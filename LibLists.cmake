@@ -1,0 +1,20 @@
+# Qt
+FIND_PACKAGE(Qt5OpenGL REQUIRED)
+SET(CMAKE_AUTOMOC ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+
+# ExTh
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+    "${GpuMesh_SRC_DIR}/../ExperimentalTheatre/")
+FIND_PACKAGE(ExperimentalTheatre REQUIRED)
+
+
+# Global
+SET(GpuMesh_LIBRARIES
+    ${ExTh_LIBRARIES})
+SET(GpuMesh_INCLUDE_DIRS
+    ${GpuMesh_SRC_DIR}
+    ${ExTh_INCLUDE_DIRS})
+SET(GpuMesh_QT_MODULES
+    OpenGL)

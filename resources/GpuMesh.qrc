@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shaders/Boundary.frag</file>
+        <file>shaders/Boundary.vert</file>
+    </qresource>
+</RCC>
