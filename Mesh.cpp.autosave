@@ -398,28 +398,15 @@ void Mesh::findDelaunayBall(int vId, const std::shared_ptr<Tetrahedron>& base,
 {
     glm::dvec3 v = vert[vId].p;
 
-    std::list<pair<std::shared_ptr<Tetrahedron>, bool>> queue;
+    std::list<std::shared_ptr<Tetrahedron>> queue;
     std::vector<std::shared_ptr<Tetrahedron>> preserved;
 
-    removeTetrahedronGrid(base->cId, base);
-    for(int i=0; i<4; ++i)
-    {
-        for(auto neighbor : vert[base->v[i]].tetra)
-        {
-            if(!neighbor->flag)
-            {
-                neighbor->flag = true;
-                queue.push_back(make_pair(neighbor, true));
-            }
-        }
-    }
-
-    int delBaseCount = 0;
-    int delAuxCount = 0;
+    base->flag = true;
+    queue.push_back(base);
 
     while(!queue.empty())
     {
-        std::shared_ptr<Tetrahedron> tet = queue.front().first;
+        std::shared_ptr<Tetrahedron> tet = queue.front();
 
         glm::dvec3 dist = v - tet->circumCenter;
         if(glm::dot(dist, dist) < tet->circumRadius2)
@@ -439,16 +426,12 @@ void Mesh::findDelaunayBall(int vId, const std::shared_ptr<Tetrahedron>& base,
                     if(!neighbor->flag)
                     {
                         neighbor->flag = true;
-                        queue.push_back(make_pair(neighbor, false));
+                        queue.push_back(neighbor);
                     }
                 }
             }
 
             removeTetrahedronGrid(tet->cId, tet);
-            if(queue.front().second)
-                ++delBaseCount;
-            else
-                ++delAuxCount;
         }
         else
         {
@@ -464,8 +447,6 @@ void Mesh::findDelaunayBall(int vId, const std::shared_ptr<Tetrahedron>& base,
     {
         tet->flag = false;
     }
-
-    cout << "(" << delBaseCount << ", " << delAuxCount << ", " << preserved.size() << ") ";
 }
 
 bool Mesh::isBase(int vId, const std::shared_ptr<Tetrahedron>& tet)
