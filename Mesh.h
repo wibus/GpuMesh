@@ -20,7 +20,7 @@ struct Vertex
     {}
 
     glm::dvec3 p;
-    std::set<std::shared_ptr<Tetrahedron>> tetra;
+    std::set<Tetrahedron*> tetra;
 };
 
 struct Triangle
@@ -151,7 +151,7 @@ struct Tetrahedron
 struct GridCell
 {
     std::vector<int> vertId;
-    std::set<std::shared_ptr<Tetrahedron>> tetra;
+    std::set<Tetrahedron*> tetra;
 };
 
 class Mesh
@@ -179,7 +179,7 @@ public:
     void insertVertices(const std::vector<glm::dvec3>& vertices);
 
     std::vector<Vertex> vert;
-    std::list<std::shared_ptr<Tetrahedron>> tetra;
+    std::list<Tetrahedron*> tetra;
 
 
 private:
@@ -189,14 +189,11 @@ private:
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
     void insertVertexGrid(const glm::ivec3& cId, int vId);
-    std::shared_ptr<Tetrahedron> findBaseTetrahedron(const glm::ivec3& cId, int vId);
-    void findDelaunayBall(int vId, const std::shared_ptr<Tetrahedron>& base,
-                          std::set<Triangle>& ball);
-    bool isBase(int vId, const std::shared_ptr<Tetrahedron>& tet);
-    void insertTetrahedronGrid(const glm::ivec3& cId,
-                               const std::shared_ptr<Tetrahedron>& tet);
-    void removeTetrahedronGrid(const glm::ivec3& cId,
-                               const std::shared_ptr<Tetrahedron>& tet);
+    Tetrahedron* findBaseTetrahedron(const glm::ivec3& cId, int vId);
+    void findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball);
+    bool isBase(int vId, Tetrahedron* tet);
+    void insertTetrahedronGrid(const glm::ivec3& cId, int v0, int v1, int v2, int v3);
+    void removeTetrahedronGrid(Tetrahedron* tet);
     void collectTetrahedronsGrid();
 
 

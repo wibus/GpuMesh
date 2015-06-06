@@ -21,7 +21,7 @@ void Mesh::initialize(
     tetra.clear();
     for(auto& t : tetrahedras)
     {
-        std::shared_ptr<Tetrahedron> tet(new Tetrahedron(t));
+        Tetrahedron* tet = new Tetrahedron(t);
         computeDataCache(*tet);
         tetra.push_back(tet);
     }
@@ -85,7 +85,7 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
     //*/
 
     //* Regular grid implementation
-    glm::ivec3 size(10, 10, 10);
+    glm::ivec3 size(24, 24, 24);
     int cellCount = size.x*size.y*size.z;
     std::cout << "Initializing grid (size="
               << size.x << "x" << size.y << "x" << size.z << ")" << endl;
@@ -102,13 +102,13 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
     {
         for(int j=0; j<gridSize.y; ++j)
         {
-            for(int i=0; i<gridSize.x; ++i)
+            for(int i=0; i<gridSize.x; ++i, ++cId)
             {
                 insertCell(glm::ivec3(i, j, k));
 
-                double progress = (++cId) / (double) (cellCount);
-                //std::cout <<  progress * 100 << "% done" << endl;
             }
+            double progress = (cId) / (double) (cellCount);
+            std::cout <<  progress * 100 << "% done" << endl;
         }
     }
 
@@ -137,6 +137,7 @@ void Mesh::insertVertex(int id)
             ++triBuffer[Triangle(t.v[0], t.v[3], t.v[1])];
             ++triBuffer[Triangle(t.v[1], t.v[3], t.v[2])];
 
+            delete *tetraIt;
             tetraIt = tetra.erase(tetraIt);
         }
         else
@@ -150,8 +151,8 @@ void Mesh::insertVertex(int id)
         if(triCount.second == 1)
         {
             const Triangle& tri = triCount.first;
-            std::shared_ptr<Tetrahedron> t(
-                new Tetrahedron(id, tri.v[0], tri.v[1], tri.v[2]));
+            Tetrahedron* t =
+                new Tetrahedron(id, tri.v[0], tri.v[1], tri.v[2]);
             computeDataCache(*t);
             tetra.push_back(t);
         }
@@ -223,8 +224,11 @@ void Mesh::initializeGrid(int idStart, int idEnd)
     const glm::ivec3 FIRST_CELL(0, 0, 0);
     for(auto tet : tetra)
     {
-        insertTetrahedronGrid(FIRST_CELL, tet);
+        insertTetrahedronGrid(FIRST_CELL,
+            tet->v[0], tet->v[1], tet->v[2], tet->v[3]);
+        delete tet;
     }
+    tetra.clear();
 
     //* Radially sort cell vertices
     for(int k=0; k<gridSize.z; ++k)
@@ -261,7 +265,7 @@ void Mesh::insertCell(const glm::ivec3& cId)
 
 void Mesh::insertVertexGrid(const glm::ivec3& cId, int vId)
 {
-    std::shared_ptr<Tetrahedron> base = findBaseTetrahedron(cId, vId);
+    Tetrahedron* base = findBaseTetrahedron(cId, vId);
 
     std::set<Triangle> triBuffer;
     findDelaunayBall(vId, base, triBuffer);
@@ -270,14 +274,12 @@ void Mesh::insertVertexGrid(const glm::ivec3& cId, int vId)
     // Build new tetrehedrons
     for(auto t : triBuffer)
     {
-        std::shared_ptr<Tetrahedron> tet(
-            new Tetrahedron(vId, t.v[0], t.v[1], t.v[2]));
-        insertTetrahedronGrid(cId, tet);
-        computeDataCache(*tet);
+        insertTetrahedronGrid(cId, vId, t.v[0], t.v[1], t.v[2]);
+
     }
 }
 
-std::shared_ptr<Tetrahedron> Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
+Tetrahedron* Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
 {
     const glm::ivec3 DOWN(0, 0, -1);
     const glm::ivec3 BACK(-1, 0, 0);
@@ -310,6 +312,7 @@ std::shared_ptr<Tetrahedron> Mesh::findBaseTetrahedron(const glm::ivec3& cId, in
     cells.push_back(make_pair(cId + LEFT_DOWN, LEFT_DOWN));
     cells.push_back(make_pair(cId + BACK_LEFT_DOWN, BACK_LEFT_DOWN));
 
+    std::vector<glm::ivec3> path;
 
     while(!cells.empty())
     {
@@ -318,6 +321,7 @@ std::shared_ptr<Tetrahedron> Mesh::findBaseTetrahedron(const glm::ivec3& cId, in
         if(glm::all(glm::greaterThanEqual(c, glm::ivec3())) &&
            glm::all(glm::lessThan(c, gridSize)))
         {
+            path.push_back(c);
 
             GridCell& cell = grid[c.z][c.y][c.x];
             for(auto tet : cell.tetra)
@@ -390,36 +394,56 @@ std::shared_ptr<Tetrahedron> Mesh::findBaseTetrahedron(const glm::ivec3& cId, in
 
         cells.pop_front();
     }
+
+    std::vector<std::vector<std::vector<int>>> marks;
+    marks.resize(gridSize.z);
+    for(int k=0; k<gridSize.z; ++k) {
+        marks[k].resize(gridSize.y);
+        for(int j=0; j<gridSize.y; ++j)
+            marks[k][j].resize(gridSize.x);
+    }
+
+    for(auto c : path)
+    {
+        marks[c.z][c.y][c.x] = 1;
+    }
+
+    marks[cId.z][cId.y][cId.x] = 8;
+
+    for(int k=gridSize.z-1; k>=0; --k)
+    {
+        for(int j=gridSize.y-1; j>=0; --j)
+        {
+            for(int i=0; i<gridSize.x; ++i)
+            {
+                cerr << marks[k][j][i] << " ";
+            }
+            cerr << endl;
+        }
+
+        cerr << endl << endl;
+    }
+
+
+    bool isBaseFound = false;
+    assert(isBaseFound);
 }
 
 
-void Mesh::findDelaunayBall(int vId, const std::shared_ptr<Tetrahedron>& base,
-                            std::set<Triangle>& ball)
+void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball)
 {
     glm::dvec3 v = vert[vId].p;
 
-    std::list<pair<std::shared_ptr<Tetrahedron>, bool>> queue;
-    std::vector<std::shared_ptr<Tetrahedron>> preserved;
+    std::vector<Tetrahedron*> queue;
+    std::vector<Tetrahedron*> preserved;
 
-    removeTetrahedronGrid(base->cId, base);
-    for(int i=0; i<4; ++i)
+    queue.push_back(base);
+    base->flag = true;
+
+    int qId = 0;
+    while(qId < queue.size())
     {
-        for(auto neighbor : vert[base->v[i]].tetra)
-        {
-            if(!neighbor->flag)
-            {
-                neighbor->flag = true;
-                queue.push_back(make_pair(neighbor, true));
-            }
-        }
-    }
-
-    int delBaseCount = 0;
-    int delAuxCount = 0;
-
-    while(!queue.empty())
-    {
-        std::shared_ptr<Tetrahedron> tet = queue.front().first;
+        Tetrahedron* tet = queue[qId];
 
         glm::dvec3 dist = v - tet->circumCenter;
         if(glm::dot(dist, dist) < tet->circumRadius2)
@@ -434,28 +458,24 @@ void Mesh::findDelaunayBall(int vId, const std::shared_ptr<Tetrahedron>& base,
                     ball.erase(it.first);
                 }
 
-                for(auto neighbor : vert[tet->v[i]].tetra)
+                for(const auto& neighbor : vert[tet->v[i]].tetra)
                 {
                     if(!neighbor->flag)
                     {
                         neighbor->flag = true;
-                        queue.push_back(make_pair(neighbor, false));
+                        queue.push_back(neighbor);
                     }
                 }
             }
 
-            removeTetrahedronGrid(tet->cId, tet);
-            if(queue.front().second)
-                ++delBaseCount;
-            else
-                ++delAuxCount;
+            removeTetrahedronGrid(tet);
         }
         else
         {
             preserved.push_back(tet);
         }
 
-        queue.pop_front();
+        ++qId;
     }
 
 
@@ -464,11 +484,9 @@ void Mesh::findDelaunayBall(int vId, const std::shared_ptr<Tetrahedron>& base,
     {
         tet->flag = false;
     }
-
-    cout << "(" << delBaseCount << ", " << delAuxCount << ", " << preserved.size() << ") ";
 }
 
-bool Mesh::isBase(int vId, const std::shared_ptr<Tetrahedron>& tet)
+bool Mesh::isBase(int vId, Tetrahedron* tet)
 {
     glm::dmat4 D(
         glm::dvec4(vert[tet->v[0]].p, 1),
@@ -501,9 +519,11 @@ bool Mesh::isBase(int vId, const std::shared_ptr<Tetrahedron>& tet)
 }
 
 void Mesh::insertTetrahedronGrid(
-        const glm::ivec3& cId,
-        const std::shared_ptr<Tetrahedron>& tet)
+        const glm::ivec3& cId, int v0, int v1, int v2, int v3)
 {
+    Tetrahedron* tet = new Tetrahedron(v0, v1, v2, v3);
+    computeDataCache(*tet);
+
     tet->cId = cId;
     grid[cId.z][cId.y][cId.x].tetra.insert(tet);
     vert[tet->v[0]].tetra.insert(tet);
@@ -512,11 +532,14 @@ void Mesh::insertTetrahedronGrid(
     vert[tet->v[3]].tetra.insert(tet);
 }
 
-void Mesh::removeTetrahedronGrid(
-        const glm::ivec3& cId,
-        const std::shared_ptr<Tetrahedron>& tet)
+void Mesh::removeTetrahedronGrid(Tetrahedron* tet)
 {
-    grid[cId.z][cId.y][cId.x].tetra.erase(tet);
+    grid[tet->cId.z][tet->cId.y][tet->cId.x].tetra.erase(tet);
+    vert[tet->v[0]].tetra.erase(tet);
+    vert[tet->v[1]].tetra.erase(tet);
+    vert[tet->v[2]].tetra.erase(tet);
+    vert[tet->v[3]].tetra.erase(tet);
+    delete tet;
 }
 
 void Mesh::collectTetrahedronsGrid()
