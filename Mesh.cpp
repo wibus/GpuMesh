@@ -66,10 +66,12 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
     int idStart = vert.size();
     int idEnd = idStart + vertices.size();
     vert.resize(vert.size() + vertices.size());
+    std::vector<int> ids(vertices.size());
 
     for(int i=idStart; i<idEnd; ++i)
     {
         vert[i] = Vertex(vertices[i]);
+        ids[i-idStart] = i;
     }
 
     /* Flat implementation
@@ -82,17 +84,21 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
     //*/
 
     //* KD Tree implementation
+    sort(ids.begin(), ids.end(), [this](int a, int b) {
+        return glm::dot(vert[a].p, vert[a].p) < glm::dot(vert[b].p, vert[b].p);
+    });
+
     std::cout << "Building the KD Tree" << endl;
     std::shared_ptr<KdNode> kdRoot = buildKdTree(8);
     std::cout << "Inserting vertices in the mesh" << endl;
-    for(int i=idStart; i<idEnd; ++i)
+    for(int i=0; i<ids.size(); ++i)
     {
-        insertVertexKd(kdRoot, i);
+        insertVertexKd(kdRoot, ids[i]);
 
-        if(((1+i-idStart) * 10) % (idEnd-idStart) == 0)
-            std::cout << (1+i-idStart)*100 / (double) (idEnd-idStart) << "% done" << endl;
+        if(((1+i) * 10) % (ids.size()) == 0)
+            std::cout << (1+i)*100 / (double) (ids.size()) << "% done" << endl;
 
-        if(((1+i-idStart) * 10) % (idEnd-idStart) == 0)
+        if(((1+i) * 10) % (ids.size()) == 0)
         {
             printLoads(kdRoot);
         }
