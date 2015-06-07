@@ -66,12 +66,10 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
     int idStart = vert.size();
     int idEnd = idStart + vertices.size();
     vert.resize(vert.size() + vertices.size());
-    std::vector<int> ids(vertices.size());
 
     for(int i=idStart; i<idEnd; ++i)
     {
         vert[i] = Vertex(vertices[i]);
-        ids[i-idStart] = i;
     }
 
     /* Flat implementation
@@ -83,24 +81,31 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
     }
     //*/
 
-    //* KD Tree implementation
-    sort(ids.begin(), ids.end(), [this](int a, int b) {
-        return glm::dot(vert[a].p, vert[a].p) < glm::dot(vert[b].p, vert[b].p);
-    });
+    //* Regular grid implementation
+    glm::ivec3 size(24, 24, 24);
+    int cellCount = size.x*size.y*size.z;
+    std::cout << "Initializing grid (size="
+              << size.x << "x" << size.y << "x" << size.z << ")" << endl;
+    std::cout << "Cell density: vert count/cell count = " <<
+                 (idEnd-idStart) / (double) cellCount << endl;
 
-    std::cout << "Building the KD Tree" << endl;
-    std::shared_ptr<KdNode> kdRoot = buildKdTree(8);
+    gridSize = size;
+    initializeGrid(idStart, idEnd);
+
+
     std::cout << "Inserting vertices in the mesh" << endl;
-    for(int i=0; i<ids.size(); ++i)
+    int cId = 0;
+    for(int k=0; k<gridSize.z; ++k)
     {
-        insertVertexKd(kdRoot, ids[i]);
-
-        if(((1+i) * 10) % (ids.size()) == 0)
-            std::cout << (1+i)*100 / (double) (ids.size()) << "% done" << endl;
-
-        if(((1+i) * 10) % (ids.size()) == 0)
+        for(int j=0; j<gridSize.y; ++j)
         {
-            printLoads(kdRoot);
+            for(int i=0; i<gridSize.x; ++i, ++cId)
+            {
+                insertCell(glm::ivec3(i, j, k));
+
+            }
+            double progress = (cId) / (double) (cellCount);
+            std::cout <<  progress * 100 << "% done" << endl;
         }
     }
 
