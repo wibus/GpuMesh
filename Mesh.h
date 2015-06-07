@@ -16,11 +16,12 @@ struct Vertex
 {
     Vertex() {}
     Vertex(const glm::dvec3 pos) :
-        p(pos)
+        p(pos), flag(false)
     {}
 
     glm::dvec3 p;
     std::set<Tetrahedron*> tetra;
+    bool flag;
 };
 
 struct Triangle
@@ -183,24 +184,24 @@ public:
 
 
 private:
-    void insertVertex(int id);
-    void computeDataCache(Tetrahedron& tet);
-
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
     void insertVertexGrid(const glm::ivec3& cId, int vId);
     Tetrahedron* findBaseTetrahedron(const glm::ivec3& cId, int vId);
-    void findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball);
     bool isBase(int vId, Tetrahedron* tet);
+    void findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball);
+    void remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::set<Triangle>& ball);
     void insertTetrahedronGrid(const glm::ivec3& cId, int v0, int v1, int v2, int v3);
     void removeTetrahedronGrid(Tetrahedron* tet);
+
     void collectTetrahedronsGrid();
 
 
-    glm::ivec3 gridSize;
-    std::vector<std::vector<std::vector<GridCell>>> grid;
     glm::dvec3 cMin;
     glm::dvec3 cMax;
+
+    glm::ivec3 gridSize;
+    std::vector<std::vector<std::vector<GridCell>>> grid;
 };
 
 

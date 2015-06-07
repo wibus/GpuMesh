@@ -27,7 +27,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _azimuth(0),
     _altitude(0),
     _distance(10),
-    _internalVertices(100000),
+    _internalVertices(10000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
