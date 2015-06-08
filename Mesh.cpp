@@ -66,8 +66,7 @@ void Mesh::compileArrayBuffers(
 void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
 {
     int idStart = vert.size();
-    int vCount = vertices.size();
-    int idEnd = idStart + vCount;
+    int idEnd = idStart + vertices.size();
     vert.resize(idEnd);
 
     for(int i=idStart; i<idEnd; ++i)
@@ -75,17 +74,10 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
         vert[i] = Vertex(vertices[i-idStart]);
     }
 
-    int sideLen = (int) glm::pow(vCount/4, 1/3.0);
-    gridSize = glm::ivec3(sideLen, sideLen, sideLen);
-    int cellCount = gridSize.x*gridSize.y*gridSize.z;
-    std::cout << "Cell density: vert count/cell count = " <<
-                 (idEnd-idStart) / (double) cellCount << endl;
-    std::cout << "Initializing grid (size="
-              << gridSize.x << "x"
-              << gridSize.y << "x"
-              << gridSize.z << ")" << endl;
 
+    std::cout << "Initializing grid" << endl;
     initializeGrid(idStart, idEnd);
+    int cellCount = gridSize.x*gridSize.y*gridSize.z;
 
 
     std::cout << "Inserting vertices in the mesh" << endl;
@@ -97,26 +89,40 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
             for(int i=0; i<gridSize.x; ++i, ++cId)
             {
                 insertCell(glm::ivec3(i, j, k));
-
             }
-
-            //double progress = (cId) / (double) (cellCount);
-            //std::cout <<  progress * 100 << "% done" << endl;
         }
+
+        double progress = (cId) / (double) (cellCount);
+        std::cout <<  progress * 100 << "% done" << endl;
     }
 
 
     std::cout << "Collecting tetrahedrons" << endl;
-    collectTetrahedronsGrid();
+    tearDownGrid();
 }
 
 void Mesh::initializeGrid(int idStart, int idEnd)
 {
+    // Compute dimensions
+    const int VERT_PER_CELL = 5;
+    int vCount = idEnd - idStart;
+    int sideLen = (int) glm::pow(vCount / VERT_PER_CELL, 1/3.0);
+    int height = vCount / (sideLen * sideLen) / VERT_PER_CELL;
+    gridSize = glm::ivec3(sideLen, sideLen, height);
+    int cellCount = gridSize.x*gridSize.y*gridSize.z;
+    std::cout << "Grid size: "
+              << gridSize.x << "x"
+              << gridSize.y << "x"
+              << gridSize.z << endl;
+    std::cout << "Cell density: vert count/cell count = " <<
+                 (idEnd-idStart) / (double) cellCount << endl;
+
+
     // Construct grid
     grid.resize(gridSize.z);
     for(int k=0; k<gridSize.z; ++k)
     {
-        grid[k].resize(gridSize.x);
+        grid[k].resize(gridSize.y);
         for(int j=0; j<gridSize.y; ++j)
         {
             grid[k][j].resize(gridSize.x);
@@ -152,6 +158,7 @@ void Mesh::initializeGrid(int idStart, int idEnd)
             {
                 glm::dvec3 floatBin = glm::dvec3(i+1, j+1, k+1) / floatSize;
                 glm::dvec3 cellCorner = floatBin * boxSize + cMin;
+
                 std::sort(grid[k][j][i].vertId.begin(),
                           grid[k][j][i].vertId.end(),
                           [this, &cellCorner](int a, int b) {
@@ -168,7 +175,9 @@ void Mesh::initializeGrid(int idStart, int idEnd)
 
 void Mesh::insertCell(const glm::ivec3& cId)
 {
-    GridCell cell = grid[cId.z][cId.y][cId.x];
+    pullupTetrahedrons(cId);
+
+    GridCell& cell = grid[cId.z][cId.y][cId.x];
     int vertCount = cell.vertId.size();
     for(int vId=0; vId<vertCount; ++vId)
     {
@@ -176,58 +185,102 @@ void Mesh::insertCell(const glm::ivec3& cId)
     }
 }
 
+void Mesh::pullupTetrahedrons(const glm::ivec3& cId)
+{
+    GridCell& cell = grid[cId.z][cId.y][cId.x];
+
+    if(cId.z > 0)
+    {
+        std::unordered_set<Tetrahedron*>& cellTets = cell.tetra;
+
+        GridCell& floor = grid[cId.z-1][cId.y][cId.x];
+        std::unordered_set<Tetrahedron*>& floorTets = floor.tetra;
+        auto tetIt = floorTets.begin();
+
+        while(tetIt != floorTets.end())
+        {
+            Tetrahedron* tet = *tetIt;
+
+            if(tet->v[0] < 4)
+            {
+                tet->cId = cId;
+                cellTets.insert(tet);
+                tetIt = floorTets.erase(tetIt);
+            }
+            else if(tet->v[1] < 4)
+            {
+                tet->cId = cId;
+                cellTets.insert(tet);
+                tetIt = floorTets.erase(tetIt);
+            }
+            else if(tet->v[2] < 4)
+            {
+                tet->cId = cId;
+                cellTets.insert(tet);
+                tetIt = floorTets.erase(tetIt);
+            }
+            else if(tet->v[3] < 4)
+            {
+                tet->cId = cId;
+                cellTets.insert(tet);
+                tetIt = floorTets.erase(tetIt);
+            }
+            else
+            {
+                ++tetIt;
+            }
+        }
+    }
+}
+
 void Mesh::insertVertexGrid(const glm::ivec3& cId, int vId)
 {
-    std::set<Triangle> ball;
+    std::unordered_set<Triangle> ball;
     Tetrahedron* base = findBaseTetrahedron(cId, vId);
     findDelaunayBall(vId, base, ball);
     remeshDelaunayBall(cId, vId, ball);
 }
 
+
 Tetrahedron* Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
 {
-    const glm::ivec3 DOWN(0, 0, -1);
     const glm::ivec3 BACK(-1, 0, 0);
     const glm::ivec3 BACK_RIGHT(-1, -1, 0);
     const glm::ivec3 RIGHT(0, -1, 0);
     const glm::ivec3 FRONT_RIGHT(1, -1, 0);
 
-    const glm::ivec3 BACK_DOWN(-1, 0, -1);
-    const glm::ivec3 BACK_RIGHT_DOWN(-1, -1, -1);
-    const glm::ivec3 RIGHT_DOWN(0, -1, -1);
-    const glm::ivec3 FRONT_RIGHT_DOWN(1, -1, -1);
+    const glm::ivec3 FRONT(1, 0, 0);
+    const glm::ivec3 FRONT_LEFT(1, 1, 0);
+    const glm::ivec3 LEFT(0, 1, 0);
+    const glm::ivec3 BACK_LEFT(-1, 1, 0);
+
     const glm::ivec3 FRONT_DOWN(1, 0, -1);
     const glm::ivec3 FRONT_LEFT_DOWN(1, 1, -1);
     const glm::ivec3 LEFT_DOWN(0, 1, -1);
     const glm::ivec3 BACK_LEFT_DOWN(-1, 1, -1);
 
-    std::vector<std::pair<glm::ivec3, glm::ivec3>> queue;
-    queue.reserve(256);
-
-    queue.push_back(make_pair(cId, glm::ivec3()));
-    queue.push_back(make_pair(cId + DOWN, DOWN));
-    queue.push_back(make_pair(cId + BACK, BACK));
-    queue.push_back(make_pair(cId + BACK_RIGHT, BACK_RIGHT));
-    queue.push_back(make_pair(cId + RIGHT, RIGHT));
-    queue.push_back(make_pair(cId + FRONT_RIGHT, FRONT_RIGHT));
-    queue.push_back(make_pair(cId + BACK_DOWN, BACK_DOWN));
-    queue.push_back(make_pair(cId + BACK_RIGHT_DOWN, BACK_RIGHT_DOWN));
-    queue.push_back(make_pair(cId + RIGHT_DOWN, RIGHT_DOWN));
-    queue.push_back(make_pair(cId + FRONT_RIGHT_DOWN, FRONT_RIGHT_DOWN));
-    queue.push_back(make_pair(cId + FRONT_DOWN, FRONT_DOWN));
-    queue.push_back(make_pair(cId + FRONT_LEFT_DOWN, FRONT_LEFT_DOWN));
-    queue.push_back(make_pair(cId + LEFT_DOWN, LEFT_DOWN));
-    queue.push_back(make_pair(cId + BACK_LEFT_DOWN, BACK_LEFT_DOWN));
+    _baseQueue.clear();
+    _baseQueue.push_back(make_pair(cId,               EDir::STATIC));
+    _baseQueue.push_back(make_pair(cId + BACK,        EDir::BACK));
+    _baseQueue.push_back(make_pair(cId + BACK_RIGHT,  EDir::BACK_RIGHT));
+    _baseQueue.push_back(make_pair(cId + RIGHT,       EDir::RIGHT));
+    _baseQueue.push_back(make_pair(cId + FRONT_RIGHT, EDir::FRONT_RIGHT));
+    if(cId.z > 0)
+    {
+        _baseQueue.push_back(make_pair(cId + FRONT_DOWN,      EDir::FRONT));
+        _baseQueue.push_back(make_pair(cId + FRONT_LEFT_DOWN, EDir::FRONT_LEFT));
+        _baseQueue.push_back(make_pair(cId + LEFT_DOWN,       EDir::LEFT));
+        _baseQueue.push_back(make_pair(cId + BACK_LEFT_DOWN,  EDir::BACK_LEFT));
+    }
 
 
     int qId = 0;
-    while(qId != queue.size())
+    while(qId != _baseQueue.size())
     {
-        const glm::ivec3& c = queue[qId].first;
+        const glm::ivec3& c = _baseQueue[qId].first;
 
         if(0 <= c.x && c.x < gridSize.x &&
-           0 <= c.y && c.y < gridSize.y &&
-           0 <= c.z && c.z < gridSize.z)
+           0 <= c.y && c.y < gridSize.y)
         {
             GridCell& cell = grid[c.z][c.y][c.x];
             for(auto tet : cell.tetra)
@@ -239,67 +292,55 @@ Tetrahedron* Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
             }
 
             // Push neighbors
-            const glm::ivec3& d = queue[qId].second;
-            if(d.x != 0)
+            switch (_baseQueue[qId].second)
             {
-                glm::ivec3 x(d.x, 0, 0);
-                queue.push_back(make_pair(c+x, x));
+            case EDir::BACK :
+                _baseQueue.push_back(make_pair(c + BACK, EDir::BACK));
+                break;
 
-                if(d.y != 0)
-                {
-                    glm::ivec3 y(0, d.y, 0);
-                    queue.push_back(make_pair(c+y, y));
+            case EDir::BACK_RIGHT :
+                _baseQueue.push_back(make_pair(c + BACK, EDir::BACK));
+                _baseQueue.push_back(make_pair(c + BACK_RIGHT, EDir::BACK_RIGHT));
+                _baseQueue.push_back(make_pair(c + RIGHT, EDir::RIGHT));
+                break;
 
-                    glm::ivec3 xy(d.x, d.y, 0);
-                    queue.push_back(make_pair(c+xy, xy));
+            case EDir::RIGHT :
+                _baseQueue.push_back(make_pair(c + RIGHT, EDir::RIGHT));
+                break;
 
-                    if(d.z != 0)
-                    {
-                        glm::ivec3 z(0, 0, d.z);
-                        queue.push_back(make_pair(c+z, z));
+            case EDir::FRONT_RIGHT :
+                _baseQueue.push_back(make_pair(c + RIGHT, EDir::RIGHT));
+                _baseQueue.push_back(make_pair(c + FRONT_RIGHT, EDir::FRONT_RIGHT));
+                _baseQueue.push_back(make_pair(c + FRONT, EDir::FRONT));
+                break;
 
-                        glm::ivec3 xz(d.x, 0, d.z);
-                        queue.push_back(make_pair(c+xz, xz));
+            case EDir::FRONT :
+                _baseQueue.push_back(make_pair(c + FRONT, EDir::FRONT));
+                break;
 
-                        glm::ivec3 yz(0, d.y, d.z);
-                        queue.push_back(make_pair(c+yz, yz));
+            case EDir::FRONT_LEFT :
+                _baseQueue.push_back(make_pair(c + FRONT, EDir::FRONT));
+                _baseQueue.push_back(make_pair(c + FRONT_LEFT, EDir::FRONT_LEFT));
+                _baseQueue.push_back(make_pair(c + LEFT, EDir::LEFT));
+                break;
 
-                        queue.push_back(make_pair(c+d, d));
-                    }
-                }
-                else
-                {
-                    if(d.z != 0)
-                    {
-                        glm::ivec3 z(0, 0, d.z);
-                        queue.push_back(make_pair(c+z, z));
+            case EDir::LEFT :
+                _baseQueue.push_back(make_pair(c + LEFT, EDir::LEFT));
+                break;
 
-                        queue.push_back(make_pair(c+d, d));
-                    }
-                }
-            }
-            else if(d.y != 0)
-            {
-                glm::ivec3 y(0, d.y, 0);
-                queue.push_back(make_pair(c+y, y));
-
-                if(d.z != 0)
-                {
-                    glm::ivec3 z(0, 0, d.z);
-                    queue.push_back(make_pair(c+z, z));
-
-                    queue.push_back(make_pair(c+d, d));
-                }
-            }
-            else if(d.z != 0)
-            {
-                // Only z is not null
-                queue.push_back(make_pair(c+d, d));
+            case EDir::BACK_LEFT :
+                _baseQueue.push_back(make_pair(c + LEFT, EDir::LEFT));
+                _baseQueue.push_back(make_pair(c + BACK_LEFT, EDir::BACK_LEFT));
+                _baseQueue.push_back(make_pair(c + BACK, EDir::BACK));
+                break;
             }
         }
 
         ++qId;
     }
+
+    bool isBaseTetrahedronFound = false;
+    assert(isBaseTetrahedronFound);
 }
 
 bool Mesh::isBase(int vId, Tetrahedron* tet)
@@ -335,26 +376,21 @@ bool Mesh::isBase(int vId, Tetrahedron* tet)
 }
 
 
-void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball)
+void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Triangle>& ball)
 {
     glm::dvec3 v = vert[vId].p;
 
-    std::vector<Tetrahedron*> queue;
-    queue.reserve(256);
+    _ballPreserved.clear();
+    _ballTouched.clear();
 
-    std::vector<Tetrahedron*> preserved;
-    preserved.reserve(256);
-
-    std::vector<Vertex*> touched;
-    touched.reserve(256);
-
-    queue.push_back(base);
+    _ballQueue.clear();
+    _ballQueue.push_back(base);
     base->flag = true;
 
     int qId = 0;
-    while(qId < queue.size())
+    while(qId < _ballQueue.size())
     {
-        Tetrahedron* tet = queue[qId];
+        Tetrahedron* tet = _ballQueue[qId];
 
         glm::dvec3 dist = v - tet->circumCenter;
         if(glm::dot(dist, dist) < tet->circumRadius2)
@@ -373,14 +409,14 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball
                 if(!triVert.flag)
                 {
                     triVert.flag = true;
-                    touched.push_back(&triVert);
+                    _ballTouched.push_back(&triVert);
 
                     for(auto neighbor : triVert.tetra)
                     {
                         if(!neighbor->flag)
                         {
                             neighbor->flag = true;
-                            queue.push_back(neighbor);
+                            _ballQueue.push_back(neighbor);
                         }
                     }
                 }
@@ -390,7 +426,7 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball
         }
         else
         {
-            preserved.push_back(tet);
+            _ballPreserved.push_back(tet);
         }
 
         ++qId;
@@ -398,18 +434,20 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::set<Triangle>& ball
 
 
     // Reset algo flag on preserved tetrahedrons
-    for(auto tet : preserved)
+    int preservedCount = _ballPreserved.size();
+    for(int i=0; i<preservedCount; ++i)
     {
-        tet->flag = false;
+        _ballPreserved[i]->flag = false;
     }
 
-    for(Vertex* triVert : touched)
+    int touchedCount = _ballTouched.size();
+    for(int i=0; i<touchedCount; ++i)
     {
-        triVert->flag = false;
+        _ballTouched[i]->flag = false;
     }
 }
 
-void Mesh::remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::set<Triangle>& ball)
+void Mesh::remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unordered_set<Triangle>& ball)
 {
     for(auto t : ball)
     {
@@ -478,8 +516,9 @@ void Mesh::removeTetrahedronGrid(Tetrahedron* tet)
     delete tet;
 }
 
-void Mesh::collectTetrahedronsGrid()
+void Mesh::tearDownGrid()
 {
+    // Collect tetrahedrons
     tetra.clear();
     for(int k=0; k<gridSize.z; ++k)
     {
@@ -487,16 +526,25 @@ void Mesh::collectTetrahedronsGrid()
         {
             for(int i=0; i<gridSize.x; ++i)
             {
-                for(auto tet : grid[k][j][i].tetra)
-                {
-                    vert[tet->v[0]].tetra.erase(tet);
-                    vert[tet->v[1]].tetra.erase(tet);
-                    vert[tet->v[2]].tetra.erase(tet);
-                    vert[tet->v[3]].tetra.erase(tet);
-                    tetra.push_back(tet);
-                }
-                grid[k][j][i].tetra.clear();
+                unordered_set<Tetrahedron*>& tetSet = grid[k][j][i].tetra;
+                tetra.insert(tetra.begin(), tetSet.begin(), tetSet.end());
             }
+            grid[k][j].clear();
         }
+        grid[k].clear();
     }
+    grid.clear();
+
+
+    // Reset vertices adjacency lists
+    for(auto& v : vert)
+    {
+        v.tetra.clear();
+    }
+
+    // Reset cached data structures
+    _baseQueue.clear();
+    _ballQueue.clear();
+    _ballPreserved.clear();
+    _ballTouched.clear();
 }

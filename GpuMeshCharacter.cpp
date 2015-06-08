@@ -27,7 +27,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _azimuth(0),
     _altitude(0),
     _distance(10),
-    _internalVertices(10000),
+    _internalVertices(25000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -103,14 +103,14 @@ void GpuMeshCharacter::draw(const shared_ptr<View>& view, const StageTime& time)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
 
-
+/*
     // Render vertices as points
     glPointSize(6.0f);
     _shader.setVec3f("Color", glm::dvec3(0.2, 0.65, 0.2));
     _shader.setVec3f("Offset", glm::dvec3(0, 0, -0.01));
     glDrawArrays(GL_POINTS, 0, _mesh.vertCount());
     _shader.setVec3f("Offset", glm::dvec3(0, 0, 0));
-
+*/
 
     glBindVertexArray(0);
     _shader.popProgram();
@@ -131,7 +131,7 @@ void GpuMeshCharacter::moveCamera(double azimuth, double altitude, double distan
 {
     _azimuth = glm::mod(azimuth, 2.0 * glm::pi<double>());
     _altitude = glm::clamp(altitude, -glm::pi<double>() * 0.48, glm::pi<double>() * 0.48);
-    _distance = glm::clamp(distance, 0.3, 20.0);
+    _distance = glm::clamp(distance, 0.05, 20.0);
 
     glm::vec4 from = glm::rotate(glm::dmat4(), _azimuth, glm::dvec3(0, 0, 1)) *
                      glm::rotate(glm::dmat4(), _altitude, glm::dvec3(0, 1, 0)) *
@@ -271,12 +271,12 @@ void GpuMeshCharacter::triangulateDomainCpu()
         vertices[i] = glm::linearRand(min, max);
 
     _mesh.insertVertices(vertices);
-    updateBuffers();
+    //updateBuffers();
 }
 
 void GpuMeshCharacter::smoothMeshCpu()
 {
-
+    exit(0);
 }
 
 
