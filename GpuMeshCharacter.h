@@ -22,29 +22,41 @@ public:
     void exitStage() override;
 
 protected:
-    virtual void printStep(int step, const std::string& stepName);
-    virtual void moveCamera(double azimuth, double altitude, double distance);
-    virtual void setupShaders();
-    virtual void updateBuffers();
-
+    // CPU pipleine
     virtual void resetCpuPipeline();
     virtual void processCpuPipeline();
     virtual void genBoundaryMeshesCpu();
     virtual void triangulateDomainCpu();
     virtual void smoothMeshCpu();
 
+    // GPU pipeline
     virtual void resetGpuPipeline();
     virtual void processGpuPipeline();
 
+
+    virtual void printStep(int step, const std::string& stepName);
+    virtual void moveCamera(double azimuth, double altitude, double distance);
+    virtual void moveCutPlane(double azimuth, double altitude, double distance);
+    virtual void setupShaders();
+    virtual void updateBuffers();
+
 protected:
     cellar::GlProgram _shader;
+    int _buffElemCount;
     GLuint _vao;
     GLuint _vbo;
-    GLuint _ibo;
+    GLuint _nbo;
+    GLuint _ebo;
+    GLuint _qbo;
 
-    double _azimuth;
-    double _altitude;
-    double _distance;
+    double _camAzimuth;
+    double _camAltitude;
+    double _camDistance;
+
+    double _cutAzimuth;
+    double _cutAltitude;
+    double _cutDistance;
+
     glm::dmat4 _projection;
     glm::dmat4 _viewMatrix;
 

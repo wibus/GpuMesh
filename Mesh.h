@@ -21,6 +21,7 @@ struct Vertex
 
     glm::dvec3 p;
     std::unordered_set<Tetrahedron*> tetra;
+    bool isBoundary;
     bool flag;
 };
 
@@ -177,20 +178,42 @@ public:
     }
 
     void initialize(
-            const std::vector<glm::dvec3>& vertices,
-            const std::vector<Tetrahedron>& tetrahedras);
+            const std::vector<glm::dvec3>& boundingVertices,
+            const std::vector<Tetrahedron>& boundingTetrahedras);
 
-    void compileArrayBuffers(
-            std::vector<unsigned int>& indices,
-            std::vector<glm::dvec3>& vertices);
+    void compileFacesAttributes(
+            std::vector<glm::dvec3>& vertices,
+            std::vector<glm::dvec3>& normals,
+            std::vector<glm::dvec3>& triEdges,
+            std::vector<double>& tetQualities);
+
+    void compileAdjacencyLists(std::vector<std::vector<int> >& neighbors);
 
     void insertVertices(const std::vector<glm::dvec3>& vertices);
 
+    int externalVertCount;
     std::vector<Vertex> vert;
     std::list<Tetrahedron*> tetra;
 
+    int qualityCount;
+    double qualityMean;
+    double qualityVar;
+
 
 private:
+    bool isExternalTetraHedron(Tetrahedron* tet);
+    double tetrahedronQuality(Tetrahedron* tet);
+    void pushTriangle(
+            std::vector<glm::dvec3>& vertices,
+            std::vector<glm::dvec3>& normals,
+            std::vector<glm::dvec3>& triEdges,
+            std::vector<double>& tetQualities,
+            const glm::dvec3& A,
+            const glm::dvec3& B,
+            const glm::dvec3& C,
+            const glm::dvec3& n,
+            double quality);
+
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
     void pullupTetrahedrons(const glm::ivec3& cId);
@@ -203,8 +226,10 @@ private:
     void removeTetrahedronGrid(Tetrahedron* tet);
     void tearDownGrid();
 
+
     glm::dvec3 cMin;
     glm::dvec3 cMax;
+    glm::dvec3 cDim;
 
     glm::ivec3 gridSize;
     std::vector<std::vector<std::vector<GridCell>>> grid;

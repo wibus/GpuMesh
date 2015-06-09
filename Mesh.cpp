@@ -7,60 +7,219 @@ using namespace std;
 
 
 void Mesh::initialize(
-        const std::vector<glm::dvec3>& vertices,
-        const std::vector<Tetrahedron>& tetrahedras)
+        const std::vector<glm::dvec3>& boundingVertices,
+        const std::vector<Tetrahedron>& boundingTetrahedras)
 {
-    vert.resize(vertices.size());
+    vert.resize(boundingVertices.size());
+    externalVertCount = boundingVertices.size();
     for(int i=0; i<vert.size(); ++i)
     {
-        vert[i] = Vertex(vertices[i]);
-        cMin = glm::min(cMin, vertices[i]);
-        cMax = glm::max(cMax, vertices[i]);
+        vert[i] = Vertex(boundingVertices[i]);
     }
 
     tetra.clear();
-    for(auto& t : tetrahedras)
+    for(auto& t : boundingTetrahedras)
     {
         Tetrahedron* tet = new Tetrahedron(t);
         tetra.push_back(tet);
     }
 }
 
-void Mesh::compileArrayBuffers(
-        std::vector<unsigned int>& indices,
-        std::vector<glm::dvec3>& vertices)
+void Mesh::compileFacesAttributes(
+        std::vector<glm::dvec3>& vertices,
+        std::vector<glm::dvec3>& normals,
+        std::vector<glm::dvec3>& triEdges,
+        std::vector<double>& tetQualities)
 {
-    int id = -1;
-    indices.resize(elemCount());
-    for(const auto& t : tetra)
+    vertices.reserve(elemCount());
+    normals.reserve(elemCount());
+    triEdges.reserve(elemCount());
+    tetQualities.reserve(elemCount());
+
+    qualityCount = 0;
+    qualityMean = 0;
+    qualityVar = 0;
+
+    for(const auto& tet : tetra)
     {
-        indices[++id] = t->v[0];
-        indices[++id] = t->v[1];
-        indices[++id] = t->v[2];
+        if(isExternalTetraHedron(tet))
+            continue;
 
-        indices[++id] = t->v[0];
-        indices[++id] = t->v[2];
-        indices[++id] = t->v[3];
+        glm::dvec3 verts[] = {
+            vert[tet->v[0]].p,
+            vert[tet->v[1]].p,
+            vert[tet->v[2]].p,
+            vert[tet->v[3]].p
+        };
 
-        indices[++id] = t->v[0];
-        indices[++id] = t->v[3];
-        indices[++id] = t->v[1];
+        glm::dvec3 norms[] = {
+            glm::normalize(glm::cross(verts[1] - verts[0], verts[2] - verts[1])),
+            glm::normalize(glm::cross(verts[2] - verts[0], verts[3] - verts[2])),
+            glm::normalize(glm::cross(verts[3] - verts[0], verts[1] - verts[3])),
+            glm::normalize(glm::cross(verts[3] - verts[1], verts[2] - verts[3])),
+        };
 
-        indices[++id] = t->v[1];
-        indices[++id] = t->v[3];
-        indices[++id] = t->v[2];
+        double quality = tetrahedronQuality(tet);
+
+        qualityMean = (qualityMean * qualityCount + quality) / (qualityCount + 1);
+        double qualityMeanDist = qualityMean - quality;
+        qualityVar = (qualityVar * qualityCount + qualityMeanDist*qualityMeanDist) / (qualityCount + 1);
+        ++qualityCount;
+
+        pushTriangle(vertices, normals, triEdges, tetQualities,
+                     verts[0], verts[1], verts[2], norms[0], quality);
+        pushTriangle(vertices, normals, triEdges, tetQualities,
+                     verts[0], verts[2], verts[3], norms[1], quality);
+        pushTriangle(vertices, normals, triEdges, tetQualities,
+                     verts[0], verts[3], verts[1], norms[2], quality);
+        pushTriangle(vertices, normals, triEdges, tetQualities,
+                     verts[1], verts[3], verts[2], norms[3], quality);
+    }
+}
+
+
+void Mesh::compileAdjacencyLists(
+        std::vector<std::vector<int>>& neighbors)
+{
+    neighbors.clear();
+    neighbors.resize(vertCount());
+
+    for(auto& v : vert)
+    {
+        v.isBoundary = false;
     }
 
-    id = -1;
-    vertices.resize(vertCount());
-    for(const auto& v : vert)
+    for(const auto& tet : tetra)
     {
-        vertices[++id] = v.p;
-    }
+        if(isExternalTetraHedron(tet))
+        {
+            vert[tet->v[0]].isBoundary = true;
+            vert[tet->v[1]].isBoundary = true;
+            vert[tet->v[2]].isBoundary = true;
+            vert[tet->v[3]].isBoundary = true;
+            continue;
+        }
 
-    std::cout << "NV / NT: "
-              << tetra.size() << "/" << vert.size() << " = "
-              << tetra.size() / (double) vert.size() << endl;
+        int verts[][2] = {
+            {tet->v[0], tet->v[1]},
+            {tet->v[0], tet->v[2]},
+            {tet->v[0], tet->v[3]},
+            {tet->v[1], tet->v[2]},
+            {tet->v[1], tet->v[3]},
+            {tet->v[2], tet->v[3]},
+        };
+
+        for(int e=0; e<6; ++e)
+        {
+            bool isPresent = false;
+            int firstVert = verts[e][0];
+            int secondVert = verts[e][1];
+            int neighborCount = neighbors[firstVert].size();
+            for(int n=0; n < neighborCount; ++n)
+            {
+                if(secondVert == neighbors[firstVert][n])
+                {
+                    isPresent = true;
+                    break;
+                }
+            }
+
+            if(!isPresent)
+            {
+                neighbors[firstVert].push_back(secondVert);
+                neighbors[secondVert].push_back(firstVert);
+            }
+        }
+    }
+}
+
+bool Mesh::isExternalTetraHedron(Tetrahedron* tet)
+{
+    return tet->v[0] < externalVertCount ||
+           tet->v[1] < externalVertCount ||
+           tet->v[2] < externalVertCount ||
+           tet->v[3] < externalVertCount;
+}
+
+double Mesh::tetrahedronQuality(Tetrahedron* tet)
+{
+    glm::dvec3& A = vert[tet->v[0]].p;
+    glm::dvec3& B = vert[tet->v[1]].p;
+    glm::dvec3& C = vert[tet->v[2]].p;
+    glm::dvec3& D = vert[tet->v[3]].p;
+    std::vector<double> lengths {
+        glm::distance(A, B),
+        glm::distance(A, C),
+        glm::distance(A, D),
+        glm::distance(B, C),
+        glm::distance(D, B),
+        glm::distance(C, D)
+    };
+
+    double maxLen = 0;
+    for(auto l : lengths)
+        if(l > maxLen)
+            maxLen = l;
+
+    double u = lengths[0];
+    double v = lengths[1];
+    double w = lengths[2];
+    double U = lengths[5];
+    double V = lengths[4];
+    double W = lengths[3];
+
+    double Volume = 4*u*u*v*v*w*w;
+    Volume -= u*u*pow(v*v+w*w-U*U,2);
+    Volume -= v*v*pow(w*w+u*u-V*V,2);
+    Volume -= w*w*pow(u*u+v*v-W*W,2);
+    Volume += (v*v+w*w-U*U)*(w*w+u*u-V*V)*(u*u+v*v-W*W);
+    Volume = sqrt(Volume);
+    Volume /= 12;
+
+    double s1 = (double) ((U + V + W) / 2);
+    double s2 = (double) ((u + v + W) / 2);
+    double s3 = (double) ((u + V + w) / 2);
+    double s4 = (double) ((U + v + w) / 2);
+
+    double L1 = sqrt(s1*(s1-U)*(s1-V)*(s1-W));
+    double L2 = sqrt(s2*(s2-u)*(s2-v)*(s2-W));
+    double L3 = sqrt(s3*(s3-u)*(s3-V)*(s3-w));
+    double L4 = sqrt(s4*(s4-U)*(s4-v)*(s4-w));
+
+    double R = (Volume*3)/(L1+L2+L3+L4);
+
+    return (4.89897948557) * R / maxLen;
+}
+
+void Mesh::pushTriangle(
+        std::vector<glm::dvec3>& vertices,
+        std::vector<glm::dvec3>& normals,
+        std::vector<glm::dvec3>& triEdges,
+        std::vector<double>& tetQualities,
+        const glm::dvec3& A,
+        const glm::dvec3& B,
+        const glm::dvec3& C,
+        const glm::dvec3& n,
+        double quality)
+{
+    const glm::dvec3 X_EDGE(1, 1, 0);
+    const glm::dvec3 Y_EDGE(0, 1, 1);
+    const glm::dvec3 Z_EDGE(1, 0, 1);
+
+    vertices.push_back(A);
+    normals.push_back(n);
+    triEdges.push_back(X_EDGE);
+    tetQualities.push_back(quality);
+
+    vertices.push_back(B);
+    normals.push_back(n);
+    triEdges.push_back(Y_EDGE);
+    tetQualities.push_back(quality);
+
+    vertices.push_back(C);
+    normals.push_back(n);
+    triEdges.push_back(Z_EDGE);
+    tetQualities.push_back(quality);
 }
 
 void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
@@ -71,9 +230,15 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
 
     for(int i=idStart; i<idEnd; ++i)
     {
-        vert[i] = Vertex(vertices[i-idStart]);
+        const glm::dvec3& pos = vertices[i-idStart];
+        cMin = glm::min(cMin, pos);
+        cMax = glm::max(cMax, pos);
+        vert[i] = Vertex(pos);
     }
 
+    glm::dvec3 dim = cMax- cMin;
+    cMin -= dim / 1000000.0;
+    cMax += dim / 1000000.0;
 
     std::cout << "Initializing grid" << endl;
     initializeGrid(idStart, idEnd);
@@ -130,12 +295,12 @@ void Mesh::initializeGrid(int idStart, int idEnd)
     }
 
     // Bin the vertices
-    glm::dvec3 boxSize = (cMax - cMin);
+    cDim = (cMax - cMin);
     glm::dvec3 floatSize = glm::dvec3(gridSize);
     for(int vId=idStart; vId<idEnd; ++vId)
     {
         const glm::dvec3& v = vert[vId].p;
-        glm::ivec3 bin = glm::ivec3((v - cMin) / (boxSize) * floatSize);
+        glm::ivec3 bin = glm::ivec3((v - cMin) / (cDim) * floatSize);
         grid[bin.z][bin.y][bin.x].vertId.push_back(vId);
     }
 
@@ -157,7 +322,7 @@ void Mesh::initializeGrid(int idStart, int idEnd)
             for(int i=0; i<gridSize.x; ++i)
             {
                 glm::dvec3 floatBin = glm::dvec3(i+1, j+1, k+1) / floatSize;
-                glm::dvec3 cellCorner = floatBin * boxSize + cMin;
+                glm::dvec3 cellCorner = floatBin * cDim + cMin;
 
                 std::sort(grid[k][j][i].vertId.begin(),
                           grid[k][j][i].vertId.end(),
@@ -197,29 +362,31 @@ void Mesh::pullupTetrahedrons(const glm::ivec3& cId)
         std::unordered_set<Tetrahedron*>& floorTets = floor.tetra;
         auto tetIt = floorTets.begin();
 
+        double zThreshold = (cId.z / (double) gridSize.z) * cDim.z + cMin.z;
+
         while(tetIt != floorTets.end())
         {
             Tetrahedron* tet = *tetIt;
 
-            if(tet->v[0] < 4)
+            if(vert[tet->v[0]].p.z > zThreshold)
             {
                 tet->cId = cId;
                 cellTets.insert(tet);
                 tetIt = floorTets.erase(tetIt);
             }
-            else if(tet->v[1] < 4)
+            else if(vert[tet->v[1]].p.z > zThreshold)
             {
                 tet->cId = cId;
                 cellTets.insert(tet);
                 tetIt = floorTets.erase(tetIt);
             }
-            else if(tet->v[2] < 4)
+            else if(vert[tet->v[2]].p.z > zThreshold)
             {
                 tet->cId = cId;
                 cellTets.insert(tet);
                 tetIt = floorTets.erase(tetIt);
             }
-            else if(tet->v[3] < 4)
+            else if(vert[tet->v[3]].p.z > zThreshold)
             {
                 tet->cId = cId;
                 cellTets.insert(tet);
