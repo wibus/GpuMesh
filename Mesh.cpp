@@ -212,9 +212,6 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
 
     std::cout << "Collecting tetrahedrons" << endl;
     tearDownGrid();
-
-    std::cout << "Computing adjacency lists" << endl;
-    compileAdjacencyLists();
 }
 
 void Mesh::initializeGrid(int idStart, int idEnd)
@@ -529,13 +526,16 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
                     triVert.flag = true;
                     _ballTouched.push_back(&triVert);
 
-                    for(auto neighbor : triVert.tetra)
+                    TetListNode* node = triVert.tetList;
+                    while(node != nullptr)
                     {
+                        Tetrahedron* neighbor = node->tet;
                         if(!neighbor->flag)
                         {
                             neighbor->flag = true;
                             _ballQueue.push_back(neighbor);
                         }
+                        node = node->next;
                     }
                 }
             }
@@ -580,10 +580,10 @@ void Mesh::insertTetrahedronGrid(
 
     // Literally insert in the grid and mesh
     grid[cId.z][cId.y][cId.x].tetra.insert(tet);
-    vert[tet->v[0]].tetra.insert(tet);
-    vert[tet->v[1]].tetra.insert(tet);
-    vert[tet->v[2]].tetra.insert(tet);
-    vert[tet->v[3]].tetra.insert(tet);
+    vert[tet->v[0]].addTet(tet);
+    vert[tet->v[1]].addTet(tet);
+    vert[tet->v[2]].addTet(tet);
+    vert[tet->v[3]].addTet(tet);
 
     // Set owner cell
     tet->cId = cId;
@@ -627,10 +627,10 @@ void Mesh::insertTetrahedronGrid(
 void Mesh::removeTetrahedronGrid(Tetrahedron* tet)
 {
     grid[tet->cId.z][tet->cId.y][tet->cId.x].tetra.erase(tet);
-    vert[tet->v[0]].tetra.erase(tet);
-    vert[tet->v[1]].tetra.erase(tet);
-    vert[tet->v[2]].tetra.erase(tet);
-    vert[tet->v[3]].tetra.erase(tet);
+    vert[tet->v[0]].delTet(tet);
+    vert[tet->v[1]].delTet(tet);
+    vert[tet->v[2]].delTet(tet);
+    vert[tet->v[3]].delTet(tet);
     delete tet;
 }
 
@@ -654,10 +654,10 @@ void Mesh::tearDownGrid()
     grid.clear();
 
 
-    // Reset vertices adjacency lists
+    // Reset vertices' tetrahedron lists
     for(auto& v : vert)
     {
-        v.tetra.clear();
+        v.clrTet();
     }
 
     // Reset cached data structures

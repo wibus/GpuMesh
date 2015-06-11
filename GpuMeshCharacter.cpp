@@ -43,7 +43,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(glm::pi<float>() / 6.0),
     _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
     _lightDistance(1.0),
-    _internalVertices(1000),
+    _internalVertices(10000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -90,7 +90,6 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
         if(keyboard->isAsciiPressed('s'))
         {
             _processFinished = false;
-            _stepId = 2;
         }
     }
 
@@ -217,11 +216,16 @@ void GpuMeshCharacter::processCpuPipeline()
         break;
 
     case 2:
+        printStep(_stepId, "Computing adjacency lists");
+        computeAdjacencyCpu();
+        ++_stepId;
+        break;
+
+    case 3:
         printStep(_stepId, "Smoothing of the internal domain");
         smoothMeshCpu();
 
         _processFinished = true;
-        ++_stepId;
         break;
 
     default:
@@ -264,26 +268,38 @@ void GpuMeshCharacter::triangulateDomainCpu()
     std::vector<glm::dvec3> vertices;
 
 
-    /* Box distribution
+    //* Box distribution
     vertices.resize(_internalVertices);
 
     for(int iv=0; iv<_internalVertices; ++iv)
         vertices[iv] = glm::linearRand(cMin, cMax);
 
+    auto startTime = chrono::high_resolution_clock::now();
     _mesh.insertVertices(vertices);
+    auto endTime = chrono::high_resolution_clock::now();
     //*/
 
-    //* Sphere distribution
+    /* Sphere distribution
     vertices.resize(_internalVertices);
 
     for(int iv=0; iv<_internalVertices; ++iv)
         vertices[iv] = glm::ballRand(sphereRadius * 1.41);
 
+    auto startTime = chrono::high_resolution_clock::now();
     _mesh.insertVertices(vertices);
+    auto endTime = chrono::high_resolution_clock::now();
     //*/
 
+    auto dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
+    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
+    exit(0);
 
     updateBuffers();
+}
+
+void GpuMeshCharacter::computeAdjacencyCpu()
+{
+    _mesh.compileAdjacencyLists();
 }
 
 void GpuMeshCharacter::smoothMeshCpu()

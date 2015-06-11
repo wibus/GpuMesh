@@ -12,15 +12,64 @@
 
 struct Tetrahedron;
 
+struct TetListNode
+{
+    Tetrahedron* tet;
+    TetListNode* next;
+};
+
 struct Vertex
 {
     Vertex() {}
     Vertex(const glm::dvec3 pos) :
-        p(pos), flag(false)
+        p(pos),
+        tetList(nullptr),
+        isBoundary(false),
+        flag(false)
     {}
 
+    inline void addTet(Tetrahedron* tet)
+    {
+        TetListNode* node = new TetListNode();
+        node->next = tetList;
+        node->tet = tet;
+        tetList = node;
+    }
+
+    inline void delTet(Tetrahedron* tet)
+    {
+        TetListNode* parent = nullptr;
+        TetListNode* node = tetList;
+        while(node != nullptr)
+        {
+            if(node->tet == tet)
+            {
+                if(parent != nullptr)
+                    parent->next = node->next;
+                else
+                    tetList = node->next;
+                delete node;
+                return;
+            }
+
+            parent = node;
+            node = node->next;
+        }
+    }
+
+    inline void clrTet()
+    {
+        TetListNode* node = tetList;
+        while(node != nullptr)
+        {
+            TetListNode* next = node->next;
+            delete node;
+            node = next;
+        }
+    }
+
     glm::dvec3 p;
-    std::unordered_set<Tetrahedron*> tetra;
+    TetListNode* tetList;
     bool isBoundary;
     bool flag;
 };
@@ -181,6 +230,8 @@ public:
             const std::vector<glm::dvec3>& boundingVertices,
             const std::vector<Tetrahedron>& boundingTetrahedras);
 
+    void compileAdjacencyLists();
+
     void compileFacesAttributes(
             std::vector<glm::dvec3>& vertices,
             std::vector<glm::dvec3>& normals,
@@ -227,7 +278,6 @@ private:
     void insertTetrahedronGrid(const glm::ivec3& cId, int v0, int v1, int v2, int v3);
     void removeTetrahedronGrid(Tetrahedron* tet);
     void tearDownGrid();
-    void compileAdjacencyLists();
 
     // Bounding polyhedron dimensions
     glm::dvec3 cMin;
@@ -240,8 +290,8 @@ private:
 
     // Algorithms's main structure (keep allocated memory)
     std::vector<std::pair<glm::ivec3, EDir>> _baseQueue;
-    std::vector<Tetrahedron*> _ballQueue;
     std::vector<Tetrahedron*> _ballPreserved;
+    std::vector<Tetrahedron*> _ballQueue;
     std::vector<Vertex*> _ballTouched;
 };
 

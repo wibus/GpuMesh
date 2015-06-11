@@ -27,6 +27,7 @@ protected:
     virtual void processCpuPipeline();
     virtual void genBoundaryMeshesCpu();
     virtual void triangulateDomainCpu();
+    virtual void computeAdjacencyCpu();
     virtual void smoothMeshCpu();
 
     // GPU pipeline
