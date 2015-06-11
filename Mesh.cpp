@@ -577,50 +577,99 @@ bool Mesh::isBase(int vId, Tetrahedron* tet)
 
 void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Triangle>& ball)
 {
-    ++_currentVisitTime;
-    _ballQueue.clear();
-
-    _ballQueue.push_back(base);
-    base->visitTime = _currentVisitTime;
     glm::dvec3 v = vert[vId].p;
+    Vertex& v0 = vert[base->v[0]];
+    Vertex& v1 = vert[base->v[1]];
+    Vertex& v2 = vert[base->v[2]];
+    Vertex& v3 = vert[base->v[3]];
+
+    _ballQueue.clear();
+    _ballQueue.push_back(&v0);
+    _ballQueue.push_back(&v1);
+    _ballQueue.push_back(&v2);
+    _ballQueue.push_back(&v3);
+
+    ++_currentVisitTime;
+    v0.visitTime = _currentVisitTime;
+    v1.visitTime = _currentVisitTime;
+    v2.visitTime = _currentVisitTime;
+    v3.visitTime = _currentVisitTime;
+    base->visitTime = _currentVisitTime;
+
+    ball.insert(base->t0());
+    ball.insert(base->t1());
+    ball.insert(base->t2());
+    ball.insert(base->t3());
+    removeTetrahedronGrid(base);
+
 
     for(int qId = 0; qId < _ballQueue.size(); ++qId)
     {
-        Tetrahedron* tet = _ballQueue[qId];
+        Vertex* vertex = _ballQueue[qId];
 
-        glm::dvec3 dist = v - tet->circumCenter;
-        if(glm::dot(dist, dist) < tet->circumRadius2)
+        TetListNode* node = vertex->tetList.head;
+        while(node != nullptr)
         {
-            Triangle tri[] {tet->t0(), tet->t1(), tet->t2(), tet->t3()};
+            Tetrahedron* tet = node->tet;
+            node = node->next;
 
-            for(int i=0; i<4; ++i)
+            if(tet->visitTime < _currentVisitTime)
             {
-                auto it = ball.insert(tri[i]);
-                if(!it.second)
-                {
-                    ball.erase(it.first);
-                }
+                tet->visitTime = _currentVisitTime;
 
-                Vertex& triVert = vert[tet->v[i]];
-                if(triVert.visitTime < _currentVisitTime)
+                glm::dvec3 dist = v - tet->circumCenter;
+                if(glm::dot(dist, dist) < tet->circumRadius2)
                 {
-                    triVert.visitTime = _currentVisitTime;
+                    decltype(ball.insert(base->t0())) it;
 
-                    TetListNode* node = triVert.tetList.head;
-                    while(node != nullptr)
+                    it = ball.insert(tet->t0());
+                    if(!it.second)
+                        ball.erase(it.first);
+
+                    it = ball.insert(tet->t1());
+                    if(!it.second)
+                        ball.erase(it.first);
+
+                    it = ball.insert(tet->t2());
+                    if(!it.second)
+                        ball.erase(it.first);
+
+                    it = ball.insert(tet->t3());
+                    if(!it.second)
+                        ball.erase(it.first);
+
+
+                    Vertex* tv0 = &vert[tet->v[0]];
+                    if(tv0->visitTime < _currentVisitTime)
                     {
-                        Tetrahedron* neighbor = node->tet;
-                        if(neighbor->visitTime < _currentVisitTime)
-                        {
-                            neighbor->visitTime = _currentVisitTime;
-                            _ballQueue.push_back(neighbor);
-                        }
-                        node = node->next;
+                        tv0->visitTime = _currentVisitTime;
+                        _ballQueue.push_back(tv0);
                     }
+
+                    Vertex* tv1 = &vert[tet->v[1]];
+                    if(tv1->visitTime < _currentVisitTime)
+                    {
+                        tv1->visitTime = _currentVisitTime;
+                        _ballQueue.push_back(tv1);
+                    }
+
+                    Vertex* tv2 = &vert[tet->v[2]];
+                    if(tv2->visitTime < _currentVisitTime)
+                    {
+                        tv2->visitTime = _currentVisitTime;
+                        _ballQueue.push_back(tv2);
+                    }
+
+                    Vertex* tv3 = &vert[tet->v[3]];
+                    if(tv3->visitTime < _currentVisitTime)
+                    {
+                        tv3->visitTime = _currentVisitTime;
+                        _ballQueue.push_back(tv3);
+                    }
+
+                    removeTetrahedronGrid(tet);
                 }
             }
-
-            removeTetrahedronGrid(tet);
         }
     }
 }

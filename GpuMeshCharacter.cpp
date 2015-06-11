@@ -43,7 +43,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(glm::pi<float>() / 6.0),
     _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
     _lightDistance(1.0),
-    _internalVertices(100000),
+    _internalVertices(2500000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)

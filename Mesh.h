@@ -331,7 +331,7 @@ private:
 
     // Algorithms's main structure (keep allocated memory)
     std::vector<std::pair<glm::ivec3, EDir>> _baseQueue;
-    std::vector<Tetrahedron*> _ballQueue;
+    std::vector<Vertex*> _ballQueue;
     int _currentVisitTime;
 };
 
