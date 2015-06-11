@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>shaders/Boundary.frag</file>
         <file>shaders/Boundary.vert</file>
+        <file>shaders/Shadow.frag</file>
+        <file>shaders/Shadow.vert</file>
     </qresource>
 </RCC>

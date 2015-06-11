@@ -25,8 +25,7 @@ void Mesh::initialize(
     }
 }
 
-void Mesh::compileFacesAttributes(
-        std::vector<glm::dvec3>& vertices,
+void Mesh::compileFacesAttributes(std::vector<glm::dvec3>& vertices,
         std::vector<glm::dvec3>& normals,
         std::vector<glm::dvec3>& triEdges,
         std::vector<double>& tetQualities)
@@ -61,11 +60,6 @@ void Mesh::compileFacesAttributes(
 
         double quality = tetrahedronQuality(tet);
 
-        qualityMean = (qualityMean * qualityCount + quality) / (qualityCount + 1);
-        double qualityMeanDist = qualityMean - quality;
-        qualityVar = (qualityVar * qualityCount + qualityMeanDist*qualityMeanDist) / (qualityCount + 1);
-        ++qualityCount;
-
         pushTriangle(vertices, normals, triEdges, tetQualities,
                      verts[0], verts[1], verts[2], norms[0], quality);
         pushTriangle(vertices, normals, triEdges, tetQualities,
@@ -74,62 +68,16 @@ void Mesh::compileFacesAttributes(
                      verts[0], verts[3], verts[1], norms[2], quality);
         pushTriangle(vertices, normals, triEdges, tetQualities,
                      verts[1], verts[3], verts[2], norms[3], quality);
-    }
-}
 
 
-void Mesh::compileAdjacencyLists(
-        std::vector<std::vector<int>>& neighbors)
-{
-    neighbors.clear();
-    neighbors.resize(vertCount());
-
-    for(auto& v : vert)
-    {
-        v.isBoundary = false;
-    }
-
-    for(const auto& tet : tetra)
-    {
-        if(isExternalTetraHedron(tet))
-        {
-            vert[tet->v[0]].isBoundary = true;
-            vert[tet->v[1]].isBoundary = true;
-            vert[tet->v[2]].isBoundary = true;
-            vert[tet->v[3]].isBoundary = true;
-            continue;
-        }
-
-        int verts[][2] = {
-            {tet->v[0], tet->v[1]},
-            {tet->v[0], tet->v[2]},
-            {tet->v[0], tet->v[3]},
-            {tet->v[1], tet->v[2]},
-            {tet->v[1], tet->v[3]},
-            {tet->v[2], tet->v[3]},
-        };
-
-        for(int e=0; e<6; ++e)
-        {
-            bool isPresent = false;
-            int firstVert = verts[e][0];
-            int secondVert = verts[e][1];
-            int neighborCount = neighbors[firstVert].size();
-            for(int n=0; n < neighborCount; ++n)
-            {
-                if(secondVert == neighbors[firstVert][n])
-                {
-                    isPresent = true;
-                    break;
-                }
-            }
-
-            if(!isPresent)
-            {
-                neighbors[firstVert].push_back(secondVert);
-                neighbors[secondVert].push_back(firstVert);
-            }
-        }
+        // Quality statistics
+        qualityMean = (qualityMean * qualityCount + quality) /
+                      (qualityCount + 1);
+        double qualityMeanDist = qualityMean - quality;
+        double qualityMeanDist2 = qualityMeanDist*qualityMeanDist;
+        qualityVar = (qualityVar * qualityCount + qualityMeanDist2) /
+                     (qualityCount + 1);
+        ++qualityCount;
     }
 }
 
@@ -264,6 +212,9 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
 
     std::cout << "Collecting tetrahedrons" << endl;
     tearDownGrid();
+
+    std::cout << "Computing adjacency lists" << endl;
+    compileAdjacencyLists();
 }
 
 void Mesh::initializeGrid(int idStart, int idEnd)
@@ -714,4 +665,58 @@ void Mesh::tearDownGrid()
     _ballQueue.clear();
     _ballPreserved.clear();
     _ballTouched.clear();
+}
+
+void Mesh::compileAdjacencyLists()
+{
+    neighbors.clear();
+    neighbors.resize(vertCount());
+
+    for(auto& v : vert)
+    {
+        v.isBoundary = false;
+    }
+
+    for(const auto& tet : tetra)
+    {
+        if(isExternalTetraHedron(tet))
+        {
+            vert[tet->v[0]].isBoundary = true;
+            vert[tet->v[1]].isBoundary = true;
+            vert[tet->v[2]].isBoundary = true;
+            vert[tet->v[3]].isBoundary = true;
+            continue;
+        }
+
+        int verts[][2] = {
+            {tet->v[0], tet->v[1]},
+            {tet->v[0], tet->v[2]},
+            {tet->v[0], tet->v[3]},
+            {tet->v[1], tet->v[2]},
+            {tet->v[1], tet->v[3]},
+            {tet->v[2], tet->v[3]},
+        };
+
+        for(int e=0; e<6; ++e)
+        {
+            bool isPresent = false;
+            int firstVert = verts[e][0];
+            int secondVert = verts[e][1];
+            int neighborCount = neighbors[firstVert].size();
+            for(int n=0; n < neighborCount; ++n)
+            {
+                if(secondVert == neighbors[firstVert][n])
+                {
+                    isPresent = true;
+                    break;
+                }
+            }
+
+            if(!isPresent)
+            {
+                neighbors[firstVert].push_back(secondVert);
+                neighbors[secondVert].push_back(firstVert);
+            }
+        }
+    }
 }

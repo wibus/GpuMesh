@@ -35,8 +35,9 @@ protected:
 
 
     virtual void printStep(int step, const std::string& stepName);
-    virtual void moveCamera(double azimuth, double altitude, double distance);
-    virtual void moveCutPlane(double azimuth, double altitude, double distance);
+    virtual void moveCamera(float azimuth, float altitude, float distance);
+    virtual void moveCutPlane(float azimuth, float altitude, float distance);
+    virtual void moveLight(float azimuth, float altitude, float distance);
     virtual void setupShaders();
     virtual void updateBuffers();
 
@@ -49,16 +50,27 @@ protected:
     GLuint _ebo;
     GLuint _qbo;
 
-    double _camAzimuth;
-    double _camAltitude;
-    double _camDistance;
+    bool _updateShadow;
+    glm::ivec2 _shadowSize;
+    cellar::GlProgram _shadowShader;
+    GLuint _shadowFbo;
+    GLuint _shadowDpt;
+    GLuint _shadowTex;
 
-    double _cutAzimuth;
-    double _cutAltitude;
-    double _cutDistance;
+    glm::mat4 _camProj;
+    float _camAzimuth;
+    float _camAltitude;
+    float _camDistance;
 
-    glm::dmat4 _projection;
-    glm::dmat4 _viewMatrix;
+    float _cutAzimuth;
+    float _cutAltitude;
+    float _cutDistance;
+
+    glm::mat4 _lightProj;
+    float _lightAzimuth;
+    float _lightAltitude;
+    float _lightDistance;
+
 
     Mesh _mesh;
     int _internalVertices;

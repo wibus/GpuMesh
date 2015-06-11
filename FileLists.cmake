@@ -21,7 +21,9 @@ SET(GpuMesh_SOURCES
 # Shaders
 SET(GpuMesh_SHADERS
     ${GpuMesh_SRC_DIR}/resources/shaders/Boundary.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/Boundary.frag)
+    ${GpuMesh_SRC_DIR}/resources/shaders/Boundary.frag
+    ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.vert
+    ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.frag)
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES

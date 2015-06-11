@@ -187,13 +187,13 @@ public:
             std::vector<glm::dvec3>& triEdges,
             std::vector<double>& tetQualities);
 
-    void compileAdjacencyLists(std::vector<std::vector<int> >& neighbors);
-
     void insertVertices(const std::vector<glm::dvec3>& vertices);
 
     int externalVertCount;
     std::vector<Vertex> vert;
     std::list<Tetrahedron*> tetra;
+    std::vector<std::vector<int>> neighbors;
+
 
     int qualityCount;
     double qualityMean;
@@ -214,6 +214,8 @@ private:
             const glm::dvec3& n,
             double quality);
 
+
+
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
     void pullupTetrahedrons(const glm::ivec3& cId);
@@ -225,15 +227,18 @@ private:
     void insertTetrahedronGrid(const glm::ivec3& cId, int v0, int v1, int v2, int v3);
     void removeTetrahedronGrid(Tetrahedron* tet);
     void tearDownGrid();
+    void compileAdjacencyLists();
 
-
+    // Bounding polyhedron dimensions
     glm::dvec3 cMin;
     glm::dvec3 cMax;
     glm::dvec3 cDim;
 
+    // Computing grid
     glm::ivec3 gridSize;
     std::vector<std::vector<std::vector<GridCell>>> grid;
 
+    // Algorithms's main structure (keep allocated memory)
     std::vector<std::pair<glm::ivec3, EDir>> _baseQueue;
     std::vector<Tetrahedron*> _ballQueue;
     std::vector<Tetrahedron*> _ballPreserved;
