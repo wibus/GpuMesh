@@ -16,30 +16,35 @@ struct TetListNode
 {
     Tetrahedron* tet;
     TetListNode* next;
+
+    TetListNode() :
+        tet(nullptr),
+        next(nullptr)
+    {
+    }
 };
 
-struct Vertex
+struct TetList
 {
-    Vertex() {}
-    Vertex(const glm::dvec3 pos) :
-        p(pos),
-        tetList(nullptr),
-        isBoundary(false),
-        flag(false)
-    {}
+    TetListNode* head;
+
+    TetList() :
+        head(nullptr)
+    {
+    }
 
     inline void addTet(Tetrahedron* tet)
     {
         TetListNode* node = new TetListNode();
-        node->next = tetList;
+        node->next = head;
         node->tet = tet;
-        tetList = node;
+        head = node;
     }
 
     inline void delTet(Tetrahedron* tet)
     {
+        TetListNode* node = head;
         TetListNode* parent = nullptr;
-        TetListNode* node = tetList;
         while(node != nullptr)
         {
             if(node->tet == tet)
@@ -47,7 +52,7 @@ struct Vertex
                 if(parent != nullptr)
                     parent->next = node->next;
                 else
-                    tetList = node->next;
+                    head = node->next;
                 delete node;
                 return;
             }
@@ -59,19 +64,31 @@ struct Vertex
 
     inline void clrTet()
     {
-        TetListNode* node = tetList;
+        TetListNode* node = head;
         while(node != nullptr)
         {
             TetListNode* next = node->next;
             delete node;
             node = next;
         }
+        head = nullptr;
     }
+};
+
+struct Vertex
+{
+    Vertex() {}
+    Vertex(const glm::dvec3 pos) :
+        p(pos),
+        isBoundary(false)
+    {}
 
     glm::dvec3 p;
-    TetListNode* tetList;
+    TetList tetList;
     bool isBoundary;
-    bool flag;
+
+    // Algo flag
+    int visitTime;
 };
 
 struct Triangle
@@ -192,25 +209,48 @@ struct Tetrahedron
     int v[4];
 
     // Algo flag
-    bool flag;
+    int visitTime;
 
     // Data cache
     double circumRadius2;
     glm::dvec3 circumCenter;
-    glm::ivec3 cId;
 };
 
 struct GridCell
 {
-    std::vector<int> vertId;
-    std::unordered_set<Tetrahedron*> tetra;
+    std::vector<int> insertedVertId;
+    std::vector<int> waitingVertId;
 };
 
-enum class EDir {BACK,  BACK_RIGHT,
-                 RIGHT, FRONT_RIGHT,
-                 FRONT, FRONT_LEFT,
-                 LEFT,  BACK_LEFT,
-                 STATIC};
+enum EDir {
+    STATIC,
+    BACK,       BACK_RIGHT,
+    RIGHT,      FRONT_RIGHT,
+    FRONT,      FRONT_LEFT,
+    LEFT,       BACK_LEFT,
+
+    DOWN,
+    BACK_DOWN,  BACK_RIGHT_DOWN,
+    RIGHT_DOWN, FRONT_RIGHT_DOWN,
+    FRONT_DOWN, FRONT_LEFT_DOWN,
+    LEFT_DOWN,  BACK_LEFT_DOWN,
+
+    DIR_COUNT
+};
+
+const glm::ivec3 DIR[DIR_COUNT] = {
+    glm::ivec3( 0,  0,  0),
+    glm::ivec3(-1,  0,  0), glm::ivec3(-1, -1,  0),
+    glm::ivec3( 0, -1,  0), glm::ivec3( 1, -1,  0),
+    glm::ivec3( 1,  0,  0), glm::ivec3( 1,  1,  0),
+    glm::ivec3( 0,  1,  0), glm::ivec3(-1,  1,  0),
+
+    glm::ivec3( 0,  0, -1),
+    glm::ivec3(-1,  0, -1), glm::ivec3(-1, -1, -1),
+    glm::ivec3( 0, -1, -1), glm::ivec3( 1, -1, -1),
+    glm::ivec3( 1,  0, -1), glm::ivec3( 1,  1, -1),
+    glm::ivec3( 0,  1, -1), glm::ivec3(-1,  1, -1)
+};
 
 class Mesh
 {
@@ -269,20 +309,21 @@ private:
 
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
-    void pullupTetrahedrons(const glm::ivec3& cId);
     void insertVertexGrid(const glm::ivec3& cId, int vId);
     Tetrahedron* findBaseTetrahedron(const glm::ivec3& cId, int vId);
     bool isBase(int vId, Tetrahedron* tet);
     void findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Triangle>& ball);
     void remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unordered_set<Triangle>& ball);
-    void insertTetrahedronGrid(const glm::ivec3& cId, int v0, int v1, int v2, int v3);
+    void insertTetrahedronGrid(int v0, int v1, int v2, int v3);
     void removeTetrahedronGrid(Tetrahedron* tet);
     void tearDownGrid();
 
     // Bounding polyhedron dimensions
     glm::dvec3 cMin;
     glm::dvec3 cMax;
-    glm::dvec3 cDim;
+    glm::dvec3 cExtMin;
+    glm::dvec3 cExtMax;
+    glm::dvec3 cExtDim;
 
     // Computing grid
     glm::ivec3 gridSize;
@@ -290,9 +331,8 @@ private:
 
     // Algorithms's main structure (keep allocated memory)
     std::vector<std::pair<glm::ivec3, EDir>> _baseQueue;
-    std::vector<Tetrahedron*> _ballPreserved;
     std::vector<Tetrahedron*> _ballQueue;
-    std::vector<Vertex*> _ballTouched;
+    int _currentVisitTime;
 };
 
 

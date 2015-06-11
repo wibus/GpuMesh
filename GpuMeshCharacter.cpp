@@ -43,7 +43,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(glm::pi<float>() / 6.0),
     _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
     _lightDistance(1.0),
-    _internalVertices(10000),
+    _internalVertices(100000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -262,6 +262,9 @@ void GpuMeshCharacter::genBoundaryMeshesCpu()
 
 void GpuMeshCharacter::triangulateDomainCpu()
 {
+    chrono::high_resolution_clock::time_point startTime, endTime;
+    chrono::microseconds dt;
+
     double sphereRadius = 1.0;
     glm::dvec3 cMin(-sphereRadius);
     glm::dvec3 cMax( sphereRadius);
@@ -274,25 +277,29 @@ void GpuMeshCharacter::triangulateDomainCpu()
     for(int iv=0; iv<_internalVertices; ++iv)
         vertices[iv] = glm::linearRand(cMin, cMax);
 
-    auto startTime = chrono::high_resolution_clock::now();
+    startTime = chrono::high_resolution_clock::now();
     _mesh.insertVertices(vertices);
-    auto endTime = chrono::high_resolution_clock::now();
+    endTime = chrono::high_resolution_clock::now();
+
+    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
+    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
     //*/
 
-    /* Sphere distribution
+    exit(0);
+
+    //* Sphere distribution
     vertices.resize(_internalVertices);
 
     for(int iv=0; iv<_internalVertices; ++iv)
         vertices[iv] = glm::ballRand(sphereRadius * 1.41);
 
-    auto startTime = chrono::high_resolution_clock::now();
+    startTime = chrono::high_resolution_clock::now();
     _mesh.insertVertices(vertices);
-    auto endTime = chrono::high_resolution_clock::now();
-    //*/
+    endTime = chrono::high_resolution_clock::now();
 
-    auto dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
+    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
     cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
-    exit(0);
+    //*/
 
     updateBuffers();
 }

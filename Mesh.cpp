@@ -184,9 +184,10 @@ void Mesh::insertVertices(const std::vector<glm::dvec3>& vertices)
         vert[i] = Vertex(pos);
     }
 
-    glm::dvec3 dim = cMax- cMin;
-    cMin -= dim / 1000000.0;
-    cMax += dim / 1000000.0;
+    glm::dvec3 dim = cMax - cMin;
+    cExtMin = cMin - dim / 1000000.0;
+    cExtMax = cMax + dim / 1000000.0;
+    cExtDim = (cExtMax - cExtMin);
 
     std::cout << "Initializing grid" << endl;
     initializeGrid(idStart, idEnd);
@@ -230,6 +231,9 @@ void Mesh::initializeGrid(int idStart, int idEnd)
     std::cout << "Cell density: vert count/cell count = " <<
                  (idEnd-idStart) / (double) cellCount << endl;
 
+    // Reset visit time
+    _currentVisitTime = 0;
+
 
     // Construct grid
     grid.resize(gridSize.z);
@@ -243,21 +247,31 @@ void Mesh::initializeGrid(int idStart, int idEnd)
     }
 
     // Bin the vertices
-    cDim = (cMax - cMin);
     glm::dvec3 floatSize = glm::dvec3(gridSize);
+    for(int vId=0; vId<idStart; ++vId)
+    {
+        vert[vId].visitTime = _currentVisitTime;
+        const glm::dvec3& v = glm::clamp(vert[vId].p, cMin, cMax);
+        glm::ivec3 bin = glm::ivec3((v - cExtMin) / (cExtDim) * floatSize);
+        grid[bin.z][bin.y][bin.x].insertedVertId.push_back(vId);
+    }
     for(int vId=idStart; vId<idEnd; ++vId)
     {
+        vert[vId].visitTime = _currentVisitTime;
         const glm::dvec3& v = vert[vId].p;
-        glm::ivec3 bin = glm::ivec3((v - cMin) / (cDim) * floatSize);
-        grid[bin.z][bin.y][bin.x].vertId.push_back(vId);
+        glm::ivec3 bin = glm::ivec3((v - cExtMin) / (cExtDim) * floatSize);
+        grid[bin.z][bin.y][bin.x].waitingVertId.push_back(vId);
     }
 
     // Put starting tetrahedrons in the first cell
-    const glm::ivec3 FIRST_CELL(0, 0, 0);
     for(auto tet : tetra)
     {
-        insertTetrahedronGrid(FIRST_CELL,
-            tet->v[0], tet->v[1], tet->v[2], tet->v[3]);
+        insertTetrahedronGrid(
+            tet->v[0],
+            tet->v[1],
+            tet->v[2],
+            tet->v[3]);
+
         delete tet;
     }
     tetra.clear();
@@ -270,10 +284,10 @@ void Mesh::initializeGrid(int idStart, int idEnd)
             for(int i=0; i<gridSize.x; ++i)
             {
                 glm::dvec3 floatBin = glm::dvec3(i+1, j+1, k+1) / floatSize;
-                glm::dvec3 cellCorner = floatBin * cDim + cMin;
+                glm::dvec3 cellCorner = floatBin * cExtDim + cMin;
 
-                std::sort(grid[k][j][i].vertId.begin(),
-                          grid[k][j][i].vertId.end(),
+                std::sort(grid[k][j][i].waitingVertId.begin(),
+                          grid[k][j][i].waitingVertId.end(),
                           [this, &cellCorner](int a, int b) {
                     glm::dvec3 distA = cellCorner - vert[a].p;
                     glm::dvec3 distB = cellCorner - vert[b].p;
@@ -288,64 +302,21 @@ void Mesh::initializeGrid(int idStart, int idEnd)
 
 void Mesh::insertCell(const glm::ivec3& cId)
 {
-    pullupTetrahedrons(cId);
-
     GridCell& cell = grid[cId.z][cId.y][cId.x];
-    int vertCount = cell.vertId.size();
+    std::vector<int>& waitingVertId = cell.waitingVertId;
+    std::vector<int>& insertedVertId = cell.insertedVertId;
+    insertedVertId.reserve(insertedVertId.size() + waitingVertId.size());
+
+    int vertCount = waitingVertId.size();
     for(int vId=0; vId<vertCount; ++vId)
     {
-        insertVertexGrid(cId, cell.vertId[vId]);
+        insertVertexGrid(cId, waitingVertId[vId]);
+        insertedVertId.push_back(waitingVertId[vId]);
     }
-}
 
-void Mesh::pullupTetrahedrons(const glm::ivec3& cId)
-{
-    GridCell& cell = grid[cId.z][cId.y][cId.x];
-
-    if(cId.z > 0)
-    {
-        std::unordered_set<Tetrahedron*>& cellTets = cell.tetra;
-
-        GridCell& floor = grid[cId.z-1][cId.y][cId.x];
-        std::unordered_set<Tetrahedron*>& floorTets = floor.tetra;
-        auto tetIt = floorTets.begin();
-
-        double zThreshold = (cId.z / (double) gridSize.z) * cDim.z + cMin.z;
-
-        while(tetIt != floorTets.end())
-        {
-            Tetrahedron* tet = *tetIt;
-
-            if(vert[tet->v[0]].p.z > zThreshold)
-            {
-                tet->cId = cId;
-                cellTets.insert(tet);
-                tetIt = floorTets.erase(tetIt);
-            }
-            else if(vert[tet->v[1]].p.z > zThreshold)
-            {
-                tet->cId = cId;
-                cellTets.insert(tet);
-                tetIt = floorTets.erase(tetIt);
-            }
-            else if(vert[tet->v[2]].p.z > zThreshold)
-            {
-                tet->cId = cId;
-                cellTets.insert(tet);
-                tetIt = floorTets.erase(tetIt);
-            }
-            else if(vert[tet->v[3]].p.z > zThreshold)
-            {
-                tet->cId = cId;
-                cellTets.insert(tet);
-                tetIt = floorTets.erase(tetIt);
-            }
-            else
-            {
-                ++tetIt;
-            }
-        }
-    }
+    // Freeing space
+    waitingVertId.clear();
+    waitingVertId.shrink_to_fit();
 }
 
 void Mesh::insertVertexGrid(const glm::ivec3& cId, int vId)
@@ -356,102 +327,215 @@ void Mesh::insertVertexGrid(const glm::ivec3& cId, int vId)
     remeshDelaunayBall(cId, vId, ball);
 }
 
-
 Tetrahedron* Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
 {
-    const glm::ivec3 BACK(-1, 0, 0);
-    const glm::ivec3 BACK_RIGHT(-1, -1, 0);
-    const glm::ivec3 RIGHT(0, -1, 0);
-    const glm::ivec3 FRONT_RIGHT(1, -1, 0);
-
-    const glm::ivec3 FRONT(1, 0, 0);
-    const glm::ivec3 FRONT_LEFT(1, 1, 0);
-    const glm::ivec3 LEFT(0, 1, 0);
-    const glm::ivec3 BACK_LEFT(-1, 1, 0);
-
-    const glm::ivec3 FRONT_DOWN(1, 0, -1);
-    const glm::ivec3 FRONT_LEFT_DOWN(1, 1, -1);
-    const glm::ivec3 LEFT_DOWN(0, 1, -1);
-    const glm::ivec3 BACK_LEFT_DOWN(-1, 1, -1);
-
+    ++_currentVisitTime;
     _baseQueue.clear();
-    _baseQueue.push_back(make_pair(cId,               EDir::STATIC));
-    _baseQueue.push_back(make_pair(cId + BACK,        EDir::BACK));
-    _baseQueue.push_back(make_pair(cId + BACK_RIGHT,  EDir::BACK_RIGHT));
-    _baseQueue.push_back(make_pair(cId + RIGHT,       EDir::RIGHT));
-    _baseQueue.push_back(make_pair(cId + FRONT_RIGHT, EDir::FRONT_RIGHT));
-    if(cId.z > 0)
-    {
-        _baseQueue.push_back(make_pair(cId + FRONT_DOWN,      EDir::FRONT));
-        _baseQueue.push_back(make_pair(cId + FRONT_LEFT_DOWN, EDir::FRONT_LEFT));
-        _baseQueue.push_back(make_pair(cId + LEFT_DOWN,       EDir::LEFT));
-        _baseQueue.push_back(make_pair(cId + BACK_LEFT_DOWN,  EDir::BACK_LEFT));
-    }
+
+    _baseQueue.push_back(make_pair(cId, STATIC));
 
 
-    int qId = 0;
-    while(qId != _baseQueue.size())
+    for(int qId = 0; qId < _baseQueue.size(); ++qId)
     {
-        const glm::ivec3& c = _baseQueue[qId].first;
+        glm::ivec3& c = _baseQueue[qId].first;
+        const EDir& dir = _baseQueue[qId].second;
+        c += DIR[dir];
 
         if(0 <= c.x && c.x < gridSize.x &&
            0 <= c.y && c.y < gridSize.y)
         {
             GridCell& cell = grid[c.z][c.y][c.x];
-            for(auto tet : cell.tetra)
+            std::vector<int>& insertedVertId = cell.insertedVertId;
+
+            int insertedCount = insertedVertId.size();
+            for(int v=0; v <insertedCount; ++v)
             {
-                if(isBase(vId, tet))
+                Vertex& vertex = vert[insertedVertId[v]];
+                TetListNode* node = vertex.tetList.head;
+                while(node != nullptr)
                 {
-                    return tet;
+                    Tetrahedron* tet = node->tet;
+                    if(tet->visitTime < _currentVisitTime)
+                    {
+                        tet->visitTime = _currentVisitTime;
+                        if(isBase(vId, tet))
+                        {
+                            return tet;
+                        }
+                    }
+
+                    node = node->next;
                 }
             }
 
+
             // Push neighbors
-            switch (_baseQueue[qId].second)
+            switch (dir)
             {
-            case EDir::BACK :
-                _baseQueue.push_back(make_pair(c + BACK, EDir::BACK));
+            case STATIC:
+                if(cId.z != 0)
+                    _baseQueue.push_back(make_pair(cId, DOWN));
+
+                _baseQueue.push_back(make_pair(c, BACK));
+                _baseQueue.push_back(make_pair(c, RIGHT));
+                _baseQueue.push_back(make_pair(c, FRONT));
+                _baseQueue.push_back(make_pair(c, LEFT));
+                _baseQueue.push_back(make_pair(c, BACK_RIGHT));
+                _baseQueue.push_back(make_pair(c, FRONT_RIGHT));
+                _baseQueue.push_back(make_pair(c, FRONT_LEFT));
+                _baseQueue.push_back(make_pair(c, BACK_LEFT));
+
+                if(cId.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, BACK_DOWN));
+                    _baseQueue.push_back(make_pair(c, RIGHT_DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_DOWN));
+                    _baseQueue.push_back(make_pair(c, LEFT_DOWN));
+                    _baseQueue.push_back(make_pair(c, BACK_RIGHT_DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_RIGHT_DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_LEFT_DOWN));
+                    _baseQueue.push_back(make_pair(c, BACK_LEFT_DOWN));
+                }
                 break;
 
-            case EDir::BACK_RIGHT :
-                _baseQueue.push_back(make_pair(c + BACK, EDir::BACK));
-                _baseQueue.push_back(make_pair(c + BACK_RIGHT, EDir::BACK_RIGHT));
-                _baseQueue.push_back(make_pair(c + RIGHT, EDir::RIGHT));
+            case BACK :
+                _baseQueue.push_back(make_pair(c, BACK));
                 break;
 
-            case EDir::RIGHT :
-                _baseQueue.push_back(make_pair(c + RIGHT, EDir::RIGHT));
+            case BACK_RIGHT :
+                _baseQueue.push_back(make_pair(c, BACK));
+                _baseQueue.push_back(make_pair(c, RIGHT));
+                _baseQueue.push_back(make_pair(c, BACK_RIGHT));
                 break;
 
-            case EDir::FRONT_RIGHT :
-                _baseQueue.push_back(make_pair(c + RIGHT, EDir::RIGHT));
-                _baseQueue.push_back(make_pair(c + FRONT_RIGHT, EDir::FRONT_RIGHT));
-                _baseQueue.push_back(make_pair(c + FRONT, EDir::FRONT));
+            case RIGHT :
+                _baseQueue.push_back(make_pair(c, RIGHT));
                 break;
 
-            case EDir::FRONT :
-                _baseQueue.push_back(make_pair(c + FRONT, EDir::FRONT));
+            case FRONT_RIGHT :
+                _baseQueue.push_back(make_pair(c, RIGHT));
+                _baseQueue.push_back(make_pair(c, FRONT));
+                _baseQueue.push_back(make_pair(c, FRONT_RIGHT));
                 break;
 
-            case EDir::FRONT_LEFT :
-                _baseQueue.push_back(make_pair(c + FRONT, EDir::FRONT));
-                _baseQueue.push_back(make_pair(c + FRONT_LEFT, EDir::FRONT_LEFT));
-                _baseQueue.push_back(make_pair(c + LEFT, EDir::LEFT));
+            case FRONT :
+                _baseQueue.push_back(make_pair(c, FRONT));
                 break;
 
-            case EDir::LEFT :
-                _baseQueue.push_back(make_pair(c + LEFT, EDir::LEFT));
+            case FRONT_LEFT :
+                _baseQueue.push_back(make_pair(c, FRONT));
+                _baseQueue.push_back(make_pair(c, LEFT));
+                _baseQueue.push_back(make_pair(c, FRONT_LEFT));
                 break;
 
-            case EDir::BACK_LEFT :
-                _baseQueue.push_back(make_pair(c + LEFT, EDir::LEFT));
-                _baseQueue.push_back(make_pair(c + BACK_LEFT, EDir::BACK_LEFT));
-                _baseQueue.push_back(make_pair(c + BACK, EDir::BACK));
+            case LEFT :
+                _baseQueue.push_back(make_pair(c, LEFT));
+                break;
+
+            case BACK_LEFT :
+                _baseQueue.push_back(make_pair(c, BACK));
+                _baseQueue.push_back(make_pair(c, LEFT));
+                _baseQueue.push_back(make_pair(c, BACK_LEFT));
+                break;
+
+
+            case DOWN:
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                }
+                break;
+
+            case BACK_DOWN :
+                _baseQueue.push_back(make_pair(c, BACK));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, BACK_DOWN));
+                }
+                break;
+
+            case BACK_RIGHT_DOWN :
+                _baseQueue.push_back(make_pair(c, BACK));
+                _baseQueue.push_back(make_pair(c, RIGHT));
+                _baseQueue.push_back(make_pair(c, BACK_RIGHT));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, BACK_DOWN));
+                    _baseQueue.push_back(make_pair(c, RIGHT_DOWN));
+                    _baseQueue.push_back(make_pair(c, BACK_RIGHT_DOWN));
+                }
+
+                break;
+
+            case RIGHT_DOWN :
+                _baseQueue.push_back(make_pair(c, RIGHT));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, RIGHT_DOWN));
+                }
+                break;
+
+            case FRONT_RIGHT_DOWN :
+                _baseQueue.push_back(make_pair(c, FRONT));
+                _baseQueue.push_back(make_pair(c, RIGHT));
+                _baseQueue.push_back(make_pair(c, FRONT_RIGHT));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_DOWN));
+                    _baseQueue.push_back(make_pair(c, RIGHT_DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_RIGHT_DOWN));
+                }
+                break;
+
+            case FRONT_DOWN :
+                _baseQueue.push_back(make_pair(c, FRONT));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_DOWN));
+                }
+                break;
+
+            case FRONT_LEFT_DOWN :
+                _baseQueue.push_back(make_pair(c, FRONT));
+                _baseQueue.push_back(make_pair(c, LEFT));
+                _baseQueue.push_back(make_pair(c, FRONT_LEFT));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_DOWN));
+                    _baseQueue.push_back(make_pair(c, LEFT_DOWN));
+                    _baseQueue.push_back(make_pair(c, FRONT_LEFT_DOWN));
+                }
+                break;
+
+            case LEFT_DOWN :
+                _baseQueue.push_back(make_pair(c, LEFT));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, LEFT_DOWN));
+                }
+                break;
+
+            case BACK_LEFT_DOWN :
+                _baseQueue.push_back(make_pair(c, BACK));
+                _baseQueue.push_back(make_pair(c, LEFT));
+                _baseQueue.push_back(make_pair(c, BACK_LEFT));
+                if(c.z != 0)
+                {
+                    _baseQueue.push_back(make_pair(c, DOWN));
+                    _baseQueue.push_back(make_pair(c, BACK_DOWN));
+                    _baseQueue.push_back(make_pair(c, LEFT_DOWN));
+                    _baseQueue.push_back(make_pair(c, BACK_LEFT_DOWN));
+                }
                 break;
             }
         }
-
-        ++qId;
     }
 
     bool isBaseTetrahedronFound = false;
@@ -493,17 +577,14 @@ bool Mesh::isBase(int vId, Tetrahedron* tet)
 
 void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Triangle>& ball)
 {
+    ++_currentVisitTime;
+    _ballQueue.clear();
+
+    _ballQueue.push_back(base);
+    base->visitTime = _currentVisitTime;
     glm::dvec3 v = vert[vId].p;
 
-    _ballPreserved.clear();
-    _ballTouched.clear();
-
-    _ballQueue.clear();
-    _ballQueue.push_back(base);
-    base->flag = true;
-
-    int qId = 0;
-    while(qId < _ballQueue.size())
+    for(int qId = 0; qId < _ballQueue.size(); ++qId)
     {
         Tetrahedron* tet = _ballQueue[qId];
 
@@ -521,18 +602,17 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
                 }
 
                 Vertex& triVert = vert[tet->v[i]];
-                if(!triVert.flag)
+                if(triVert.visitTime < _currentVisitTime)
                 {
-                    triVert.flag = true;
-                    _ballTouched.push_back(&triVert);
+                    triVert.visitTime = _currentVisitTime;
 
-                    TetListNode* node = triVert.tetList;
+                    TetListNode* node = triVert.tetList.head;
                     while(node != nullptr)
                     {
                         Tetrahedron* neighbor = node->tet;
-                        if(!neighbor->flag)
+                        if(neighbor->visitTime < _currentVisitTime)
                         {
-                            neighbor->flag = true;
+                            neighbor->visitTime = _currentVisitTime;
                             _ballQueue.push_back(neighbor);
                         }
                         node = node->next;
@@ -542,26 +622,6 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
 
             removeTetrahedronGrid(tet);
         }
-        else
-        {
-            _ballPreserved.push_back(tet);
-        }
-
-        ++qId;
-    }
-
-
-    // Reset algo flag on preserved tetrahedrons
-    int preservedCount = _ballPreserved.size();
-    for(int i=0; i<preservedCount; ++i)
-    {
-        _ballPreserved[i]->flag = false;
-    }
-
-    int touchedCount = _ballTouched.size();
-    for(int i=0; i<touchedCount; ++i)
-    {
-        _ballTouched[i]->flag = false;
     }
 }
 
@@ -569,27 +629,20 @@ void Mesh::remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unorder
 {
     for(auto t : ball)
     {
-        insertTetrahedronGrid(cId, vId, t.v[0], t.v[1], t.v[2]);
+        insertTetrahedronGrid(vId, t.v[0], t.v[1], t.v[2]);
     }
 }
 
-void Mesh::insertTetrahedronGrid(
-        const glm::ivec3& cId, int v0, int v1, int v2, int v3)
+void Mesh::insertTetrahedronGrid(int v0, int v1, int v2, int v3)
 {
     Tetrahedron* tet = new Tetrahedron(v0, v1, v2, v3);
+    tet->visitTime = _currentVisitTime;
 
     // Literally insert in the grid and mesh
-    grid[cId.z][cId.y][cId.x].tetra.insert(tet);
-    vert[tet->v[0]].addTet(tet);
-    vert[tet->v[1]].addTet(tet);
-    vert[tet->v[2]].addTet(tet);
-    vert[tet->v[3]].addTet(tet);
-
-    // Set owner cell
-    tet->cId = cId;
-
-    // Initialise algo flag
-    tet->flag = false;
+    vert[tet->v[0]].tetList.addTet(tet);
+    vert[tet->v[1]].tetList.addTet(tet);
+    vert[tet->v[2]].tetList.addTet(tet);
+    vert[tet->v[3]].tetList.addTet(tet);
 
     // Compute tetrahedron circumcircle
     glm::dvec3 A = vert[tet->v[0]].p;
@@ -626,45 +679,40 @@ void Mesh::insertTetrahedronGrid(
 
 void Mesh::removeTetrahedronGrid(Tetrahedron* tet)
 {
-    grid[tet->cId.z][tet->cId.y][tet->cId.x].tetra.erase(tet);
-    vert[tet->v[0]].delTet(tet);
-    vert[tet->v[1]].delTet(tet);
-    vert[tet->v[2]].delTet(tet);
-    vert[tet->v[3]].delTet(tet);
+    vert[tet->v[0]].tetList.delTet(tet);
+    vert[tet->v[1]].tetList.delTet(tet);
+    vert[tet->v[2]].tetList.delTet(tet);
+    vert[tet->v[3]].tetList.delTet(tet);
     delete tet;
 }
 
 void Mesh::tearDownGrid()
 {
-    // Collect tetrahedrons
-    tetra.clear();
-    for(int k=0; k<gridSize.z; ++k)
-    {
-        for(int j=0; j<gridSize.y; ++j)
-        {
-            for(int i=0; i<gridSize.x; ++i)
-            {
-                unordered_set<Tetrahedron*>& tetSet = grid[k][j][i].tetra;
-                tetra.insert(tetra.begin(), tetSet.begin(), tetSet.end());
-            }
-            grid[k][j].clear();
-        }
-        grid[k].clear();
-    }
+    ++_currentVisitTime;
+
+    // Clear grid
     grid.clear();
 
-
-    // Reset vertices' tetrahedron lists
-    for(auto& v : vert)
+    // Collect tetrahedrons
+    int vertCount = vert.size();
+    for(int v=0; v < vertCount; ++v)
     {
-        v.clrTet();
-    }
+        Vertex& vertex = vert[v];
+        TetListNode* node = vertex.tetList.head;
+        while(node != nullptr)
+        {
+            Tetrahedron* tet = node->tet;
+            if(tet->visitTime < _currentVisitTime)
+            {
+                tet->visitTime = _currentVisitTime;
+                tetra.push_back(tet);
+            }
 
-    // Reset cached data structures
-    _baseQueue.clear();
-    _ballQueue.clear();
-    _ballPreserved.clear();
-    _ballTouched.clear();
+            node = node->next;
+        }
+
+        vertex.tetList.clrTet();
+    }
 }
 
 void Mesh::compileAdjacencyLists()
