@@ -60,6 +60,9 @@ struct TetList
             parent = node;
             node = node->next;
         }
+
+        bool tetDeleted = false;
+        assert(tetDeleted);
     }
 
     inline void clrTet()
@@ -338,17 +341,17 @@ private:
             const glm::dvec3& n,
             double quality);
 
-
+    inline bool intersects(const glm::dvec3& v, Tetrahedron* tet);
 
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
     void insertVertexGrid(const glm::ivec3& cId, int vId);
     Tetrahedron* findBaseTetrahedron(const glm::ivec3& cId, int vId);
-    bool isBase(int vId, Tetrahedron* tet);
     void findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Triangle>& ball);
     void remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unordered_set<Triangle>& ball);
     void insertTetrahedronGrid(int v0, int v1, int v2, int v3);
     void removeTetrahedronGrid(Tetrahedron* tet);
+    void makeTetrahedronPositive(Tetrahedron* tet);
     void tearDownGrid();
 
     // Bounding polyhedron dimensions
