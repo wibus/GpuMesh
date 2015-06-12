@@ -73,6 +73,7 @@ protected:
     float _cutAzimuth;
     float _cutAltitude;
     float _cutDistance;
+    glm::dvec4 _physicalCutPlaneEq;
 
     float _lightAzimuth;
     float _lightAltitude;

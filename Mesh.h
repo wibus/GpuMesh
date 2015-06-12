@@ -273,6 +273,7 @@ public:
     void compileAdjacencyLists();
 
     void compileFacesAttributes(
+            const glm::dvec4& cutPlaneEq,
             std::vector<glm::dvec3>& vertices,
             std::vector<glm::dvec3>& normals,
             std::vector<glm::dvec3>& triEdges,

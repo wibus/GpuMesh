@@ -28,6 +28,6 @@ void main(void)
     nrm = normal;
     edg = edge;
     qual = quality;
-    dist = max(dot(position, CutPlaneEq.xyz) - CutPlaneEq.w, 0);
+    dist = dot(position, CutPlaneEq.xyz) - CutPlaneEq.w;
 }
 

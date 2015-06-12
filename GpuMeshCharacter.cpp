@@ -50,7 +50,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(glm::pi<float>() / 6.0),
     _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
     _lightDistance(1.0),
-    _internalVertices(25000),
+    _internalVertices(300000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -215,14 +215,31 @@ bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
             _shadowEnabled = !_shadowEnabled;
             cout << "Shadow enabled : " << (_shadowEnabled ? "true" : "false") << endl;
 
-            glBindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
-            glClearColor(1.0, 1.0, 1.0, 1.0);
-            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glBindTexture(GL_TEXTURE_2D, _shadowTex);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            if(_shadowEnabled)
+            {
+                _updateShadow = true;
+            }
+            else
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
+                glClearColor(1.0, 1.0, 1.0, 1.0);
+                glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glBindTexture(GL_TEXTURE_2D, _shadowTex);
+                glGenerateMipmap(GL_TEXTURE_2D);
+            }
+        }
+        else if(event.getAscii() == 'C')
+        {
+            _isPhysicalCut = !_isPhysicalCut;
+            cout << "Physical cut : " << (_isPhysicalCut ? "true" : "false") << endl;
 
-            _updateShadow = true;
+            moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
+
+            if(!_isPhysicalCut)
+            {
+                updateBuffers();
+            }
         }
     }
 }
@@ -446,23 +463,43 @@ void GpuMeshCharacter::moveCutPlane(float azimuth, float altitude, float distanc
             glm::vec4(1.0, 0.0f, 0.0f, 1.0f);
     cutPlaneEq.w = _cutDistance;
 
+    glm::dvec4 disabledCut(0, 0, 0, 0);
 
-
-    _litShader.pushProgram();
-    _litShader.setVec4f("CutPlaneEq", cutPlaneEq);
-    _litShader.popProgram();
-
-    _unlitShader.pushProgram();
-    _unlitShader.setVec4f("CutPlaneEq", cutPlaneEq);
-    _unlitShader.popProgram();
-
-    if(_shadowEnabled)
+    if(_isPhysicalCut)
     {
+        _litShader.pushProgram();
+        _litShader.setVec4f("CutPlaneEq", disabledCut);
+        _litShader.popProgram();
+
+        _unlitShader.pushProgram();
+        _unlitShader.setVec4f("CutPlaneEq",disabledCut);
+        _unlitShader.popProgram();
+
+        _shadowShader.pushProgram();
+        _shadowShader.setVec4f("CutPlaneEq", disabledCut);
+        _shadowShader.popProgram();
+
+        _physicalCutPlaneEq = cutPlaneEq;
+        updateBuffers();
+    }
+    else
+    {
+        _litShader.pushProgram();
+        _litShader.setVec4f("CutPlaneEq", cutPlaneEq);
+        _litShader.popProgram();
+
+        _unlitShader.pushProgram();
+        _unlitShader.setVec4f("CutPlaneEq", cutPlaneEq);
+        _unlitShader.popProgram();
+
         _shadowShader.pushProgram();
         _shadowShader.setVec4f("CutPlaneEq", cutPlaneEq);
         _shadowShader.popProgram();
-        _updateShadow = true;
+
+        _physicalCutPlaneEq = disabledCut;
     }
+
+    _updateShadow = true;
 }
 
 
@@ -478,34 +515,27 @@ void GpuMeshCharacter::moveLight(float azimuth, float altitude, float distance)
             glm::rotate(glm::mat4(), _lightAltitude, glm::vec3(0, 1, 0)) *
             glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
+    glm::mat4 view = glm::lookAt(from, nullVec, upVec);
+    glm::mat4 pvMat = _shadowProj * view;
+    glm::mat4 pvShadow =
+            glm::scale(glm::mat4(), glm::vec3(0.5)) *
+            glm::translate(glm::mat4(), glm::vec3(1.0, 1.0, 1.0)) *
+            pvMat;
 
     _litShader.pushProgram();
     _litShader.setVec3f("LightDirection", -from);
+    _litShader.setMat4f("PVshadow", pvShadow);
     _litShader.popProgram();
 
     _unlitShader.pushProgram();
     _unlitShader.setVec3f("LightDirection", -from);
     _unlitShader.popProgram();
 
-    if(_shadowEnabled)
-    {
-        glm::mat4 view = glm::lookAt(from, nullVec, upVec);
-        glm::mat4 pvMat = _shadowProj * view;
-        glm::mat4 pvShadow =
-                glm::scale(glm::mat4(), glm::vec3(0.5)) *
-                glm::translate(glm::mat4(), glm::vec3(1.0, 1.0, 1.0)) *
-                pvMat;
+    _shadowShader.pushProgram();
+    _shadowShader.setMat4f("PVmat", pvMat);
+    _shadowShader.popProgram();
 
-        _litShader.pushProgram();
-        _litShader.setMat4f("PVshadow", pvShadow);
-        _litShader.popProgram();
-
-        _shadowShader.pushProgram();
-        _shadowShader.setMat4f("PVmat", pvMat);
-        _shadowShader.popProgram();
-
-        _updateShadow = true;
-    }
+    _updateShadow = true;
 }
 
 void GpuMeshCharacter::setupShaders()
@@ -564,6 +594,7 @@ void GpuMeshCharacter::updateBuffers()
     vector<double> qualities;
 
     _mesh.compileFacesAttributes(
+                _physicalCutPlaneEq,
                 vertices,
                 normals,
                 edges,

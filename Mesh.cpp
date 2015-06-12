@@ -25,7 +25,9 @@ void Mesh::initialize(
     }
 }
 
-void Mesh::compileFacesAttributes(std::vector<glm::dvec3>& vertices,
+void Mesh::compileFacesAttributes(
+        const glm::dvec4& cutPlaneEq,
+        std::vector<glm::dvec3>& vertices,
         std::vector<glm::dvec3>& normals,
         std::vector<glm::dvec3>& triEdges,
         std::vector<double>& tetQualities)
@@ -39,6 +41,9 @@ void Mesh::compileFacesAttributes(std::vector<glm::dvec3>& vertices,
     qualityMean = 0;
     qualityVar = 0;
 
+    glm::dvec3 cutNormal(cutPlaneEq);
+    double cutDistance = cutPlaneEq.w;
+
     for(const auto& tet : tetra)
     {
         if(isExternalTetraHedron(tet))
@@ -50,6 +55,12 @@ void Mesh::compileFacesAttributes(std::vector<glm::dvec3>& vertices,
             vert[tet->v[2]].p,
             vert[tet->v[3]].p
         };
+
+        if(glm::dot(verts[0], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[1], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[2], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[3], cutNormal) - cutDistance > 0.0)
+            continue;
 
         glm::dvec3 norms[] = {
             glm::normalize(glm::cross(verts[1] - verts[0], verts[2] - verts[1])),
