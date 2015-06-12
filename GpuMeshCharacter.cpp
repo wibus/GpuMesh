@@ -50,7 +50,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(glm::pi<float>() / 6.0),
     _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
     _lightDistance(1.0),
-    _internalVertices(300000),
+    _internalVertices(3000000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -331,6 +331,8 @@ void GpuMeshCharacter::triangulateDomainCpu()
     dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
     cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
     //*/
+
+    exit(0);
 
     /* Sphere distribution
     vertices.resize(_internalVertices);

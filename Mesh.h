@@ -35,7 +35,7 @@ struct TetList
 
     inline void addTet(Tetrahedron* tet)
     {
-        TetListNode* node = new TetListNode();
+        TetListNode* node = _acquireNode();
         node->next = head;
         node->tet = tet;
         head = node;
@@ -53,7 +53,7 @@ struct TetList
                     parent->next = node->next;
                 else
                     head = node->next;
-                delete node;
+                _disposeNode(node);
                 return;
             }
 
@@ -73,6 +73,38 @@ struct TetList
         }
         head = nullptr;
     }
+
+    static void releaseMemoryPool()
+    {
+        int nodeCount = _nodePool.size();
+        for(int i=0; i < nodeCount; ++i)
+            delete _nodePool[i];
+
+        _nodePool.clear();
+        _nodePool.shrink_to_fit();
+    }
+
+private:
+    inline static TetListNode* _acquireNode()
+    {
+        if(_nodePool.empty())
+        {
+            return new TetListNode();
+        }
+        else
+        {
+            TetListNode* node = _nodePool.back();
+            _nodePool.pop_back();
+            return node;
+        }
+    }
+
+    inline static void _disposeNode(TetListNode* node)
+    {
+        _nodePool.push_back(node);
+    }
+
+    static std::vector<TetListNode*> _nodePool;
 };
 
 struct Vertex
@@ -334,6 +366,42 @@ private:
     std::vector<std::pair<glm::ivec3, EDir>> _baseQueue;
     std::vector<Vertex*> _ballQueue;
     int _currentVisitTime;
+
+    // Memory pool
+    inline static Tetrahedron* _acquireTetrahedron(int v0, int v1, int v2, int v3)
+    {
+        if(_tetPool.empty())
+        {
+            return new Tetrahedron(v0, v1, v2, v3);
+        }
+        else
+        {
+            Tetrahedron* tet = _tetPool.back();
+            _tetPool.pop_back();
+            tet->v[0] = v0;
+            tet->v[1] = v1;
+            tet->v[2] = v2;
+            tet->v[3] = v3;
+            return tet;
+        }
+    }
+
+    inline static void _disposeTetrahedron(Tetrahedron* tet)
+    {
+        _tetPool.push_back(tet);
+    }
+
+    inline static void _releaseTetrahedronMemoryPool()
+    {
+        int tetCount = _tetPool.size();
+        for(int i=0; i < tetCount; ++i)
+            delete _tetPool[i];
+
+        _tetPool.clear();
+        _tetPool.shrink_to_fit();
+    }
+
+    static std::vector<Tetrahedron*> _tetPool;
 };
 
 

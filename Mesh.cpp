@@ -6,6 +6,10 @@
 using namespace std;
 
 
+
+std::vector<TetListNode*> TetList::_nodePool;
+std::vector<Tetrahedron*> Mesh::_tetPool;
+
 void Mesh::initialize(
         const std::vector<glm::dvec3>& boundingVertices,
         const std::vector<Tetrahedron>& boundingTetrahedras)
@@ -287,7 +291,7 @@ void Mesh::initializeGrid(int idStart, int idEnd)
     }
     tetra.clear();
 
-    //* Radially sort cell vertices
+    /* Radially sort cell vertices
     for(int k=0; k<gridSize.z; ++k)
     {
         for(int j=0; j<gridSize.y; ++j)
@@ -555,6 +559,16 @@ Tetrahedron* Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
 
 bool Mesh::isBase(int vId, Tetrahedron* tet)
 {
+    glm::dvec3 v = vert[vId].p;
+    glm::dvec3 dist = v - tet->circumCenter;
+    if(glm::dot(dist, dist) < tet->circumRadius2)
+    {
+        return true;
+    }
+
+    return false;
+
+    /*
     glm::dmat4 D(
         glm::dvec4(vert[tet->v[0]].p, 1),
         glm::dvec4(vert[tet->v[1]].p, 1),
@@ -583,6 +597,7 @@ bool Mesh::isBase(int vId, Tetrahedron* tet)
         return false;
 
     return true;
+    */
 }
 
 
@@ -695,7 +710,7 @@ void Mesh::remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unorder
 
 void Mesh::insertTetrahedronGrid(int v0, int v1, int v2, int v3)
 {
-    Tetrahedron* tet = new Tetrahedron(v0, v1, v2, v3);
+    Tetrahedron* tet = _acquireTetrahedron(v0, v1, v2, v3);
     tet->visitTime = _currentVisitTime;
 
     // Literally insert in the grid and mesh
@@ -725,7 +740,7 @@ void Mesh::insertTetrahedronGrid(int v0, int v1, int v2, int v3)
     glm::dvec3 dist = A - tet->circumCenter;
     tet->circumRadius2 = glm::dot(dist, dist);
 
-
+/*
     // Check tetrahedron volume positivness
     glm::dvec3 d10(A - B);
     glm::dvec3 d12(C - B);
@@ -735,6 +750,7 @@ void Mesh::insertTetrahedronGrid(int v0, int v1, int v2, int v3)
     {
         std::swap(tet->v[2], tet->v[3]);
     }
+    */
 }
 
 void Mesh::removeTetrahedronGrid(Tetrahedron* tet)
@@ -743,7 +759,7 @@ void Mesh::removeTetrahedronGrid(Tetrahedron* tet)
     vert[tet->v[1]].tetList.delTet(tet);
     vert[tet->v[2]].tetList.delTet(tet);
     vert[tet->v[3]].tetList.delTet(tet);
-    delete tet;
+    _disposeTetrahedron(tet);
 }
 
 void Mesh::tearDownGrid()
@@ -773,6 +789,12 @@ void Mesh::tearDownGrid()
 
         vertex.tetList.clrTet();
     }
+
+    TetList::releaseMemoryPool();
+    _releaseTetrahedronMemoryPool();
+
+    cout << "Tetrahedrons / Vertex = " <<
+            tetra.size() / (double) vert.size() << endl;
 }
 
 void Mesh::compileAdjacencyLists()
