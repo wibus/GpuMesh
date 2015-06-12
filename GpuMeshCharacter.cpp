@@ -12,6 +12,7 @@
 
 #include <Scaena/Play/Play.h>
 #include <Scaena/Play/View.h>
+#include <Scaena/StageManagement/Event/KeyboardEvent.h>
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 
@@ -20,6 +21,9 @@ using namespace cellar;
 using namespace scaena;
 
 
+
+const glm::vec3 GpuMeshCharacter::nullVec = glm::vec3(0, 0, 0);
+const glm::vec3 GpuMeshCharacter::upVec = glm::vec3(0, 0, 1);
 
 GpuMeshCharacter::GpuMeshCharacter() :
     Character("GpuMeshChracter"),
@@ -32,18 +36,21 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _shadowFbo(0),
     _shadowDpt(0),
     _shadowTex(0),
+    _useLitShader(false),
+    _shadowEnabled(true),
     _updateShadow(false),
     _shadowSize(1024, 1024),
     _camAzimuth(0),
     _camAltitude(0),
     _camDistance(6),
+    _isPhysicalCut(false),
     _cutAzimuth(0),
     _cutAltitude(0),
     _cutDistance(0),
     _lightAzimuth(glm::pi<float>() / 6.0),
     _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
     _lightDistance(1.0),
-    _internalVertices(2500000),
+    _internalVertices(25000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -84,13 +91,6 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
         stringstream ss;
         ss << "Step took " << dt.count() / 1000.0 << "ms to execute";
         getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
-    }
-    else
-    {
-        if(keyboard->isAsciiPressed('s'))
-        {
-            _processFinished = false;
-        }
     }
 
 
@@ -141,15 +141,15 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
                        _camAltitude,
                        _camDistance + mouse->degreeDelta() / 80.0f);
         }
-
     }
 }
 
 void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
 {
     glBindVertexArray(_vao);
+    glBindTexture(GL_TEXTURE_2D, _shadowTex);
 
-    if(_updateShadow)
+    if(_shadowEnabled && _updateShadow)
     {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -173,9 +173,6 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
         glViewport(viewport[0], viewport[1],
                    viewport[2], viewport[3]);
 
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, _shadowTex);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         _updateShadow = false;
@@ -184,17 +181,50 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
     glClearColor(0.93, 0.95, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    _shader.pushProgram();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _shadowTex);
+    if(_useLitShader)
+        _litShader.pushProgram();
+    else
+        _unlitShader.pushProgram();
+
     glDrawArrays(GL_TRIANGLES, 0, _buffElemCount);
-    _shader.popProgram();
+
+    GlProgram::popProgram();
 
     glBindVertexArray(0);
 }
 
 void GpuMeshCharacter::exitStage()
 {
+}
+
+bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
+{
+    if(_processFinished)
+    {
+        if(event.getAscii()  == 'S')
+        {
+            _processFinished = false;
+        }
+        else if(event.getAscii() == 'Z')
+        {
+            _useLitShader = !_useLitShader;
+            cout << "Using lit shader : " << (_useLitShader ? "true" : "false") << endl;
+        }
+        else if(event.getAscii() == 'X')
+        {
+            _shadowEnabled = !_shadowEnabled;
+            cout << "Shadow enabled : " << (_shadowEnabled ? "true" : "false") << endl;
+
+            glBindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
+            glClearColor(1.0, 1.0, 1.0, 1.0);
+            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, _shadowTex);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            _updateShadow = true;
+        }
+    }
 }
 
 void GpuMeshCharacter::processCpuPipeline()
@@ -285,9 +315,7 @@ void GpuMeshCharacter::triangulateDomainCpu()
     cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
     //*/
 
-    exit(0);
-
-    //* Sphere distribution
+    /* Sphere distribution
     vertices.resize(_internalVertices);
 
     for(int iv=0; iv<_internalVertices; ++iv)
@@ -392,15 +420,17 @@ void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
             glm::rotate(glm::mat4(), _camAltitude, glm::vec3(0, 1, 0)) *
             glm::vec4(_camDistance, 0.0f, 0.0f, 1.0f));
 
-    glm::mat4 viewMatrix = glm::lookAt(
-            glm::vec3(from),
-            glm::vec3(0, 0, 0),
-            glm::vec3(0, 0, 1));
+    glm::mat4 viewMatrix = glm::lookAt(from, nullVec, upVec);
 
-    _shader.pushProgram();
-    _shader.setMat4f("PVmat", _camProj * viewMatrix);
-    _shader.setVec3f("CameraPosition", glm::vec3(from));
-    _shader.popProgram();
+    _litShader.pushProgram();
+    _litShader.setMat4f("PVmat", _camProj * viewMatrix);
+    _litShader.setVec3f("CameraPosition", glm::vec3(from));
+    _litShader.popProgram();
+
+    _unlitShader.pushProgram();
+    _unlitShader.setMat4f("PVmat", _camProj * viewMatrix);
+    _unlitShader.setVec3f("CameraPosition", glm::vec3(from));
+    _unlitShader.popProgram();
 }
 
 void GpuMeshCharacter::moveCutPlane(float azimuth, float altitude, float distance)
@@ -416,15 +446,23 @@ void GpuMeshCharacter::moveCutPlane(float azimuth, float altitude, float distanc
             glm::vec4(1.0, 0.0f, 0.0f, 1.0f);
     cutPlaneEq.w = _cutDistance;
 
-    _shader.pushProgram();
-    _shader.setVec4f("CutPlaneEq", cutPlaneEq);
-    _shader.popProgram();
 
-    _shadowShader.pushProgram();
-    _shadowShader.setVec4f("CutPlaneEq", cutPlaneEq);
-    _shadowShader.popProgram();
 
-    _updateShadow = true;
+    _litShader.pushProgram();
+    _litShader.setVec4f("CutPlaneEq", cutPlaneEq);
+    _litShader.popProgram();
+
+    _unlitShader.pushProgram();
+    _unlitShader.setVec4f("CutPlaneEq", cutPlaneEq);
+    _unlitShader.popProgram();
+
+    if(_shadowEnabled)
+    {
+        _shadowShader.pushProgram();
+        _shadowShader.setVec4f("CutPlaneEq", cutPlaneEq);
+        _shadowShader.popProgram();
+        _updateShadow = true;
+    }
 }
 
 
@@ -440,39 +478,51 @@ void GpuMeshCharacter::moveLight(float azimuth, float altitude, float distance)
             glm::rotate(glm::mat4(), _lightAltitude, glm::vec3(0, 1, 0)) *
             glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-    glm::mat4 view = glm::lookAt(
-            from,
-            glm::vec3(0, 0, 0),
-            glm::vec3(0, 0, 1));
 
-    glm::mat4 pvMat = _lightProj * view;
-    glm::mat4 pvLight =
-            glm::scale(glm::mat4(), glm::vec3(0.5)) *
-            glm::translate(glm::mat4(), glm::vec3(1.0, 1.0, 1.0)) *
-            pvMat;
+    _litShader.pushProgram();
+    _litShader.setVec3f("LightDirection", -from);
+    _litShader.popProgram();
 
-    _shader.pushProgram();
-    _shader.setVec3f("LightDirection", -from);
-    _shader.setMat4f("PVlight", pvLight);
-    _shader.popProgram();
+    _unlitShader.pushProgram();
+    _unlitShader.setVec3f("LightDirection", -from);
+    _unlitShader.popProgram();
 
-    _shadowShader.pushProgram();
-    _shadowShader.setMat4f("PVmat", pvMat);
-    _shadowShader.popProgram();
+    if(_shadowEnabled)
+    {
+        glm::mat4 view = glm::lookAt(from, nullVec, upVec);
+        glm::mat4 pvMat = _shadowProj * view;
+        glm::mat4 pvShadow =
+                glm::scale(glm::mat4(), glm::vec3(0.5)) *
+                glm::translate(glm::mat4(), glm::vec3(1.0, 1.0, 1.0)) *
+                pvMat;
 
-    _updateShadow = true;
+        _litShader.pushProgram();
+        _litShader.setMat4f("PVshadow", pvShadow);
+        _litShader.popProgram();
+
+        _shadowShader.pushProgram();
+        _shadowShader.setMat4f("PVmat", pvMat);
+        _shadowShader.popProgram();
+
+        _updateShadow = true;
+    }
 }
 
 void GpuMeshCharacter::setupShaders()
 {
-    // Compile shader
-    _shader.addShader(GL_VERTEX_SHADER, ":/shaders/Boundary.vert");
-    _shader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Boundary.frag");
-    _shader.link();
-    _shader.pushProgram();
-    _shader.setInt("DepthTex", 0);
-    _shader.popProgram();
+    // Compile shaders
+    _litShader.addShader(GL_VERTEX_SHADER, ":/shaders/LitMesh.vert");
+    _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/LitMesh.frag");
+    _litShader.link();
+    _litShader.pushProgram();
+    _litShader.setInt("DepthTex", 0);
+    _litShader.popProgram();
 
+    _unlitShader.addShader(GL_VERTEX_SHADER, ":/shaders/UnlitMesh.vert");
+    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/UnlitMesh.frag");
+    _unlitShader.link();
+    _unlitShader.pushProgram();
+    _unlitShader.popProgram();
 
     _shadowShader.addShader(GL_VERTEX_SHADER, ":/shaders/Shadow.vert");
     _shadowShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Shadow.frag");
@@ -491,7 +541,7 @@ void GpuMeshCharacter::setupShaders()
             10.0);
 
     // Set shadow projection view matrix
-    _lightProj = glm::ortho(
+    _shadowProj = glm::ortho(
             -2.0f, 2.0f,
             -2.0f, 2.0f,
             -2.0f, 2.0f);
@@ -624,7 +674,12 @@ void GpuMeshCharacter::resetCpuPipeline()
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _shadowDpt);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _shadowTex, 0);
 
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
 }

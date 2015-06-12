@@ -1,8 +1,10 @@
 <RCC>
     <qresource prefix="/">
-        <file>shaders/Boundary.frag</file>
-        <file>shaders/Boundary.vert</file>
         <file>shaders/Shadow.frag</file>
         <file>shaders/Shadow.vert</file>
+        <file>shaders/LitMesh.frag</file>
+        <file>shaders/LitMesh.vert</file>
+        <file>shaders/UnlitMesh.frag</file>
+        <file>shaders/UnlitMesh.vert</file>
     </qresource>
 </RCC>

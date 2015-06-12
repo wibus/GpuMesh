@@ -1,7 +1,7 @@
 #version 440
 
 uniform mat4 PVmat;
-uniform mat4 PVlight;
+uniform mat4 PVshadow;
 uniform vec4 CutPlaneEq;
 
 layout(location=0) in vec3 position;
@@ -21,7 +21,7 @@ void main(void)
 {
     vec4 position4 = vec4(position, 1);
     gl_Position = PVmat * position4;
-    vec4 lgt4 = PVlight * position4;
+    vec4 lgt4 = PVshadow * position4;
     lgt = lgt4.xyz / lgt4.w;
 
     pos = position;

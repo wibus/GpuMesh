@@ -15,11 +15,13 @@ class GpuMeshCharacter : public scaena::Character
 public:
     GpuMeshCharacter();
 
-    void enterStage() override;
-    void beginStep(const scaena::StageTime &time) override;
-    void draw(const std::shared_ptr<scaena::View> &view,
-              const scaena::StageTime &time) override;
-    void exitStage() override;
+    virtual void enterStage() override;
+    virtual void beginStep(const scaena::StageTime &time) override;
+    virtual void draw(const std::shared_ptr<scaena::View> &view,
+                      const scaena::StageTime &time) override;
+    virtual void exitStage() override;
+
+    virtual bool keyPressEvent(const scaena::KeyboardEvent &event) override;
 
 protected:
     // CPU pipleine
@@ -43,7 +45,8 @@ protected:
     virtual void updateBuffers();
 
 protected:
-    cellar::GlProgram _shader;
+    cellar::GlProgram _litShader;
+    cellar::GlProgram _unlitShader;
     int _buffElemCount;
     GLuint _vao;
     GLuint _vbo;
@@ -51,7 +54,10 @@ protected:
     GLuint _ebo;
     GLuint _qbo;
 
+    bool _useLitShader;
+    bool _shadowEnabled;
     bool _updateShadow;
+    glm::mat4 _shadowProj;
     glm::ivec2 _shadowSize;
     cellar::GlProgram _shadowShader;
     GLuint _shadowFbo;
@@ -63,11 +69,11 @@ protected:
     float _camAltitude;
     float _camDistance;
 
+    bool _isPhysicalCut;
     float _cutAzimuth;
     float _cutAltitude;
     float _cutDistance;
 
-    glm::mat4 _lightProj;
     float _lightAzimuth;
     float _lightAltitude;
     float _lightDistance;
@@ -80,6 +86,9 @@ private:
     bool _useGpuPipeline;
     bool _processFinished;
     int _stepId;
+
+    static const glm::vec3 nullVec;
+    static const glm::vec3 upVec;
 };
 
 #endif //GpuMesh_CHARACTER
