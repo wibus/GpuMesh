@@ -7,6 +7,7 @@ using namespace std;
 
 
 
+std::vector<TriSetNode*> TriSet::_nodePool;
 std::vector<TetListNode*> TetList::_nodePool;
 std::vector<Tetrahedron*> Mesh::_tetPool;
 
@@ -330,6 +331,8 @@ void Mesh::initializeGrid(int idStart, int idEnd)
         }
     }
     //*/
+
+    _ball.reset(307);
 }
 
 
@@ -354,10 +357,9 @@ void Mesh::insertCell(const glm::ivec3& cId)
 
 void Mesh::insertVertexGrid(const glm::ivec3& cId, int vId)
 {
-    std::unordered_set<Triangle> ball;
-    Tetrahedron* base = findBaseTetrahedron(cId, vId);
-    findDelaunayBall(vId, base, ball);
-    remeshDelaunayBall(cId, vId, ball);
+    _ball.clear();
+    findDelaunayBall(cId, vId);
+    remeshDelaunayBall(vId);
 }
 
 Tetrahedron* Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
@@ -575,9 +577,9 @@ Tetrahedron* Mesh::findBaseTetrahedron(const glm::ivec3& cId, int vId)
     assert(isBaseTetrahedronFound);
 }
 
-void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Triangle>& ball)
+void Mesh::findDelaunayBall(const glm::ivec3& cId, int vId)
 {
-    const glm::dvec3& v = vert[vId].p;
+    Tetrahedron* base = findBaseTetrahedron(cId, vId);
     Vertex& v0 = vert[base->v[0]];
     Vertex& v1 = vert[base->v[1]];
     Vertex& v2 = vert[base->v[2]];
@@ -589,17 +591,19 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
     _ballQueue.push_back(&v2);
     _ballQueue.push_back(&v3);
 
+    _ball.xOrTri(base->t0());
+    _ball.xOrTri(base->t1());
+    _ball.xOrTri(base->t2());
+    _ball.xOrTri(base->t3());
+
+    removeTetrahedronGrid(base);
+    const glm::dvec3& v = vert[vId].p;
+
     ++_currentVisitTime;
     v0.visitTime = _currentVisitTime;
     v1.visitTime = _currentVisitTime;
     v2.visitTime = _currentVisitTime;
     v3.visitTime = _currentVisitTime;
-
-    ball.insert(base->t0());
-    ball.insert(base->t1());
-    ball.insert(base->t2());
-    ball.insert(base->t3());
-    removeTetrahedronGrid(base);
 
 
     for(int qId = 0; qId < _ballQueue.size(); ++qId)
@@ -618,23 +622,10 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
 
                 if(intersects(v, tet))
                 {
-                    decltype(ball.insert(base->t0())) it;
-
-                    it = ball.insert(tet->t0());
-                    if(!it.second)
-                        ball.erase(it.first);
-
-                    it = ball.insert(tet->t1());
-                    if(!it.second)
-                        ball.erase(it.first);
-
-                    it = ball.insert(tet->t2());
-                    if(!it.second)
-                        ball.erase(it.first);
-
-                    it = ball.insert(tet->t3());
-                    if(!it.second)
-                        ball.erase(it.first);
+                    _ball.xOrTri(tet->t0());
+                    _ball.xOrTri(tet->t1());
+                    _ball.xOrTri(tet->t2());
+                    _ball.xOrTri(tet->t3());
 
 
                     Vertex* tv0 = &vert[tet->v[0]];
@@ -673,10 +664,13 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
     }
 }
 
-void Mesh::remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unordered_set<Triangle>& ball)
+void Mesh::remeshDelaunayBall(int vId)
 {
-    for(auto t : ball)
+    const std::vector<Triangle>& tris = _ball.gather();
+    int triCount = tris.size();
+    for(int i=0; i < triCount; ++i)
     {
+        const Triangle& t = tris[i];
         insertTetrahedronGrid(vId, t.v[0], t.v[1], t.v[2]);
     }
 }
@@ -770,6 +764,7 @@ void Mesh::tearDownGrid()
         vertex.tetList.clrTet();
     }
 
+    _ball.releaseMemoryPool();
     TetList::releaseMemoryPool();
     _releaseTetrahedronMemoryPool();
 
@@ -782,9 +777,10 @@ void Mesh::compileAdjacencyLists()
     neighbors.clear();
     neighbors.resize(vertCount());
 
-    for(auto& v : vert)
+    int vertCount = vert.size();
+    for(int i=0; i< vertCount; ++i)
     {
-        v.isBoundary = false;
+        vert[i].isBoundary = false;
     }
 
     int tetCount = tetra.size();

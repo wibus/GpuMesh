@@ -1,7 +1,6 @@
 #ifndef GPUMESH_MESH
 #define GPUMESH_MESH
 
-#include <unordered_set>
 #include <list>
 #include <vector>
 #include <memory>
@@ -187,20 +186,13 @@ struct Triangle
                v[2] == t.v[2];
     }
 
+    size_t hash() const
+    {
+        return v[2] * (1000001 + v[1] * (3 + v[0] * 1234567));
+    }
+
     int v[3];
 };
-
-namespace std
-{
-    template<>
-    struct hash<Triangle>
-    {
-        size_t operator() (const Triangle& t) const
-        {
-            return t.v[0] * (t.v[1] * 1000001 * (t.v[2] * 1234567 + 3));
-        }
-    };
-}
 
 struct Tetrahedron
 {
@@ -249,6 +241,125 @@ struct Tetrahedron
     // Data cache
     double circumRadius2;
     glm::dvec3 circumCenter;
+};
+
+struct TriSetNode
+{
+    TriSetNode(const Triangle& tri) :
+        tri(tri),
+        next(nullptr)
+    {
+    }
+
+    Triangle tri;
+    TriSetNode* next;
+};
+
+struct TriSet
+{
+    void clear()
+    {
+        _tris.clear();
+    }
+
+    void reset(size_t bucketCount)
+    {
+        gather();
+        _buckets.resize(bucketCount, nullptr);
+        clear();
+    }
+
+    inline void xOrTri(const Triangle& tri)
+    {
+        size_t hash = tri.hash();
+        hash %= _buckets.size();
+
+        TriSetNode* parent = nullptr;
+        TriSetNode* node = _buckets[hash];
+        while(node != nullptr)
+        {
+            if(node->tri == tri)
+            {
+                if(parent == nullptr)
+                    _buckets[hash] = node->next;
+                else
+                    parent->next = node->next;
+
+                _disposeNode(node);
+                return;
+            }
+
+            parent = node;
+            node = node->next;
+        }
+
+        node = _acquireNode(tri);
+        node->next = _buckets[hash];
+        _buckets[hash] = node;
+    }
+
+    inline const std::vector<Triangle>& gather()
+    {
+        size_t bucketCount = _buckets.size();
+        for(int i=0; i< bucketCount; ++i)
+        {
+            TriSetNode* node = _buckets[i];
+            _buckets[i] = nullptr;
+
+            while(node != nullptr)
+            {
+                _tris.push_back(node->tri);
+                _disposeNode(node);
+                node = node->next;
+            }
+        }
+
+        return _tris;
+    }
+
+    void releaseMemoryPool()
+    {
+        gather();
+
+        _tris.clear();
+        _tris.shrink_to_fit();
+
+        _buckets.clear();
+        _buckets.shrink_to_fit();
+
+
+        int nodeCount = _nodePool.size();
+        for(int i=0; i < nodeCount; ++i)
+            delete _nodePool[i];
+
+        _nodePool.clear();
+        _nodePool.shrink_to_fit();
+    }
+
+private:
+    inline static TriSetNode* _acquireNode(const Triangle& tri)
+    {
+        if(_nodePool.empty())
+        {
+            return new TriSetNode(tri);
+        }
+        else
+        {
+            TriSetNode* node = _nodePool.back();
+            _nodePool.pop_back();
+            node->tri = tri;
+            return node;
+        }
+    }
+
+    inline static void _disposeNode(TriSetNode* node)
+    {
+        _nodePool.push_back(node);
+    }
+
+    std::vector<Triangle> _tris;
+    std::vector<TriSetNode*> _buckets;
+    static std::vector<TriSetNode*> _nodePool;
 };
 
 struct GridCell
@@ -347,8 +458,8 @@ private:
     void insertCell(const glm::ivec3& cId);
     void insertVertexGrid(const glm::ivec3& cId, int vId);
     Tetrahedron* findBaseTetrahedron(const glm::ivec3& cId, int vId);
-    void findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Triangle>& ball);
-    void remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unordered_set<Triangle>& ball);
+    void findDelaunayBall(const glm::ivec3& cId, int vId);
+    void remeshDelaunayBall(int vId);
     void insertTetrahedronGrid(int v0, int v1, int v2, int v3);
     void removeTetrahedronGrid(Tetrahedron* tet);
     void makeTetrahedronPositive(Tetrahedron* tet);
@@ -368,7 +479,10 @@ private:
     // Algorithms's main structure (keep allocated memory)
     std::vector<std::pair<glm::ivec3, EDir>> _baseQueue;
     std::vector<Vertex*> _ballQueue;
+    TriSet _ball;
+
     int _currentVisitTime;
+
 
     // Memory pool
     inline static Tetrahedron* _acquireTetrahedron(int v0, int v1, int v2, int v3)
