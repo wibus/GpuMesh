@@ -50,7 +50,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(glm::pi<float>() / 6.0),
     _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
     _lightDistance(1.0),
-    _internalVertices(3000),
+    _internalVertices(3000000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -590,10 +590,10 @@ void GpuMeshCharacter::setupShaders()
 
 void GpuMeshCharacter::updateBuffers()
 {
-    vector<glm::dvec3> vertices;
-    vector<glm::dvec3> normals;
-    vector<glm::dvec3> edges;
-    vector<double> qualities;
+    vector<glm::vec3> vertices;
+    vector<glm::vec3> normals;
+    vector<glm::vec3> edges;
+    vector<float> qualities;
 
     _mesh.compileFacesAttributes(
                 _physicalCutPlaneEq,
@@ -668,22 +668,22 @@ void GpuMeshCharacter::resetCpuPipeline()
 
     glGenBuffers(1, &_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenBuffers(1, &_nbo);
     glBindBuffer(GL_ARRAY_BUFFER, _nbo);
-    glVertexAttribPointer(1, 3, GL_DOUBLE, GL_FALSE, 0, 0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenBuffers(1, &_ebo);
     glBindBuffer(GL_ARRAY_BUFFER, _ebo);
-    glVertexAttribPointer(2, 3, GL_DOUBLE, GL_FALSE, 0, 0);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenBuffers(1, &_qbo);
     glBindBuffer(GL_ARRAY_BUFFER, _qbo);
-    glVertexAttribPointer(3, 1, GL_DOUBLE, GL_FALSE, 0, 0);
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 

@@ -197,7 +197,7 @@ namespace std
     {
         size_t operator() (const Triangle& t) const
         {
-            return t.v[0] * (t.v[1] * 1000001 * (t.v[2] * 1000007 + 3));
+            return t.v[0] * (t.v[1] * 1000001 * (t.v[2] * 1234567 + 3));
         }
     };
 }
@@ -309,16 +309,16 @@ public:
 
     void compileFacesAttributes(
             const glm::dvec4& cutPlaneEq,
-            std::vector<glm::dvec3>& vertices,
-            std::vector<glm::dvec3>& normals,
-            std::vector<glm::dvec3>& triEdges,
-            std::vector<double>& tetQualities);
+            std::vector<glm::vec3>& vertices,
+            std::vector<glm::vec3>& normals,
+            std::vector<glm::vec3>& triEdges,
+            std::vector<float>& colors);
 
     void insertVertices(const std::vector<glm::dvec3>& vertices);
 
     int externalVertCount;
     std::vector<Vertex> vert;
-    std::list<Tetrahedron*> tetra;
+    std::vector<Tetrahedron*> tetra;
     std::vector<std::vector<int>> neighbors;
 
 
@@ -331,10 +331,10 @@ private:
     bool isExternalTetraHedron(Tetrahedron* tet);
     double tetrahedronQuality(Tetrahedron* tet);
     void pushTriangle(
-            std::vector<glm::dvec3>& vertices,
-            std::vector<glm::dvec3>& normals,
-            std::vector<glm::dvec3>& triEdges,
-            std::vector<double>& tetQualities,
+            std::vector<glm::vec3>& vertices,
+            std::vector<glm::vec3>& normals,
+            std::vector<glm::vec3>& triEdges,
+            std::vector<float>& tetQualities,
             const glm::dvec3& A,
             const glm::dvec3& B,
             const glm::dvec3& C,

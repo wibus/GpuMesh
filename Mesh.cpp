@@ -14,32 +14,34 @@ void Mesh::initialize(
         const std::vector<glm::dvec3>& boundingVertices,
         const std::vector<Tetrahedron>& boundingTetrahedras)
 {
-    vert.resize(boundingVertices.size());
-    externalVertCount = boundingVertices.size();
-    for(int i=0; i<vert.size(); ++i)
+    int vertCount = boundingVertices.size();
+    int tetCount = boundingTetrahedras.size();
+
+    vert.resize(vertCount);
+    externalVertCount = vertCount;
+    for(int i=0; i<vertCount; ++i)
     {
         vert[i] = Vertex(boundingVertices[i]);
     }
 
-    tetra.clear();
-    for(auto& t : boundingTetrahedras)
+    tetra.resize(tetCount);
+    for(int i=0; i<tetCount; ++i)
     {
-        Tetrahedron* tet = new Tetrahedron(t);
-        tetra.push_back(tet);
+        tetra[i] = new Tetrahedron(boundingTetrahedras[i]);
     }
 }
 
 void Mesh::compileFacesAttributes(
         const glm::dvec4& cutPlaneEq,
-        std::vector<glm::dvec3>& vertices,
-        std::vector<glm::dvec3>& normals,
-        std::vector<glm::dvec3>& triEdges,
-        std::vector<double>& tetQualities)
+        std::vector<glm::vec3>& vertices,
+        std::vector<glm::vec3>& normals,
+        std::vector<glm::vec3>& triEdges,
+        std::vector<float>& colors)
 {
     vertices.reserve(elemCount());
     normals.reserve(elemCount());
     triEdges.reserve(elemCount());
-    tetQualities.reserve(elemCount());
+    colors.reserve(elemCount());
 
     qualityCount = 0;
     qualityMean = 0;
@@ -48,8 +50,10 @@ void Mesh::compileFacesAttributes(
     glm::dvec3 cutNormal(cutPlaneEq);
     double cutDistance = cutPlaneEq.w;
 
-    for(const auto& tet : tetra)
+    int tetCount = tetra.size();
+    for(int i=0; i < tetCount; ++i)
     {
+        Tetrahedron* tet = tetra[i];
         if(isExternalTetraHedron(tet))
             continue;
 
@@ -75,13 +79,13 @@ void Mesh::compileFacesAttributes(
 
         double quality = tetrahedronQuality(tet);
 
-        pushTriangle(vertices, normals, triEdges, tetQualities,
+        pushTriangle(vertices, normals, triEdges, colors,
                      verts[0], verts[1], verts[2], norms[0], quality);
-        pushTriangle(vertices, normals, triEdges, tetQualities,
+        pushTriangle(vertices, normals, triEdges, colors,
                      verts[0], verts[2], verts[3], norms[1], quality);
-        pushTriangle(vertices, normals, triEdges, tetQualities,
+        pushTriangle(vertices, normals, triEdges, colors,
                      verts[0], verts[3], verts[1], norms[2], quality);
-        pushTriangle(vertices, normals, triEdges, tetQualities,
+        pushTriangle(vertices, normals, triEdges, colors,
                      verts[1], verts[3], verts[2], norms[3], quality);
 
 
@@ -155,33 +159,34 @@ double Mesh::tetrahedronQuality(Tetrahedron* tet)
 }
 
 void Mesh::pushTriangle(
-        std::vector<glm::dvec3>& vertices,
-        std::vector<glm::dvec3>& normals,
-        std::vector<glm::dvec3>& triEdges,
-        std::vector<double>& tetQualities,
+        std::vector<glm::vec3>& vertices,
+        std::vector<glm::vec3>& normals,
+        std::vector<glm::vec3>& triEdges,
+        std::vector<float>& tetQualities,
         const glm::dvec3& A,
         const glm::dvec3& B,
         const glm::dvec3& C,
         const glm::dvec3& n,
         double quality)
 {
-    const glm::dvec3 X_EDGE(1, 1, 0);
-    const glm::dvec3 Y_EDGE(0, 1, 1);
-    const glm::dvec3 Z_EDGE(1, 0, 1);
+    const glm::vec3 X_EDGE(1, 1, 0);
+    const glm::vec3 Y_EDGE(0, 1, 1);
+    const glm::vec3 Z_EDGE(1, 0, 1);
 
-    vertices.push_back(A);
-    normals.push_back(n);
+    vertices.push_back(glm::vec3(A));
+    vertices.push_back(glm::vec3(B));
+    vertices.push_back(glm::vec3(C));
+
+    normals.push_back(glm::vec3(n));
+    normals.push_back(glm::vec3(n));
+    normals.push_back(glm::vec3(n));
+
     triEdges.push_back(X_EDGE);
-    tetQualities.push_back(quality);
-
-    vertices.push_back(B);
-    normals.push_back(n);
     triEdges.push_back(Y_EDGE);
-    tetQualities.push_back(quality);
-
-    vertices.push_back(C);
-    normals.push_back(n);
     triEdges.push_back(Z_EDGE);
+
+    tetQualities.push_back(quality);
+    tetQualities.push_back(quality);
     tetQualities.push_back(quality);
 }
 
@@ -290,8 +295,10 @@ void Mesh::initializeGrid(int idStart, int idEnd)
     }
 
     // Put starting tetrahedrons in the first cell
-    for(auto tet : tetra)
+    int tetCount = tetra.size();
+    for(int i=0; i < tetCount; ++i)
     {
+        Tetrahedron* tet = tetra[i];
         insertTetrahedronGrid(
             tet->v[0],
             tet->v[1],
@@ -594,8 +601,6 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
     ball.insert(base->t3());
     removeTetrahedronGrid(base);
 
-    int hit = 0;
-    int miss = 0;
 
     for(int qId = 0; qId < _ballQueue.size(); ++qId)
     {
@@ -613,8 +618,6 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
 
                 if(intersects(v, tet))
                 {
-                    ++hit;
-
                     decltype(ball.insert(base->t0())) it;
 
                     it = ball.insert(tet->t0());
@@ -665,15 +668,9 @@ void Mesh::findDelaunayBall(int vId, Tetrahedron* base, std::unordered_set<Trian
 
                     removeTetrahedronGrid(tet);
                 }
-                else
-                {
-                    ++miss;
-                }
             }
         }
     }
-
-    cout << "(" << hit << ", " << miss << ")\t";
 }
 
 void Mesh::remeshDelaunayBall(const glm::ivec3& cId, int vId, const std::unordered_set<Triangle>& ball)
@@ -752,6 +749,7 @@ void Mesh::tearDownGrid()
 
     // Collect tetrahedrons
     int vertCount = vert.size();
+    tetra.reserve(vertCount * 7);
     for(int v=0; v < vertCount; ++v)
     {
         Vertex& vertex = vert[v];
@@ -789,8 +787,10 @@ void Mesh::compileAdjacencyLists()
         v.isBoundary = false;
     }
 
-    for(const auto& tet : tetra)
+    int tetCount = tetra.size();
+    for(int i=0; i < tetCount; ++i)
     {
+        Tetrahedron* tet = tetra[i];
         if(isExternalTetraHedron(tet))
         {
             vert[tet->v[0]].isBoundary = true;
