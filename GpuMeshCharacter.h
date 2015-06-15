@@ -9,7 +9,7 @@
 
 #include <Scaena/Play/Character.h>
 
-#include "Mesh.h"
+#include "DataStructures/Mesh.h"
 
 
 class GpuMeshCharacter :

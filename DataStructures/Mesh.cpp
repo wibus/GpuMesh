@@ -1,15 +1,36 @@
 #include "Mesh.h"
 
-#include <map>
+#include <algorithm>
 #include <iostream>
 
 using namespace std;
 
 
 
-std::vector<TriSetNode*> TriSet::_nodePool;
-std::vector<TetListNode*> TetList::_nodePool;
-std::vector<Tetrahedron*> Mesh::_tetPool;
+const glm::ivec3 DIR[DIR_COUNT] = {
+    glm::ivec3( 0,  0,  0),
+    glm::ivec3(-1,  0,  0), glm::ivec3(-1, -1,  0),
+    glm::ivec3( 0, -1,  0), glm::ivec3( 1, -1,  0),
+    glm::ivec3( 1,  0,  0), glm::ivec3( 1,  1,  0),
+    glm::ivec3( 0,  1,  0), glm::ivec3(-1,  1,  0),
+
+    glm::ivec3( 0,  0, -1),
+    glm::ivec3(-1,  0, -1), glm::ivec3(-1, -1, -1),
+    glm::ivec3( 0, -1, -1), glm::ivec3( 1, -1, -1),
+    glm::ivec3( 1,  0, -1), glm::ivec3( 1,  1, -1),
+    glm::ivec3( 0,  1, -1), glm::ivec3(-1,  1, -1)
+};
+
+
+unsigned int Mesh::vertCount() const
+{
+    return vert.size();
+}
+
+unsigned int Mesh::elemCount() const
+{
+    return tetra.size() * 12;
+}
 
 void Mesh::initialize(
         const std::vector<glm::dvec3>& boundingVertices,
@@ -678,7 +699,7 @@ void Mesh::remeshDelaunayBall(int vId)
 
 void Mesh::insertTetrahedronGrid(int v0, int v1, int v2, int v3)
 {
-    Tetrahedron* tet = _acquireTetrahedron(v0, v1, v2, v3);
+    Tetrahedron* tet = _tetPool.acquireTetrahedron(v0, v1, v2, v3);
     tet->visitTime = _currentVisitTime;
 
     // Literally insert in the grid and mesh
@@ -715,7 +736,7 @@ void Mesh::removeTetrahedronGrid(Tetrahedron* tet)
     vert[tet->v[1]].tetList.delTet(tet);
     vert[tet->v[2]].tetList.delTet(tet);
     vert[tet->v[3]].tetList.delTet(tet);
-    _disposeTetrahedron(tet);
+    _tetPool.disposeTetrahedron(tet);
 }
 
 void Mesh::makeTetrahedronPositive(Tetrahedron* tet)
@@ -742,6 +763,12 @@ void Mesh::tearDownGrid()
     // Clear grid
     grid.clear();
 
+    // Clear memory pools
+    _ball.releaseMemoryPool();
+    _tetPool.releaseMemoryPool();
+    TetList::releaseMemoryPool();
+
+
     // Collect tetrahedrons
     int vertCount = vert.size();
     tetra.reserve(vertCount * 7);
@@ -764,10 +791,6 @@ void Mesh::tearDownGrid()
 
         vertex.tetList.clrTet();
     }
-
-    _ball.releaseMemoryPool();
-    TetList::releaseMemoryPool();
-    _releaseTetrahedronMemoryPool();
 
     cout << "Tetrahedrons / Vertex = " <<
             tetra.size() / (double) vert.size() << endl;
@@ -829,3 +852,4 @@ void Mesh::compileAdjacencyLists()
         }
     }
 }
+

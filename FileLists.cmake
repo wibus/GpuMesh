@@ -1,18 +1,31 @@
 ## Headers ##
 
 # All the header files #
-SET(GpuMesh_HEADERS
-    ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h
-    ${GpuMesh_SRC_DIR}/Mesh.h)
+SET(GpuMesh_DATASTRUCTURES_HEADERS
+    ${GpuMesh_SRC_DIR}/DataStructures/Mesh.h
+    ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedron.h
+    ${GpuMesh_SRC_DIR}/DataStructures/TetList.h
+    ${GpuMesh_SRC_DIR}/DataStructures/TetPool.h
+    ${GpuMesh_SRC_DIR}/DataStructures/Triangle.h
+    ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h)
 
+SET(GpuMesh_HEADERS
+    ${GpuMesh_DATASTRUCTURES_HEADERS}
+    ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
 
 
 ## Sources ##
 
 # All the source files #
+SET(GpuMesh_DATASTRUCTURES_SOURCES
+    ${GpuMesh_SRC_DIR}/DataStructures/Mesh.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp)
+
 SET(GpuMesh_SOURCES
+    ${GpuMesh_DATASTRUCTURES_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp
-    ${GpuMesh_SRC_DIR}/Mesh.cpp
     ${GpuMesh_SRC_DIR}/main.cpp)
 
 
