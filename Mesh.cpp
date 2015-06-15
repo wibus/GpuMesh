@@ -259,6 +259,7 @@ void Mesh::initializeGrid(int idStart, int idEnd)
               << gridSize.y << "x"
               << gridSize.z << endl;
     std::cout << "Cell density: vert count/cell count = " <<
+                 (idEnd-idStart) << " / " << cellCount << " = " <<
                  (idEnd-idStart) / (double) cellCount << endl;
 
     // Reset visit time

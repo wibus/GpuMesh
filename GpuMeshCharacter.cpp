@@ -9,6 +9,9 @@
 #include <GLM/gtc/matrix_transform.hpp>
 
 #include <CellarWorkbench/Misc/Log.h>
+#include <CellarWorkbench/Image/Image.h>
+#include <CellarWorkbench/Image/ImageBank.h>
+#include <CellarWorkbench/GL/GlToolkit.h>
 
 #include <Scaena/Play/Play.h>
 #include <Scaena/Play/View.h>
@@ -36,21 +39,25 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _shadowFbo(0),
     _shadowDpt(0),
     _shadowTex(0),
-    _useLitShader(false),
+    _useBackdrop(true),
+    _backdropTex(0),
+    _backdropVao(0),
+    _backdropVbo(0),
+    _useLitShader(true),
     _shadowEnabled(true),
     _updateShadow(false),
     _shadowSize(1024, 1024),
     _camAzimuth(0),
     _camAltitude(0),
     _camDistance(6),
-    _isPhysicalCut(false),
+    _isPhysicalCut(true),
     _cutAzimuth(0),
     _cutAltitude(0),
     _cutDistance(0),
-    _lightAzimuth(glm::pi<float>() / 6.0),
-    _lightAltitude(glm::pi<float>() * 2.0 / 6.0),
+    _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
+    _lightAltitude(-glm::pi<float>() * 1.0 / 4.0),
     _lightDistance(1.0),
-    _internalVertices(3000000),
+    _internalVertices(1000),
     _useGpuPipeline(false),
     _processFinished(false),
     _stepId(0)
@@ -62,6 +69,8 @@ void GpuMeshCharacter::enterStage()
     setupShaders();
     resetCpuPipeline();
     resetGpuPipeline();
+
+    play().view()->camera3D()->registerObserver(*this);
 
     _processFinished = false;
     _stepId = 0;
@@ -149,6 +158,8 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
     glBindVertexArray(_vao);
     glBindTexture(GL_TEXTURE_2D, _shadowTex);
 
+
+    // Render shadow map
     if(_shadowEnabled && _updateShadow)
     {
         int viewport[4];
@@ -178,18 +189,40 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
         _updateShadow = false;
     }
 
-    glClearColor(0.93, 0.95, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
 
+    // Render background
+    if(_useBackdrop)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, _backdropTex);
+        glActiveTexture(GL_TEXTURE0);
+
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+
+        _backdropShader.pushProgram();
+        glBindVertexArray(_backdropVao);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(_vao);
+        _backdropShader.popProgram();
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+    }
+    else
+    {
+        glClearColor(0.93, 0.95, 1.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+
+    // Render mesh
     if(_useLitShader)
         _litShader.pushProgram();
     else
         _unlitShader.pushProgram();
-
     glDrawArrays(GL_TRIANGLES, 0, _buffElemCount);
-
     GlProgram::popProgram();
-
     glBindVertexArray(0);
 }
 
@@ -241,6 +274,46 @@ bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
                 updateBuffers();
             }
         }
+    }
+}
+
+void GpuMeshCharacter::notify(CameraMsg& msg)
+{
+    if(msg.change == CameraMsg::EChange::VIEWPORT)
+    {
+        const glm::ivec2& viewport = msg.camera.viewport();
+
+        // Camera projection
+        _camProj = glm::perspectiveFov(
+                glm::pi<float>() / 6,
+                (float) viewport.x,
+                (float) viewport.y,
+                0.1f,
+                12.0f);
+        moveCamera(_camAzimuth,
+                   _camAltitude,
+                   _camDistance);
+
+        // Background scale
+        glm::vec2 scale(1.0);
+        glm::vec2 viewportf(viewport);
+        glm::vec2 backSize(_backdropWidth, _backdropHeight);
+        if(glm::any(glm::greaterThan(viewportf, backSize)))
+        {
+            glm::vec2 ratio = viewportf / backSize;
+            if(ratio.x < ratio.y)
+                scale.x = 1.0f / ratio.y;
+            else
+                scale.y = 1.0f / ratio.x;
+        }
+        else
+            scale = viewportf / backSize;
+
+        _backdropShader.pushProgram();
+        _backdropShader.setVec2f("TexScale", scale);
+        _backdropShader.popProgram();
+
+        _updateShadow = true;
     }
 }
 
@@ -318,11 +391,20 @@ void GpuMeshCharacter::triangulateDomainCpu()
     std::vector<glm::dvec3> vertices;
 
 
-    //* Box distribution
+    /* Box distribution
     vertices.resize(_internalVertices);
 
-    for(int iv=0; iv<_internalVertices; ++iv)
-        vertices[iv] = glm::linearRand(cMin, cMax);
+    int surfCount = glm::sqrt(_internalVertices) * 10;
+    int padding = glm::pow(_internalVertices, 1/3.0);
+    for(int iv=0; iv < surfCount; ++iv)
+    {
+        glm::dvec3 val = glm::linearRand(cMin, cMax);
+        val[iv%3] = glm::mix(-1.0, 1.0, (double)(iv%2));
+        vertices[iv] = val;
+    }
+
+    for(int iv=surfCount; iv<_internalVertices; ++iv)
+        vertices[iv] = glm::linearRand(cMin, cMax) * (1.0 - 1.0 / padding);
 
     startTime = chrono::high_resolution_clock::now();
     _mesh.insertVertices(vertices);
@@ -332,9 +414,7 @@ void GpuMeshCharacter::triangulateDomainCpu()
     cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
     //*/
 
-    exit(0);
-
-    /* Sphere distribution
+    //* Sphere distribution
     vertices.resize(_internalVertices);
 
     for(int iv=0; iv<_internalVertices; ++iv)
@@ -348,6 +428,48 @@ void GpuMeshCharacter::triangulateDomainCpu()
     cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
     //*/
 
+
+    /* Paraboloid cap
+    int stackCount = glm::pow(_internalVertices/2.3, 1/3.0);
+    glm::dvec3 minPerturb(-0.1 / stackCount);
+    glm::dvec3 maxPerturb(0.1 / stackCount);
+    for(int s=0; s <= stackCount; ++s)
+    {
+        double sProg = s / (double) stackCount;
+        double height = sProg;
+        vertices.push_back(glm::dvec3(0, 0, height));
+
+        for(int r=1; r <= s; ++r)
+        {
+            double rProg = r / (double) s;
+            double ringRadius = r / (double) stackCount;
+            double ringHeight = height * (1.0 - rProg*rProg);
+            double ringVertCount = stackCount * glm::sqrt(1.0 + r);
+            for(int v=0; v < ringVertCount; ++v)
+            {
+                double vProg = v / (double) ringVertCount;
+                double vAngle = glm::pi<double>() * vProg * 2;
+                vertices.push_back(glm::dvec3(
+                    glm::cos(vAngle) * ringRadius,
+                    glm::sin(vAngle) * ringRadius * 0.75,
+                    ringHeight)
+                                   +
+                    glm::linearRand(minPerturb, maxPerturb)
+                     * (1.1 - rProg) * (1.1 - sProg));
+            }
+        }
+    }
+
+    startTime = chrono::high_resolution_clock::now();
+    _mesh.insertVertices(vertices);
+    endTime = chrono::high_resolution_clock::now();
+
+    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
+    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
+    //*/
+
+
+    //exit(0);
     updateBuffers();
 }
 
@@ -432,7 +554,7 @@ void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
     const float PI = glm::pi<float>();
     _camAzimuth = glm::mod(azimuth, 2 * PI);
     _camAltitude = glm::clamp(altitude, -PI * 0.48f, PI * 0.48f);
-    _camDistance = glm::clamp(distance, 0.05f, 7.0f);
+    _camDistance = glm::clamp(distance, 0.05f, 10.0f);
 
     glm::vec3 from = glm::vec3(
             glm::rotate(glm::mat4(), _camAzimuth, glm::vec3(0, 0, 1)) *
@@ -440,15 +562,17 @@ void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
             glm::vec4(_camDistance, 0.0f, 0.0f, 1.0f));
 
     glm::mat4 viewMatrix = glm::lookAt(from, nullVec, upVec);
+    glm::mat4 pvMat = _camProj * viewMatrix;
+    glm::vec3 camPos(from);
 
     _litShader.pushProgram();
-    _litShader.setMat4f("PVmat", _camProj * viewMatrix);
-    _litShader.setVec3f("CameraPosition", glm::vec3(from));
+    _litShader.setMat4f("PVmat", pvMat);
+    _litShader.setVec3f("CameraPosition", camPos);
     _litShader.popProgram();
 
     _unlitShader.pushProgram();
-    _unlitShader.setMat4f("PVmat", _camProj * viewMatrix);
-    _unlitShader.setVec3f("CameraPosition", glm::vec3(from));
+    _unlitShader.setMat4f("PVmat", pvMat);
+    _unlitShader.setVec3f("CameraPosition", camPos);
     _unlitShader.popProgram();
 }
 
@@ -465,41 +589,31 @@ void GpuMeshCharacter::moveCutPlane(float azimuth, float altitude, float distanc
             glm::vec4(1.0, 0.0f, 0.0f, 1.0f);
     cutPlaneEq.w = _cutDistance;
 
-    glm::dvec4 disabledCut(0, 0, 0, 0);
+    glm::dvec4 virtualCut(0, 0, 0, 0);
 
     if(_isPhysicalCut)
     {
-        _litShader.pushProgram();
-        _litShader.setVec4f("CutPlaneEq", disabledCut);
-        _litShader.popProgram();
-
-        _unlitShader.pushProgram();
-        _unlitShader.setVec4f("CutPlaneEq",disabledCut);
-        _unlitShader.popProgram();
-
-        _shadowShader.pushProgram();
-        _shadowShader.setVec4f("CutPlaneEq", disabledCut);
-        _shadowShader.popProgram();
-
         _physicalCutPlaneEq = cutPlaneEq;
         updateBuffers();
     }
     else
     {
-        _litShader.pushProgram();
-        _litShader.setVec4f("CutPlaneEq", cutPlaneEq);
-        _litShader.popProgram();
-
-        _unlitShader.pushProgram();
-        _unlitShader.setVec4f("CutPlaneEq", cutPlaneEq);
-        _unlitShader.popProgram();
-
-        _shadowShader.pushProgram();
-        _shadowShader.setVec4f("CutPlaneEq", cutPlaneEq);
-        _shadowShader.popProgram();
-
-        _physicalCutPlaneEq = disabledCut;
+        _physicalCutPlaneEq = virtualCut;
+        virtualCut = cutPlaneEq;
     }
+
+
+    _litShader.pushProgram();
+    _litShader.setVec4f("CutPlaneEq", virtualCut);
+    _litShader.popProgram();
+
+    _unlitShader.pushProgram();
+    _unlitShader.setVec4f("CutPlaneEq",virtualCut);
+    _unlitShader.popProgram();
+
+    _shadowShader.pushProgram();
+    _shadowShader.setVec4f("CutPlaneEq", virtualCut);
+    _shadowShader.popProgram();
 
     _updateShadow = true;
 }
@@ -517,7 +631,7 @@ void GpuMeshCharacter::moveLight(float azimuth, float altitude, float distance)
             glm::rotate(glm::mat4(), _lightAltitude, glm::vec3(0, 1, 0)) *
             glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-    glm::mat4 view = glm::lookAt(from, nullVec, upVec);
+    glm::mat4 view = glm::lookAt(nullVec, -from , upVec);
     glm::mat4 pvMat = _shadowProj * view;
     glm::mat4 pvShadow =
             glm::scale(glm::mat4(), glm::vec3(0.5)) *
@@ -562,15 +676,14 @@ void GpuMeshCharacter::setupShaders()
     _shadowShader.pushProgram();
     _shadowShader.popProgram();
 
+    _backdropShader.addShader(GL_VERTEX_SHADER, ":/shaders/Backdrop.vert");
+    _backdropShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Backdrop.frag");
+    _backdropShader.link();
+    _backdropShader.pushProgram();
+    _backdropShader.setInt("Backdrop", 1);
+    _backdropShader.setVec2f("TexScale", glm::vec2(1.0f));
+    _backdropShader.popProgram();
 
-    // Setup projection
-    glm::dvec2 viewport = glm::dvec2(play().view()->viewport());
-    _camProj = glm::perspectiveFov(
-            glm::pi<double>() / 6,
-            viewport.x,
-            viewport.y,
-            0.1,
-            10.0);
 
     // Set shadow projection view matrix
     _shadowProj = glm::ortho(
@@ -602,6 +715,8 @@ void GpuMeshCharacter::updateBuffers()
                 edges,
                 qualities);
 
+    glBindVertexArray(_vao);
+
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     GLuint verticesSize = vertices.size() * sizeof(decltype(vertices.front()));
     glBufferData(GL_ARRAY_BUFFER, verticesSize, vertices.data(), GL_STATIC_DRAW);
@@ -626,6 +741,8 @@ void GpuMeshCharacter::updateBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(3);
 
+    glBindVertexArray(0);
+
     _buffElemCount = vertices.size();
 }
 
@@ -648,6 +765,15 @@ void GpuMeshCharacter::resetCpuPipeline()
 
     glDeleteBuffers(1, &_qbo);
     _qbo = 0;
+
+    GlToolkit::deleteTextureId(_backdropTex);
+    _backdropTex = 0;
+
+    glDeleteBuffers(1, &_backdropVao);
+    _backdropVao = 0;
+
+    glDeleteBuffers(1, &_backdropVbo);
+    _backdropVbo = 0;
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteRenderbuffers(1, &_shadowDpt);
@@ -686,17 +812,20 @@ void GpuMeshCharacter::resetCpuPipeline()
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    glBindVertexArray(0);
+
 
     // Shadow casting
     glGenTextures(1, &_shadowTex);
     glBindTexture(GL_TEXTURE_2D, _shadowTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, _shadowSize.x, _shadowSize.y,
                  0, GL_RG, GL_UNSIGNED_INT, NULL);
     glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glGenRenderbuffers(1, &_shadowDpt);
     glBindRenderbuffer(GL_RENDERBUFFER, _shadowDpt);
@@ -713,6 +842,28 @@ void GpuMeshCharacter::resetCpuPipeline()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Backdrop
+    GLfloat backTriangle[] = {
+        -1.0f, -1.0f,
+         3.0f, -1.0f,
+        -1.0f,  3.0f
+    };
+
+    Image& backdrop =  getImageBank().getImage("resources/textures/Backdrop.png");
+    _backdropTex = GlToolkit::genTextureId(backdrop);
+    _backdropWidth = backdrop.width();
+    _backdropHeight = backdrop.height();
+
+    glGenVertexArrays(1, &_backdropVao);
+    glBindVertexArray(_backdropVao);
+
+    glGenBuffers(1, &_backdropVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _backdropVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(backTriangle), backTriangle, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
 }

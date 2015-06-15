@@ -26,7 +26,7 @@ int main(int argc, char** argv) try
     
     std::shared_ptr<QGlWidgetView> view(
         new QGlWidgetView("MainView"));
-    view->setGlWindowSpace(1280, 960);
+    view->setGlWindowSpace(1280, 720);
     view->centerOnScreen();
     view->show();
     

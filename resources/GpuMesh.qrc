@@ -6,5 +6,7 @@
         <file>shaders/LitMesh.vert</file>
         <file>shaders/UnlitMesh.frag</file>
         <file>shaders/UnlitMesh.vert</file>
+        <file>shaders/Backdrop.frag</file>
+        <file>shaders/Backdrop.vert</file>
     </qresource>
 </RCC>

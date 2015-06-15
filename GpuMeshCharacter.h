@@ -4,13 +4,17 @@
 #include <GL3/gl3w.h>
 
 #include <CellarWorkbench/GL/GlProgram.h>
+#include <CellarWorkbench/Camera/Camera.h>
+#include <CellarWorkbench/DesignPattern/SpecificObserver.h>
 
 #include <Scaena/Play/Character.h>
 
 #include "Mesh.h"
 
 
-class GpuMeshCharacter : public scaena::Character
+class GpuMeshCharacter :
+        public scaena::Character,
+        public cellar::SpecificObserver<cellar::CameraMsg>
 {
 public:
     GpuMeshCharacter();
@@ -22,6 +26,8 @@ public:
     virtual void exitStage() override;
 
     virtual bool keyPressEvent(const scaena::KeyboardEvent &event) override;
+
+    virtual void notify(cellar::CameraMsg& msg) override;
 
 protected:
     // CPU pipleine
@@ -47,6 +53,8 @@ protected:
 protected:
     cellar::GlProgram _litShader;
     cellar::GlProgram _unlitShader;
+    cellar::GlProgram _shadowShader;
+    cellar::GlProgram _backdropShader;
     int _buffElemCount;
     GLuint _vao;
     GLuint _vbo;
@@ -54,12 +62,18 @@ protected:
     GLuint _ebo;
     GLuint _qbo;
 
+    bool _useBackdrop;
+    int _backdropWidth;
+    int _backdropHeight;
+    GLuint _backdropTex;
+    GLuint _backdropVao;
+    GLuint _backdropVbo;
+
     bool _useLitShader;
     bool _shadowEnabled;
     bool _updateShadow;
     glm::mat4 _shadowProj;
     glm::ivec2 _shadowSize;
-    cellar::GlProgram _shadowShader;
     GLuint _shadowFbo;
     GLuint _shadowDpt;
     GLuint _shadowTex;
@@ -79,9 +93,9 @@ protected:
     float _lightAltitude;
     float _lightDistance;
 
-
     Mesh _mesh;
     int _internalVertices;
+
 
 private:
     bool _useGpuPipeline;

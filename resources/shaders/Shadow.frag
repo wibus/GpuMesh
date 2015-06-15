@@ -10,7 +10,6 @@ void main(void)
         discard;
 
     float depth = gl_FragCoord.z;
-    float variance = depth * depth;
+    float variance = depth*depth;
     FragColor = vec4(depth, variance, 0, 1.0);
 }
-

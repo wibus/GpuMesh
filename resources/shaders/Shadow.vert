@@ -13,4 +13,3 @@ void main(void)
     gl_Position = PVmat * vec4(position, 1);
     dist = max(dot(position, CutPlaneEq.xyz) - CutPlaneEq.w, 0);
 }
-

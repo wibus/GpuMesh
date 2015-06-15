@@ -25,7 +25,9 @@ SET(GpuMesh_SHADERS
     ${GpuMesh_SRC_DIR}/resources/shaders/UnlitMesh.vert
     ${GpuMesh_SRC_DIR}/resources/shaders/UnlitMesh.frag
     ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.frag)
+    ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.frag
+    ${GpuMesh_SRC_DIR}/resources/shaders/Backdrop.vert
+    ${GpuMesh_SRC_DIR}/resources/shaders/Backdrop.frag)
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES
