@@ -1,11 +1,9 @@
 #include "GpuMeshCharacter.h"
 
 #include <sstream>
-#include <chrono>
 #include <iostream>
 
 #include <GLM/glm.hpp>
-#include <GLM/gtc/random.hpp>
 #include <GLM/gtc/matrix_transform.hpp>
 
 #include <CellarWorkbench/Misc/Log.h>
@@ -18,6 +16,8 @@
 #include <Scaena/StageManagement/Event/KeyboardEvent.h>
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
+
+#include "Meshers/CpuMesher.h"
 
 using namespace std;
 using namespace cellar;
@@ -57,23 +57,17 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 1.0 / 4.0),
     _lightDistance(1.0),
-    _internalVertices(1000),
-    _useGpuPipeline(false),
-    _processFinished(false),
-    _stepId(0)
+    _mesher(new CpuMesher(_mesh, 1e6))
 {
 }
 
 void GpuMeshCharacter::enterStage()
 {
     setupShaders();
-    resetCpuPipeline();
-    resetGpuPipeline();
-
+    resetResources();
     play().view()->camera3D()->registerObserver(*this);
 
-    _processFinished = false;
-    _stepId = 0;
+    _mesher->resetPipeline();
 }
 
 void GpuMeshCharacter::beginStep(const StageTime &time)
@@ -81,21 +75,16 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
     std::shared_ptr<SynchronousKeyboard> keyboard = play().synchronousKeyboard();
     std::shared_ptr<SynchronousMouse> mouse = play().synchronousMouse();
 
-    if(!_processFinished)
+    if(!_mesher->processFinished())
     {
         auto startTime = chrono::high_resolution_clock::now();
 
-        if(_useGpuPipeline)
-        {
-            processGpuPipeline();
-        }
-        else
-        {
-            processCpuPipeline();
-        }
+        _mesher->processPipeline();
 
         auto endTime = chrono::high_resolution_clock::now();
         auto dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
+
+        updateBuffers();
 
         stringstream ss;
         ss << "Step took " << dt.count() / 1000.0 << "ms to execute";
@@ -232,11 +221,11 @@ void GpuMeshCharacter::exitStage()
 
 bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
 {
-    if(_processFinished)
+    if(_mesher->processFinished())
     {
         if(event.getAscii()  == 'S')
         {
-            _processFinished = false;
+            _mesher->scheduleSmoothing();
         }
         else if(event.getAscii() == 'Z')
         {
@@ -317,237 +306,6 @@ void GpuMeshCharacter::notify(CameraMsg& msg)
     }
 }
 
-void GpuMeshCharacter::processCpuPipeline()
-{
-    switch(_stepId)
-    {
-    case 0:
-        printStep(_stepId, "Generation of boundary surfaces");
-        genBoundaryMeshesCpu();
-        ++_stepId;
-        break;
-
-    case 1:
-        printStep(_stepId, "Triangulation of internal domain");
-        triangulateDomainCpu();
-
-        _processFinished = true;
-        ++_stepId;
-        break;
-
-    case 2:
-        printStep(_stepId, "Computing adjacency lists");
-        computeAdjacencyCpu();
-        ++_stepId;
-        break;
-
-    case 3:
-        printStep(_stepId, "Smoothing of the internal domain");
-        smoothMeshCpu();
-
-        _processFinished = true;
-        break;
-
-    default:
-        _processFinished = true;
-        getLog().postMessage(new Message(
-            'E', false, "Invalid step", "GpuMeshCharacter"));
-    }
-}
-
-void GpuMeshCharacter::genBoundaryMeshesCpu()
-{
-    double a = 20.0;
-
-    vector<glm::dvec3> vertices;
-    vertices.push_back(glm::dvec3(-a, -a,  a));
-    vertices.push_back(glm::dvec3( a, -a,  a));
-    vertices.push_back(glm::dvec3(-a,  a,  a));
-    vertices.push_back(glm::dvec3( a,  a,  a));
-    vertices.push_back(glm::dvec3(-a, -a, -a));
-    vertices.push_back(glm::dvec3( a, -a, -a));
-    vertices.push_back(glm::dvec3(-a,  a, -a));
-    vertices.push_back(glm::dvec3( a,  a, -a));
-
-    std::vector<Tetrahedron> tetrahedron;
-    tetrahedron.push_back(Tetrahedron(0, 1, 2, 4));
-    tetrahedron.push_back(Tetrahedron(5, 4, 7, 1));
-    tetrahedron.push_back(Tetrahedron(3, 1, 7, 2));
-    tetrahedron.push_back(Tetrahedron(6, 2, 7, 4));
-    tetrahedron.push_back(Tetrahedron(4, 1, 2, 7));
-
-    _mesh.initialize(vertices, tetrahedron);
-    updateBuffers();
-}
-
-void GpuMeshCharacter::triangulateDomainCpu()
-{
-    chrono::high_resolution_clock::time_point startTime, endTime;
-    chrono::microseconds dt;
-
-    double sphereRadius = 1.0;
-    glm::dvec3 cMin(-sphereRadius);
-    glm::dvec3 cMax( sphereRadius);
-    std::vector<glm::dvec3> vertices;
-
-
-    /* Box distribution
-    vertices.resize(_internalVertices);
-
-    int surfCount = glm::sqrt(_internalVertices) * 10;
-    int padding = glm::pow(_internalVertices, 1/3.0);
-    for(int iv=0; iv < surfCount; ++iv)
-    {
-        glm::dvec3 val = glm::linearRand(cMin, cMax);
-        val[iv%3] = glm::mix(-1.0, 1.0, (double)(iv%2));
-        vertices[iv] = val;
-    }
-
-    for(int iv=surfCount; iv<_internalVertices; ++iv)
-        vertices[iv] = glm::linearRand(cMin, cMax) * (1.0 - 1.0 / padding);
-
-    startTime = chrono::high_resolution_clock::now();
-    _mesh.insertVertices(vertices);
-    endTime = chrono::high_resolution_clock::now();
-
-    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
-    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
-    //*/
-
-    //* Sphere distribution
-    vertices.resize(_internalVertices);
-
-    for(int iv=0; iv<_internalVertices; ++iv)
-        vertices[iv] = glm::ballRand(sphereRadius * 1.41);
-
-    startTime = chrono::high_resolution_clock::now();
-    _mesh.insertVertices(vertices);
-    endTime = chrono::high_resolution_clock::now();
-
-    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
-    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
-    //*/
-
-
-    /* Paraboloid cap
-    int stackCount = glm::pow(_internalVertices/2.3, 1/3.0);
-    glm::dvec3 minPerturb(-0.1 / stackCount);
-    glm::dvec3 maxPerturb(0.1 / stackCount);
-    for(int s=0; s <= stackCount; ++s)
-    {
-        double sProg = s / (double) stackCount;
-        double height = sProg;
-        vertices.push_back(glm::dvec3(0, 0, height));
-
-        for(int r=1; r <= s; ++r)
-        {
-            double rProg = r / (double) s;
-            double ringRadius = r / (double) stackCount;
-            double ringHeight = height * (1.0 - rProg*rProg);
-            double ringVertCount = stackCount * glm::sqrt(1.0 + r);
-            for(int v=0; v < ringVertCount; ++v)
-            {
-                double vProg = v / (double) ringVertCount;
-                double vAngle = glm::pi<double>() * vProg * 2;
-                vertices.push_back(glm::dvec3(
-                    glm::cos(vAngle) * ringRadius,
-                    glm::sin(vAngle) * ringRadius * 0.75,
-                    ringHeight)
-                                   +
-                    glm::linearRand(minPerturb, maxPerturb)
-                     * (1.1 - rProg) * (1.1 - sProg));
-            }
-        }
-    }
-
-    startTime = chrono::high_resolution_clock::now();
-    _mesh.insertVertices(vertices);
-    endTime = chrono::high_resolution_clock::now();
-
-    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
-    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
-    //*/
-
-
-    //exit(0);
-    updateBuffers();
-}
-
-void GpuMeshCharacter::computeAdjacencyCpu()
-{
-    _mesh.compileAdjacencyLists();
-}
-
-void GpuMeshCharacter::smoothMeshCpu()
-{
-    const glm::dvec3 MOVE_FACTOR(0.5);
-    const double SMOOTH_AMELIORATION_THRESHOLD = 0.001;
-    double dQuality = 1.0;
-    int smoothPass = 0;
-
-    while(dQuality > SMOOTH_AMELIORATION_THRESHOLD)
-    {
-        cout << "Smooth pass number" << smoothPass << endl;
-        cout << "Input mesh quality mean: " << _mesh.qualityMean << endl;
-        cout << "Input mesh quality std dev: " << _mesh.qualityVar << endl;
-        double lastQualityMean = _mesh.qualityMean;
-
-        int vertCount = _mesh.vertCount();
-        int firstVert = _mesh.externalVertCount;
-        for(int v = firstVert; v < vertCount; ++v)
-        {
-            if(_mesh.vert[v].isBoundary)
-                continue;
-
-            double weightSum = 0.0;
-            glm::dvec3 barycenter;
-
-            glm::dvec3& vertPos = _mesh.vert[v].p;
-            for(auto& n : _mesh.neighbors[v])
-            {
-                const glm::dvec3& neighborPos = _mesh.vert[n].p;
-                glm::dvec3 dist = vertPos - neighborPos;
-                double weight = glm::log(glm::dot(dist, dist) + 1);
-
-                barycenter = (barycenter * weightSum + neighborPos * weight)
-                              / (weightSum + weight);
-                weightSum += weight;
-            }
-
-            vertPos = glm::mix(vertPos, barycenter, MOVE_FACTOR);
-        }
-
-        updateBuffers();
-
-        dQuality = _mesh.qualityMean - lastQualityMean;
-        ++smoothPass;
-    }
-
-    cout << "#Smoothing finished" << endl;
-    cout << "Final mesh quality mean: " << _mesh.qualityMean << endl;
-    cout << "Final mesh quality std dev: " << _mesh.qualityVar << endl << endl;
-}
-
-
-// GPU Pipeline
-void GpuMeshCharacter::resetGpuPipeline()
-{
-
-}
-
-void GpuMeshCharacter::processGpuPipeline()
-{
-    processCpuPipeline();
-}
-
-
-// Common management
-void GpuMeshCharacter::printStep(int step, const std::string& stepName)
-{
-    stringstream ss;
-    ss << "Step " << step << ": Executing " << stepName;
-    getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
-}
 
 void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
 {
@@ -703,6 +461,23 @@ void GpuMeshCharacter::setupShaders()
 
 void GpuMeshCharacter::updateBuffers()
 {
+    // Clear old vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _nbo);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _ebo);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _qbo);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+    // Fetch new vertex attributes
     vector<glm::vec3> vertices;
     vector<glm::vec3> normals;
     vector<glm::vec3> edges;
@@ -714,41 +489,40 @@ void GpuMeshCharacter::updateBuffers()
                 normals,
                 edges,
                 qualities);
+    _buffElemCount = vertices.size();
 
-    glBindVertexArray(_vao);
 
+    // Send new vertex attribute
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     GLuint verticesSize = vertices.size() * sizeof(decltype(vertices.front()));
     glBufferData(GL_ARRAY_BUFFER, verticesSize, vertices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(0);
+    vertices.clear();
+    vertices.shrink_to_fit();
 
     glBindBuffer(GL_ARRAY_BUFFER, _nbo);
     GLuint normalsSize = normals.size() * sizeof(decltype(normals.front()));
     glBufferData(GL_ARRAY_BUFFER, normalsSize, normals.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(1);
+    normals.clear();
+    normals.shrink_to_fit();
 
     glBindBuffer(GL_ARRAY_BUFFER, _ebo);
     GLuint edgesSize = edges.size() * sizeof(decltype(edges.front()));
     glBufferData(GL_ARRAY_BUFFER, edgesSize, edges.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(2);
+    edges.clear();
+    edges.shrink_to_fit();
 
     glBindBuffer(GL_ARRAY_BUFFER, _qbo);
     GLuint qualitiesSize = qualities.size() * sizeof(decltype(qualities.front()));
     glBufferData(GL_ARRAY_BUFFER, qualitiesSize, qualities.data(), GL_STATIC_DRAW);
+    qualities.clear();
+    qualities.shrink_to_fit();
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(3);
-
-    glBindVertexArray(0);
-
-    _buffElemCount = vertices.size();
 }
 
 
 // CPU Pipeline
-void GpuMeshCharacter::resetCpuPipeline()
+void GpuMeshCharacter::resetResources()
 {
     // Delete old buffers
     glDeleteVertexArrays(1, &_vao);
@@ -796,21 +570,25 @@ void GpuMeshCharacter::resetCpuPipeline()
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glEnableVertexAttribArray(0);
 
     glGenBuffers(1, &_nbo);
     glBindBuffer(GL_ARRAY_BUFFER, _nbo);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glEnableVertexAttribArray(1);
 
     glGenBuffers(1, &_ebo);
     glBindBuffer(GL_ARRAY_BUFFER, _ebo);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glEnableVertexAttribArray(2);
 
     glGenBuffers(1, &_qbo);
     glBindBuffer(GL_ARRAY_BUFFER, _qbo);
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glEnableVertexAttribArray(3);
 
     glBindVertexArray(0);
 

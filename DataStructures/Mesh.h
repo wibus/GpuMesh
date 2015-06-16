@@ -64,6 +64,9 @@ public:
             const std::vector<Tetrahedron>& boundingTetrahedras);
 
     void compileAdjacencyLists();
+    void compileTetrahedronQuality(
+            double& qualityMean,
+            double& qualityVar);
 
     void compileFacesAttributes(
             const glm::dvec4& cutPlaneEq,
@@ -72,17 +75,13 @@ public:
             std::vector<glm::vec3>& triEdges,
             std::vector<float>& colors);
 
+
     void insertVertices(const std::vector<glm::dvec3>& vertices);
 
     int externalVertCount;
     std::vector<Vertex> vert;
     std::vector<Tetrahedron*> tetra;
     std::vector<std::vector<int>> neighbors;
-
-
-    int qualityCount;
-    double qualityMean;
-    double qualityVar;
 
 
 private:

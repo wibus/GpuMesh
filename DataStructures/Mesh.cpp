@@ -53,6 +53,27 @@ void Mesh::initialize(
     }
 }
 
+void Mesh::compileTetrahedronQuality(
+        double& qualityMean,
+        double& qualityVar)
+{
+    qualityMean = 0.0;
+    qualityVar = 0.0;
+
+    int tetCount = tetra.size();
+    for(int i=0; i < tetCount; ++i)
+    {
+        Tetrahedron* tet = tetra[i];
+        double quality = tetrahedronQuality(tet);
+
+        // Quality statistics
+        qualityMean = (qualityMean * i + quality) / (i + 1);
+        double qualityMeanDist = qualityMean - quality;
+        double qualityMeanDist2 = qualityMeanDist*qualityMeanDist;
+        qualityVar = (qualityVar * 1 + qualityMeanDist2) / (1 + 1);
+    }
+}
+
 void Mesh::compileFacesAttributes(
         const glm::dvec4& cutPlaneEq,
         std::vector<glm::vec3>& vertices,
@@ -60,15 +81,6 @@ void Mesh::compileFacesAttributes(
         std::vector<glm::vec3>& triEdges,
         std::vector<float>& colors)
 {
-    vertices.reserve(elemCount());
-    normals.reserve(elemCount());
-    triEdges.reserve(elemCount());
-    colors.reserve(elemCount());
-
-    qualityCount = 0;
-    qualityMean = 0;
-    qualityVar = 0;
-
     glm::dvec3 cutNormal(cutPlaneEq);
     double cutDistance = cutPlaneEq.w;
 
@@ -109,16 +121,6 @@ void Mesh::compileFacesAttributes(
                      verts[0], verts[3], verts[1], norms[2], quality);
         pushTriangle(vertices, normals, triEdges, colors,
                      verts[1], verts[3], verts[2], norms[3], quality);
-
-
-        // Quality statistics
-        qualityMean = (qualityMean * qualityCount + quality) /
-                      (qualityCount + 1);
-        double qualityMeanDist = qualityMean - quality;
-        double qualityMeanDist2 = qualityMeanDist*qualityMeanDist;
-        qualityVar = (qualityVar * qualityCount + qualityMeanDist2) /
-                     (qualityCount + 1);
-        ++qualityCount;
     }
 }
 
@@ -800,6 +802,7 @@ void Mesh::compileAdjacencyLists()
 {
     neighbors.clear();
     neighbors.resize(vertCount());
+    neighbors.shrink_to_fit();
 
     int vertCount = vert.size();
     for(int i=0; i< vertCount; ++i)
@@ -850,6 +853,11 @@ void Mesh::compileAdjacencyLists()
                 neighbors[secondVert].push_back(firstVert);
             }
         }
+    }
+
+    for(int i=0; i< vertCount; ++i)
+    {
+        neighbors[i].shrink_to_fit();
     }
 }
 

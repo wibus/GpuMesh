@@ -9,8 +9,15 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Triangle.h
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h)
 
+
+SET(GpuMesh_MESHERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.h
+    ${GpuMesh_SRC_DIR}/Meshers/CpuMesher.h
+    ${GpuMesh_SRC_DIR}/Meshers/GpuMesher.h)
+
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
+    ${GpuMesh_MESHERS_HEADERS}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
 
 
@@ -23,8 +30,14 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp)
 
+SET(GpuMesh_MESHERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.cpp
+    ${GpuMesh_SRC_DIR}/Meshers/CpuMesher.cpp
+    ${GpuMesh_SRC_DIR}/Meshers/GpuMesher.cpp)
+
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
+    ${GpuMesh_MESHERS_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp
     ${GpuMesh_SRC_DIR}/main.cpp)
 

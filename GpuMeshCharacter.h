@@ -10,6 +10,7 @@
 #include <Scaena/Play/Character.h>
 
 #include "DataStructures/Mesh.h"
+#include "Meshers/AbstractMesher.h"
 
 
 class GpuMeshCharacter :
@@ -30,25 +31,13 @@ public:
     virtual void notify(cellar::CameraMsg& msg) override;
 
 protected:
-    // CPU pipleine
-    virtual void resetCpuPipeline();
-    virtual void processCpuPipeline();
-    virtual void genBoundaryMeshesCpu();
-    virtual void triangulateDomainCpu();
-    virtual void computeAdjacencyCpu();
-    virtual void smoothMeshCpu();
-
-    // GPU pipeline
-    virtual void resetGpuPipeline();
-    virtual void processGpuPipeline();
-
-
-    virtual void printStep(int step, const std::string& stepName);
     virtual void moveCamera(float azimuth, float altitude, float distance);
     virtual void moveCutPlane(float azimuth, float altitude, float distance);
     virtual void moveLight(float azimuth, float altitude, float distance);
+
     virtual void setupShaders();
     virtual void updateBuffers();
+    virtual void resetResources();
 
 protected:
     cellar::GlProgram _litShader;
@@ -94,13 +83,10 @@ protected:
     float _lightDistance;
 
     Mesh _mesh;
-    int _internalVertices;
 
 
 private:
-    bool _useGpuPipeline;
-    bool _processFinished;
-    int _stepId;
+    std::unique_ptr<AbstractMesher> _mesher;
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;
