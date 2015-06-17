@@ -53,7 +53,11 @@ SET(GpuMesh_SHADERS
     ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.vert
     ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.frag
     ${GpuMesh_SRC_DIR}/resources/shaders/Backdrop.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/Backdrop.frag)
+    ${GpuMesh_SRC_DIR}/resources/shaders/Backdrop.frag
+    ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlur.vert
+    ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlur.frag
+    ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlend.vert
+    ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlend.frag)
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES

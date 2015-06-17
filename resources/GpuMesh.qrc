@@ -8,5 +8,9 @@
         <file>shaders/UnlitMesh.vert</file>
         <file>shaders/Backdrop.frag</file>
         <file>shaders/Backdrop.vert</file>
+        <file>shaders/BloomBlur.frag</file>
+        <file>shaders/BloomBlur.vert</file>
+        <file>shaders/BloomBlend.frag</file>
+        <file>shaders/BloomBlend.vert</file>
     </qresource>
 </RCC>
