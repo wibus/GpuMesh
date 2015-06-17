@@ -39,15 +39,14 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _shadowFbo(0),
     _shadowDpt(0),
     _shadowTex(0),
-    _bloomBaseFbo(0),
-    _bloomBlurFbo(0),
+    _bloomFbo(0),
     _bloomDpt(0),
     _bloomBaseTex(0),
     _bloomBlurTex(0),
     _useBackdrop(true),
     _fullscreenVao(0),
     _fullscreenVbo(0),
-    _fullscreenTex(0),
+    _filterTex(0),
     _lightingEnabled(true),
     _updateShadow(false),
     _shadowSize(1024, 1024),
@@ -157,25 +156,27 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _bloomBaseTex);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _fullscreenTex);
+    glBindTexture(GL_TEXTURE_2D, _filterTex);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _shadowTex);
 
     if(_lightingEnabled)
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, _bloomBaseFbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, _bloomFbo);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             _bloomBaseTex,  0);
         glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     // Render background
     glBindVertexArray(_fullscreenVao);
-    _backdropShader.pushProgram();
+    _gradientShader.pushProgram();
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
-    _backdropShader.popProgram();
+    _gradientShader.popProgram();
     glBindVertexArray(_meshVao);
 
 
@@ -200,7 +201,7 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
             glEnableVertexAttribArray(3);
             _shadowShader.popProgram();
 
-            glBindFramebuffer(GL_FRAMEBUFFER, _bloomBaseFbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, _bloomFbo);
             glViewport(viewport[0], viewport[1],
                        viewport[2], viewport[3]);
 
@@ -230,18 +231,40 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
 
         glBindVertexArray(_fullscreenVao);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, _bloomBlurFbo);
-        glViewport(viewport[0], viewport[1],
-                   viewport[2], viewport[3]);
 
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             _bloomBlurTex,  0);
         _bloomBlurShader.pushProgram();
         glDrawArrays(GL_TRIANGLES, 0, 3);
         _bloomBlurShader.popProgram();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             _bloomBaseTex,  0);
         _bloomBlendShader.pushProgram();
         glDrawArrays(GL_TRIANGLES, 0, 3);
         _bloomBlendShader.popProgram();
+
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             _bloomBlurTex,  0);
+        _screenShader.pushProgram();
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        _screenShader.popProgram();
+
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             _bloomBaseTex,  0);
+        _brushShader.pushProgram();
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        _brushShader.popProgram();
+
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        _grainShader.pushProgram();
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        _grainShader.popProgram();
+
 
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
@@ -302,16 +325,16 @@ void GpuMeshCharacter::notify(CameraMsg& msg)
 
         // Background scale
         glm::vec2 viewportf(viewport);
-        glm::vec2 backSize(_backdropWidth, _backdropHeight);
+        glm::vec2 backSize(_filterWidth, _filterHeight);
         glm::vec2 scale = viewportf / backSize;
         if(scale.x > 1.0)
             scale /= scale.x;
         if(scale.y > 1.0)
             scale /= scale.y;
 
-        _backdropShader.pushProgram();
-        _backdropShader.setVec2f("TexScale", scale);
-        _backdropShader.popProgram();
+        _gradientShader.pushProgram();
+        _gradientShader.setVec2f("TexScale", scale);
+        _gradientShader.popProgram();
 
         _updateShadow = true;
 
@@ -441,6 +464,20 @@ void GpuMeshCharacter::moveLight(float azimuth, float altitude, float distance)
 void GpuMeshCharacter::setupShaders()
 {
     // Compile shaders
+    _gradientShader.addShader(GL_VERTEX_SHADER, ":/shaders/Filter.vert");
+    _gradientShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Gradient.frag");
+    _gradientShader.link();
+    _gradientShader.pushProgram();
+    _gradientShader.setInt("Filter", 1);
+    _gradientShader.setVec2f("TexScale", glm::vec2(1.0f));
+    _gradientShader.popProgram();
+
+    _shadowShader.addShader(GL_VERTEX_SHADER, ":/shaders/Shadow.vert");
+    _shadowShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Shadow.frag");
+    _shadowShader.link();
+    _shadowShader.pushProgram();
+    _shadowShader.popProgram();
+
     _litShader.addShader(GL_VERTEX_SHADER, ":/shaders/LitMesh.vert");
     _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/LitMesh.frag");
     _litShader.link();
@@ -454,34 +491,47 @@ void GpuMeshCharacter::setupShaders()
     _unlitShader.pushProgram();
     _unlitShader.popProgram();
 
-    _shadowShader.addShader(GL_VERTEX_SHADER, ":/shaders/Shadow.vert");
-    _shadowShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Shadow.frag");
-    _shadowShader.link();
-    _shadowShader.pushProgram();
-    _shadowShader.popProgram();
-
-    _backdropShader.addShader(GL_VERTEX_SHADER, ":/shaders/Backdrop.vert");
-    _backdropShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Backdrop.frag");
-    _backdropShader.link();
-    _backdropShader.pushProgram();
-    _backdropShader.setInt("Backdrop", 1);
-    _backdropShader.setVec2f("TexScale", glm::vec2(1.0f));
-    _backdropShader.popProgram();
-
-    _bloomBlurShader.addShader(GL_VERTEX_SHADER, ":/shaders/BloomBlur.vert");
+    _bloomBlurShader.addShader(GL_VERTEX_SHADER, ":/shaders/Bloom.vert");
     _bloomBlurShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/BloomBlur.frag");
     _bloomBlurShader.link();
     _bloomBlurShader.pushProgram();
     _bloomBlurShader.setInt("BloomBase", 2);
     _bloomBlurShader.popProgram();
 
-    _bloomBlendShader.addShader(GL_VERTEX_SHADER, ":/shaders/BloomBlend.vert");
+    _bloomBlendShader.addShader(GL_VERTEX_SHADER, ":/shaders/Bloom.vert");
     _bloomBlendShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/BloomBlend.frag");
     _bloomBlendShader.link();
     _bloomBlendShader.pushProgram();
     _bloomBlendShader.setInt("BloomBase", 2);
     _bloomBlendShader.setInt("BloomBlur", 3);
     _bloomBlendShader.popProgram();
+
+    _screenShader.addShader(GL_VERTEX_SHADER, ":/shaders/Filter.vert");
+    _screenShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Screen.frag");
+    _screenShader.link();
+    _screenShader.pushProgram();
+    _screenShader.setInt("Base", 2);
+    _screenShader.setInt("Filter", 1);
+    _screenShader.setVec2f("TexScale", glm::vec2(1.0f));
+    _screenShader.popProgram();
+
+    _brushShader.addShader(GL_VERTEX_SHADER, ":/shaders/Filter.vert");
+    _brushShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Brush.frag");
+    _brushShader.link();
+    _brushShader.pushProgram();
+    _brushShader.setInt("Base", 3);
+    _brushShader.setInt("Filter", 1);
+    _brushShader.setVec2f("TexScale", glm::vec2(1.0f));
+    _brushShader.popProgram();
+
+    _grainShader.addShader(GL_VERTEX_SHADER, ":/shaders/Filter.vert");
+    _grainShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/Grain.frag");
+    _grainShader.link();
+    _grainShader.pushProgram();
+    _grainShader.setInt("Base", 2);
+    _grainShader.setInt("Filter", 1);
+    _grainShader.setVec2f("TexScale", glm::vec2(1.0f));
+    _grainShader.popProgram();
 
 
     // Set shadow projection view matrix
@@ -522,7 +572,7 @@ void GpuMeshCharacter::updateBuffers()
     vector<glm::vec3> vertices;
     vector<glm::vec3> normals;
     vector<glm::vec3> edges;
-    vector<float> qualities;
+    vector<unsigned char> qualities;
 
     _mesh.compileFacesAttributes(
                 _physicalCutPlaneEq,
@@ -581,8 +631,8 @@ void GpuMeshCharacter::resetResources()
     glDeleteBuffers(1, &_qbo);
     _qbo = 0;
 
-    GlToolkit::deleteTextureId(_fullscreenTex);
-    _fullscreenTex = 0;
+    GlToolkit::deleteTextureId(_filterTex);
+    _filterTex = 0;
 
     glDeleteBuffers(1, &_fullscreenVao);
     _fullscreenVao = 0;
@@ -603,12 +653,8 @@ void GpuMeshCharacter::resetResources()
     glDeleteRenderbuffers(1, &_bloomDpt);
     _bloomDpt = 0;
 
-    glDeleteFramebuffers(1, &_bloomBaseFbo);
-    _bloomBaseFbo = 0;
-
-    glDeleteFramebuffers(1, &_bloomBlurFbo);
-    _bloomBlurFbo = 0;
-
+    glDeleteFramebuffers(1, &_bloomFbo);
+    _bloomFbo = 0;
 
     glDeleteTextures(1, &_bloomBaseTex);
     _bloomBaseTex = 0;
@@ -644,7 +690,7 @@ void GpuMeshCharacter::resetResources()
 
     glGenBuffers(1, &_qbo);
     glBindBuffer(GL_ARRAY_BUFFER, _qbo);
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(3, 1, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(3);
 
@@ -696,13 +742,6 @@ void GpuMeshCharacter::resetResources()
                  0, GL_RGB, GL_UNSIGNED_INT, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    glGenFramebuffers(1, &_bloomBaseFbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, _bloomBaseFbo);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _bloomBaseTex, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _bloomDpt);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
     glGenTextures(1, &_bloomBlurTex);
     glBindTexture(GL_TEXTURE_2D, _bloomBlurTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -713,11 +752,12 @@ void GpuMeshCharacter::resetResources()
                  0, GL_RGB, GL_UNSIGNED_INT, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    glGenFramebuffers(1, &_bloomBlurFbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, _bloomBlurFbo);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _bloomBlurTex, 0);
+    glGenFramebuffers(1, &_bloomFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, _bloomFbo);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _bloomBaseTex, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _bloomDpt);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
 
 
@@ -729,10 +769,10 @@ void GpuMeshCharacter::resetResources()
         -1.0f,  3.0f
     };
 
-    Image& backdrop =  getImageBank().getImage("resources/textures/Backdrop_NoScreen.png");
-    _fullscreenTex = GlToolkit::genTextureId(backdrop);
-    _backdropWidth = backdrop.width();
-    _backdropHeight = backdrop.height();
+    Image& filterTex =  getImageBank().getImage("resources/textures/Filter.png");
+    _filterTex = GlToolkit::genTextureId(filterTex);
+    _filterWidth = filterTex.width();
+    _filterHeight = filterTex.height();
 
     glGenVertexArrays(1, &_fullscreenVao);
     glBindVertexArray(_fullscreenVao);

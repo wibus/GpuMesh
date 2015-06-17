@@ -73,7 +73,7 @@ public:
             std::vector<glm::vec3>& vertices,
             std::vector<glm::vec3>& normals,
             std::vector<glm::vec3>& triEdges,
-            std::vector<float>& colors);
+            std::vector<unsigned char>& qualities);
 
 
     void insertVertices(const std::vector<glm::dvec3>& vertices);
@@ -91,7 +91,7 @@ private:
             std::vector<glm::vec3>& vertices,
             std::vector<glm::vec3>& normals,
             std::vector<glm::vec3>& triEdges,
-            std::vector<float>& tetQualities,
+            std::vector<unsigned char>& qualities,
             const glm::dvec3& A,
             const glm::dvec3& B,
             const glm::dvec3& C,

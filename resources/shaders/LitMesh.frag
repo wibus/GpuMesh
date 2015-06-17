@@ -15,9 +15,8 @@ layout(location = 0) out vec4 FragColor;
 
 
 const float MAT_SHINE = 40.0;
-const vec3 LIGHT_COLOR = vec3(1);
-const vec3 LIGHT_DIRECT = vec3(0.55);
-const vec3 LIGHT_AMBIANT = vec3(0.2);
+const vec3 LIGHT_DIFFUSE = vec3(0.6);
+const vec3 LIGHT_AMBIANT = vec3(0.3);
 const vec3 LIGHT_SPEC = vec3(1.0, 0.9, 0.7);
 const float DEPTH_MIN_VAR = 0.05;
 
@@ -51,8 +50,7 @@ float chebyshevUpperBound(in vec3 l)
 
 vec3 diffuse(in vec3 n)
 {
-    float directLighting = max(dot(-LightDirection, n), 0.0) * LIGHT_DIRECT;
-    return LIGHT_COLOR * directLighting;
+    return  LIGHT_DIFFUSE * max(dot(-LightDirection, n), 0.0);
 }
 
 vec3 specular(in vec3 p, in vec3 n)

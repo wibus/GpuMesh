@@ -74,12 +74,11 @@ void Mesh::compileTetrahedronQuality(
     }
 }
 
-void Mesh::compileFacesAttributes(
-        const glm::dvec4& cutPlaneEq,
+void Mesh::compileFacesAttributes(const glm::dvec4& cutPlaneEq,
         std::vector<glm::vec3>& vertices,
         std::vector<glm::vec3>& normals,
         std::vector<glm::vec3>& triEdges,
-        std::vector<float>& colors)
+        std::vector<unsigned char>& qualities)
 {
     glm::dvec3 cutNormal(cutPlaneEq);
     double cutDistance = cutPlaneEq.w;
@@ -113,13 +112,13 @@ void Mesh::compileFacesAttributes(
 
         double quality = tetrahedronQuality(tet);
 
-        pushTriangle(vertices, normals, triEdges, colors,
+        pushTriangle(vertices, normals, triEdges, qualities,
                      verts[0], verts[1], verts[2], norms[0], quality);
-        pushTriangle(vertices, normals, triEdges, colors,
+        pushTriangle(vertices, normals, triEdges, qualities,
                      verts[0], verts[2], verts[3], norms[1], quality);
-        pushTriangle(vertices, normals, triEdges, colors,
+        pushTriangle(vertices, normals, triEdges, qualities,
                      verts[0], verts[3], verts[1], norms[2], quality);
-        pushTriangle(vertices, normals, triEdges, colors,
+        pushTriangle(vertices, normals, triEdges, qualities,
                      verts[1], verts[3], verts[2], norms[3], quality);
     }
 }
@@ -182,11 +181,10 @@ double Mesh::tetrahedronQuality(Tetrahedron* tet)
     return (4.89897948557) * R / maxLen;
 }
 
-void Mesh::pushTriangle(
-        std::vector<glm::vec3>& vertices,
+void Mesh::pushTriangle(std::vector<glm::vec3>& vertices,
         std::vector<glm::vec3>& normals,
         std::vector<glm::vec3>& triEdges,
-        std::vector<float>& tetQualities,
+        std::vector<unsigned char>& qualities,
         const glm::dvec3& A,
         const glm::dvec3& B,
         const glm::dvec3& C,
@@ -209,9 +207,9 @@ void Mesh::pushTriangle(
     triEdges.push_back(Y_EDGE);
     triEdges.push_back(Z_EDGE);
 
-    tetQualities.push_back(quality);
-    tetQualities.push_back(quality);
-    tetQualities.push_back(quality);
+    qualities.push_back(quality * 255);
+    qualities.push_back(quality * 255);
+    qualities.push_back(quality * 255);
 }
 
 bool Mesh::intersects(const glm::dvec3& v, Tetrahedron* tet)

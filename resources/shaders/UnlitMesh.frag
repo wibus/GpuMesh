@@ -12,7 +12,7 @@ in float dist;
 layout(location = 0) out vec4 FragColor;
 
 
-const vec3 LIGHT_DIRECT = vec3(0.7);
+const vec3 LIGHT_DIFFUSE = vec3(0.6);
 const vec3 LIGHT_AMBIANT = vec3(0.3);
 
 
@@ -30,7 +30,7 @@ vec3 bold(in vec3 e)
 
 vec3 diffuse(in vec3 n)
 {
-    return LIGHT_DIRECT * (dot(-LightDirection, n) + 1.0) / 2.0;
+    return  LIGHT_DIFFUSE * max(dot(-LightDirection, n), 0.0);
 }
 
 void main(void)

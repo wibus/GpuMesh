@@ -43,9 +43,12 @@ protected:
     cellar::GlProgram _litShader;
     cellar::GlProgram _unlitShader;
     cellar::GlProgram _shadowShader;
-    cellar::GlProgram _backdropShader;
     cellar::GlProgram _bloomBlurShader;
     cellar::GlProgram _bloomBlendShader;
+    cellar::GlProgram _gradientShader;
+    cellar::GlProgram _screenShader;
+    cellar::GlProgram _brushShader;
+    cellar::GlProgram _grainShader;
     int _buffElemCount;
     GLuint _meshVao;
     GLuint _vbo;
@@ -54,11 +57,11 @@ protected:
     GLuint _qbo;
 
     bool _useBackdrop;
-    int _backdropWidth;
-    int _backdropHeight;
+    int _filterWidth;
+    int _filterHeight;
     GLuint _fullscreenVao;
     GLuint _fullscreenVbo;
-    GLuint _fullscreenTex;
+    GLuint _filterTex;
 
     bool _lightingEnabled;
     bool _updateShadow;
@@ -67,11 +70,10 @@ protected:
     GLuint _shadowFbo;
     GLuint _shadowDpt;
     GLuint _shadowTex;
-    GLuint _bloomBaseFbo;
-    GLuint _bloomBlurFbo;
+    GLuint _bloomFbo;
+    GLuint _bloomDpt;
     GLuint _bloomBaseTex;
     GLuint _bloomBlurTex;
-    GLuint _bloomDpt;
 
     glm::mat4 _camProj;
     float _camAzimuth;
