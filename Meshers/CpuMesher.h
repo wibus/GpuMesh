@@ -4,19 +4,25 @@
 #include "AbstractMesher.h"
 
 
+class Adjacency;
+
+
 class CpuMesher : public AbstractMesher
 {
 public:
     CpuMesher(Mesh& mesh, unsigned int vertCount);
-    virtual ~CpuMesher();
+    virtual ~CpuMesher() = 0;
 
 
 protected:
+    virtual void computeVertexLocations();
+    virtual void clearVertexLocations();
     virtual void smoothMesh() override;
 
 
-private:
-
+protected:
+    bool _locationsComputed;
+    std::vector<Adjacency> _adjacency;
 };
 
 #endif // GPUMESH_CPUMESHER

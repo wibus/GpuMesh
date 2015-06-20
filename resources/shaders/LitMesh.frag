@@ -30,7 +30,12 @@ vec3 lut(in float q)
 
 vec3 bold(in vec3 e)
 {
-    return vec3(!any(greaterThan(e, vec3(0.99))));
+    const float THRESHOLD = 0.99;
+    const float SMOOTH_WIDTH = 0.004;
+    return vec3(1.0 - smoothstep(
+        THRESHOLD - SMOOTH_WIDTH,
+        THRESHOLD + SMOOTH_WIDTH,
+        max(max(e.x, e.y), e.z)));
 }
 
 float chebyshevUpperBound(in vec3 l)

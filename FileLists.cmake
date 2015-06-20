@@ -13,6 +13,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
 SET(GpuMesh_MESHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.h
     ${GpuMesh_SRC_DIR}/Meshers/CpuMesher.h
+    ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.h
     ${GpuMesh_SRC_DIR}/Meshers/GpuMesher.h)
 
 SET(GpuMesh_HEADERS
@@ -33,6 +34,7 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
 SET(GpuMesh_MESHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.cpp
     ${GpuMesh_SRC_DIR}/Meshers/CpuMesher.cpp
+    ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.cpp
     ${GpuMesh_SRC_DIR}/Meshers/GpuMesher.cpp)
 
 SET(GpuMesh_SOURCES

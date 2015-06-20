@@ -17,7 +17,7 @@
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 
-#include "Meshers/CpuMesher.h"
+#include "Meshers/CpuDelaunayMesher.h"
 
 using namespace std;
 using namespace cellar;
@@ -60,7 +60,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 1.0 / 4.0),
     _lightDistance(1.0),
-    _mesher(new CpuMesher(_mesh, 1e4))
+    _mesher(new CpuDelaunayMesher(_mesh, 1e4))
 {
 }
 
@@ -336,6 +336,18 @@ void GpuMeshCharacter::notify(CameraMsg& msg)
         _gradientShader.setVec2f("TexScale", scale);
         _gradientShader.popProgram();
 
+        _screenShader.pushProgram();
+        _screenShader.setVec2f("TexScale", scale);
+        _screenShader.popProgram();
+
+        _brushShader.pushProgram();
+        _brushShader.setVec2f("TexScale", scale);
+        _brushShader.popProgram();
+
+        _grainShader.pushProgram();
+        _grainShader.setVec2f("TexScale", scale);
+        _grainShader.popProgram();
+
         _updateShadow = true;
 
         // Resize bloom buffers
@@ -570,8 +582,8 @@ void GpuMeshCharacter::updateBuffers()
 
     // Fetch new vertex attributes
     vector<glm::vec3> vertices;
-    vector<glm::vec3> normals;
-    vector<glm::vec3> edges;
+    vector<signed char> normals;
+    vector<unsigned char> edges;
     vector<unsigned char> qualities;
 
     _mesh.compileFacesAttributes(
@@ -580,6 +592,7 @@ void GpuMeshCharacter::updateBuffers()
                 normals,
                 edges,
                 qualities);
+
     _buffElemCount = vertices.size();
 
 
@@ -678,13 +691,13 @@ void GpuMeshCharacter::resetResources()
 
     glGenBuffers(1, &_nbo);
     glBindBuffer(GL_ARRAY_BUFFER, _nbo);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(1, 3, GL_BYTE, GL_TRUE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(1);
 
     glGenBuffers(1, &_ebo);
     glBindBuffer(GL_ARRAY_BUFFER, _ebo);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(2, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(2);
 

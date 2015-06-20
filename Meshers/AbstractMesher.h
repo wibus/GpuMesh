@@ -10,7 +10,7 @@ class AbstractMesher
 {
 public:
     AbstractMesher(Mesh& mesh, unsigned int vertCount);
-    virtual ~AbstractMesher();
+    virtual ~AbstractMesher() = 0;
 
     bool processFinished() const;
 
@@ -20,19 +20,17 @@ public:
 
 
 protected:
-    virtual void genBoundaryMeshes();
+    virtual void printStep(int step, const std::string& stepName);
     virtual void triangulateDomain();
-    virtual void computeAdjacency();
     virtual void smoothMesh();
 
-    virtual void printStep(int step, const std::string& stepName);
 
 protected:
     Mesh& _mesh;
     unsigned int _vertCount;
 
-    bool _processFinished;
     int _stepId;
+    bool _processFinished;
 };
 
 #endif // GPUMESH_ABSTRACTMESHER
