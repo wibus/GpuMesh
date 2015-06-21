@@ -241,10 +241,10 @@ void CpuDelaunayMesher::insertVertices()
 void CpuDelaunayMesher::initializeGrid(int idStart, int idEnd)
 {
     // Compute dimensions
-    const int VERT_PER_CELL = 5;
+    const double VERT_PER_CELL = 5.0;
     int vCount = idEnd - idStart;
-    int sideLen = (int) glm::pow(vCount / VERT_PER_CELL, 1/3.0);
-    int height = vCount / (sideLen * sideLen) / VERT_PER_CELL;
+    int sideLen = (int) glm::ceil(glm::pow(vCount / VERT_PER_CELL, 1/3.0));
+    int height = (int) glm::ceil(vCount / (sideLen * sideLen * VERT_PER_CELL) );
     gridSize = glm::ivec3(sideLen, sideLen, height);
     int cellCount = gridSize.x*gridSize.y*gridSize.z;
     std::cout << "Grid size: "
@@ -732,8 +732,9 @@ void CpuDelaunayMesher::tearDownGrid()
     for(int i = _externalVertCount; i < vertCount; ++i)
     {
         Vertex& vertex = vert[i];
+        MeshVert& meshVert = _mesh.vert[i-_externalVertCount];
 
-        _mesh.vert[i-_externalVertCount] = glm::vec4(vertex.p, 0.0);
+        meshVert.p = vertex.p;
 
         TetListNode* node = vertex.tetList.head;
         while(node != nullptr)
@@ -744,24 +745,25 @@ void CpuDelaunayMesher::tearDownGrid()
                 tet->visitTime = _currentVisitTime;
                 makeTetrahedronPositive(tet);
 
-                glm::ivec4 tetV(
+                MeshTet meshTet(
                     tet->v[0] - _externalVertCount,
                     tet->v[1] - _externalVertCount,
                     tet->v[2] - _externalVertCount,
                     tet->v[3] - _externalVertCount);
 
-                if(tetV[0] < 0 || tetV[1] < 0 || tetV[2] < 0 || tetV[3] < 0)
+                if(meshTet[0] < 0 || meshTet[1] < 0 ||
+                   meshTet[2] < 0 || meshTet[3] < 0)
                 {
                     // It's a bounding tetrahedron
-                    if(tetV[0] >= 0) _mesh.vert[tetV[0]].w = 1.0;
-                    if(tetV[1] >= 0) _mesh.vert[tetV[1]].w = 1.0;
-                    if(tetV[2] >= 0) _mesh.vert[tetV[2]].w = 1.0;
-                    if(tetV[3] >= 0) _mesh.vert[tetV[3]].w = 1.0;
+                    if(meshTet[0] >= 0) _mesh.vert[meshTet[0]].boundary = true;
+                    if(meshTet[1] >= 0) _mesh.vert[meshTet[1]].boundary = true;
+                    if(meshTet[2] >= 0) _mesh.vert[meshTet[2]].boundary = true;
+                    if(meshTet[3] >= 0) _mesh.vert[meshTet[3]].boundary = true;
                 }
                 else
                 {
                     // It's a real tetrahedron
-                    _mesh.tetra.push_back(tetV);
+                    _mesh.tetra.push_back(meshTet);
                 }
 
                 // Tetrahedrons are not directly deleted

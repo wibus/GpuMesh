@@ -8,19 +8,40 @@ using namespace std;
 
 
 
+const MeshTri MeshTet::faces[MeshTet::FACE_COUNT] = {
+    MeshTri(0, 1, 2),
+    MeshTri(0, 2, 3),
+    MeshTri(0, 3, 1),
+    MeshTri(1, 3, 2)
+};
 
+const MeshTri MeshPen::faces[MeshPen::FACE_COUNT] = {
+    MeshTri(0, 2, 1), // Z neg face 0
+    MeshTri(1, 2, 3), // Z neg face 1
+    MeshTri(0, 1, 4), // Y neg face 0
+    MeshTri(1, 5, 4), // Y neg face 1
+    MeshTri(2, 4, 3), // Y pos face 0
+    MeshTri(3, 4, 5), // Y pos face 1
+    MeshTri(0, 4, 2), // YZ neg face
+    MeshTri(1, 3, 5)  // YZ pos face
+};
 
-unsigned int Mesh::vertCount() const
-{
-    return vert.size();
-}
+const MeshTri MeshHex::faces[MeshHex::FACE_COUNT] = {
+    MeshTri(0, 2, 1), // Z neg face 0
+    MeshTri(1, 2, 3), // Z pos face 1
+    MeshTri(4, 5, 6), // Z pos face 0
+    MeshTri(5, 7, 6), // Z pos face 1
+    MeshTri(0, 1, 4), // Y neg face 0
+    MeshTri(1, 5, 4), // Y neg face 1
+    MeshTri(2, 7, 3), // Y pos face 0
+    MeshTri(2, 6, 7), // Y pos face 1
+    MeshTri(0, 4, 2), // X neg face 0
+    MeshTri(2, 4, 6), // X neg face 1
+    MeshTri(1, 3, 7), // X pos face 0
+    MeshTri(1, 7, 5), // X pos face 1
+};
 
-unsigned int Mesh::elemCount() const
-{
-    return tetra.size() * 12;
-}
-
-double Mesh::tetrahedronQuality(const glm::ivec4& tet)
+double Mesh::tetrahedronQuality(const MeshTet& tet)
 {
     glm::dvec3 A(vert[tet[0]]);
     glm::dvec3 B(vert[tet[1]]);
@@ -70,7 +91,18 @@ double Mesh::tetrahedronQuality(const glm::ivec4& tet)
     return (4.89897948557) * R / maxLen;
 }
 
-void Mesh::compileTetrahedronQuality(
+
+double Mesh::pentahedronQuality(const MeshPen& pen)
+{
+    return 1;
+}
+
+double Mesh::hexahedronQuality(const MeshHex& hex)
+{
+    return 1;
+}
+
+void Mesh::compileElementQuality(
         double& qualityMean,
         double& qualityVar)
 {
@@ -80,7 +112,7 @@ void Mesh::compileTetrahedronQuality(
     int tetCount = tetra.size();
     for(int i=0; i < tetCount; ++i)
     {
-        const glm::ivec4& tet = tetra[i];
+        const MeshTet& tet = tetra[i];
         double quality = tetrahedronQuality(tet);
 
         // Quality statistics
@@ -101,16 +133,18 @@ void Mesh::compileFacesAttributes(
     glm::dvec3 cutNormal(cutPlaneEq);
     double cutDistance = cutPlaneEq.w;
 
+
+    // Tetrahedrons
     int tetCount = tetra.size();
     for(int i=0; i < tetCount; ++i)
     {
-        const glm::ivec4& tet = tetra[i];
+        const MeshTet& tet = tetra[i];
 
         glm::dvec3 verts[] = {
-            glm::vec3(vert[tet[0]]),
-            glm::vec3(vert[tet[1]]),
-            glm::vec3(vert[tet[2]]),
-            glm::vec3(vert[tet[3]])
+            glm::dvec3(vert[tet[0]]),
+            glm::dvec3(vert[tet[1]]),
+            glm::dvec3(vert[tet[2]]),
+            glm::dvec3(vert[tet[3]])
         };
 
         if(glm::dot(verts[0], cutNormal) - cutDistance > 0.0 ||
@@ -119,23 +153,103 @@ void Mesh::compileFacesAttributes(
            glm::dot(verts[3], cutNormal) - cutDistance > 0.0)
             continue;
 
-        glm::dvec3 norms[] = {
-            glm::normalize(glm::cross(verts[1] - verts[0], verts[2] - verts[1])),
-            glm::normalize(glm::cross(verts[2] - verts[0], verts[3] - verts[2])),
-            glm::normalize(glm::cross(verts[3] - verts[0], verts[1] - verts[3])),
-            glm::normalize(glm::cross(verts[3] - verts[1], verts[2] - verts[3])),
-        };
-
         double quality = tetrahedronQuality(tet);
 
-        pushTriangle(vertices, normals, triEdges, qualities,
-                     verts[0], verts[1], verts[2], norms[0], quality);
-        pushTriangle(vertices, normals, triEdges, qualities,
-                     verts[0], verts[2], verts[3], norms[1], quality);
-        pushTriangle(vertices, normals, triEdges, qualities,
-                     verts[0], verts[3], verts[1], norms[2], quality);
-        pushTriangle(vertices, normals, triEdges, qualities,
-                     verts[1], verts[3], verts[2], norms[3], quality);
+
+        for(int f=0; f < MeshTet::FACE_COUNT; ++f)
+        {
+            const MeshTri& tri = MeshTet::faces[f];
+            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+            pushTriangle(vertices, normals, triEdges, qualities,
+                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                         normal, quality);
+        }
+    }
+
+
+    // Pentahedrons
+    int penCount = penta.size();
+    for(int i=0; i < penCount; ++i)
+    {
+        const MeshPen& pen = penta[i];
+
+        glm::dvec3 verts[] = {
+            glm::dvec3(vert[pen[0]]),
+            glm::dvec3(vert[pen[1]]),
+            glm::dvec3(vert[pen[2]]),
+            glm::dvec3(vert[pen[3]]),
+            glm::dvec3(vert[pen[4]]),
+            glm::dvec3(vert[pen[5]])
+        };
+
+        if(glm::dot(verts[0], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[1], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[2], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[3], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[4], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[5], cutNormal) - cutDistance > 0.0)
+            continue;
+
+
+        double quality = pentahedronQuality(pen);
+
+
+        for(int f=0; f < MeshPen::FACE_COUNT; ++f)
+        {
+            const MeshTri& tri = MeshPen::faces[f];
+            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+            pushTriangle(vertices, normals, triEdges, qualities,
+                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                         normal, quality);
+        }
+    }
+
+
+    // Hexahedrons
+    int hexCount = hexa.size();
+    for(int i=0; i < hexCount; ++i)
+    {
+        const MeshHex& hex = hexa[i];
+
+        glm::dvec3 verts[] = {
+            glm::dvec3(vert[hex[0]]),
+            glm::dvec3(vert[hex[1]]),
+            glm::dvec3(vert[hex[2]]),
+            glm::dvec3(vert[hex[3]]),
+            glm::dvec3(vert[hex[4]]),
+            glm::dvec3(vert[hex[5]]),
+            glm::dvec3(vert[hex[6]]),
+            glm::dvec3(vert[hex[7]])
+        };
+
+        if(glm::dot(verts[0], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[1], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[2], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[3], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[4], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[5], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[6], cutNormal) - cutDistance > 0.0 ||
+           glm::dot(verts[7], cutNormal) - cutDistance > 0.0)
+            continue;
+
+
+        double quality = hexahedronQuality(hex);
+
+
+        for(int f=0; f < MeshHex::FACE_COUNT; ++f)
+        {
+            const MeshTri& tri = MeshHex::faces[f];
+            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+            pushTriangle(vertices, normals, triEdges, qualities,
+                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                         normal, quality);
+        }
     }
 }
 

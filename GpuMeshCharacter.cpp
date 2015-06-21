@@ -18,6 +18,7 @@
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 
 #include "Meshers/CpuDelaunayMesher.h"
+#include "Meshers/CpuParametricMesher.h"
 
 using namespace std;
 using namespace cellar;
@@ -60,7 +61,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 1.0 / 4.0),
     _lightDistance(1.0),
-    _mesher(new CpuDelaunayMesher(_mesh, 1e4))
+    _mesher(new CpuParametricMesher(_mesh, 1e4))
 {
 }
 

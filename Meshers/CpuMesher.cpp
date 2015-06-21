@@ -36,7 +36,7 @@ void CpuMesher::computeVertexLocations()
     int tetCount = _mesh.tetra.size();
     for(int i=0; i < tetCount; ++i)
     {
-        const glm::ivec4& tet = _mesh.tetra[i];
+        const MeshTet& tet = _mesh.tetra[i];
 
         int verts[][2] = {
             {tet[0], tet[1]},
@@ -95,14 +95,14 @@ void CpuMesher::smoothMesh()
         computeVertexLocations();
     }
 
-    const double MOVE_FACTOR = 0.5;
+    const double MOVE_FACTOR = 0.1;
     const double SMOOTH_AMELIORATION_THRESHOLD = 0.001;
     double dQuality = 1.0;
     int smoothPass = 0;
 
 
     double lastQualityMean, lastQualityVar;
-    _mesh.compileTetrahedronQuality(
+    _mesh.compileElementQuality(
                 lastQualityMean,
                 lastQualityVar);
 
@@ -111,15 +111,15 @@ void CpuMesher::smoothMesh()
 
     while(dQuality > SMOOTH_AMELIORATION_THRESHOLD)
     {
-        int vertCount = _mesh.vertCount();
+        int vertCount = _mesh.vert.size();
         for(int v = 0; v < vertCount; ++v)
         {
-            glm::dvec4& vertPos = _mesh.vert[v];
-            if(vertPos.w != 0.0)
+            glm::dvec3& vertPos = _mesh.vert[v].p;
+            if(_mesh.vert[v].boundary)
                 continue;
 
-            double weightSum = 0.0;
-            glm::dvec3 barycenter;
+            double weightSum = 1.0;
+            glm::dvec3 barycenter = vertPos;
 
             for(auto& n : _adjacency[v].neighbors)
             {
@@ -138,7 +138,7 @@ void CpuMesher::smoothMesh()
         }
 
         double newQualityMean, newQualityVar;
-        _mesh.compileTetrahedronQuality(
+        _mesh.compileElementQuality(
                     newQualityMean,
                     newQualityVar);
 
