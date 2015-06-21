@@ -382,16 +382,17 @@ void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
             glm::vec4(_camDistance, 0.0f, 0.0f, 1.0f));
 
     glm::mat4 viewMatrix = glm::lookAt(from, nullVec, upVec);
-    glm::mat4 pvMat = _camProj * viewMatrix;
     glm::vec3 camPos(from);
 
     _litShader.pushProgram();
-    _litShader.setMat4f("PVmat", pvMat);
+    _litShader.setMat4f("ProjMat", _camProj);
+    _litShader.setMat4f("ViewMat", viewMatrix);
     _litShader.setVec3f("CameraPosition", camPos);
     _litShader.popProgram();
 
     _unlitShader.pushProgram();
-    _unlitShader.setMat4f("PVmat", pvMat);
+    _unlitShader.setMat4f("ProjMat", _camProj);
+    _unlitShader.setMat4f("ViewMat", viewMatrix);
     _unlitShader.setVec3f("CameraPosition", camPos);
     _unlitShader.popProgram();
 }

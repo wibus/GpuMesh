@@ -4,6 +4,7 @@ uniform vec3 CameraPosition;
 uniform vec3 LightDirection;
 
 in vec3 pos;
+in vec3 eye;
 in vec3 nrm;
 in vec3 edg;
 in float qual;
@@ -23,14 +24,14 @@ vec3 lut(in float q)
                 smoothstep(-0.15, 0.15, q) - smoothstep(0.15, 0.5, q));
 }
 
-vec3 bold(in vec3 e)
+vec3 bold(in vec3 e, in float d)
 {
-    const float THRESHOLD = 0.99;
-    const float SMOOTH_WIDTH = 0.004;
-    return vec3(1.0 - smoothstep(
-        THRESHOLD - SMOOTH_WIDTH,
-        THRESHOLD + SMOOTH_WIDTH,
-        max(max(e.x, e.y), e.z)));
+    const float THRESHOLD = 0.01;
+    const float SMOOTH_WIDTH = 0.015;
+    return vec3(smoothstep(
+        max(THRESHOLD - SMOOTH_WIDTH * d, -THRESHOLD),
+        THRESHOLD + SMOOTH_WIDTH * d,
+        1.0 - max(max(e.x, e.y), e.z)));
 }
 
 vec3 diffuse(in vec3 n)
@@ -43,7 +44,8 @@ void main(void)
     if(dist > 0.0)
         discard;
 
-    vec3 baseCol = lut(qual) * bold(edg);
+    float dist = sqrt(length(eye));
+    vec3 baseCol = lut(qual) * bold(edg, dist);
     vec3 diffCol = diffuse(nrm) + LIGHT_AMBIANT;
     FragColor = vec4(baseCol * diffCol, 1);
 }

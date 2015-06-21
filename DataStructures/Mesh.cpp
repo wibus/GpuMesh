@@ -9,36 +9,36 @@ using namespace std;
 
 
 const MeshTri MeshTet::faces[MeshTet::FACE_COUNT] = {
-    MeshTri(0, 1, 2),
-    MeshTri(0, 2, 3),
-    MeshTri(0, 3, 1),
-    MeshTri(1, 3, 2)
+    MeshTri(0, 1, 2, false),
+    MeshTri(0, 2, 3, false),
+    MeshTri(0, 3, 1, false),
+    MeshTri(1, 3, 2, false)
 };
 
 const MeshTri MeshPen::faces[MeshPen::FACE_COUNT] = {
-    MeshTri(0, 2, 1), // Z neg face 0
-    MeshTri(1, 2, 3), // Z neg face 1
-    MeshTri(0, 1, 4), // Y neg face 0
-    MeshTri(1, 5, 4), // Y neg face 1
-    MeshTri(2, 4, 3), // Y pos face 0
-    MeshTri(3, 4, 5), // Y pos face 1
-    MeshTri(0, 4, 2), // YZ neg face
-    MeshTri(1, 3, 5)  // YZ pos face
+    MeshTri(2, 1, 0, true), // Z neg face 0
+    MeshTri(1, 2, 3, true), // Z neg face 1
+    MeshTri(1, 4, 0, true), // Y neg face 0
+    MeshTri(4, 1, 5, true), // Y neg face 1
+    MeshTri(4, 3, 2, true), // Y pos face 0
+    MeshTri(3, 4, 5, true), // Y pos face 1
+    MeshTri(0, 4, 2, false), // YZ neg face
+    MeshTri(1, 3, 5, false)  // YZ pos face
 };
 
 const MeshTri MeshHex::faces[MeshHex::FACE_COUNT] = {
-    MeshTri(0, 2, 1), // Z neg face 0
-    MeshTri(1, 2, 3), // Z pos face 1
-    MeshTri(4, 5, 6), // Z pos face 0
-    MeshTri(5, 7, 6), // Z pos face 1
-    MeshTri(0, 1, 4), // Y neg face 0
-    MeshTri(1, 5, 4), // Y neg face 1
-    MeshTri(2, 7, 3), // Y pos face 0
-    MeshTri(2, 6, 7), // Y pos face 1
-    MeshTri(0, 4, 2), // X neg face 0
-    MeshTri(2, 4, 6), // X neg face 1
-    MeshTri(1, 3, 7), // X pos face 0
-    MeshTri(1, 7, 5), // X pos face 1
+    MeshTri(2, 1, 0, true), // Z neg face 0
+    MeshTri(1, 2, 3, true), // Z pos face 1
+    MeshTri(5, 6, 4, true), // Z pos face 0
+    MeshTri(6, 5, 7, true), // Z pos face 1
+    MeshTri(1, 4, 0, true), // Y neg face 0
+    MeshTri(4, 1, 5, true), // Y neg face 1
+    MeshTri(2, 7, 3, true), // Y pos face 0
+    MeshTri(7, 2, 6, true), // Y pos face 1
+    MeshTri(4, 2, 0, true), // X neg face 0
+    MeshTri(2, 4, 6, true), // X neg face 1
+    MeshTri(7, 1, 3, true), // X pos face 0
+    MeshTri(1, 7, 5, true), // X pos face 1
 };
 
 double Mesh::tetrahedronQuality(const MeshTet& tet)
@@ -164,7 +164,7 @@ void Mesh::compileFacesAttributes(
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
             pushTriangle(vertices, normals, triEdges, qualities,
                          verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, quality);
+                         normal, tri.fromQuad, quality);
         }
     }
 
@@ -204,7 +204,7 @@ void Mesh::compileFacesAttributes(
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
             pushTriangle(vertices, normals, triEdges, qualities,
                          verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, quality);
+                         normal, tri.fromQuad, quality);
         }
     }
 
@@ -248,7 +248,7 @@ void Mesh::compileFacesAttributes(
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
             pushTriangle(vertices, normals, triEdges, qualities,
                          verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, quality);
+                         normal, tri.fromQuad, quality);
         }
     }
 }
@@ -262,6 +262,7 @@ void Mesh::pushTriangle(
         const glm::dvec3& B,
         const glm::dvec3& C,
         const glm::dvec3& n,
+        bool fromQuad,
         double quality)
 {
 
@@ -282,18 +283,34 @@ void Mesh::pushTriangle(
     normals.push_back(ny);
     normals.push_back(nz);
 
-    const glm::ivec3 X_EDGE(0,   255, 255);
-    const glm::ivec3 Y_EDGE(255, 0,   255);
-    const glm::ivec3 Z_EDGE(255, 255, 0  );
-    triEdges.push_back(X_EDGE.x);
-    triEdges.push_back(X_EDGE.y);
-    triEdges.push_back(X_EDGE.z);
-    triEdges.push_back(Y_EDGE.x);
-    triEdges.push_back(Y_EDGE.y);
-    triEdges.push_back(Y_EDGE.z);
-    triEdges.push_back(Z_EDGE.x);
-    triEdges.push_back(Z_EDGE.y);
-    triEdges.push_back(Z_EDGE.z);
+    if(fromQuad)
+    {
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+        triEdges.push_back(0);
+
+        triEdges.push_back(0);
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+
+        triEdges.push_back(255);
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+    }
+    else
+    {
+        triEdges.push_back(0);
+        triEdges.push_back(255);
+        triEdges.push_back(255);
+
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+        triEdges.push_back(255);
+
+        triEdges.push_back(255);
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+    }
 
     qualities.push_back(quality * 255);
     qualities.push_back(quality * 255);

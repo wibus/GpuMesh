@@ -23,9 +23,10 @@ struct MeshVert
 struct MeshTri
 {
     int v[3];
+    int fromQuad;
 
-    MeshTri() : v{-1, -1, -1} {}
-    MeshTri(int v0, int v1, int v2) : v{v0, v1, v2} {}
+    MeshTri() : v{-1, -1, -1}, fromQuad(false) {}
+    MeshTri(int v0, int v1, int v2, bool q) : v{v0, v1, v2}, fromQuad(q) {}
     inline int& operator[] (int i) { return v[i]; }
     inline const int& operator[] (int i) const { return v[i]; }
 };
@@ -115,6 +116,7 @@ private:
             const glm::dvec3& B,
             const glm::dvec3& C,
             const glm::dvec3& n,
+            bool fromQuad,
             double quality);
 };
 
