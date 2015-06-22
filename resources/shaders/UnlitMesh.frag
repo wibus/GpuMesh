@@ -27,11 +27,12 @@ vec3 lut(in float q)
 vec3 bold(in vec3 e, in float d)
 {
     const float THRESHOLD = 0.01;
-    const float SMOOTH_WIDTH = 0.015;
-    return vec3(smoothstep(
-        max(THRESHOLD - SMOOTH_WIDTH * d, -THRESHOLD),
-        THRESHOLD + SMOOTH_WIDTH * d,
-        1.0 - max(max(e.x, e.y), e.z)));
+    float smoothWidth = THRESHOLD * 1.5 * d;
+    float inf = max(THRESHOLD - smoothWidth, -THRESHOLD);
+    float sup = THRESHOLD + smoothWidth;
+
+    float maxE = max(max(e.x, e.y), e.z);
+    return vec3(smoothstep(inf, sup, 1.0 - maxE));
 }
 
 vec3 diffuse(in vec3 n)

@@ -13,15 +13,42 @@ public:
 
 protected:
     virtual void triangulateDomain() override;
-    virtual void genStraightTube(
+
+    virtual void genStraightPipe(
             const glm::dvec3& begin,
             const glm::dvec3& end,
             const glm::dvec3& up,
-            double tubeRadius,
+            double pipeRadius,
             int stackCount,
+            int sliceCount,
+            int layerCount,
+            bool first);
+
+    virtual void genArcPipe(
+            const glm::dvec3& center,
+            const glm::dvec3& rotationAxis,
+            const glm::dvec3& dirBegin,
+            const glm::dvec3& upBegin,
+            double arcAngle,
+            double arcRadius,
+            double pipeRadius,
+            int stackCount,
+            int sliceCount,
+            int layerCount,
+            bool first);
+
+    virtual void insertStackVertices(
+            const glm::dvec3& center,
+            const glm::dvec4& upBase,
+            const glm::dmat4& dSlice,
+            double dRadius,
             int sliceCount,
             int layerCount);
 
+    virtual void meshPipe(
+            int stackCount,
+            int sliceCount,
+            int layerCount);
 
 private:
 };

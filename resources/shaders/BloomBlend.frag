@@ -64,5 +64,5 @@ void main()
 
 
     vec3 base = texture(BloomBase, texCoord).rgb;
-    FragColor = vec4(base + blur, 1.0);
+    FragColor = vec4(min(base + blur, vec3(1 + 8.0/256.0)), 1.0);
 }
