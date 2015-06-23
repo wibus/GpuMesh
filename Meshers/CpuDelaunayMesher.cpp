@@ -725,18 +725,25 @@ void CpuDelaunayMesher::tearDownGrid()
 
 
     // Copy vertices in mesh
-    int vertCount = vert.size();
+    int delaunayVertCount = vert.size();
+    int meshVertCount = delaunayVertCount - _externalVertCount;
 
-    _mesh.tetra.clear();
-    _mesh.vert.resize(vertCount - _externalVertCount);
-    for(int i = _externalVertCount; i < vertCount; ++i)
+    // Shorthands
+    decltype(_mesh.vert)& meshVert = _mesh.vert;
+    decltype(_mesh.tetra)& meshTetra = _mesh.tetra;
+    decltype(_mesh.vertProperties)& vertProp = _mesh.vertProperties;
+
+    meshTetra.clear();
+    meshVert.resize(meshVertCount);
+    vertProp.resize(meshVertCount);
+    for(int i = _externalVertCount; i < delaunayVertCount; ++i)
     {
-        Vertex& vertex = vert[i];
-        MeshVert& meshVert = _mesh.vert[i-_externalVertCount];
+        Vertex& dVert = vert[i];
+        MeshVert& mVert = meshVert[i-_externalVertCount];
 
-        meshVert.p = vertex.p;
+        mVert.p = dVert.p;
 
-        TetListNode* node = vertex.tetList.head;
+        TetListNode* node = dVert.tetList.head;
         while(node != nullptr)
         {
             Tetrahedron* tet = node->tet;
@@ -755,15 +762,15 @@ void CpuDelaunayMesher::tearDownGrid()
                    meshTet[2] < 0 || meshTet[3] < 0)
                 {
                     // It's a bounding tetrahedron
-                    if(meshTet[0] >= 0) _mesh.vert[meshTet[0]].boundary = true;
-                    if(meshTet[1] >= 0) _mesh.vert[meshTet[1]].boundary = true;
-                    if(meshTet[2] >= 0) _mesh.vert[meshTet[2]].boundary = true;
-                    if(meshTet[3] >= 0) _mesh.vert[meshTet[3]].boundary = true;
+                    if(meshTet[0] >= 0) vertProp[meshTet[0]].isFixed = true;
+                    if(meshTet[1] >= 0) vertProp[meshTet[1]].isFixed = true;
+                    if(meshTet[2] >= 0) vertProp[meshTet[2]].isFixed = true;
+                    if(meshTet[3] >= 0) vertProp[meshTet[3]].isFixed = true;
                 }
                 else
                 {
                     // It's a real tetrahedron
-                    _mesh.tetra.push_back(meshTet);
+                    meshTetra.push_back(meshTet);
                 }
 
                 // Tetrahedrons are not directly deleted
@@ -775,9 +782,9 @@ void CpuDelaunayMesher::tearDownGrid()
             node = node->next;
         }
 
-        vertex.tetList.clrTet();
+        dVert.tetList.clrTet();
     }
-    _mesh.tetra.shrink_to_fit();
+    meshTetra.shrink_to_fit();
 
 
     // Discard unused memory
@@ -792,9 +799,9 @@ void CpuDelaunayMesher::tearDownGrid()
     _tetPool.releaseMemoryPool();
 
 
-    cout << "Tetrahedrons / Vertex = " <<
-            _mesh.tetra.size() << " / " << _mesh.vert.size() << " = " <<
-            _mesh.tetra.size() / (double) _mesh.vert.size() << endl;
+    cout << "Elements / Vertices = " <<
+            _mesh.elemCount() << " / " << _mesh.vertCount() << " = " <<
+            _mesh.elemCount()  / (double) _mesh.vertCount() << endl;
 }
 
 bool CpuDelaunayMesher::intersects(const glm::dvec3& v, Tetrahedron* tet)

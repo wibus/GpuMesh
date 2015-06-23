@@ -22,7 +22,8 @@ protected:
             int stackCount,
             int sliceCount,
             int layerCount,
-            bool first);
+            bool first,
+            bool last);
 
     virtual void genArcPipe(
             const glm::dvec3& center,
@@ -35,15 +36,18 @@ protected:
             int stackCount,
             int sliceCount,
             int layerCount,
-            bool first);
+            bool first,
+            bool last);
 
     virtual void insertStackVertices(
             const glm::dvec3& center,
             const glm::dvec4& upBase,
+            const glm::dvec3& frontU,
             const glm::dmat4& dSlice,
             double dRadius,
             int sliceCount,
-            int layerCount);
+            int layerCount,
+            bool isBoundary);
 
     virtual void meshPipe(
             int stackCount,

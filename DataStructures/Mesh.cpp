@@ -9,37 +9,99 @@ using namespace std;
 
 
 const MeshTri MeshTet::faces[MeshTet::FACE_COUNT] = {
-    MeshTri(0, 1, 2, false),
-    MeshTri(0, 2, 3, false),
-    MeshTri(0, 3, 1, false),
-    MeshTri(1, 3, 2, false)
+    MeshTri(0, 1, 2),
+    MeshTri(0, 2, 3),
+    MeshTri(0, 3, 1),
+    MeshTri(1, 3, 2)
 };
 
-const MeshTri MeshPen::faces[MeshPen::FACE_COUNT] = {
-    MeshTri(2, 1, 0, true), // Z neg face 0
-    MeshTri(1, 2, 3, true), // Z neg face 1
-    MeshTri(1, 4, 0, true), // Y neg face 0
-    MeshTri(4, 1, 5, true), // Y neg face 1
-    MeshTri(4, 3, 2, true), // Y pos face 0
-    MeshTri(3, 4, 5, true), // Y pos face 1
-    MeshTri(0, 4, 2, false), // YZ neg face
-    MeshTri(1, 3, 5, false)  // YZ pos face
+const int MeshTet::edges[MeshTet::EDGE_COUNT][2] = {
+    {0, 1},
+    {0, 2},
+    {0, 3},
+    {1, 2},
+    {2, 3},
+    {3, 1}
 };
+
+
+const MeshTri MeshPri::faces[MeshPri::FACE_COUNT] = {
+    MeshTri(2, 1, 0), // Z neg face 0
+    MeshTri(1, 2, 3), // Z neg face 1
+    MeshTri(1, 4, 0), // Y neg face 0
+    MeshTri(4, 1, 5), // Y neg face 1
+    MeshTri(4, 3, 2), // Y pos face 0
+    MeshTri(3, 4, 5), // Y pos face 1
+    MeshTri(0, 4, 2), // X neg face
+    MeshTri(1, 3, 5)  // X pos face
+};
+
+const int MeshPri::edges[MeshPri::EDGE_COUNT][2] = {
+    {0, 1},
+    {0, 2},
+    {1, 3},
+    {2, 3},
+    {0, 4},
+    {1, 5},
+    {2, 4},
+    {3, 5},
+    {4, 5}
+};
+
 
 const MeshTri MeshHex::faces[MeshHex::FACE_COUNT] = {
-    MeshTri(2, 1, 0, true), // Z neg face 0
-    MeshTri(1, 2, 3, true), // Z pos face 1
-    MeshTri(5, 6, 4, true), // Z pos face 0
-    MeshTri(6, 5, 7, true), // Z pos face 1
-    MeshTri(1, 4, 0, true), // Y neg face 0
-    MeshTri(4, 1, 5, true), // Y neg face 1
-    MeshTri(2, 7, 3, true), // Y pos face 0
-    MeshTri(7, 2, 6, true), // Y pos face 1
-    MeshTri(4, 2, 0, true), // X neg face 0
-    MeshTri(2, 4, 6, true), // X neg face 1
-    MeshTri(7, 1, 3, true), // X pos face 0
-    MeshTri(1, 7, 5, true), // X pos face 1
+    MeshTri(2, 1, 0), // Z neg face 0
+    MeshTri(1, 2, 3), // Z pos face 1
+    MeshTri(5, 6, 4), // Z pos face 0
+    MeshTri(6, 5, 7), // Z pos face 1
+    MeshTri(1, 4, 0), // Y neg face 0
+    MeshTri(4, 1, 5), // Y neg face 1
+    MeshTri(2, 7, 3), // Y pos face 0
+    MeshTri(7, 2, 6), // Y pos face 1
+    MeshTri(4, 2, 0), // X neg face 0
+    MeshTri(2, 4, 6), // X neg face 1
+    MeshTri(7, 1, 3), // X pos face 0
+    MeshTri(1, 7, 5), // X pos face 1
 };
+
+const int MeshHex::edges[MeshHex::EDGE_COUNT][2] = {
+    {0, 1},
+    {0, 2},
+    {1, 3},
+    {2, 3},
+    {0, 4},
+    {1, 5},
+    {2, 6},
+    {3, 7},
+    {4, 5},
+    {4, 6},
+    {5, 7},
+    {6, 7}
+};
+
+
+MeshVertProperties::MeshVertProperties() :
+    isFixed(false),
+    isBoundary(false),
+    boundaryCallback()
+{
+}
+
+MeshVertProperties::MeshVertProperties(
+        bool isFixed) :
+    isFixed(isFixed),
+    isBoundary(false),
+    boundaryCallback()
+{
+}
+
+MeshVertProperties::MeshVertProperties(
+        const BoundaryCallback& boundaryCallback) :
+    isFixed(false),
+    isBoundary(true),
+    boundaryCallback(boundaryCallback)
+{
+}
 
 double Mesh::tetrahedronQuality(const MeshTet& tet)
 {
@@ -91,13 +153,18 @@ double Mesh::tetrahedronQuality(const MeshTet& tet)
     return (4.89897948557) * R / maxLen;
 }
 
-
-double Mesh::pentahedronQuality(const MeshPen& pen)
+double Mesh::hexahedronQuality(const MeshHex& hex)
 {
-    return 1;
+    // Hexahedron quality ~= mean of two possible internal tetrahedron
+    MeshTet tetA(hex.v[0], hex.v[3], hex.v[5], hex.v[6]);
+    MeshTet tetB(hex.v[1], hex.v[2], hex.v[7], hex.v[4]);
+    double tetAQuality = tetrahedronQuality(tetA);
+    double tetBQuality = tetrahedronQuality(tetB);
+    return (tetAQuality + tetBQuality) / 2.0;
 }
 
-double Mesh::hexahedronQuality(const MeshHex& hex)
+
+double Mesh::prismQuality(const MeshPri& pri)
 {
     return 1;
 }
@@ -106,18 +173,34 @@ void Mesh::compileElementQuality(
         double& qualityMean,
         double& qualityVar)
 {
-    qualityMean = 0.0;
-    qualityVar = 0.0;
-
     int tetCount = tetra.size();
-    for(int i=0; i < tetCount; ++i)
-    {
-        const MeshTet& tet = tetra[i];
-        double quality = tetrahedronQuality(tet);
+    int priCount = prism.size();
+    int hexCount = hexa.size();
 
-        // Quality statistics
-        qualityMean = (qualityMean * i + quality) / (i + 1);
-        double qualityMeanDist = qualityMean - quality;
+    int elemCount = tetCount + priCount + hexCount;
+    std::vector<double> qualities(elemCount);
+    int idx = 0;
+
+    for(int i=0; i < tetCount; ++i, ++idx)
+        qualities[idx] = tetrahedronQuality(tetra[i]);
+
+    for(int i=0; i < priCount; ++i, ++idx)
+        qualities[idx] = prismQuality(prism[i]);
+
+    for(int i=0; i < hexCount; ++i, ++idx)
+        qualities[idx] = hexahedronQuality(hexa[i]);
+
+
+    qualityMean = 0.0;
+    for(int i=0; i < elemCount; ++i)
+    {
+        qualityMean = (qualityMean * i + qualities[i]) / (i + 1);
+    }
+
+    qualityVar = 0.0;
+    for(int i=0; i < elemCount; ++i)
+    {
+        double qualityMeanDist = qualityMean - qualities[i];
         double qualityMeanDist2 = qualityMeanDist*qualityMeanDist;
         qualityVar = (qualityVar * 1 + qualityMeanDist2) / (1 + 1);
     }
@@ -164,24 +247,24 @@ void Mesh::compileFacesAttributes(
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
             pushTriangle(vertices, normals, triEdges, qualities,
                          verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, tri.fromQuad, quality);
+                         normal, false, quality);
         }
     }
 
 
-    // Pentahedrons
-    int penCount = penta.size();
-    for(int i=0; i < penCount; ++i)
+    // Prisms
+    int priCount = prism.size();
+    for(int i=0; i < priCount; ++i)
     {
-        const MeshPen& pen = penta[i];
+        const MeshPri& pri = prism[i];
 
         glm::dvec3 verts[] = {
-            glm::dvec3(vert[pen[0]]),
-            glm::dvec3(vert[pen[1]]),
-            glm::dvec3(vert[pen[2]]),
-            glm::dvec3(vert[pen[3]]),
-            glm::dvec3(vert[pen[4]]),
-            glm::dvec3(vert[pen[5]])
+            glm::dvec3(vert[pri[0]]),
+            glm::dvec3(vert[pri[1]]),
+            glm::dvec3(vert[pri[2]]),
+            glm::dvec3(vert[pri[3]]),
+            glm::dvec3(vert[pri[4]]),
+            glm::dvec3(vert[pri[5]])
         };
 
         if(glm::dot(verts[0], cutNormal) - cutDistance > 0.0 ||
@@ -193,18 +276,18 @@ void Mesh::compileFacesAttributes(
             continue;
 
 
-        double quality = pentahedronQuality(pen);
+        double quality = prismQuality(pri);
 
 
-        for(int f=0; f < MeshPen::FACE_COUNT; ++f)
+        for(int f=0; f < MeshPri::FACE_COUNT; ++f)
         {
-            const MeshTri& tri = MeshPen::faces[f];
+            const MeshTri& tri = MeshPri::faces[f];
             glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
             glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
             pushTriangle(vertices, normals, triEdges, qualities,
                          verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, tri.fromQuad, quality);
+                         normal, f < 7, quality);
         }
     }
 
@@ -248,7 +331,7 @@ void Mesh::compileFacesAttributes(
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
             pushTriangle(vertices, normals, triEdges, qualities,
                          verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, tri.fromQuad, quality);
+                         normal, true, quality);
         }
     }
 }

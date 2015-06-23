@@ -2,6 +2,7 @@
 #define GPUMESH_MESH
 
 #include <vector>
+#include <functional>
 
 #include <GLM/glm.hpp>
 
@@ -9,24 +10,20 @@
 struct MeshVert
 {
     glm::dvec3 p;
-    bool boundary;
 
-    MeshVert() : p(0), boundary(false) {}
-    MeshVert(const glm::dvec3 p) : p(p), boundary(false) {}
-    MeshVert(const glm::dvec3 p, bool boundary) : p(p), boundary(boundary) {}
+    MeshVert() : p(0) {}
+    MeshVert(const glm::dvec3 p) : p(p){}
     inline double& operator[] (int c) { return p[c]; }
     inline const double& operator[] (int c) const { return p[c]; }
     inline operator glm::dvec3() const { return p; }
 };
 
-
 struct MeshTri
 {
     int v[3];
-    int fromQuad;
 
-    MeshTri() : v{-1, -1, -1}, fromQuad(false) {}
-    MeshTri(int v0, int v1, int v2, bool q) : v{v0, v1, v2}, fromQuad(q) {}
+    MeshTri() : v{-1, -1, -1} {}
+    MeshTri(int v0, int v1, int v2) : v{v0, v1, v2} {}
     inline int& operator[] (int i) { return v[i]; }
     inline const int& operator[] (int i) const { return v[i]; }
 };
@@ -43,14 +40,17 @@ struct MeshTet
 
     static const int FACE_COUNT = 4;
     static const MeshTri faces[FACE_COUNT];
+    static const int EDGE_COUNT = 6;
+    static const int edges[EDGE_COUNT][2];
 };
 
-struct MeshPen
+
+struct MeshPri
 {
     int v[6];
 
-    MeshPen() : v{-1, -1, -1, -1, -1, -1} {}
-    MeshPen(int v0, int v1, int v2,
+    MeshPri() : v{-1, -1, -1, -1, -1, -1} {}
+    MeshPri(int v0, int v1, int v2,
             int v3, int v4, int v5) :
         v{v0, v1, v2, v3, v4, v5} {}
     inline int operator[] (int i) { return v[i]; }
@@ -58,6 +58,8 @@ struct MeshPen
 
     static const int FACE_COUNT = 8;
     static const MeshTri faces[FACE_COUNT];
+    static const int EDGE_COUNT = 9;
+    static const int edges[EDGE_COUNT][2];
 };
 
 
@@ -74,6 +76,25 @@ struct MeshHex
 
     static const int FACE_COUNT = 12;
     static const MeshTri faces[FACE_COUNT];
+    static const int EDGE_COUNT = 12;
+    static const int edges[EDGE_COUNT][2];
+};
+
+
+typedef std::function<glm::dvec3(const glm::dvec3&)>
+    BoundaryCallback;
+
+struct MeshVertProperties
+{
+    bool isFixed;
+    std::vector<int> neighbors;
+
+    bool isBoundary;
+    BoundaryCallback boundaryCallback;
+
+    MeshVertProperties();
+    MeshVertProperties(bool isFixed);
+    MeshVertProperties(const BoundaryCallback& boundaryCallback);
 };
 
 
@@ -85,8 +106,8 @@ public:
     unsigned int elemCount() const;
 
     double tetrahedronQuality(const MeshTet& tet);
-    double pentahedronQuality(const MeshPen& pen);
     double hexahedronQuality(const MeshHex& hex);
+    double prismQuality(const MeshPri& pri);
 
     void compileElementQuality(
             double& qualityMean,
@@ -102,8 +123,10 @@ public:
 
     std::vector<MeshVert> vert;
     std::vector<MeshTet> tetra;
-    std::vector<MeshPen> penta;
+    std::vector<MeshPri> prism;
     std::vector<MeshHex> hexa;
+
+    std::vector<MeshVertProperties> vertProperties;
 
 
 private:
@@ -120,5 +143,18 @@ private:
             double quality);
 };
 
+
+
+
+// IMPLEMENTATION //
+inline unsigned int Mesh::vertCount() const
+{
+    return vert.size();
+}
+
+inline unsigned int Mesh::elemCount() const
+{
+    return tetra.size() + prism.size() + hexa.size();
+}
 
 #endif // GPUMESH_MESH

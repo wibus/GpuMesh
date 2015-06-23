@@ -36,38 +36,30 @@ void CpuMesher::computeVertexLocations()
     int tetCount = _mesh.tetra.size();
     for(int i=0; i < tetCount; ++i)
     {
-        const MeshTet& tet = _mesh.tetra[i];
-
-        int verts[][2] = {
-            {tet[0], tet[1]},
-            {tet[0], tet[2]},
-            {tet[0], tet[3]},
-            {tet[1], tet[2]},
-            {tet[1], tet[3]},
-            {tet[2], tet[3]},
-        };
-
-        for(int e=0; e<6; ++e)
+        for(int e=0; e < MeshTet::EDGE_COUNT; ++e)
         {
-            bool isPresent = false;
-            int firstVert = verts[e][0];
-            int secondVert = verts[e][1];
-            vector<int>& neighbors = _adjacency[firstVert].neighbors;
-            int neighborCount = neighbors.size();
-            for(int n=0; n < neighborCount; ++n)
-            {
-                if(secondVert == neighbors[n])
-                {
-                    isPresent = true;
-                    break;
-                }
-            }
+            addEdge(_mesh.tetra[i].v[MeshTet::edges[e][0]],
+                    _mesh.tetra[i].v[MeshTet::edges[e][1]]);
+        }
+    }
 
-            if(!isPresent)
-            {
-                _adjacency[firstVert].neighbors.push_back(secondVert);
-                _adjacency[secondVert].neighbors.push_back(firstVert);
-            }
+    int prismCount = _mesh.prism.size();
+    for(int i=0; i < prismCount; ++i)
+    {
+        for(int e=0; e < MeshPri::EDGE_COUNT; ++e)
+        {
+            addEdge(_mesh.prism[i].v[MeshPri::edges[e][0]],
+                    _mesh.prism[i].v[MeshPri::edges[e][1]]);
+        }
+    }
+
+    int hexCount = _mesh.hexa.size();
+    for(int i=0; i < hexCount; ++i)
+    {
+        for(int e=0; e < MeshHex::EDGE_COUNT; ++e)
+        {
+            addEdge(_mesh.hexa[i].v[MeshHex::edges[e][0]],
+                    _mesh.hexa[i].v[MeshHex::edges[e][1]]);
         }
     }
 
@@ -88,6 +80,21 @@ void CpuMesher::clearVertexLocations()
     _locationsComputed = false;
 }
 
+void CpuMesher::addEdge(int firstVert, int secondVert)
+{
+    vector<int>& neighbors = _adjacency[firstVert].neighbors;
+    int neighborCount = neighbors.size();
+    for(int n=0; n < neighborCount; ++n)
+    {
+        if(secondVert == neighbors[n])
+            return;
+    }
+
+    // This really is a new edge
+    _adjacency[firstVert].neighbors.push_back(secondVert);
+    _adjacency[secondVert].neighbors.push_back(firstVert);
+}
+
 void CpuMesher::smoothMesh()
 {
     if(!_locationsComputed)
@@ -95,7 +102,7 @@ void CpuMesher::smoothMesh()
         computeVertexLocations();
     }
 
-    const double MOVE_FACTOR = 0.1;
+    const double MOVE_FACTOR = 1.0;
     const double SMOOTH_AMELIORATION_THRESHOLD = 0.001;
     double dQuality = 1.0;
     int smoothPass = 0;
@@ -115,26 +122,40 @@ void CpuMesher::smoothMesh()
         for(int v = 0; v < vertCount; ++v)
         {
             glm::dvec3& vertPos = _mesh.vert[v].p;
-            if(_mesh.vert[v].boundary)
+            if(_mesh.vertProperties[v].isFixed)
                 continue;
 
-            double weightSum = 1.0;
-            glm::dvec3 barycenter = vertPos;
+            const vector<int>& neighbors =
+                    _adjacency[v].neighbors;
 
-            for(auto& n : _adjacency[v].neighbors)
+            if(!neighbors.empty())
             {
-                glm::dvec3 neighborPos(_mesh.vert[n]);
-                glm::dvec3 dist = glm::dvec3(vertPos) - neighborPos;
-                double weight = glm::log(glm::dot(dist, dist) + 1);
+                double weightSum = 0.0;
+                glm::dvec3 barycenter;
 
-                barycenter = (barycenter * weightSum + neighborPos * weight)
-                              / (weightSum + weight);
-                weightSum += weight;
+                int neighborCount = neighbors.size();
+                for(int i=0; i<neighborCount; ++i)
+                {
+                    int n = neighbors[i];
+                    glm::dvec3 neighborPos(_mesh.vert[n]);
+                    glm::dvec3 dist = glm::dvec3(vertPos) - neighborPos;
+                    double weight = glm::dot(dist, dist) + 0.1;
+
+                    barycenter = (barycenter * weightSum + neighborPos * weight)
+                                  / (weightSum + weight);
+                    weightSum += weight;
+                }
+
+                const double alpha = 1.0 - MOVE_FACTOR;
+                vertPos.x = alpha * vertPos.x + MOVE_FACTOR * barycenter.x;
+                vertPos.y = alpha * vertPos.y + MOVE_FACTOR * barycenter.y;
+                vertPos.z = alpha * vertPos.z + MOVE_FACTOR * barycenter.z;
+
+                if(_mesh.vertProperties[v].isBoundary)
+                {
+                    vertPos = _mesh.vertProperties[v].boundaryCallback(vertPos);
+                }
             }
-
-            vertPos.x = glm::mix(vertPos.x, barycenter.x, MOVE_FACTOR);
-            vertPos.y = glm::mix(vertPos.y, barycenter.y, MOVE_FACTOR);
-            vertPos.z = glm::mix(vertPos.z, barycenter.z, MOVE_FACTOR);
         }
 
         double newQualityMean, newQualityVar;

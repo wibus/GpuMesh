@@ -17,6 +17,9 @@ public:
 protected:
     virtual void computeVertexLocations();
     virtual void clearVertexLocations();
+    virtual void addEdge(int firstVert,
+                         int secondVert);
+
     virtual void smoothMesh() override;
 
 
