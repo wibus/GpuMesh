@@ -27,8 +27,8 @@ vec3 lut(in float q)
 vec3 bold(in vec3 e, in float d)
 {
     const float THRESHOLD = 0.01;
-    float smoothWidth = THRESHOLD * 1.5 * d;
-    float inf = max(THRESHOLD - smoothWidth, -THRESHOLD);
+    float smoothWidth = 0.025 * d;
+    float inf = THRESHOLD - smoothWidth;
     float sup = THRESHOLD + smoothWidth;
 
     float maxE = max(max(e.x, e.y), e.z);
@@ -45,7 +45,7 @@ void main(void)
     if(dist > 0.0)
         discard;
 
-    float dist = sqrt(length(eye));
+    float dist = length(eye);
     vec3 baseCol = lut(qual) * bold(edg, dist);
     vec3 diffCol = diffuse(nrm) + LIGHT_AMBIANT;
     FragColor = vec4(baseCol * diffCol, 1);
