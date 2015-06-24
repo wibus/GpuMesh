@@ -105,6 +105,8 @@ public:
     unsigned int vertCount() const;
     unsigned int elemCount() const;
 
+    void clear();
+
     double tetrahedronQuality(const MeshTet& tet);
     double hexahedronQuality(const MeshHex& hex);
     double prismQuality(const MeshPri& pri);
@@ -112,6 +114,8 @@ public:
     void compileElementQuality(
             double& qualityMean,
             double& qualityVar);
+
+    void compileVertexAdjacency();
 
     void compileFacesAttributes(
             const glm::dvec4& cutPlaneEq,
@@ -129,7 +133,7 @@ public:
     std::vector<MeshVertProperties> vertProperties;
 
 
-private:
+protected:
     void pushTriangle(
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
@@ -141,6 +145,9 @@ private:
             const glm::dvec3& n,
             bool fromQuad,
             double quality);
+
+    virtual void addEdge(int firstVert,
+                         int secondVert);
 };
 
 

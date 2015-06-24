@@ -11,6 +11,7 @@
 
 #include "DataStructures/Mesh.h"
 #include "Meshers/AbstractMesher.h"
+#include "Smoothers/AbstractSmoother.h"
 
 
 class GpuMeshCharacter :
@@ -31,6 +32,11 @@ public:
     virtual void notify(cellar::CameraMsg& msg) override;
 
 protected:
+    virtual void resetPipeline();
+    virtual void processPipeline();
+    virtual void scheduleSmoothing();
+    virtual void printStep(int step, const std::string& stepName);
+
     virtual void moveCamera(float azimuth, float altitude, float distance);
     virtual void moveCutPlane(float azimuth, float altitude, float distance);
     virtual void moveLight(float azimuth, float altitude, float distance);
@@ -91,10 +97,14 @@ protected:
     float _lightDistance;
 
     Mesh _mesh;
+    int _stepId;
+    bool _processFinished;
+    bool _mustUpdateBuffers;
 
 
 private:
     std::unique_ptr<AbstractMesher> _mesher;
+    std::unique_ptr<AbstractSmoother> _smoother;
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;

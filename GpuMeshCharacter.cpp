@@ -19,6 +19,7 @@
 
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
+#include "Smoothers/CpuLagrangianSmoother.h"
 
 using namespace std;
 using namespace cellar;
@@ -61,7 +62,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 1.0 / 4.0),
     _lightDistance(1.0),
-    _mesher(new CpuParametricMesher(_mesh, 1e4))
+    _mesher(new CpuParametricMesher(_mesh, 1e5)),
+    _smoother(new CpuLangrangianSmoother(_mesh, 0.9, 0.0))
 {
 }
 
@@ -72,7 +74,7 @@ void GpuMeshCharacter::enterStage()
 
     play().view()->camera3D()->registerObserver(*this);
 
-    _mesher->resetPipeline();
+    resetPipeline();
 }
 
 void GpuMeshCharacter::beginStep(const StageTime &time)
@@ -80,20 +82,25 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
     std::shared_ptr<SynchronousKeyboard> keyboard = play().synchronousKeyboard();
     std::shared_ptr<SynchronousMouse> mouse = play().synchronousMouse();
 
-    if(!_mesher->processFinished())
+    if(!_processFinished)
     {
         auto startTime = chrono::high_resolution_clock::now();
 
-        _mesher->processPipeline();
+        processPipeline();
 
         auto endTime = chrono::high_resolution_clock::now();
         auto dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
 
-        updateBuffers();
-
         stringstream ss;
         ss << "Step took " << dt.count() / 1000.0 << "ms to execute";
         getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
+
+
+        if(_mustUpdateBuffers)
+        {
+            updateBuffers();
+            _mustUpdateBuffers = false;
+        }
     }
 
 
@@ -280,11 +287,11 @@ void GpuMeshCharacter::exitStage()
 
 bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
 {
-    if(_mesher->processFinished())
+    if(_processFinished)
     {
         if(event.getAscii()  == 'S')
         {
-            _mesher->scheduleSmoothing();
+            scheduleSmoothing();
         }
         else if(event.getAscii() == 'X')
         {
@@ -368,6 +375,65 @@ void GpuMeshCharacter::notify(CameraMsg& msg)
     }
 }
 
+
+void GpuMeshCharacter::resetPipeline()
+{
+    _stepId = 0;
+    _processFinished = false;
+    _mustUpdateBuffers = false;
+
+    _mesh.clear();
+}
+
+void GpuMeshCharacter::processPipeline()
+{
+    switch(_stepId)
+    {
+    case 0:
+        printStep(_stepId, "Triangulating internal domain");
+        _mesher->triangulateDomain();
+
+        _mustUpdateBuffers = true;
+        _processFinished = true;
+        ++_stepId;
+        break;
+
+    case 1:
+        printStep(_stepId, "Generating vertex adjacency lists");
+        _mesh.compileVertexAdjacency();
+
+        ++_stepId;
+        break;
+
+    case 2:
+        printStep(_stepId, "Smoothing internal domain");
+        _smoother->smoothMesh();
+
+        _mustUpdateBuffers = true;
+        _processFinished = true;
+        break;
+
+    default:
+        _processFinished = true;
+        getLog().postMessage(new Message(
+            'E', false, "Invalid step", "GpuMeshCharacter"));
+    }
+}
+
+void GpuMeshCharacter::scheduleSmoothing()
+{
+    if(_processFinished)
+    {
+        _processFinished = false;
+    }
+}
+
+void GpuMeshCharacter::printStep(int step, const std::string& stepName)
+{
+    stringstream ss;
+    ss << "Step " << step << ": " << stepName;
+    getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
+}
 
 void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
 {

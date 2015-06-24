@@ -1,7 +1,7 @@
 #ifndef GPUMESH_CPUDELAUNAYMESHER
 #define GPUMESH_CPUDELAUNAYMESHER
 
-#include "CpuMesher.h"
+#include "AbstractMesher.h"
 
 #include "DataStructures/Tetrahedron.h"
 #include "DataStructures/TetPool.h"
@@ -28,18 +28,18 @@ enum EDir {
 };
 
 
-class CpuDelaunayMesher : public CpuMesher
+class CpuDelaunayMesher : public AbstractMesher
 {
 public:
     CpuDelaunayMesher(Mesh& mesh, unsigned int vertCount);
     virtual ~CpuDelaunayMesher();
 
+    virtual void triangulateDomain() override;
 
 protected:
     virtual void genBoundingMesh();
     virtual void genVertices(std::vector<glm::dvec3>& vertices);
     virtual void insertVertices();
-    virtual void triangulateDomain() override;
 
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);

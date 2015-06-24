@@ -92,7 +92,7 @@ private:
 
 
 CpuParametricMesher::CpuParametricMesher(Mesh& mesh, unsigned int vertCount) :
-    CpuMesher(mesh, vertCount)
+    AbstractMesher(mesh, vertCount)
 {
 
 }
@@ -104,13 +104,24 @@ CpuParametricMesher::~CpuParametricMesher()
 
 void CpuParametricMesher::triangulateDomain()
 {
+    double pipeRadius = 0.3;
+
+    // Give proportianl dimention
+    int layerCount = 8;
+    int sliceCount = 20;
     int arcPipeStackCount = 30;
     int straightPipeStackCount = 30;
     int totalStackCount = 2 * straightPipeStackCount + arcPipeStackCount;
 
-    int sliceCount = 20;
-    int layerCount = 8;
-    double pipeRadius = 0.3;
+    // Rescale dimension to fit vert count hint
+    int vertCount = (layerCount * sliceCount + 1) * totalStackCount;
+    double scaleFactor = glm::pow(_vertCount / (double) vertCount, 1/3.0);
+    layerCount = glm::floor(layerCount * scaleFactor);
+    sliceCount = glm::ceil(sliceCount * scaleFactor);
+    arcPipeStackCount = glm::ceil(arcPipeStackCount * scaleFactor);
+    straightPipeStackCount = glm::ceil(straightPipeStackCount * scaleFactor);
+    totalStackCount = 2 * straightPipeStackCount + arcPipeStackCount;
+
 
     genStraightPipe(glm::dvec3(-1.0, -0.5,  0),
                     glm::dvec3( 0.5, -0.5,  0),

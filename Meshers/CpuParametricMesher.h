@@ -1,19 +1,19 @@
 #ifndef GPUMESH_CPUPARAMETRICMESHER
 #define GPUMESH_CPUPARAMETRICMESHER
 
-#include "CpuMesher.h"
+#include "AbstractMesher.h"
 
 
-class CpuParametricMesher : public CpuMesher
+class CpuParametricMesher : public AbstractMesher
 {
 public:
     CpuParametricMesher(Mesh& mesh, unsigned int vertCount);
     virtual ~CpuParametricMesher();
 
-
-protected:
     virtual void triangulateDomain() override;
 
+
+protected:
     virtual void genStraightPipe(
             const glm::dvec3& begin,
             const glm::dvec3& end,
@@ -53,8 +53,6 @@ protected:
             int stackCount,
             int sliceCount,
             int layerCount);
-
-private:
 };
 
 #endif // GPUMESH_CPUPARAMETRICMESHER

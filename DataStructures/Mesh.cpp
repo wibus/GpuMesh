@@ -103,6 +103,16 @@ MeshVertProperties::MeshVertProperties(
 {
 }
 
+void Mesh::clear()
+{
+    vert.clear();
+    tetra.clear();
+    prism.clear();
+    hexa.clear();
+
+    vertProperties.clear();
+}
+
 double Mesh::tetrahedronQuality(const MeshTet& tet)
 {
     glm::dvec3 A(vert[tet[0]]);
@@ -203,6 +213,49 @@ void Mesh::compileElementQuality(
         double qualityMeanDist = qualityMean - qualities[i];
         double qualityMeanDist2 = qualityMeanDist*qualityMeanDist;
         qualityVar = (qualityVar * 1 + qualityMeanDist2) / (1 + 1);
+    }
+}
+
+void Mesh::compileVertexAdjacency()
+{
+    int vertCount = vert.size();
+
+    vertProperties.resize(vertCount);
+    vertProperties.shrink_to_fit();
+
+    int tetCount = tetra.size();
+    for(int i=0; i < tetCount; ++i)
+    {
+        for(int e=0; e < MeshTet::EDGE_COUNT; ++e)
+        {
+            addEdge(tetra[i].v[MeshTet::edges[e][0]],
+                    tetra[i].v[MeshTet::edges[e][1]]);
+        }
+    }
+
+    int prismCount = prism.size();
+    for(int i=0; i < prismCount; ++i)
+    {
+        for(int e=0; e < MeshPri::EDGE_COUNT; ++e)
+        {
+            addEdge(prism[i].v[MeshPri::edges[e][0]],
+                    prism[i].v[MeshPri::edges[e][1]]);
+        }
+    }
+
+    int hexCount = hexa.size();
+    for(int i=0; i < hexCount; ++i)
+    {
+        for(int e=0; e < MeshHex::EDGE_COUNT; ++e)
+        {
+            addEdge(hexa[i].v[MeshHex::edges[e][0]],
+                    hexa[i].v[MeshHex::edges[e][1]]);
+        }
+    }
+
+    for(int i=0; i < vertCount; ++i)
+    {
+        vertProperties[i].neighbors.shrink_to_fit();
     }
 }
 
@@ -398,4 +451,19 @@ void Mesh::pushTriangle(
     qualities.push_back(quality * 255);
     qualities.push_back(quality * 255);
     qualities.push_back(quality * 255);
+}
+
+void Mesh::addEdge(int firstVert, int secondVert)
+{
+    vector<int>& neighbors = vertProperties[firstVert].neighbors;
+    int neighborCount = neighbors.size();
+    for(int n=0; n < neighborCount; ++n)
+    {
+        if(secondVert == neighbors[n])
+            return;
+    }
+
+    // This really is a new edge
+    vertProperties[firstVert].neighbors.push_back(secondVert);
+    vertProperties[secondVert].neighbors.push_back(firstVert);
 }

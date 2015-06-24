@@ -49,7 +49,7 @@ const glm::ivec3 DIR[DIR_COUNT] = {
 
 
 CpuDelaunayMesher::CpuDelaunayMesher(Mesh& mesh, unsigned int vertCount) :
-    CpuMesher(mesh, vertCount)
+    AbstractMesher(mesh, vertCount)
 {
 
 }
@@ -59,10 +59,20 @@ CpuDelaunayMesher::~CpuDelaunayMesher()
 
 }
 
+void CpuDelaunayMesher::triangulateDomain()
+{
+    chrono::high_resolution_clock::time_point startTime, endTime;
+    startTime = chrono::high_resolution_clock::now();
+    insertVertices();
+    endTime = chrono::high_resolution_clock::now();
+
+    chrono::microseconds dt;
+    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
+    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
+}
+
 void CpuDelaunayMesher::genBoundingMesh()
 {
-    printStep(_stepId, "Generating bounding mesh");
-
     const double a = 20.0;
 
     std::vector<glm::dvec3> vertices;
@@ -104,9 +114,6 @@ void CpuDelaunayMesher::genBoundingMesh()
 
 void CpuDelaunayMesher::genVertices(std::vector<glm::dvec3>& vertices)
 {
-    printStep(_stepId, "Generating vertices");
-
-
     double sphereRadius = 1.0;
     glm::dvec3 cMin(-sphereRadius);
     glm::dvec3 cMax( sphereRadius);
@@ -166,23 +173,6 @@ void CpuDelaunayMesher::genVertices(std::vector<glm::dvec3>& vertices)
         }
     }
     //*/
-}
-
-void CpuDelaunayMesher::triangulateDomain()
-{
-    if(_locationsComputed)
-    {
-        clearVertexLocations();
-    }
-
-    chrono::high_resolution_clock::time_point startTime, endTime;
-    startTime = chrono::high_resolution_clock::now();
-    insertVertices();
-    endTime = chrono::high_resolution_clock::now();
-
-    chrono::microseconds dt;
-    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
-    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
 }
 
 void CpuDelaunayMesher::insertVertices()
