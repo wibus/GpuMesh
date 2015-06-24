@@ -16,7 +16,8 @@ SET(GpuMesh_MESHERS_HEADERS
 
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/CpuLagrangianSmoother.h)
+    ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/GpuLaplacianSmoother.h)
 
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
@@ -41,7 +42,8 @@ SET(GpuMesh_MESHERS_SOURCES
 
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/CpuLagrangianSmoother.cpp)
+    ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/GpuLaplacianSmoother.cpp)
 
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
@@ -53,8 +55,8 @@ SET(GpuMesh_SOURCES
 
 ## Resrouces ##
 
-# Shaders
-SET(GpuMesh_SHADERS
+# Graphics shaders
+SET(GpuMesh_GRAPHICS_SHADERS
     ${GpuMesh_SRC_DIR}/resources/shaders/LitMesh.vert
     ${GpuMesh_SRC_DIR}/resources/shaders/LitMesh.frag
     ${GpuMesh_SRC_DIR}/resources/shaders/UnlitMesh.vert
@@ -70,6 +72,10 @@ SET(GpuMesh_SHADERS
     ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlur.frag
     ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlend.frag)
 
+# Compute shaders
+SET(GpuMesh_COMPUTE_SHADERS
+    ${GpuMesh_SRC_DIR}/resources/computes/LaplacianSmoothing.comp)
+
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES
     ${GpuMesh_SRC_DIR}/resources/GpuMesh.qrc)
@@ -84,7 +90,8 @@ SET(GpuMesh_CONFIG_FILES
 SET(GpuMesh_SRC_FILES
     ${GpuMesh_HEADERS}
     ${GpuMesh_SOURCES}
-    ${GpuMesh_SHADERS}
+    ${GpuMesh_GRAPHICS_SHADERS}
+    ${GpuMesh_COMPUTE_SHADERS}
     ${GpuMesh_RESOURCES}
     ${GpuMesh_CONFIG_FILES}
     ${GpuMesh_MOC_CPP_FILES})

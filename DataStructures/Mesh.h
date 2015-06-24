@@ -113,7 +113,8 @@ public:
 
     void compileElementQuality(
             double& qualityMean,
-            double& qualityVar);
+            double& qualityVar,
+            double& minQuality);
 
     void compileVertexAdjacency();
 

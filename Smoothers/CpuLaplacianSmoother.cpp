@@ -1,11 +1,11 @@
-#include "CpuLagrangianSmoother.h"
+#include "CpuLaplacianSmoother.h"
 
 #include <iostream>
 
 using namespace std;
 
 
-CpuLangrangianSmoother::CpuLangrangianSmoother(
+CpuLaplacianSmoother::CpuLaplacianSmoother(
         Mesh &mesh,
         double moveFactor,
         double gainThreshold) :
@@ -14,24 +14,26 @@ CpuLangrangianSmoother::CpuLangrangianSmoother(
 
 }
 
-CpuLangrangianSmoother::~CpuLangrangianSmoother()
+CpuLaplacianSmoother::~CpuLaplacianSmoother()
 {
 
 }
 
-void CpuLangrangianSmoother::smoothMesh()
+void CpuLaplacianSmoother::smoothMesh()
 {
     double dQuality = 1.0;
     int smoothPass = 0;
 
 
-    double lastQualityMean, lastQualityVar;
+    double lastQualityMean, lastQualityVar, lastMinQuality;
     _mesh.compileElementQuality(
                 lastQualityMean,
-                lastQualityVar);
+                lastQualityVar,
+                lastMinQuality);
 
     cout << "Input mesh quality mean: " << lastQualityMean << endl;
     cout << "Input mesh quality std dev: " << lastQualityVar << endl;
+    cout << "Input mesh minimum quality: " << lastMinQuality << endl;
 
     while(dQuality > _gainThreshold)
     {
@@ -55,7 +57,7 @@ void CpuLangrangianSmoother::smoothMesh()
                     int n = neighbors[i];
                     glm::dvec3 neighborPos(_mesh.vert[n]);
                     glm::dvec3 dist = glm::dvec3(vertPos) - neighborPos;
-                    double weight = glm::dot(dist, dist) + 0.1;
+                    double weight = glm::dot(dist, dist) + 0.0001;
 
                     barycenter = (barycenter * weightSum + neighborPos * weight)
                                   / (weightSum + weight);
@@ -74,14 +76,16 @@ void CpuLangrangianSmoother::smoothMesh()
             }
         }
 
-        double newQualityMean, newQualityVar;
+        double newQualityMean, newQualityVar, newMinQuality;
         _mesh.compileElementQuality(
                     newQualityMean,
-                    newQualityVar);
+                    newQualityVar,
+                    newMinQuality);
 
         cout << "Smooth pass number " << smoothPass << endl;
         cout << "Mesh quality mean: " << newQualityMean << endl;
         cout << "Mesh quality std dev: " << newQualityVar << endl;
+        cout << "Mesh minimum quality: " << lastMinQuality << endl;
 
         dQuality = newQualityMean - lastQualityMean;
         lastQualityMean = newQualityMean;

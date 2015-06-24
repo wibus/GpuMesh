@@ -19,7 +19,7 @@
 
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
-#include "Smoothers/CpuLagrangianSmoother.h"
+#include "Smoothers/CpuLaplacianSmoother.h"
 
 using namespace std;
 using namespace cellar;
@@ -63,7 +63,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAltitude(-glm::pi<float>() * 1.0 / 4.0),
     _lightDistance(1.0),
     _mesher(new CpuParametricMesher(_mesh, 1e5)),
-    _smoother(new CpuLangrangianSmoother(_mesh, 0.9, 0.0))
+    _smoother(new CpuLaplacianSmoother(_mesh, 0.3, 0.0))
 {
 }
 

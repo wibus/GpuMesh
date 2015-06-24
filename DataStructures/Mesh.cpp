@@ -165,7 +165,7 @@ double Mesh::tetrahedronQuality(const MeshTet& tet)
 
 double Mesh::hexahedronQuality(const MeshHex& hex)
 {
-    // Hexahedron quality ~= mean of two possible internal tetrahedron
+    // Hexahedron quality ~= mean of two possible internal tetrahedrons
     MeshTet tetA(hex.v[0], hex.v[3], hex.v[5], hex.v[6]);
     MeshTet tetB(hex.v[1], hex.v[2], hex.v[7], hex.v[4]);
     double tetAQuality = tetrahedronQuality(tetA);
@@ -176,12 +176,27 @@ double Mesh::hexahedronQuality(const MeshHex& hex)
 
 double Mesh::prismQuality(const MeshPri& pri)
 {
-    return 1;
+    // Prism quality ~= mean of 6 possible tetrahedrons from prism triangular faces
+    MeshTet tetA(pri.v[4], pri.v[1], pri.v[5], pri.v[3]);
+    MeshTet tetB(pri.v[5], pri.v[2], pri.v[4], pri.v[0]);
+    MeshTet tetC(pri.v[2], pri.v[1], pri.v[5], pri.v[3]);
+    MeshTet tetD(pri.v[3], pri.v[2], pri.v[4], pri.v[0]);
+    MeshTet tetE(pri.v[0], pri.v[1], pri.v[5], pri.v[3]);
+    MeshTet tetF(pri.v[1], pri.v[2], pri.v[4], pri.v[0]);
+
+    double tetAq = tetrahedronQuality(tetA);
+    double tetBq = tetrahedronQuality(tetB);
+    double tetCq = tetrahedronQuality(tetC);
+    double tetDq = tetrahedronQuality(tetD);
+    double tetEq = tetrahedronQuality(tetE);
+    double tetFq = tetrahedronQuality(tetF);
+    return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq) / (6.0 * 0.716178);
 }
 
 void Mesh::compileElementQuality(
         double& qualityMean,
-        double& qualityVar)
+        double& qualityVar,
+        double& minQuality)
 {
     int tetCount = tetra.size();
     int priCount = prism.size();
@@ -201,9 +216,13 @@ void Mesh::compileElementQuality(
         qualities[idx] = hexahedronQuality(hexa[i]);
 
 
+    minQuality = 1.0;
     qualityMean = 0.0;
     for(int i=0; i < elemCount; ++i)
     {
+        if(qualities[i] < minQuality)
+            minQuality = qualities[i];
+
         qualityMean = (qualityMean * i + qualities[i]) / (i + 1);
     }
 
@@ -289,8 +308,8 @@ void Mesh::compileFacesAttributes(
            glm::dot(verts[3], cutNormal) - cutDistance > 0.0)
             continue;
 
-        double quality = tetrahedronQuality(tet);
 
+        double quality = tetrahedronQuality(tet);
 
         for(int f=0; f < MeshTet::FACE_COUNT; ++f)
         {
@@ -330,7 +349,6 @@ void Mesh::compileFacesAttributes(
 
 
         double quality = prismQuality(pri);
-
 
         for(int f=0; f < MeshPri::FACE_COUNT; ++f)
         {
@@ -374,7 +392,6 @@ void Mesh::compileFacesAttributes(
 
 
         double quality = hexahedronQuality(hex);
-
 
         for(int f=0; f < MeshHex::FACE_COUNT; ++f)
         {

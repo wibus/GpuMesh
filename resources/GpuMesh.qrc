@@ -14,5 +14,6 @@
         <file>shaders/Gradient.frag</file>
         <file>shaders/Grain.frag</file>
         <file>shaders/Screen.frag</file>
+        <file>computes/LaplacianSmoothing.comp</file>
     </qresource>
 </RCC>
