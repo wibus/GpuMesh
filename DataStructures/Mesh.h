@@ -18,6 +18,23 @@ struct MeshVert
     inline operator glm::dvec3() const { return p; }
 };
 
+
+typedef std::function<glm::dvec3(const glm::dvec3&)>
+    BoundaryCallback;
+
+struct MeshTopo
+{
+    bool isFixed;
+    std::vector<int> neighbors;
+
+    bool isBoundary;
+    BoundaryCallback boundaryCallback;
+
+    MeshTopo();
+    MeshTopo(bool isFixed);
+    MeshTopo(const BoundaryCallback& boundaryCallback);
+};
+
 struct MeshTri
 {
     int v[3];
@@ -81,23 +98,6 @@ struct MeshHex
 };
 
 
-typedef std::function<glm::dvec3(const glm::dvec3&)>
-    BoundaryCallback;
-
-struct MeshVertProperties
-{
-    bool isFixed;
-    std::vector<int> neighbors;
-
-    bool isBoundary;
-    BoundaryCallback boundaryCallback;
-
-    MeshVertProperties();
-    MeshVertProperties(bool isFixed);
-    MeshVertProperties(const BoundaryCallback& boundaryCallback);
-};
-
-
 class Mesh
 {
 public:
@@ -127,11 +127,11 @@ public:
 
 
     std::vector<MeshVert> vert;
+    std::vector<MeshTopo> topo;
     std::vector<MeshTet> tetra;
     std::vector<MeshPri> prism;
     std::vector<MeshHex> hexa;
 
-    std::vector<MeshVertProperties> vertProperties;
 
 
 protected:

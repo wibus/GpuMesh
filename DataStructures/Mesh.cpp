@@ -80,14 +80,14 @@ const int MeshHex::edges[MeshHex::EDGE_COUNT][2] = {
 };
 
 
-MeshVertProperties::MeshVertProperties() :
+MeshTopo::MeshTopo() :
     isFixed(false),
     isBoundary(false),
     boundaryCallback()
 {
 }
 
-MeshVertProperties::MeshVertProperties(
+MeshTopo::MeshTopo(
         bool isFixed) :
     isFixed(isFixed),
     isBoundary(false),
@@ -95,7 +95,7 @@ MeshVertProperties::MeshVertProperties(
 {
 }
 
-MeshVertProperties::MeshVertProperties(
+MeshTopo::MeshTopo(
         const BoundaryCallback& boundaryCallback) :
     isFixed(false),
     isBoundary(true),
@@ -110,7 +110,7 @@ void Mesh::clear()
     prism.clear();
     hexa.clear();
 
-    vertProperties.clear();
+    topo.clear();
 }
 
 double Mesh::tetrahedronQuality(const MeshTet& tet)
@@ -239,8 +239,8 @@ void Mesh::compileVertexAdjacency()
 {
     int vertCount = vert.size();
 
-    vertProperties.resize(vertCount);
-    vertProperties.shrink_to_fit();
+    topo.resize(vertCount);
+    topo.shrink_to_fit();
 
     int tetCount = tetra.size();
     for(int i=0; i < tetCount; ++i)
@@ -274,7 +274,7 @@ void Mesh::compileVertexAdjacency()
 
     for(int i=0; i < vertCount; ++i)
     {
-        vertProperties[i].neighbors.shrink_to_fit();
+        topo[i].neighbors.shrink_to_fit();
     }
 }
 
@@ -472,7 +472,7 @@ void Mesh::pushTriangle(
 
 void Mesh::addEdge(int firstVert, int secondVert)
 {
-    vector<int>& neighbors = vertProperties[firstVert].neighbors;
+    vector<int>& neighbors = topo[firstVert].neighbors;
     int neighborCount = neighbors.size();
     for(int n=0; n < neighborCount; ++n)
     {
@@ -481,6 +481,6 @@ void Mesh::addEdge(int firstVert, int secondVert)
     }
 
     // This really is a new edge
-    vertProperties[firstVert].neighbors.push_back(secondVert);
-    vertProperties[secondVert].neighbors.push_back(firstVert);
+    topo[firstVert].neighbors.push_back(secondVert);
+    topo[secondVert].neighbors.push_back(firstVert);
 }

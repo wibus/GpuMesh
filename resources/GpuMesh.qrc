@@ -1,19 +1,19 @@
 <RCC>
     <qresource prefix="/">
-        <file>shaders/Shadow.frag</file>
-        <file>shaders/Shadow.vert</file>
-        <file>shaders/LitMesh.frag</file>
-        <file>shaders/LitMesh.vert</file>
-        <file>shaders/UnlitMesh.frag</file>
-        <file>shaders/UnlitMesh.vert</file>
-        <file>shaders/BloomBlur.frag</file>
-        <file>shaders/BloomBlend.frag</file>
-        <file>shaders/Bloom.vert</file>
-        <file>shaders/Brush.frag</file>
-        <file>shaders/Filter.vert</file>
-        <file>shaders/Gradient.frag</file>
-        <file>shaders/Grain.frag</file>
-        <file>shaders/Screen.frag</file>
-        <file>computes/LaplacianSmoothing.comp</file>
+        <file>shaders/vertex/UnlitMesh.vert</file>
+        <file>shaders/vertex/Shadow.vert</file>
+        <file>shaders/vertex/LitMesh.vert</file>
+        <file>shaders/vertex/Filter.vert</file>
+        <file>shaders/vertex/Bloom.vert</file>
+        <file>shaders/fragment/UnlitMesh.frag</file>
+        <file>shaders/fragment/Shadow.frag</file>
+        <file>shaders/fragment/Screen.frag</file>
+        <file>shaders/fragment/LitMesh.frag</file>
+        <file>shaders/fragment/Grain.frag</file>
+        <file>shaders/fragment/Gradient.frag</file>
+        <file>shaders/fragment/Brush.frag</file>
+        <file>shaders/fragment/BloomBlur.frag</file>
+        <file>shaders/fragment/BloomBlend.frag</file>
+        <file>shaders/compute/LaplacianSmoothing.glsl</file>
     </qresource>
 </RCC>

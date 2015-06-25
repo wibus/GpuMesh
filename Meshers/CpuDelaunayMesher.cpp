@@ -721,7 +721,7 @@ void CpuDelaunayMesher::tearDownGrid()
     // Shorthands
     decltype(_mesh.vert)& meshVert = _mesh.vert;
     decltype(_mesh.tetra)& meshTetra = _mesh.tetra;
-    decltype(_mesh.vertProperties)& vertProp = _mesh.vertProperties;
+    decltype(_mesh.topo)& vertProp = _mesh.topo;
 
     meshTetra.clear();
     meshVert.resize(meshVertCount);

@@ -54,27 +54,36 @@ SET(GpuMesh_SOURCES
 
 
 ## Resrouces ##
+SET(GpuMesh_SHADER_DIR
+    ${GpuMesh_SRC_DIR}/resources/shaders)
 
-# Graphics shaders
-SET(GpuMesh_GRAPHICS_SHADERS
-    ${GpuMesh_SRC_DIR}/resources/shaders/LitMesh.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/LitMesh.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/UnlitMesh.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/UnlitMesh.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/Shadow.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/Filter.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/Gradient.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/Screen.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/Brush.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/Grain.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/Bloom.vert
-    ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlur.frag
-    ${GpuMesh_SRC_DIR}/resources/shaders/BloomBlend.frag)
+# Genereic shaders
+SET(GpuMesh_GENERIC_SHADERS
+    )
+
+# Vertex shaders
+SET(GpuMesh_VERTEX_SHADERS
+    ${GpuMesh_SHADER_DIR}/vertex/Shadow.vert
+    ${GpuMesh_SHADER_DIR}/vertex/LitMesh.vert
+    ${GpuMesh_SHADER_DIR}/vertex/UnlitMesh.vert
+    ${GpuMesh_SHADER_DIR}/vertex/Bloom.vert
+    ${GpuMesh_SHADER_DIR}/vertex/Filter.vert)
+
+# Fragment shaders
+SET(GpuMesh_FRAGMENT_SHADERS
+    ${GpuMesh_SHADER_DIR}/fragment/Shadow.frag
+    ${GpuMesh_SHADER_DIR}/fragment/LitMesh.frag
+    ${GpuMesh_SHADER_DIR}/fragment/UnlitMesh.frag
+    ${GpuMesh_SHADER_DIR}/fragment/BloomBlur.frag
+    ${GpuMesh_SHADER_DIR}/fragment/BloomBlend.frag
+    ${GpuMesh_SHADER_DIR}/fragment/Gradient.frag
+    ${GpuMesh_SHADER_DIR}/fragment/Screen.frag
+    ${GpuMesh_SHADER_DIR}/fragment/Brush.frag
+    ${GpuMesh_SHADER_DIR}/fragment/Grain.frag)
 
 # Compute shaders
 SET(GpuMesh_COMPUTE_SHADERS
-    ${GpuMesh_SRC_DIR}/resources/computes/LaplacianSmoothing.comp)
+    ${GpuMesh_SHADER_DIR}/compute/LaplacianSmoothing.glsl)
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES
@@ -90,7 +99,9 @@ SET(GpuMesh_CONFIG_FILES
 SET(GpuMesh_SRC_FILES
     ${GpuMesh_HEADERS}
     ${GpuMesh_SOURCES}
-    ${GpuMesh_GRAPHICS_SHADERS}
+    ${GpuMesh_GENERIC_SHADERS}
+    ${GpuMesh_VERTEX_SHADERS}
+    ${GpuMesh_FRAGMENT_SHADERS}
     ${GpuMesh_COMPUTE_SHADERS}
     ${GpuMesh_RESOURCES}
     ${GpuMesh_CONFIG_FILES}

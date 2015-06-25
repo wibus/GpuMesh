@@ -41,7 +41,7 @@ void CpuLaplacianSmoother::smoothMesh()
         for(int v = 0; v < vertCount; ++v)
         {
             glm::dvec3& vertPos = _mesh.vert[v].p;
-            const MeshVertProperties& vertProp = _mesh.vertProperties[v];
+            const MeshTopo& vertProp = _mesh.topo[v];
             if(vertProp.isFixed)
                 continue;
 

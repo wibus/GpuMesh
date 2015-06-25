@@ -106,7 +106,7 @@ void CpuParametricMesher::triangulateDomain()
 {
     double pipeRadius = 0.3;
 
-    // Give proportianl dimention
+    // Give proportianl dimensions
     int layerCount = 8;
     int sliceCount = 20;
     int arcPipeStackCount = 30;
@@ -268,28 +268,28 @@ void CpuParametricMesher::insertStackVertices(
         int layerCount,
         bool isBoundary)
 {
-    MeshVertProperties extProperty;
-    MeshVertProperties intProperty;
+    MeshTopo extTopo;
+    MeshTopo intTopo;
 
     if(isBoundary)
     {
-        extProperty.isBoundary = true;
-        extProperty.boundaryCallback =
+        extTopo.isBoundary = true;
+        extTopo.boundaryCallback =
                 PipeExtremityEdgeBoundary(center, frontU, layerCount * dRadius);
 
-        intProperty.isBoundary = true;
-        intProperty.boundaryCallback =
+        intTopo.isBoundary = true;
+        intTopo.boundaryCallback =
                 PipeExtremityFaceBoundary(center, frontU);
     }
     else
     {
-        extProperty.isBoundary = true;
-        extProperty.boundaryCallback =
+        extTopo.isBoundary = true;
+        extTopo.boundaryCallback =
                 PipeSurfaceBoundary(layerCount * dRadius);
     }
 
     _mesh.vert.push_back(center);
-    _mesh.vertProperties.push_back(intProperty);
+    _mesh.topo.push_back(intTopo);
 
     // Gen new stack vertices
     glm::dvec4 arm = upBase;
@@ -301,8 +301,8 @@ void CpuParametricMesher::insertStackVertices(
             glm::dvec3 pos = center + glm::dvec3(arm) * radius;
             _mesh.vert.push_back(pos);
 
-            _mesh.vertProperties.push_back(
-                (i == layerCount-1 ? extProperty : intProperty));
+            _mesh.topo.push_back(
+                (i == layerCount-1 ? extTopo : intTopo));
         }
     }
 }
