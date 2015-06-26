@@ -21,31 +21,20 @@ CpuLaplacianSmoother::~CpuLaplacianSmoother()
 
 void CpuLaplacianSmoother::smoothMesh()
 {
-    double dQuality = 1.0;
-    int smoothPass = 0;
+    evaluateInitialMeshQuality();
 
-
-    double lastQualityMean, lastQualityVar, lastMinQuality;
-    _mesh.compileElementQuality(
-                lastQualityMean,
-                lastQualityVar,
-                lastMinQuality);
-
-    cout << "Input mesh quality mean: " << lastQualityMean << endl;
-    cout << "Input mesh quality std dev: " << lastQualityVar << endl;
-    cout << "Input mesh minimum quality: " << lastMinQuality << endl;
-
-    while(dQuality > _gainThreshold)
+    while(evaluateIterationMeshQuality())
     {
+
         int vertCount = _mesh.vert.size();
         for(int v = 0; v < vertCount; ++v)
         {
-            glm::dvec3& vertPos = _mesh.vert[v].p;
-            const MeshTopo& vertProp = _mesh.topo[v];
-            if(vertProp.isFixed)
+            glm::dvec3& pos = _mesh.vert[v].p;
+            const MeshTopo& topo = _mesh.topo[v];
+            if(topo.isFixed)
                 continue;
 
-            const vector<int>& neighbors = vertProp.neighbors;
+            const vector<int>& neighbors = topo.neighbors;
             if(!neighbors.empty())
             {
                 double weightSum = 0.0;
@@ -56,41 +45,24 @@ void CpuLaplacianSmoother::smoothMesh()
                 {
                     int n = neighbors[i];
                     glm::dvec3 neighborPos(_mesh.vert[n]);
-                    glm::dvec3 dist = glm::dvec3(vertPos) - neighborPos;
-                    double weight = glm::dot(dist, dist) + 0.0001;
+                    double weight = glm::length(pos - neighborPos) + 0.0001;
+                    double alpha = weight / (weightSum + weight);
 
-                    barycenter = (barycenter * weightSum + neighborPos * weight)
-                                  / (weightSum + weight);
+                    barycenter = glm::mix(barycenter, neighborPos, alpha);
                     weightSum += weight;
                 }
 
                 const double alpha = 1.0 - _moveFactor;
-                vertPos.x = alpha * vertPos.x + _moveFactor * barycenter.x;
-                vertPos.y = alpha * vertPos.y + _moveFactor * barycenter.y;
-                vertPos.z = alpha * vertPos.z + _moveFactor * barycenter.z;
+                pos.x = alpha * pos.x + _moveFactor * barycenter.x;
+                pos.y = alpha * pos.y + _moveFactor * barycenter.y;
+                pos.z = alpha * pos.z + _moveFactor * barycenter.z;
 
-                if(vertProp.isBoundary)
+                if(topo.isBoundary)
                 {
-                    vertPos = vertProp.boundaryCallback(vertPos);
+                    pos = topo.boundaryCallback(pos);
                 }
             }
         }
-
-        double newQualityMean, newQualityVar, newMinQuality;
-        _mesh.compileElementQuality(
-                    newQualityMean,
-                    newQualityVar,
-                    newMinQuality);
-
-        cout << "Smooth pass number " << smoothPass << endl;
-        cout << "Mesh quality mean: " << newQualityMean << endl;
-        cout << "Mesh quality std dev: " << newQualityVar << endl;
-        cout << "Mesh minimum quality: " << lastMinQuality << endl;
-
-        dQuality = newQualityMean - lastQualityMean;
-        lastQualityMean = newQualityMean;
-        lastQualityVar = newQualityVar;
-        ++smoothPass;
     }
 
     cout << "#Smoothing finished" << endl << endl;

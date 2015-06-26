@@ -1,6 +1,8 @@
 #ifndef GPUMESH_CPUPARAMETRICMESHER
 #define GPUMESH_CPUPARAMETRICMESHER
 
+#include <memory>
+
 #include "AbstractMesher.h"
 
 
@@ -53,6 +55,10 @@ protected:
             int stackCount,
             int sliceCount,
             int layerCount);
+
+    std::unique_ptr<MeshBound> _pipeSurface;
+    std::unique_ptr<MeshBound> _pipeExtFace;
+    std::unique_ptr<MeshBound> _pipeExtEdge;
 };
 
 #endif // GPUMESH_CPUPARAMETRICMESHER

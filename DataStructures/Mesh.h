@@ -18,9 +18,19 @@ struct MeshVert
     inline operator glm::dvec3() const { return p; }
 };
 
+class MeshBound
+{
+public:
+    MeshBound(int id);
+    virtual ~MeshBound();
 
-typedef std::function<glm::dvec3(const glm::dvec3&)>
-    BoundaryCallback;
+    inline int id() const {return _id;}
+
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const;
+
+private:
+    int _id;
+};
 
 struct MeshTopo
 {
@@ -28,11 +38,12 @@ struct MeshTopo
     std::vector<int> neighbors;
 
     bool isBoundary;
-    BoundaryCallback boundaryCallback;
+    const MeshBound& boundaryCallback;
+    static const MeshBound NO_BOUNDARY;
 
     MeshTopo();
     MeshTopo(bool isFixed);
-    MeshTopo(const BoundaryCallback& boundaryCallback);
+    MeshTopo(const MeshBound& boundaryCallback);
 };
 
 struct MeshTri

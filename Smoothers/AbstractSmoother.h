@@ -14,9 +14,17 @@ public:
 
 
 protected:
+    void evaluateInitialMeshQuality();
+    bool evaluateIterationMeshQuality();
+
     Mesh& _mesh;
     double _moveFactor;
     double _gainThreshold;
+
+    int _smoothPassId;
+    double _lastQualityMean;
+    double _lastQualityVar;
+    double _lastMinQuality;
 };
 
 #endif // GPUMESH_ABSTRACTSMOOTHER

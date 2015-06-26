@@ -721,11 +721,11 @@ void CpuDelaunayMesher::tearDownGrid()
     // Shorthands
     decltype(_mesh.vert)& meshVert = _mesh.vert;
     decltype(_mesh.tetra)& meshTetra = _mesh.tetra;
-    decltype(_mesh.topo)& vertProp = _mesh.topo;
+    decltype(_mesh.topo)& meshTopo = _mesh.topo;
 
     meshTetra.clear();
     meshVert.resize(meshVertCount);
-    vertProp.resize(meshVertCount);
+    meshTopo.resize(meshVertCount);
     for(int i = _externalVertCount; i < delaunayVertCount; ++i)
     {
         Vertex& dVert = vert[i];
@@ -752,10 +752,10 @@ void CpuDelaunayMesher::tearDownGrid()
                    meshTet[2] < 0 || meshTet[3] < 0)
                 {
                     // It's a bounding tetrahedron
-                    if(meshTet[0] >= 0) vertProp[meshTet[0]].isFixed = true;
-                    if(meshTet[1] >= 0) vertProp[meshTet[1]].isFixed = true;
-                    if(meshTet[2] >= 0) vertProp[meshTet[2]].isFixed = true;
-                    if(meshTet[3] >= 0) vertProp[meshTet[3]].isFixed = true;
+                    if(meshTet[0] >= 0) meshTopo[meshTet[0]].isFixed = true;
+                    if(meshTet[1] >= 0) meshTopo[meshTet[1]].isFixed = true;
+                    if(meshTet[2] >= 0) meshTopo[meshTet[2]].isFixed = true;
+                    if(meshTet[3] >= 0) meshTopo[meshTet[3]].isFixed = true;
                 }
                 else
                 {

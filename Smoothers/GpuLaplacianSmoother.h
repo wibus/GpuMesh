@@ -16,14 +16,15 @@ public:
 
 protected:
     void initializeProgram();
-    void updateBuffers();
+    void updateTopology();
 
     bool _initialized;
     bool _topologyChanged;
     cellar::GlProgram _smoothingProgram;
 
     GLuint _vertSsbo;
-    GLuint _adjaSsbo;
+    GLuint _topoSsbo;
+    GLuint _neigSsbo;
 };
 
 #endif // GPUMESH_GPULAPLACIANSMOOTHER

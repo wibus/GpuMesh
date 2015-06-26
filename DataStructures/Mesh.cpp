@@ -80,10 +80,29 @@ const int MeshHex::edges[MeshHex::EDGE_COUNT][2] = {
 };
 
 
+MeshBound::MeshBound(int id) :
+    _id(id)
+{
+
+}
+
+MeshBound::~MeshBound()
+{
+
+}
+
+glm::dvec3 MeshBound::operator()(const glm::dvec3& pos) const
+{
+    return pos;
+}
+
+
+const MeshBound MeshTopo::NO_BOUNDARY = MeshBound(0);
+
 MeshTopo::MeshTopo() :
     isFixed(false),
     isBoundary(false),
-    boundaryCallback()
+    boundaryCallback(NO_BOUNDARY)
 {
 }
 
@@ -91,14 +110,14 @@ MeshTopo::MeshTopo(
         bool isFixed) :
     isFixed(isFixed),
     isBoundary(false),
-    boundaryCallback()
+    boundaryCallback(NO_BOUNDARY)
 {
 }
 
 MeshTopo::MeshTopo(
-        const BoundaryCallback& boundaryCallback) :
+        const MeshBound& boundaryCallback) :
     isFixed(false),
-    isBoundary(true),
+    isBoundary(&boundaryCallback != &NO_BOUNDARY),
     boundaryCallback(boundaryCallback)
 {
 }

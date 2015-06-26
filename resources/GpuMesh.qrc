@@ -15,5 +15,6 @@
         <file>shaders/fragment/BloomBlur.frag</file>
         <file>shaders/fragment/BloomBlend.frag</file>
         <file>shaders/compute/LaplacianSmoothing.glsl</file>
+        <file>shaders/compute/ElbowPipeBoundaries.glsl</file>
     </qresource>
 </RCC>

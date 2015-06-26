@@ -83,7 +83,8 @@ SET(GpuMesh_FRAGMENT_SHADERS
 
 # Compute shaders
 SET(GpuMesh_COMPUTE_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/LaplacianSmoothing.glsl)
+    ${GpuMesh_SHADER_DIR}/compute/LaplacianSmoothing.glsl
+    ${GpuMesh_SHADER_DIR}/compute/ElbowPipeBoundaries.glsl)
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES

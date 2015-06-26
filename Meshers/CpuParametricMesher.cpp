@@ -7,23 +7,26 @@
 using namespace std;
 
 
-class PipeSurfaceBoundary
+const double PIPE_RADIUS = 0.3;
+const glm::dvec3 EXT_NORMAL(-1, 0, 0);
+const glm::dvec3 EXT_CENTER(-1, 0.5, 0.0);
+
+class PipeSurfaceBoundary : public MeshBound
 {
 public:
-    PipeSurfaceBoundary(double radius) :
-        radius(radius)
+    PipeSurfaceBoundary() :
+        MeshBound(1)
     {
 
     }
 
-    glm::dvec3 operator()(const glm::dvec3& pos) const
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
     {
         glm::dvec3 center;
 
         if(pos.x < 0.5) // Straights
         {
             center = glm::dvec3(pos.x, (pos.y < 0.0 ? -0.5 : 0.5), 0.0);
-
         }
         else // Arc
         {
@@ -33,66 +36,55 @@ public:
         }
 
         glm::dvec3 dist = pos - center;
-        glm::dvec3 extProj = glm::normalize(dist) * radius;
+        glm::dvec3 extProj = glm::normalize(dist) * PIPE_RADIUS;
         return center + extProj;
     }
-
-private:
-    double radius;
 };
 
-class PipeExtremityFaceBoundary
+class PipeExtFaceBoundary : public MeshBound
 {
 public:
-    PipeExtremityFaceBoundary(
-            const glm::dvec3& center,
-            const glm::dvec3& normal) :
-        center(center),
-        normal(normal)
+    PipeExtFaceBoundary() :
+        MeshBound(2)
     {
     }
 
-    glm::dvec3 operator()(const glm::dvec3& pos) const
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
     {
-        double offset = glm::dot(pos - center, normal);
-        return pos - normal * offset;
-    }
+        glm::dvec3 center = EXT_CENTER;
+        if(pos.y < 0.0) center.y = -center.y;
 
-private:
-    glm::dvec3 center;
-    glm::dvec3 normal;
+        double offset = glm::dot(pos - center, EXT_NORMAL);
+        return pos - EXT_NORMAL * offset;
+    }
 };
 
-class PipeExtremityEdgeBoundary
+class PipeExtEdgeBoundary : public MeshBound
 {
 public:
-    PipeExtremityEdgeBoundary(
-            const glm::dvec3& center,
-            const glm::dvec3& normal,
-            double radius) :
-        center(center),
-        normal(normal),
-        radius(radius)
+    PipeExtEdgeBoundary() :
+        MeshBound(3)
     {
     }
 
-    glm::dvec3 operator()(const glm::dvec3& pos) const
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
     {
+        glm::dvec3 center = EXT_CENTER;
+        if(pos.y < 0.0) center.y = -center.y;
+
         glm::dvec3 dist = pos - center;
-        double offset = glm::dot(dist, normal);
-        glm::dvec3 extProj = dist - normal * offset;
-        return center + glm::normalize(extProj) * radius;
+        double offset = glm::dot(dist, EXT_NORMAL);
+        glm::dvec3 extProj = dist - EXT_NORMAL * offset;
+        return center + glm::normalize(extProj) * PIPE_RADIUS;
     }
-
-private:
-    glm::dvec3 center;
-    glm::dvec3 normal;
-    double radius;
 };
 
 
 CpuParametricMesher::CpuParametricMesher(Mesh& mesh, unsigned int vertCount) :
-    AbstractMesher(mesh, vertCount)
+    AbstractMesher(mesh, vertCount),
+    _pipeSurface(new PipeSurfaceBoundary()),
+    _pipeExtFace(new PipeExtFaceBoundary()),
+    _pipeExtEdge(new PipeExtEdgeBoundary())
 {
 
 }
@@ -104,8 +96,6 @@ CpuParametricMesher::~CpuParametricMesher()
 
 void CpuParametricMesher::triangulateDomain()
 {
-    double pipeRadius = 0.3;
-
     // Give proportianl dimensions
     int layerCount = 8;
     int sliceCount = 20;
@@ -126,7 +116,7 @@ void CpuParametricMesher::triangulateDomain()
     genStraightPipe(glm::dvec3(-1.0, -0.5,  0),
                     glm::dvec3( 0.5, -0.5,  0),
                     glm::dvec3( 0,    0,    1),
-                    pipeRadius,
+                    PIPE_RADIUS,
                     straightPipeStackCount,
                     sliceCount,
                     layerCount,
@@ -139,7 +129,7 @@ void CpuParametricMesher::triangulateDomain()
                glm::dvec3( 0,    0,    1),
                glm::pi<double>(),
                0.5,
-               pipeRadius,
+               PIPE_RADIUS,
                arcPipeStackCount,
                sliceCount,
                layerCount,
@@ -149,7 +139,7 @@ void CpuParametricMesher::triangulateDomain()
     genStraightPipe(glm::dvec3( 0.5,  0.5,  0),
                     glm::dvec3(-1.0,  0.5,  0),
                     glm::dvec3( 0,    0,    1),
-                    pipeRadius,
+                    PIPE_RADIUS,
                     straightPipeStackCount,
                     sliceCount,
                     layerCount,
@@ -268,25 +258,8 @@ void CpuParametricMesher::insertStackVertices(
         int layerCount,
         bool isBoundary)
 {
-    MeshTopo extTopo;
-    MeshTopo intTopo;
-
-    if(isBoundary)
-    {
-        extTopo.isBoundary = true;
-        extTopo.boundaryCallback =
-                PipeExtremityEdgeBoundary(center, frontU, layerCount * dRadius);
-
-        intTopo.isBoundary = true;
-        intTopo.boundaryCallback =
-                PipeExtremityFaceBoundary(center, frontU);
-    }
-    else
-    {
-        extTopo.isBoundary = true;
-        extTopo.boundaryCallback =
-                PipeSurfaceBoundary(layerCount * dRadius);
-    }
+    MeshTopo extTopo(isBoundary ? *_pipeExtEdge : *_pipeSurface);
+    MeshTopo intTopo(isBoundary ? *_pipeExtFace : MeshTopo::NO_BOUNDARY);
 
     _mesh.vert.push_back(center);
     _mesh.topo.push_back(intTopo);
