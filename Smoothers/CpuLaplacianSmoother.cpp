@@ -38,24 +38,22 @@ void CpuLaplacianSmoother::smoothMesh()
             if(!neighbors.empty())
             {
                 double weightSum = 0.0;
-                glm::dvec3 barycenter;
+                glm::dvec3 barycenter(0.0);
 
                 int neighborCount = neighbors.size();
                 for(int i=0; i<neighborCount; ++i)
                 {
-                    int n = neighbors[i];
-                    glm::dvec3 neighborPos(_mesh.vert[n]);
-                    double weight = glm::length(pos - neighborPos) + 0.0001;
-                    double alpha = weight / (weightSum + weight);
+                    glm::dvec3 npos(_mesh.vert[neighbors[i]]);
 
-                    barycenter = glm::mix(barycenter, neighborPos, alpha);
+                    glm::dvec3 dist = npos - pos;
+                    double weight = glm::dot(dist, dist) + 0.0001;
+
+                    barycenter += npos * weight;
                     weightSum += weight;
                 }
 
-                const double alpha = 1.0 - _moveFactor;
-                pos.x = alpha * pos.x + _moveFactor * barycenter.x;
-                pos.y = alpha * pos.y + _moveFactor * barycenter.y;
-                pos.z = alpha * pos.z + _moveFactor * barycenter.z;
+                barycenter /= weightSum;
+                pos = glm::mix(pos, barycenter, _moveFactor);
 
                 if(topo.isBoundary)
                 {

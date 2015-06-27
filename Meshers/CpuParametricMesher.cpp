@@ -97,7 +97,7 @@ CpuParametricMesher::~CpuParametricMesher()
 void CpuParametricMesher::triangulateDomain()
 {
     // Give proportianl dimensions
-    int layerCount = 8;
+    int layerCount = 6;
     int sliceCount = 20;
     int arcPipeStackCount = 30;
     int straightPipeStackCount = 30;

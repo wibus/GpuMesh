@@ -120,7 +120,7 @@ void GpuLaplacianSmoother::updateTopology()
 
     vector<glm::vec4> vert(vertCount);
     vector<Topo> topo(vertCount);
-    vector<glm::ivec4> neig;
+    vector<int> neig;
 
     int base = 0;
     for(int i=0; i < vertCount; ++i)
@@ -133,7 +133,7 @@ void GpuLaplacianSmoother::updateTopology()
         topo[i] = Topo(type, base, count);
 
         for(int n=0; n < count; ++n)
-            neig.push_back(glm::ivec4(meshTopo.neighbors[n]));
+            neig.push_back(meshTopo.neighbors[n]);
 
         base += count;
     }
