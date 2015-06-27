@@ -58,6 +58,15 @@ void GpuLaplacianSmoother::smoothMesh()
 
         _topologyChanged = false;
     }
+    else
+    {
+        // Absurdly make subsequent passes much more faster...
+        // I guess it's because the driver put buffer back on GPU.
+        // It looks like glGetBufferSubData take it out of the GPU.
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, _vertTmpBuffSize,
+                     _vertTmpBuff.data(),     GL_STATIC_DRAW);
+    }
 
     int vertCount = _mesh.vertCount();
 
@@ -72,14 +81,18 @@ void GpuLaplacianSmoother::smoothMesh()
         glDispatchCompute(ceil(vertCount / 256.0), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-        glm::vec4* vertPos = (glm::vec4*) glMapBuffer(
-                GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        for(int i=0; i<vertCount; ++i)
+        if(_smoothPassId == 100)
         {
-            _mesh.vert[i].p = glm::dvec3(vertPos[i]);
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+            glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,
+                               _vertTmpBuffSize,         _vertTmpBuff.data());
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+            for(int i=0; i< vertCount; ++i)
+            {
+                _mesh.vert[i].p = glm::dvec3(_vertTmpBuff[i]);
+            }
         }
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
     _smoothingProgram.popProgram();
@@ -96,20 +109,13 @@ void GpuLaplacianSmoother::initializeProgram()
 
 
     glGenBuffers(1, &_vertSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _vertSsbo);
 
     glGenBuffers(1, &_topoSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _topoSsbo);
 
     glGenBuffers(1, &_neigSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _neigSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void GpuLaplacianSmoother::updateTopology()
@@ -118,7 +124,7 @@ void GpuLaplacianSmoother::updateTopology()
 
     int vertCount = _mesh.vertCount();
 
-    vector<glm::vec4> vert(vertCount);
+    _vertTmpBuff.resize(vertCount);
     vector<Topo> topo(vertCount);
     vector<int> neig;
 
@@ -129,7 +135,7 @@ void GpuLaplacianSmoother::updateTopology()
         int type = meshTopo.isFixed ? -1 : meshTopo.boundaryCallback.id();
         int count = meshTopo.neighbors.size();
 
-        vert[i] = glm::vec4(_mesh.vert[i].p, 0.0);
+        _vertTmpBuff[i] = glm::vec4(_mesh.vert[i].p, 0.0);
         topo[i] = Topo(type, base, count);
 
         for(int n=0; n < count; ++n)
@@ -140,8 +146,8 @@ void GpuLaplacianSmoother::updateTopology()
 
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    size_t vertSize = sizeof(decltype(vert.front())) * vert.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, vertSize, vert.data(), GL_STATIC_DRAW);
+    _vertTmpBuffSize = sizeof(decltype(_vertTmpBuff.front())) * _vertTmpBuff.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, _vertTmpBuffSize, _vertTmpBuff.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
     size_t topoSize = sizeof(decltype(topo.front())) * topo.size();
@@ -150,5 +156,6 @@ void GpuLaplacianSmoother::updateTopology()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigSsbo);
     size_t neigSize = sizeof(decltype(neig.front())) * neig.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, neigSize, neig.data(), GL_STATIC_DRAW);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }

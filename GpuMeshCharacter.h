@@ -7,6 +7,8 @@
 #include <CellarWorkbench/Camera/Camera.h>
 #include <CellarWorkbench/DesignPattern/SpecificObserver.h>
 
+#include <PropRoom2D/Prop/Hud/TextHud.h>
+
 #include <Scaena/Play/Character.h>
 
 #include "DataStructures/Mesh.h"
@@ -108,6 +110,9 @@ private:
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;
+
+    std::shared_ptr<prop2::TextHud> _fps;
+    std::shared_ptr<prop2::TextHud> _ups;
 };
 
 #endif //GpuMesh_CHARACTER

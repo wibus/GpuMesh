@@ -11,11 +11,14 @@
 #include <CellarWorkbench/Image/ImageBank.h>
 #include <CellarWorkbench/GL/GlToolkit.h>
 
+#include <PropRoom2D/Team/AbstractTeam.h>
+
 #include <Scaena/Play/Play.h>
 #include <Scaena/Play/View.h>
 #include <Scaena/StageManagement/Event/KeyboardEvent.h>
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
+#include <Scaena/StageManagement/Event/StageTime.h>
 
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
@@ -24,6 +27,7 @@
 
 using namespace std;
 using namespace cellar;
+using namespace prop2;
 using namespace scaena;
 
 
@@ -63,7 +67,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 2.0 / 4.0),
     _lightDistance(1.0),
-    _mesher(new CpuParametricMesher(_mesh, 1e5)),
+    _mesher(new CpuParametricMesher(_mesh, 1e6)),
     _smoother(new GpuLaplacianSmoother(_mesh, 0.3, 0.0))
 {
 }
@@ -73,6 +77,18 @@ void GpuMeshCharacter::enterStage()
     setupShaders();
     resetResources();
 
+    _fps = play().propTeam2D()->createTextHud();
+    _fps->setHandlePosition(glm::dvec2(5, 5));
+    _fps->setHorizontalAnchor(EHorizontalAnchor::LEFT);
+    _fps->setVerticalAnchor(EVerticalAnchor::BOTTOM);
+    _fps->setHeight(16);
+
+    _ups = play().propTeam2D()->createTextHud();
+    _ups->setHandlePosition(glm::dvec2(5, 25));
+    _ups->setHorizontalAnchor(EHorizontalAnchor::LEFT);
+    _ups->setVerticalAnchor(EVerticalAnchor::BOTTOM);
+    _ups->setHeight(16);
+
     play().view()->camera3D()->registerObserver(*this);
 
     resetPipeline();
@@ -80,6 +96,8 @@ void GpuMeshCharacter::enterStage()
 
 void GpuMeshCharacter::beginStep(const StageTime &time)
 {
+    _ups->setText("UPS: " + to_string(time.framesPerSecond()));
+
     std::shared_ptr<SynchronousKeyboard> keyboard = play().synchronousKeyboard();
     std::shared_ptr<SynchronousMouse> mouse = play().synchronousMouse();
 
@@ -155,8 +173,10 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
     }
 }
 
-void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime&)
+void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
 {
+    _fps->setText("UPS: " + to_string(time.framesPerSecond()));
+
     int viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 

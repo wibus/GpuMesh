@@ -25,6 +25,9 @@ protected:
     GLuint _vertSsbo;
     GLuint _topoSsbo;
     GLuint _neigSsbo;
+
+    std::vector<glm::vec4> _vertTmpBuff;
+    size_t _vertTmpBuffSize;
 };
 
 #endif // GPUMESH_GPULAPLACIANSMOOTHER
