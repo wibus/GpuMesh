@@ -14,6 +14,7 @@ using namespace scaena;
 #include "GpuMeshCharacter.h"
 #include "Meshers/AbstractMesher.h"
 #include "Evaluators/AbstractEvaluator.h"
+#include "Renderers/AbstractRenderer.h"
 #include "Smoothers/AbstractSmoother.h"
 
 

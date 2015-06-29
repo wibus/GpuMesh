@@ -18,5 +18,9 @@
         <file>shaders/compute/ElbowPipeBoundaries.glsl</file>
         <file>shaders/compute/PolyhedronQualityEvaluator.glsl</file>
         <file>shaders/compute/InsphereQualityMeasures.glsl</file>
+        <file>shaders/vertex/Wireframe.vert</file>
+        <file>shaders/fragment/Wireframe.frag</file>
+        <file>shaders/vertex/PointSphere.vert</file>
+        <file>shaders/fragment/PointSphere.frag</file>
     </qresource>
 </RCC>

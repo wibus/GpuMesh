@@ -191,7 +191,7 @@ void Mesh::compileFacesAttributes(
         std::vector<glm::vec3>& vertices,
         std::vector<signed char>& normals,
         std::vector<unsigned char>& triEdges,
-        std::vector<unsigned char>& qualities)
+        std::vector<unsigned char>& qualities) const
 {
     glm::dvec3 cutNormal(cutPlaneEq);
     double cutDistance = cutPlaneEq.w;
@@ -344,7 +344,7 @@ void Mesh::pushTriangle(
         const glm::dvec3& C,
         const glm::dvec3& n,
         bool fromQuad,
-        double quality)
+        double quality) const
 {
 
     vertices.push_back(glm::vec3(A));

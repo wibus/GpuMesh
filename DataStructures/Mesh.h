@@ -144,7 +144,7 @@ public:
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
             std::vector<unsigned char>& triEdges,
-            std::vector<unsigned char>& qualities);
+            std::vector<unsigned char>& qualities) const;
 
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
 
@@ -171,7 +171,7 @@ protected:
             const glm::dvec3& C,
             const glm::dvec3& n,
             bool fromQuad,
-            double quality);
+            double quality) const;
 };
 
 

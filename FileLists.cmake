@@ -25,11 +25,17 @@ SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/GpuLaplacianSmoother.h)
 
+SET(GpuMesh_RENDERERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.h
+    ${GpuMesh_SRC_DIR}/Renderers/ScientificRenderer.h
+    ${GpuMesh_SRC_DIR}/Renderers/MidEndRenderer.h)
+
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
     ${GpuMesh_MESHERS_HEADERS}
     ${GpuMesh_EVALUATORS_HEADERS}
     ${GpuMesh_SMOOTHERS_HEADERS}
+    ${GpuMesh_RENDERERS_HEADERS}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
 
 
@@ -58,11 +64,17 @@ SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/GpuLaplacianSmoother.cpp)
 
+SET(GpuMesh_RENDERERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.cpp
+    ${GpuMesh_SRC_DIR}/Renderers/ScientificRenderer.cpp
+    ${GpuMesh_SRC_DIR}/Renderers/MidEndRenderer.cpp)
+
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
     ${GpuMesh_MESHERS_SOURCES}
     ${GpuMesh_EVALUATORS_SOURCES}
     ${GpuMesh_SMOOTHERS_SOURCES}
+    ${GpuMesh_RENDERERS_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp
     ${GpuMesh_SRC_DIR}/main.cpp)
 
@@ -80,6 +92,8 @@ SET(GpuMesh_VERTEX_SHADERS
     ${GpuMesh_SHADER_DIR}/vertex/Shadow.vert
     ${GpuMesh_SHADER_DIR}/vertex/LitMesh.vert
     ${GpuMesh_SHADER_DIR}/vertex/UnlitMesh.vert
+    ${GpuMesh_SHADER_DIR}/vertex/Wireframe.vert
+    ${GpuMesh_SHADER_DIR}/vertex/PointSphere.vert
     ${GpuMesh_SHADER_DIR}/vertex/Bloom.vert
     ${GpuMesh_SHADER_DIR}/vertex/Filter.vert)
 
@@ -88,6 +102,8 @@ SET(GpuMesh_FRAGMENT_SHADERS
     ${GpuMesh_SHADER_DIR}/fragment/Shadow.frag
     ${GpuMesh_SHADER_DIR}/fragment/LitMesh.frag
     ${GpuMesh_SHADER_DIR}/fragment/UnlitMesh.frag
+    ${GpuMesh_SHADER_DIR}/fragment/Wireframe.frag
+    ${GpuMesh_SHADER_DIR}/fragment/PointSphere.frag
     ${GpuMesh_SHADER_DIR}/fragment/BloomBlur.frag
     ${GpuMesh_SHADER_DIR}/fragment/BloomBlend.frag
     ${GpuMesh_SHADER_DIR}/fragment/Gradient.frag
