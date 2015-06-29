@@ -48,8 +48,8 @@ const glm::ivec3 DIR[DIR_COUNT] = {
 };
 
 
-CpuDelaunayMesher::CpuDelaunayMesher(Mesh& mesh, unsigned int vertCount) :
-    AbstractMesher(mesh, vertCount)
+CpuDelaunayMesher::CpuDelaunayMesher(unsigned int vertCount) :
+    AbstractMesher(vertCount)
 {
 
 }
@@ -59,11 +59,11 @@ CpuDelaunayMesher::~CpuDelaunayMesher()
 
 }
 
-void CpuDelaunayMesher::triangulateDomain()
+void CpuDelaunayMesher::triangulateDomain(Mesh& mesh)
 {
     chrono::high_resolution_clock::time_point startTime, endTime;
     startTime = chrono::high_resolution_clock::now();
-    insertVertices();
+    insertVertices(mesh);
     endTime = chrono::high_resolution_clock::now();
 
     chrono::microseconds dt;
@@ -175,7 +175,7 @@ void CpuDelaunayMesher::genVertices(std::vector<glm::dvec3>& vertices)
     //*/
 }
 
-void CpuDelaunayMesher::insertVertices()
+void CpuDelaunayMesher::insertVertices(Mesh& mesh)
 {
     genBoundingMesh();
 
@@ -225,7 +225,7 @@ void CpuDelaunayMesher::insertVertices()
 
 
     std::cout << "Collecting tetrahedrons" << endl;
-    tearDownGrid();
+    tearDownGrid(mesh);
 }
 
 void CpuDelaunayMesher::initializeGrid(int idStart, int idEnd)
@@ -700,7 +700,7 @@ void CpuDelaunayMesher::removeTetrahedronGrid(Tetrahedron* tet)
     _tetPool.disposeTetrahedron(tet);
 }
 
-void CpuDelaunayMesher::tearDownGrid()
+void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
 {
     ++_currentVisitTime;
 
@@ -719,9 +719,9 @@ void CpuDelaunayMesher::tearDownGrid()
     int meshVertCount = delaunayVertCount - _externalVertCount;
 
     // Shorthands
-    decltype(_mesh.vert)& meshVert = _mesh.vert;
-    decltype(_mesh.tetra)& meshTetra = _mesh.tetra;
-    decltype(_mesh.topo)& meshTopo = _mesh.topo;
+    decltype(mesh.vert)& meshVert = mesh.vert;
+    decltype(mesh.tetra)& meshTetra = mesh.tetra;
+    decltype(mesh.topo)& meshTopo = mesh.topo;
 
     meshTetra.clear();
     meshVert.resize(meshVertCount);
@@ -790,8 +790,8 @@ void CpuDelaunayMesher::tearDownGrid()
 
 
     cout << "Elements / Vertices = " <<
-            _mesh.elemCount() << " / " << _mesh.vertCount() << " = " <<
-            _mesh.elemCount()  / (double) _mesh.vertCount() << endl;
+            mesh.elemCount() << " / " << mesh.vertCount() << " = " <<
+            mesh.elemCount()  / (double) mesh.vertCount() << endl;
 }
 
 bool CpuDelaunayMesher::intersects(const glm::dvec3& v, Tetrahedron* tet)

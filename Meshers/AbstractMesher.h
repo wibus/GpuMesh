@@ -9,14 +9,13 @@
 class AbstractMesher
 {
 public:
-    AbstractMesher(Mesh& mesh, unsigned int vertCount);
+    AbstractMesher(unsigned int vertCount);
     virtual ~AbstractMesher() = 0;
 
-    virtual void triangulateDomain() = 0;
+    virtual void triangulateDomain(Mesh& mesh) = 0;
 
 
 protected:
-    Mesh& _mesh;
     unsigned int _vertCount;
 };
 

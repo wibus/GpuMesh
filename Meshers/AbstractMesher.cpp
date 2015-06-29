@@ -1,8 +1,7 @@
 #include "AbstractMesher.h"
 
 
-AbstractMesher::AbstractMesher(Mesh& mesh, unsigned int vertCount) :
-    _mesh(mesh),
+AbstractMesher::AbstractMesher(unsigned int vertCount) :
     _vertCount(vertCount)
 {
 

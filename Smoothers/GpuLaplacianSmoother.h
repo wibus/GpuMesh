@@ -9,22 +9,18 @@
 class GpuLaplacianSmoother : public AbstractSmoother
 {
 public:
-    GpuLaplacianSmoother(Mesh& mesh, double moveFactor, double gainThreshold);
+    GpuLaplacianSmoother(
+            double moveFactor,
+            double gainThreshold);
     virtual ~GpuLaplacianSmoother();
 
-    virtual void smoothMesh() override;
+    virtual void smoothMesh(Mesh& mesh, AbstractEvaluator& evaluator) override;
 
 protected:
-    void initializeProgram();
-    void updateTopology();
+    virtual void initializeProgram(Mesh& mesh);
 
     bool _initialized;
-    bool _topologyChanged;
     cellar::GlProgram _smoothingProgram;
-
-    GLuint _vertSsbo;
-    GLuint _topoSsbo;
-    GLuint _neigSsbo;
 
     std::vector<glm::vec4> _vertTmpBuff;
     size_t _vertTmpBuffSize;

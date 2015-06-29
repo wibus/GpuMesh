@@ -11,9 +11,10 @@
 
 #include <Scaena/Play/Character.h>
 
-#include "DataStructures/Mesh.h"
-#include "Meshers/AbstractMesher.h"
-#include "Smoothers/AbstractSmoother.h"
+class Mesh;
+class AbstractMesher;
+class AbstractEvaluator;
+class AbstractSmoother;
 
 
 class GpuMeshCharacter :
@@ -98,15 +99,16 @@ protected:
     float _lightAltitude;
     float _lightDistance;
 
-    Mesh _mesh;
     int _stepId;
     bool _processFinished;
     bool _mustUpdateBuffers;
 
 
 private:
+    std::unique_ptr<Mesh> _mesh;
     std::unique_ptr<AbstractMesher> _mesher;
     std::unique_ptr<AbstractSmoother> _smoother;
+    std::unique_ptr<AbstractEvaluator> _evaluator;
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;

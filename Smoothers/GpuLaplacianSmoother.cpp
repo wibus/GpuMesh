@@ -1,39 +1,18 @@
 #include "GpuLaplacianSmoother.h"
 
 #include <iostream>
+#include <chrono>
 
 using namespace std;
 
 
-struct Topo
-{
-    // Type of vertex :
-    //  * -1 = free
-    //  *  0 = fixed
-    //  * >0 = boundary
-    int type;
 
-    // Neighbors list start location
-    int base;
 
-    // Neighbors count
-    int count;
-
-    int pad;
-
-    Topo() : type(0), base(0), count(0) {}
-    Topo(int type, int base, int count) : type(type), base(base), count(count) {}
-};
-
-GpuLaplacianSmoother::GpuLaplacianSmoother(Mesh &mesh,
+GpuLaplacianSmoother::GpuLaplacianSmoother(
         double moveFactor,
         double gainThreshold) :
-    AbstractSmoother(mesh, moveFactor, gainThreshold),
-    _initialized(false),
-    _topologyChanged(true),
-    _vertSsbo(0),
-    _topoSsbo(0),
-    _neigSsbo(0)
+    AbstractSmoother(moveFactor, gainThreshold),
+    _initialized(false)
 {
 
 }
@@ -43,62 +22,81 @@ GpuLaplacianSmoother::~GpuLaplacianSmoother()
 
 }
 
-void GpuLaplacianSmoother::smoothMesh()
+void GpuLaplacianSmoother::smoothMesh(Mesh& mesh, AbstractEvaluator& evaluator)
 {
+    GLuint vertSsbo = mesh.glBuffer(EMeshBuffer::VERT);
+    GLuint topoSsbo = mesh.glBuffer(EMeshBuffer::TOPO);
+    GLuint neigSsbo = mesh.glBuffer(EMeshBuffer::NEIG);
+
     if(!_initialized)
     {
-        initializeProgram();
+        initializeProgram(mesh);
 
         _initialized = true;
-    }
-
-    if(_topologyChanged)
-    {
-        updateTopology();
-
-        _topologyChanged = false;
     }
     else
     {
         // Absurdly make subsequent passes much more faster...
         // I guess it's because the driver put buffer back on GPU.
         // It looks like glGetBufferSubData take it out of the GPU.
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertSsbo);
         glBufferData(GL_SHADER_STORAGE_BUFFER, _vertTmpBuffSize,
-                     _vertTmpBuff.data(),     GL_STATIC_DRAW);
+                     _vertTmpBuff.data(),      GL_STATIC_DRAW);
+
     }
 
-    int vertCount = _mesh.vertCount();
+
+    int vertCount = mesh.vertCount();
 
     _smoothingProgram.pushProgram();
     _smoothingProgram.setInt("VertCount", vertCount);
     _smoothingProgram.setFloat("MoveCoeff", _moveFactor);
 
-    evaluateInitialMeshQuality();
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, topoSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, neigSsbo);
 
-    while(evaluateIterationMeshQuality())
+    auto tStart = chrono::high_resolution_clock::now();
+    auto tMiddle = tStart;
+    auto tEnd = tStart;
+
+    evaluateInitialMeshQuality(mesh, evaluator);
+    while(evaluateIterationMeshQuality(mesh, evaluator))
     {
         glDispatchCompute(ceil(vertCount / 256.0), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+
         if(_smoothPassId == 100)
         {
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+            tMiddle = chrono::high_resolution_clock::now();
+
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertSsbo);
             glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,
                                _vertTmpBuffSize,         _vertTmpBuff.data());
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-            for(int i=0; i< vertCount; ++i)
+            tEnd = chrono::high_resolution_clock::now();
+
+            for(int i=0; i < vertCount; ++i)
             {
-                _mesh.vert[i].p = glm::dvec3(_vertTmpBuff[i]);
+                mesh.vert[i].p = glm::dvec3(_vertTmpBuff[i]);
             }
         }
     }
 
     _smoothingProgram.popProgram();
+
+
+    chrono::microseconds dtMid;
+    dtMid = chrono::duration_cast<chrono::microseconds>(tMiddle - tStart);
+    cout << "Total CS time = " << dtMid.count() / 1000.0 << "ms" << endl;
+    chrono::microseconds dtEnd;
+    dtEnd = chrono::duration_cast<chrono::microseconds>(tEnd - tMiddle);
+    cout << "Get buffer time = " << dtEnd.count() / 1000.0 << "ms" << endl;
 }
 
-void GpuLaplacianSmoother::initializeProgram()
+void GpuLaplacianSmoother::initializeProgram(Mesh& mesh)
 {
     cout << "Initializing Laplacian smoothing compute shader" << endl;
     _smoothingProgram.addShader(GL_COMPUTE_SHADER,
@@ -107,55 +105,6 @@ void GpuLaplacianSmoother::initializeProgram()
         ":/shaders/compute/ElbowPipeBoundaries.glsl");
     _smoothingProgram.link();
 
-
-    glGenBuffers(1, &_vertSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _vertSsbo);
-
-    glGenBuffers(1, &_topoSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _topoSsbo);
-
-    glGenBuffers(1, &_neigSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _neigSsbo);
-}
-
-void GpuLaplacianSmoother::updateTopology()
-{
-    cout << "Updating topology shader storage buffers" << endl;
-
-    int vertCount = _mesh.vertCount();
-
-    _vertTmpBuff.resize(vertCount);
-    vector<Topo> topo(vertCount);
-    vector<int> neig;
-
-    int base = 0;
-    for(int i=0; i < vertCount; ++i)
-    {
-        const MeshTopo& meshTopo = _mesh.topo[i];
-        int type = meshTopo.isFixed ? -1 : meshTopo.boundaryCallback.id();
-        int count = meshTopo.neighbors.size();
-
-        _vertTmpBuff[i] = glm::vec4(_mesh.vert[i].p, 0.0);
-        topo[i] = Topo(type, base, count);
-
-        for(int n=0; n < count; ++n)
-            neig.push_back(meshTopo.neighbors[n]);
-
-        base += count;
-    }
-
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+    _vertTmpBuff.resize(mesh.vertCount());
     _vertTmpBuffSize = sizeof(decltype(_vertTmpBuff.front())) * _vertTmpBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, _vertTmpBuffSize, _vertTmpBuff.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
-    size_t topoSize = sizeof(decltype(topo.front())) * topo.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, topoSize, topo.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigSsbo);
-    size_t neigSize = sizeof(decltype(neig.front())) * neig.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, neigSize, neig.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }

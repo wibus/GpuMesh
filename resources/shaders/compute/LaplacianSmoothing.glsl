@@ -43,50 +43,51 @@ layout (packed, binding=2) buffer Neig
 };
 
 
-vec3 snaptoBoundary(int boundaryID, vec3 pos);
+vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 void main()
 {
-    uvec3 wholeGridSize = gl_NumWorkGroups * gl_WorkGroupSize;
-    uint uid = gl_GlobalInvocationID.z * wholeGridSize.x * wholeGridSize.y +
-               gl_GlobalInvocationID.z * wholeGridSize.x +
-               gl_GlobalInvocationID.x;
+    uint uid = gl_GlobalInvocationID.x;
 
-
-    // Read
-    vec3 pos = vec3(vert[uid]);
-
-
-    // Modification
-    int type = topo[uid].type;
-    int count = topo[uid].count;
-    if(type >= 0 && count > 0)
+    if(uid < VertCount)
     {
-        float weightSum = 0.0;
-        vec3 barycenter = vec3(0.0);
 
-        int n = topo[uid].base;
-        for(int i=0; i<count; ++i, ++n)
+        // Read
+        vec3 pos = vec3(vert[uid]);
+
+
+        // Modification
+        int type = topo[uid].type;
+        int count = topo[uid].count;
+        if(type >= 0 && count > 0)
         {
-            vec3 npos = vec3(vert[neig[n]]);
+            float weightSum = 0.0;
+            vec3 barycenter = vec3(0.0);
 
-            vec3 dist = npos - pos;
-            float weight = dot(dist, dist) + 0.0001;
+            int n = topo[uid].base;
+            for(int i=0; i<count; ++i, ++n)
+            {
+                vec3 npos = vec3(vert[neig[n]]);
 
-            barycenter += npos * weight;
-            weightSum += weight;
+                vec3 dist = npos - pos;
+                float weight = dot(dist, dist) + 0.0001;
+
+                barycenter += npos * weight;
+                weightSum += weight;
+            }
+
+            barycenter /= weightSum;
+            pos = mix(pos, barycenter, MoveCoeff);
+
+            if(type > 0)
+            {
+                pos = snapToBoundary(type, pos);
+            }
         }
 
-        barycenter /= weightSum;
-        pos = mix(pos, barycenter, MoveCoeff);
 
-        if(type > 0)
-        {
-            pos = snaptoBoundary(type, pos);
-        }
+        // Write
+        vert[uid] = vec4(pos, 0.0);
+
     }
-
-
-    // Write
-    vert[uid] = vec4(pos, 0.0);
 }

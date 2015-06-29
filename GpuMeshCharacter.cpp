@@ -20,8 +20,11 @@
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 #include <Scaena/StageManagement/Event/StageTime.h>
 
+#include "DataStructures/GpuMesh.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
+#include "Evaluators/CpuInsphereEvaluator.h"
+#include "Evaluators/GpuEvaluator.h"
 #include "Smoothers/CpuLaplacianSmoother.h"
 #include "Smoothers/GpuLaplacianSmoother.h"
 
@@ -54,21 +57,23 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _fullscreenVao(0),
     _fullscreenVbo(0),
     _filterTex(0),
-    _lightingEnabled(true),
+    _lightingEnabled(false),
     _updateShadow(false),
     _shadowSize(1024, 1024),
     _camAzimuth(-glm::pi<float>() / 2.0),
     _camAltitude(-glm::pi<float>() / 2.0),
-    _camDistance(6),
+    _camDistance(3.6),
     _isPhysicalCut(true),
     _cutAzimuth(0),
-    _cutAltitude(0),
+    _cutAltitude(-glm::pi<float>() / 2.0),
     _cutDistance(0),
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 2.0 / 4.0),
     _lightDistance(1.0),
-    _mesher(new CpuParametricMesher(_mesh, 1e6)),
-    _smoother(new GpuLaplacianSmoother(_mesh, 0.3, 0.0))
+    _mesh(new GpuMesh()),
+    _mesher(new CpuParametricMesher(1e6)),
+    _smoother(new GpuLaplacianSmoother(0.3, 0.0)),
+    _evaluator(new GpuEvaluator())
 {
 }
 
@@ -403,7 +408,7 @@ void GpuMeshCharacter::resetPipeline()
     _processFinished = false;
     _mustUpdateBuffers = false;
 
-    _mesh.clear();
+    _mesh->clear();
 }
 
 void GpuMeshCharacter::processPipeline()
@@ -412,7 +417,7 @@ void GpuMeshCharacter::processPipeline()
     {
     case 0:
         printStep(_stepId, "Triangulating internal domain");
-        _mesher->triangulateDomain();
+        _mesher->triangulateDomain(*_mesh);
 
         _mustUpdateBuffers = true;
         _processFinished = true;
@@ -421,14 +426,14 @@ void GpuMeshCharacter::processPipeline()
 
     case 1:
         printStep(_stepId, "Generating vertex adjacency lists");
-        _mesh.compileVertexAdjacency();
+        _mesh->compileTopoly();
 
         ++_stepId;
         break;
 
     case 2:
         printStep(_stepId, "Smoothing internal domain");
-        _smoother->smoothMesh();
+        _smoother->smoothMesh(*_mesh, *_evaluator);
 
         _mustUpdateBuffers = true;
         _processFinished = true;
@@ -675,7 +680,8 @@ void GpuMeshCharacter::updateBuffers()
     vector<unsigned char> edges;
     vector<unsigned char> qualities;
 
-    _mesh.compileFacesAttributes(
+    _mesh->compileFacesAttributes(
+                *_evaluator,
                 _physicalCutPlaneEq,
                 vertices,
                 normals,

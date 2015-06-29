@@ -31,15 +31,15 @@ enum EDir {
 class CpuDelaunayMesher : public AbstractMesher
 {
 public:
-    CpuDelaunayMesher(Mesh& mesh, unsigned int vertCount);
+    CpuDelaunayMesher(unsigned int vertCount);
     virtual ~CpuDelaunayMesher();
 
-    virtual void triangulateDomain() override;
+    virtual void triangulateDomain(Mesh& mesh) override;
 
 protected:
     virtual void genBoundingMesh();
     virtual void genVertices(std::vector<glm::dvec3>& vertices);
-    virtual void insertVertices();
+    virtual void insertVertices(Mesh& mesh);
 
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
@@ -49,7 +49,7 @@ protected:
     void remeshDelaunayBall(int vId);
     void insertTetrahedronGrid(int v0, int v1, int v2, int v3);
     void removeTetrahedronGrid(Tetrahedron* tet);
-    void tearDownGrid();
+    void tearDownGrid(Mesh& mesh);
 
     inline bool intersects(const glm::dvec3& v, Tetrahedron* tet);
     bool isExternalTetraHedron(Tetrahedron* tet);

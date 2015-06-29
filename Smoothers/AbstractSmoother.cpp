@@ -2,14 +2,14 @@
 
 #include <iostream>
 
+#include "Evaluators/AbstractEvaluator.h"
+
 using namespace std;
 
 
 AbstractSmoother::AbstractSmoother(
-        Mesh &mesh,
         double moveFactor,
         double gainThreshold) :
-    _mesh(mesh),
     _moveFactor(moveFactor),
     _gainThreshold(gainThreshold)
 {
@@ -20,12 +20,12 @@ AbstractSmoother::~AbstractSmoother()
 
 }
 
-void AbstractSmoother::evaluateInitialMeshQuality()
+void AbstractSmoother::evaluateInitialMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
 {
     _smoothPassId = 0;
 }
 
-bool AbstractSmoother::evaluateIterationMeshQuality()
+bool AbstractSmoother::evaluateIterationMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
 {
     bool continueSmoothing = true;
     if(_smoothPassId >= 100)
@@ -33,10 +33,11 @@ bool AbstractSmoother::evaluateIterationMeshQuality()
         continueSmoothing = false;
 
         double newQualityMean, newQualityVar, newMinQuality;
-        _mesh.compileElementQuality(
-                    newQualityMean,
-                    newQualityVar,
-                    newMinQuality);
+        evaluator.evaluateMeshQuality(
+            mesh,
+            newQualityMean,
+            newQualityVar,
+            newMinQuality);
 
         cout << "Smooth pass number " << _smoothPassId << endl;
         cout << "Mesh quality mean: " << newQualityMean << endl;

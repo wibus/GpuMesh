@@ -109,32 +109,44 @@ struct MeshHex
 };
 
 
+class AbstractEvaluator;
+
+enum class EMeshBuffer
+{
+    VERT,
+
+    TOPO,
+    NEIG,
+
+    QUAL,
+    TET,
+    PRI,
+    HEX,
+};
+
+
 class Mesh
 {
 public:
+    Mesh();
+    virtual ~Mesh();
 
     unsigned int vertCount() const;
     unsigned int elemCount() const;
 
-    void clear();
+    virtual void clear();
 
-    double tetrahedronQuality(const MeshTet& tet);
-    double hexahedronQuality(const MeshHex& hex);
-    double prismQuality(const MeshPri& pri);
+    virtual void compileTopoly();
 
-    void compileElementQuality(
-            double& qualityMean,
-            double& qualityVar,
-            double& minQuality);
-
-    void compileVertexAdjacency();
-
-    void compileFacesAttributes(
+    virtual void compileFacesAttributes(
+            const AbstractEvaluator& eval,
             const glm::dvec4& cutPlaneEq,
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
             std::vector<unsigned char>& triEdges,
             std::vector<unsigned char>& qualities);
+
+    virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
 
 
     std::vector<MeshVert> vert;
@@ -146,7 +158,10 @@ public:
 
 
 protected:
-    void pushTriangle(
+    virtual void addEdge(int firstVert,
+                         int secondVert);
+
+    virtual void pushTriangle(
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
             std::vector<unsigned char>& triEdges,
@@ -157,9 +172,6 @@ protected:
             const glm::dvec3& n,
             bool fromQuad,
             double quality);
-
-    virtual void addEdge(int firstVert,
-                         int secondVert);
 };
 
 

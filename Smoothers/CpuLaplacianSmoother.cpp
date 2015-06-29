@@ -6,10 +6,9 @@ using namespace std;
 
 
 CpuLaplacianSmoother::CpuLaplacianSmoother(
-        Mesh &mesh,
         double moveFactor,
         double gainThreshold) :
-    AbstractSmoother(mesh, moveFactor, gainThreshold)
+    AbstractSmoother(moveFactor, gainThreshold)
 {
 
 }
@@ -19,18 +18,18 @@ CpuLaplacianSmoother::~CpuLaplacianSmoother()
 
 }
 
-void CpuLaplacianSmoother::smoothMesh()
+void CpuLaplacianSmoother::smoothMesh(Mesh& mesh, AbstractEvaluator& evaluator)
 {
-    evaluateInitialMeshQuality();
+    evaluateInitialMeshQuality(mesh, evaluator);
 
-    while(evaluateIterationMeshQuality())
+    while(evaluateIterationMeshQuality(mesh, evaluator))
     {
 
-        int vertCount = _mesh.vert.size();
+        int vertCount = mesh.vert.size();
         for(int v = 0; v < vertCount; ++v)
         {
-            glm::dvec3& pos = _mesh.vert[v].p;
-            const MeshTopo& topo = _mesh.topo[v];
+            glm::dvec3& pos = mesh.vert[v].p;
+            const MeshTopo& topo = mesh.topo[v];
             if(topo.isFixed)
                 continue;
 
@@ -43,7 +42,7 @@ void CpuLaplacianSmoother::smoothMesh()
                 int neighborCount = neighbors.size();
                 for(int i=0; i<neighborCount; ++i)
                 {
-                    glm::dvec3 npos(_mesh.vert[neighbors[i]]);
+                    glm::dvec3 npos(mesh.vert[neighbors[i]]);
 
                     glm::dvec3 dist = npos - pos;
                     double weight = glm::dot(dist, dist) + 0.0001;

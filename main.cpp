@@ -12,6 +12,9 @@ using namespace cellar;
 using namespace scaena;
 
 #include "GpuMeshCharacter.h"
+#include "Meshers/AbstractMesher.h"
+#include "Evaluators/AbstractEvaluator.h"
+#include "Smoothers/AbstractSmoother.h"
 
 
 int main(int argc, char** argv) try

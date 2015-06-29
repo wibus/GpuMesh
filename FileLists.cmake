@@ -3,6 +3,7 @@
 # All the header files #
 SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.h
+    ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.h
     ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedron.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.h
@@ -14,6 +15,11 @@ SET(GpuMesh_MESHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.h
     ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.h)
 
+SET(GpuMesh_EVALUATORS_HEADERS
+    ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
+    ${GpuMesh_SRC_DIR}/Evaluators/CpuInsphereEvaluator.h
+    ${GpuMesh_SRC_DIR}/Evaluators/GpuEvaluator.h)
+
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.h
@@ -22,6 +28,7 @@ SET(GpuMesh_SMOOTHERS_HEADERS
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
     ${GpuMesh_MESHERS_HEADERS}
+    ${GpuMesh_EVALUATORS_HEADERS}
     ${GpuMesh_SMOOTHERS_HEADERS}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
 
@@ -31,6 +38,7 @@ SET(GpuMesh_HEADERS
 # All the source files #
 SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp)
@@ -40,6 +48,11 @@ SET(GpuMesh_MESHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.cpp
     ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.cpp)
 
+SET(GpuMesh_EVALUATORS_SOURCES
+    ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
+    ${GpuMesh_SRC_DIR}/Evaluators/CpuInsphereEvaluator.cpp
+    ${GpuMesh_SRC_DIR}/Evaluators/GpuEvaluator.cpp)
+
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.cpp
@@ -48,6 +61,7 @@ SET(GpuMesh_SMOOTHERS_SOURCES
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
     ${GpuMesh_MESHERS_SOURCES}
+    ${GpuMesh_EVALUATORS_SOURCES}
     ${GpuMesh_SMOOTHERS_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp
     ${GpuMesh_SRC_DIR}/main.cpp)
@@ -84,7 +98,9 @@ SET(GpuMesh_FRAGMENT_SHADERS
 # Compute shaders
 SET(GpuMesh_COMPUTE_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/LaplacianSmoothing.glsl
-    ${GpuMesh_SHADER_DIR}/compute/ElbowPipeBoundaries.glsl)
+    ${GpuMesh_SHADER_DIR}/compute/ElbowPipeBoundaries.glsl
+    ${GpuMesh_SHADER_DIR}/compute/InsphereQualityMeasures.glsl
+    ${GpuMesh_SHADER_DIR}/compute/PolyhedronQualityEvaluator.glsl)
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES

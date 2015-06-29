@@ -80,8 +80,8 @@ public:
 };
 
 
-CpuParametricMesher::CpuParametricMesher(Mesh& mesh, unsigned int vertCount) :
-    AbstractMesher(mesh, vertCount),
+CpuParametricMesher::CpuParametricMesher(unsigned int vertCount) :
+    AbstractMesher(vertCount),
     _pipeSurface(new PipeSurfaceBoundary()),
     _pipeExtFace(new PipeExtFaceBoundary()),
     _pipeExtEdge(new PipeExtEdgeBoundary())
@@ -94,7 +94,7 @@ CpuParametricMesher::~CpuParametricMesher()
 
 }
 
-void CpuParametricMesher::triangulateDomain()
+void CpuParametricMesher::triangulateDomain(Mesh& mesh)
 {
     // Give proportianl dimensions
     int layerCount = 6;
@@ -113,7 +113,8 @@ void CpuParametricMesher::triangulateDomain()
     totalStackCount = 2 * straightPipeStackCount + arcPipeStackCount;
 
 
-    genStraightPipe(glm::dvec3(-1.0, -0.5,  0),
+    genStraightPipe(mesh,
+                    glm::dvec3(-1.0, -0.5,  0),
                     glm::dvec3( 0.5, -0.5,  0),
                     glm::dvec3( 0,    0,    1),
                     PIPE_RADIUS,
@@ -123,7 +124,8 @@ void CpuParametricMesher::triangulateDomain()
                     true,
                     false);
 
-    genArcPipe(glm::dvec3( 0.5,  0,    0),
+    genArcPipe(mesh,
+               glm::dvec3( 0.5,  0,    0),
                glm::dvec3( 0,    0,    1),
                glm::dvec3( 0,   -1.0,  0),
                glm::dvec3( 0,    0,    1),
@@ -136,7 +138,8 @@ void CpuParametricMesher::triangulateDomain()
                false,
                false);
 
-    genStraightPipe(glm::dvec3( 0.5,  0.5,  0),
+    genStraightPipe(mesh,
+                    glm::dvec3( 0.5,  0.5,  0),
                     glm::dvec3(-1.0,  0.5,  0),
                     glm::dvec3( 0,    0,    1),
                     PIPE_RADIUS,
@@ -146,15 +149,16 @@ void CpuParametricMesher::triangulateDomain()
                     false,
                     true);
 
-    meshPipe(totalStackCount, sliceCount, layerCount);
+    meshPipe(mesh, totalStackCount, sliceCount, layerCount);
 
 
     cout << "Elements / Vertices = " <<
-            _mesh.elemCount() << " / " << _mesh.vertCount() << " = " <<
-            _mesh.elemCount()  / (double) _mesh.vertCount() << endl;
+            mesh.elemCount() << " / " << mesh.vertCount() << " = " <<
+            mesh.elemCount()  / (double) mesh.vertCount() << endl;
 }
 
 void CpuParametricMesher::genStraightPipe(
+        Mesh& mesh,
         const glm::dvec3& begin,
         const glm::dvec3& end,
         const glm::dvec3& up,
@@ -185,6 +189,7 @@ void CpuParametricMesher::genStraightPipe(
     {
         bool isBoundary = (k == 0) || (last && k == stackCount);
         insertStackVertices(
+                    mesh,
                     center,
                     armBase,
                     frontU,
@@ -197,18 +202,19 @@ void CpuParametricMesher::genStraightPipe(
 }
 
 void CpuParametricMesher::genArcPipe(
-            const glm::dvec3& arcCenter,
-            const glm::dvec3& rotationAxis,
-            const glm::dvec3& dirBegin,
-            const glm::dvec3& upBegin,
-            double arcAngle,
-            double arcRadius,
-            double pipeRadius,
-            int stackCount,
-            int sliceCount,
-            int layerCount,
-            bool first,
-            bool last)
+        Mesh& mesh,
+        const glm::dvec3& arcCenter,
+        const glm::dvec3& rotationAxis,
+        const glm::dvec3& dirBegin,
+        const glm::dvec3& upBegin,
+        double arcAngle,
+        double arcRadius,
+        double pipeRadius,
+        int stackCount,
+        int sliceCount,
+        int layerCount,
+        bool first,
+        bool last)
 {
     glm::dmat4 dStack = glm::rotate(glm::dmat4(),
         arcAngle / stackCount, rotationAxis);
@@ -237,6 +243,7 @@ void CpuParametricMesher::genArcPipe(
         bool isBoundary = (k == 0) || (last && k == stackCount);
 
         insertStackVertices(
+                    mesh,
                     center,
                     up,
                     frontU,
@@ -249,6 +256,7 @@ void CpuParametricMesher::genArcPipe(
 }
 
 void CpuParametricMesher::insertStackVertices(
+        Mesh& mesh,
         const glm::dvec3& center,
         const glm::dvec4& upBase,
         const glm::dvec3& frontU,
@@ -261,8 +269,8 @@ void CpuParametricMesher::insertStackVertices(
     MeshTopo extTopo(isBoundary ? *_pipeExtEdge : *_pipeSurface);
     MeshTopo intTopo(isBoundary ? *_pipeExtFace : MeshTopo::NO_BOUNDARY);
 
-    _mesh.vert.push_back(center);
-    _mesh.topo.push_back(intTopo);
+    mesh.vert.push_back(center);
+    mesh.topo.push_back(intTopo);
 
     // Gen new stack vertices
     glm::dvec4 arm = upBase;
@@ -272,18 +280,19 @@ void CpuParametricMesher::insertStackVertices(
         for(int i=0; i<layerCount; ++i, radius += dRadius)
         {
             glm::dvec3 pos = center + glm::dvec3(arm) * radius;
-            _mesh.vert.push_back(pos);
+            mesh.vert.push_back(pos);
 
-            _mesh.topo.push_back(
+            mesh.topo.push_back(
                 (i == layerCount-1 ? extTopo : intTopo));
         }
     }
 }
 
 void CpuParametricMesher::meshPipe(
-            int stackCount,
-            int sliceCount,
-            int layerCount)
+        Mesh& mesh,
+        int stackCount,
+        int sliceCount,
+        int layerCount)
 {
     int sliceVertCount = layerCount;
     int stackVertCount = sliceCount * sliceVertCount + 1; // +1 for center
@@ -302,7 +311,7 @@ void CpuParametricMesher::meshPipe(
 
 
             // Create penta center
-            _mesh.prism.push_back(
+            mesh.prism.push_back(
                 MeshPri(
                     minJ + minK,
                     minJ + maxK,
@@ -319,7 +328,7 @@ void CpuParametricMesher::meshPipe(
                 int maxI = i;
                 int minI = i-1;
 
-                _mesh.hexa.push_back(
+                mesh.hexa.push_back(
                     MeshHex(
                         minI + minJ + minK,
                         maxI + minJ + minK,

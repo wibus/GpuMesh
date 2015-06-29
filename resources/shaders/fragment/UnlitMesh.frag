@@ -26,8 +26,8 @@ vec3 lut(in float q)
 
 vec3 bold(in vec3 e, in float d)
 {
-    const float THRESHOLD = 0.01;
-    float smoothWidth = 0.025 * d;
+    const float THRESHOLD = 0.02;
+    float smoothWidth = 0.04 * d;
     float inf = THRESHOLD - smoothWidth;
     float sup = THRESHOLD + smoothWidth;
 

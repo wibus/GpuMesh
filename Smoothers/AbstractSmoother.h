@@ -7,17 +7,18 @@
 class AbstractSmoother
 {
 public:
-    AbstractSmoother(Mesh& mesh, double moveFactor, double gainThreshold);
+    AbstractSmoother(
+            double moveFactor,
+            double gainThreshold);
     virtual ~AbstractSmoother();
 
-    virtual void smoothMesh() = 0;
+    virtual void smoothMesh(Mesh& mesh, AbstractEvaluator& evaluator) = 0;
 
 
 protected:
-    void evaluateInitialMeshQuality();
-    bool evaluateIterationMeshQuality();
+    void evaluateInitialMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator);
+    bool evaluateIterationMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator);
 
-    Mesh& _mesh;
     double _moveFactor;
     double _gainThreshold;
 

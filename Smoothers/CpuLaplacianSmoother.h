@@ -8,10 +8,12 @@
 class CpuLaplacianSmoother : public AbstractSmoother
 {
 public:
-    CpuLaplacianSmoother(Mesh& mesh, double moveFactor, double gainThreshold);
+    CpuLaplacianSmoother(
+            double moveFactor,
+            double gainThreshold);
     virtual ~CpuLaplacianSmoother();
 
-    virtual void smoothMesh() override;
+    virtual void smoothMesh(Mesh& mesh, AbstractEvaluator& evaluator) override;
 };
 
 #endif // GPUMESH_CPULAPLACIANSMOOTHER

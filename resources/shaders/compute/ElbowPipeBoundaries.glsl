@@ -49,7 +49,7 @@ vec3 snapToPipeExtremityEdge(vec3 pos)
     return center + normalize(extProj) * PIPE_RADIUS;
 }
 
-vec3 snaptoBoundary(int boundaryID, vec3 pos)
+vec3 snapToBoundary(int boundaryID, vec3 pos)
 {
     switch(boundaryID)
     {

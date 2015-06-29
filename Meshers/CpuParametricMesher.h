@@ -9,14 +9,15 @@
 class CpuParametricMesher : public AbstractMesher
 {
 public:
-    CpuParametricMesher(Mesh& mesh, unsigned int vertCount);
+    CpuParametricMesher(unsigned int vertCount);
     virtual ~CpuParametricMesher();
 
-    virtual void triangulateDomain() override;
+    virtual void triangulateDomain(Mesh& mesh) override;
 
 
 protected:
     virtual void genStraightPipe(
+            Mesh& mesh,
             const glm::dvec3& begin,
             const glm::dvec3& end,
             const glm::dvec3& up,
@@ -28,6 +29,7 @@ protected:
             bool last);
 
     virtual void genArcPipe(
+            Mesh& mesh,
             const glm::dvec3& center,
             const glm::dvec3& rotationAxis,
             const glm::dvec3& dirBegin,
@@ -42,6 +44,7 @@ protected:
             bool last);
 
     virtual void insertStackVertices(
+            Mesh& mesh,
             const glm::dvec3& center,
             const glm::dvec4& upBase,
             const glm::dvec3& frontU,
@@ -52,6 +55,7 @@ protected:
             bool isBoundary);
 
     virtual void meshPipe(
+            Mesh& mesh,
             int stackCount,
             int sliceCount,
             int layerCount);
