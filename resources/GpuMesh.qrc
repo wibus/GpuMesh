@@ -22,5 +22,7 @@
         <file>shaders/fragment/Wireframe.frag</file>
         <file>shaders/vertex/PointSphere.vert</file>
         <file>shaders/fragment/PointSphere.frag</file>
+        <file>shaders/generic/QualityLut.glsl</file>
+        <file>shaders/generic/Lighting.glsl</file>
     </qresource>
 </RCC>

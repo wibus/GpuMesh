@@ -85,7 +85,8 @@ SET(GpuMesh_SHADER_DIR
 
 # Genereic shaders
 SET(GpuMesh_GENERIC_SHADERS
-    )
+    ${GpuMesh_SHADER_DIR}/generic/QualityLut.glsl
+    ${GpuMesh_SHADER_DIR}/generic/Lighting.glsl)
 
 # Vertex shaders
 SET(GpuMesh_VERTEX_SHADERS

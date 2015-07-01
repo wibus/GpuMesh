@@ -40,7 +40,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     Character("GpuMeshChracter"),
     _camAzimuth(-glm::pi<float>() / 2.0),
     _camAltitude(-glm::pi<float>() / 2.0),
-    _camDistance(3.6),
+    _camDistance(3.8),
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 2.0 / 4.0),
     _lightDistance(1.0),
@@ -48,10 +48,10 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAltitude(-glm::pi<float>() / 2.0),
     _cutDistance(0),
     _mesh(new GpuMesh()),
-    _mesher(new CpuParametricMesher(1e6)),
+    _mesher(new CpuParametricMesher(1e5)),
     _smoother(new GpuLaplacianSmoother(0.3, 0.0)),
     _evaluator(new GpuEvaluator()),
-    _renderer(new MidEndRenderer())
+    _renderer(new ScientificRenderer())
 {
 }
 
@@ -76,11 +76,11 @@ void GpuMeshCharacter::enterStage()
     // Setup view matrix
     moveCamera(_camAzimuth, _camAltitude, _camDistance);
 
-    // Setup cut plane
-    moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
-
     // Setup shadow matrix
     moveLight(_lightAzimuth, _lightAltitude, _lightDistance);
+
+    // Setup cut plane
+    moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
 
 
     resetPipeline();
@@ -200,19 +200,15 @@ void GpuMeshCharacter::processPipeline()
         printStep(_stepId, "Triangulating internal domain");
         _mesher->triangulateDomain(*_mesh);
 
+        printStep(_stepId, "Generating vertex adjacency lists");
+        _mesh->compileTopoly();
+
         _renderer->notifyMeshUpdate();
         _processFinished = true;
         ++_stepId;
         break;
 
     case 1:
-        printStep(_stepId, "Generating vertex adjacency lists");
-        _mesh->compileTopoly();
-
-        ++_stepId;
-        break;
-
-    case 2:
         printStep(_stepId, "Smoothing internal domain");
         _smoother->smoothMesh(*_mesh, *_evaluator);
 

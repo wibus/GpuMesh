@@ -48,7 +48,7 @@ MidEndRenderer::MidEndRenderer() :
 
 MidEndRenderer::~MidEndRenderer()
 {
-
+    clearResources();
 }
 
 void MidEndRenderer::notify(cellar::CameraMsg& msg)
@@ -140,7 +140,7 @@ void MidEndRenderer::updateLight(const glm::mat4& view,
     glm::mat4 pvShadow =
             glm::scale(glm::mat4(),     glm::vec3(0.5, 0.5, 0.5)) *
             glm::translate(glm::mat4(), glm::vec3(1.0, 1.0, 1.0)) *
-            view;
+            pvMat;
 
 
     _litShader.pushProgram();
@@ -163,24 +163,22 @@ void MidEndRenderer::updateCutPlane(const glm::dvec4& cutEq)
 {
     _cutPlane = cutEq;
     _updateShadow = true;
-    glm::vec4 virtualCut(cutEq);
 
     if(_isPhysicalCut)
     {
         _buffNeedUpdate = true;
-        virtualCut = glm::vec4();
     }
 
     _litShader.pushProgram();
-    _litShader.setVec4f("CutPlaneEq", virtualCut);
+    _litShader.setVec4f("CutPlaneEq", _cutPlane);
     _litShader.popProgram();
 
     _unlitShader.pushProgram();
-    _unlitShader.setVec4f("CutPlaneEq",virtualCut);
+    _unlitShader.setVec4f("CutPlaneEq",_cutPlane);
     _unlitShader.popProgram();
 
     _shadowShader.pushProgram();
-    _shadowShader.setVec4f("CutPlaneEq", virtualCut);
+    _shadowShader.setVec4f("CutPlaneEq", _cutPlane);
     _shadowShader.popProgram();
 }
 
@@ -234,16 +232,13 @@ void MidEndRenderer::updateGeometry(const Mesh& mesh)
     vector<signed char> normals;
     vector<unsigned char> edges;
     vector<unsigned char> qualities;
-    glm::dvec4 cutPlane = _isPhysicalCut ?
-        _cutPlane : glm::dvec4(0, 0, 0, 0);
 
-    mesh.compileFacesAttributes(
-                *_evaluator,
-                cutPlane,
-                vertices,
-                normals,
-                edges,
-                qualities);
+    compileFacesAttributes(
+        mesh,
+        vertices,
+        normals,
+        edges,
+        qualities);
 
 
     _buffElemCount = vertices.size();
@@ -276,6 +271,205 @@ void MidEndRenderer::updateGeometry(const Mesh& mesh)
     qualities.shrink_to_fit();
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void MidEndRenderer::compileFacesAttributes(
+        const Mesh& mesh,
+        std::vector<glm::vec3>& vertices,
+        std::vector<signed char>& normals,
+        std::vector<unsigned char>& triEdges,
+        std::vector<unsigned char>& qualities) const
+{
+    glm::dvec3 cutNormal(_cutPlane);
+    double cutDistance = _cutPlane.w;
+    if(!_isPhysicalCut)
+    {
+        cutNormal.x = 0;
+        cutNormal.y = 0;
+        cutNormal.z = 0;
+        cutDistance = 0;
+    }
+
+
+    // Tetrahedrons
+    int tetCount = mesh.tetra.size();
+    for(int i=0; i < tetCount; ++i)
+    {
+        const MeshTet& tet = mesh.tetra[i];
+
+        glm::dvec3 verts[] = {
+            glm::dvec3(mesh.vert[tet[0]]),
+            glm::dvec3(mesh.vert[tet[1]]),
+            glm::dvec3(mesh.vert[tet[2]]),
+            glm::dvec3(mesh.vert[tet[3]])
+        };
+
+        if(glm::dot(verts[0], cutNormal) > cutDistance ||
+           glm::dot(verts[1], cutNormal) > cutDistance ||
+           glm::dot(verts[2], cutNormal) > cutDistance ||
+           glm::dot(verts[3], cutNormal) > cutDistance)
+            continue;
+
+
+        double quality = _evaluator->tetrahedronQuality(mesh, tet);
+
+        for(int f=0; f < MeshTet::FACE_COUNT; ++f)
+        {
+            const MeshTri& tri = MeshTet::faces[f];
+            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+            pushTriangle(vertices, normals, triEdges, qualities,
+                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                         normal, false, quality);
+        }
+    }
+
+
+    // Prisms
+    int priCount = mesh.prism.size();
+    for(int i=0; i < priCount; ++i)
+    {
+        const MeshPri& pri = mesh.prism[i];
+
+        glm::dvec3 verts[] = {
+            glm::dvec3(mesh.vert[pri[0]]),
+            glm::dvec3(mesh.vert[pri[1]]),
+            glm::dvec3(mesh.vert[pri[2]]),
+            glm::dvec3(mesh.vert[pri[3]]),
+            glm::dvec3(mesh.vert[pri[4]]),
+            glm::dvec3(mesh.vert[pri[5]])
+        };
+
+        if(glm::dot(verts[0], cutNormal) > cutDistance ||
+           glm::dot(verts[1], cutNormal) > cutDistance ||
+           glm::dot(verts[2], cutNormal) > cutDistance ||
+           glm::dot(verts[3], cutNormal) > cutDistance ||
+           glm::dot(verts[4], cutNormal) > cutDistance ||
+           glm::dot(verts[5], cutNormal) > cutDistance)
+            continue;
+
+
+        double quality = _evaluator->prismQuality(mesh, pri);
+
+        for(int f=0; f < MeshPri::FACE_COUNT; ++f)
+        {
+            const MeshTri& tri = MeshPri::faces[f];
+            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+            pushTriangle(vertices, normals, triEdges, qualities,
+                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                         normal, f < 7, quality);
+        }
+    }
+
+
+    // Hexahedrons
+    int hexCount = mesh.hexa.size();
+    for(int i=0; i < hexCount; ++i)
+    {
+        const MeshHex& hex = mesh.hexa[i];
+
+        glm::dvec3 verts[] = {
+            glm::dvec3(mesh.vert[hex[0]]),
+            glm::dvec3(mesh.vert[hex[1]]),
+            glm::dvec3(mesh.vert[hex[2]]),
+            glm::dvec3(mesh.vert[hex[3]]),
+            glm::dvec3(mesh.vert[hex[4]]),
+            glm::dvec3(mesh.vert[hex[5]]),
+            glm::dvec3(mesh.vert[hex[6]]),
+            glm::dvec3(mesh.vert[hex[7]])
+        };
+
+        if(glm::dot(verts[0], cutNormal) > cutDistance ||
+           glm::dot(verts[1], cutNormal) > cutDistance ||
+           glm::dot(verts[2], cutNormal) > cutDistance ||
+           glm::dot(verts[3], cutNormal) > cutDistance ||
+           glm::dot(verts[4], cutNormal) > cutDistance ||
+           glm::dot(verts[5], cutNormal) > cutDistance ||
+           glm::dot(verts[6], cutNormal) > cutDistance ||
+           glm::dot(verts[7], cutNormal) > cutDistance)
+            continue;
+
+
+        double quality = _evaluator->hexahedronQuality(mesh, hex);
+
+        for(int f=0; f < MeshHex::FACE_COUNT; ++f)
+        {
+            const MeshTri& tri = MeshHex::faces[f];
+            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+            pushTriangle(vertices, normals, triEdges, qualities,
+                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                         normal, true, quality);
+        }
+    }
+}
+
+void MidEndRenderer::pushTriangle(
+        std::vector<glm::vec3>& vertices,
+        std::vector<signed char>& normals,
+        std::vector<unsigned char>& triEdges,
+        std::vector<unsigned char>& qualities,
+        const glm::dvec3& A,
+        const glm::dvec3& B,
+        const glm::dvec3& C,
+        const glm::dvec3& n,
+        bool fromQuad,
+        double quality) const
+{
+
+    vertices.push_back(glm::vec3(A));
+    vertices.push_back(glm::vec3(B));
+    vertices.push_back(glm::vec3(C));
+
+    signed char nx = n.x * 127;
+    signed char ny = n.y * 127;
+    signed char nz = n.z * 127;
+    normals.push_back(nx);
+    normals.push_back(ny);
+    normals.push_back(nz);
+    normals.push_back(nx);
+    normals.push_back(ny);
+    normals.push_back(nz);
+    normals.push_back(nx);
+    normals.push_back(ny);
+    normals.push_back(nz);
+
+    if(fromQuad)
+    {
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+        triEdges.push_back(0);
+
+        triEdges.push_back(0);
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+
+        triEdges.push_back(255);
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+    }
+    else
+    {
+        triEdges.push_back(0);
+        triEdges.push_back(255);
+        triEdges.push_back(255);
+
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+        triEdges.push_back(255);
+
+        triEdges.push_back(255);
+        triEdges.push_back(255);
+        triEdges.push_back(0);
+    }
+
+    qualities.push_back(quality * 255);
+    qualities.push_back(quality * 255);
+    qualities.push_back(quality * 255);
 }
 
 void MidEndRenderer::clearResources()
@@ -470,6 +664,8 @@ void MidEndRenderer::setupShaders()
 
     _litShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/LitMesh.vert");
     _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/LitMesh.frag");
+    _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
+    _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
     _litShader.link();
     _litShader.pushProgram();
     _litShader.setInt("DepthTex", 0);
@@ -477,6 +673,8 @@ void MidEndRenderer::setupShaders()
 
     _unlitShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/UnlitMesh.vert");
     _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/UnlitMesh.frag");
+    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
+    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
     _unlitShader.link();
     _unlitShader.pushProgram();
     _unlitShader.popProgram();

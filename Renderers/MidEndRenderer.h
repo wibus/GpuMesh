@@ -30,6 +30,23 @@ public:
 
 protected:
     virtual void updateGeometry(const Mesh& mesh) override;
+    virtual void compileFacesAttributes(
+            const Mesh& mesh,
+            std::vector<glm::vec3>& vertices,
+            std::vector<signed char>& normals,
+            std::vector<unsigned char>& triEdges,
+            std::vector<unsigned char>& qualities) const;
+    virtual void pushTriangle(
+            std::vector<glm::vec3>& vertices,
+            std::vector<signed char>& normals,
+            std::vector<unsigned char>& triEdges,
+            std::vector<unsigned char>& qualities,
+            const glm::dvec3& A,
+            const glm::dvec3& B,
+            const glm::dvec3& C,
+            const glm::dvec3& n,
+            bool fromQuad,
+            double quality) const;
 
     virtual void clearResources() override;
     virtual void resetResources() override;

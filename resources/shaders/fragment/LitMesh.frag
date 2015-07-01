@@ -16,18 +16,17 @@ layout(location = 0) out vec4 FragColor;
 
 
 const float MAT_SHINE = 40.0;
-const vec3 LIGHT_DIFFUSE = vec3(0.6);
-const vec3 LIGHT_AMBIANT = vec3(0.3);
+const vec3 LIGHT_DIFF = vec3(0.6);
+const vec3 LIGHT_AMBT = vec3(0.3);
 const vec3 LIGHT_SPEC = vec3(1.0, 0.9, 0.7);
 const float DEPTH_MIN_VAR = 0.05;
 
 
-vec3 lut(in float q)
-{
-    return vec3(smoothstep(0.0, 0.15, q) - smoothstep(0.66, 1.0, q),
-                smoothstep(0.5, 0.66, q),
-                smoothstep(-0.15, 0.15, q) - smoothstep(0.15, 0.5, q));
-}
+vec3 qualityLut(in float q);
+
+float lambertDiffuse(in vec3 n);
+float phongSpecular(in vec3 n, in vec3 p, in float shine);
+
 
 vec3 bold(in vec3 e, in float d)
 {
@@ -55,16 +54,6 @@ float chebyshevUpperBound(in vec3 l)
     return max(p, p_max);
 }
 
-vec3 diffuse(in vec3 n)
-{
-    return  LIGHT_DIFFUSE * max(dot(-LightDirection, n), 0.0);
-}
-
-vec3 specular(in vec3 p, in vec3 n)
-{
-    vec3 ref = normalize(reflect(p - CameraPosition, n));
-    return LIGHT_SPEC * pow(max(dot(ref, -LightDirection), 0.0), MAT_SHINE);
-}
 
 void main(void)
 {
@@ -73,9 +62,9 @@ void main(void)
 
     float dist = length(eye);
     float occl = chebyshevUpperBound(lgt);
-    vec3 baseCol = lut(qual) * bold(edg, dist);
-    vec3 diffCol = diffuse(nrm) * occl + LIGHT_AMBIANT;
-    vec3 specCol = specular(pos, nrm) * occl;
-    FragColor = vec4(baseCol * diffCol + specCol, 1);
+    vec3 base = qualityLut(qual) * bold(edg, dist);
+    vec3 diff = lambertDiffuse(nrm) * LIGHT_DIFF * occl;
+    vec3 spec = phongSpecular(nrm, pos, MAT_SHINE) * LIGHT_SPEC * occl;
+    FragColor = vec4(base * (LIGHT_AMBT + diff) + spec, 1);
 }
 

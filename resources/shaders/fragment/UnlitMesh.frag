@@ -17,12 +17,10 @@ const vec3 LIGHT_DIFFUSE = vec3(0.6);
 const vec3 LIGHT_AMBIANT = vec3(0.3);
 
 
-vec3 lut(in float q)
-{
-    return vec3(smoothstep(0.0, 0.15, q) - smoothstep(0.66, 1.0, q),
-                smoothstep(0.5, 0.66, q),
-                smoothstep(-0.15, 0.15, q) - smoothstep(0.15, 0.5, q));
-}
+vec3 qualityLut(in float q);
+
+float lambertDiffuse(in vec3 n);
+
 
 vec3 bold(in vec3 e, in float d)
 {
@@ -46,8 +44,8 @@ void main(void)
         discard;
 
     float dist = length(eye);
-    vec3 baseCol = lut(qual) * bold(edg, dist);
-    vec3 diffCol = diffuse(nrm) + LIGHT_AMBIANT;
-    FragColor = vec4(baseCol * diffCol, 1);
+    vec3 baseCol = qualityLut(qual) * bold(edg, dist);
+    vec3 diffCol = lambertDiffuse(nrm) * LIGHT_DIFFUSE;
+    FragColor = vec4(baseCol * (LIGHT_AMBIANT + diffCol), 1);
 }
 

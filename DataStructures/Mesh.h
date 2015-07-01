@@ -138,14 +138,6 @@ public:
 
     virtual void compileTopoly();
 
-    virtual void compileFacesAttributes(
-            const AbstractEvaluator& eval,
-            const glm::dvec4& cutPlaneEq,
-            std::vector<glm::vec3>& vertices,
-            std::vector<signed char>& normals,
-            std::vector<unsigned char>& triEdges,
-            std::vector<unsigned char>& qualities) const;
-
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
 
 
@@ -156,22 +148,9 @@ public:
     std::vector<MeshHex> hexa;
 
 
-
 protected:
     virtual void addEdge(int firstVert,
                          int secondVert);
-
-    virtual void pushTriangle(
-            std::vector<glm::vec3>& vertices,
-            std::vector<signed char>& normals,
-            std::vector<unsigned char>& triEdges,
-            std::vector<unsigned char>& qualities,
-            const glm::dvec3& A,
-            const glm::dvec3& B,
-            const glm::dvec3& C,
-            const glm::dvec3& n,
-            bool fromQuad,
-            double quality) const;
 };
 
 
