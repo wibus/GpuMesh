@@ -34,6 +34,8 @@ protected:
     virtual void scheduleSmoothing();
     virtual void printStep(int step, const std::string& stepName);
 
+    virtual int installNextRenderer();
+    virtual void installRenderer(AbstractRenderer* renderer);
     virtual void moveCamera(float azimuth, float altitude, float distance);
     virtual void moveLight(float azimuth, float altitude, float distance);
     virtual void moveCutPlane(double azimuth, double altitude, double distance);
@@ -60,6 +62,7 @@ private:
     std::unique_ptr<AbstractSmoother> _smoother;
     std::unique_ptr<AbstractEvaluator> _evaluator;
     std::unique_ptr<AbstractRenderer> _renderer;
+    int _rendererId;
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;

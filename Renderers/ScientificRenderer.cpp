@@ -41,20 +41,24 @@ void ScientificRenderer::notify(cellar::CameraMsg& msg)
         // Camera projection
         const float n = 0.1;
         const float f = 12.0;
-        glm::mat4 proj = glm::perspectiveFov(
+        _projMat = glm::perspectiveFov(
                 glm::pi<float>() / 6,
                 (float) viewport.x,
                 (float) viewport.y,
                 n, f);
 
-        _pointSphereProgram.pushProgram();
-        _pointSphereProgram.setMat4f("ProjMat", proj);
-        _pointSphereProgram.setVec2f("Viewport", viewport);
-        _pointSphereProgram.popProgram();
+        _scaffoldJointProgram.pushProgram();
+        _scaffoldJointProgram.setMat4f("ProjMat", _projMat);
+        _scaffoldJointProgram.setVec2f("Viewport", viewport);
+        _scaffoldJointProgram.popProgram();
+
+        _scaffoldTubeProgram.pushProgram();
+        _scaffoldTubeProgram.setMat4f("ProjMat", _projMat);
+        _scaffoldTubeProgram.setVec2f("Viewport", viewport);
+        _scaffoldTubeProgram.popProgram();
 
         _wireframeProgram.pushProgram();
-        _wireframeProgram.setMat4f("ProjMat", proj);
-        _wireframeProgram.setVec2f("Viewport", viewport);
+        _wireframeProgram.setMat4f("ProjViewMat", _projMat * _viewMat);
         _wireframeProgram.popProgram();
     }
 }
@@ -62,27 +66,33 @@ void ScientificRenderer::notify(cellar::CameraMsg& msg)
 void ScientificRenderer::updateCamera(const glm::mat4& view,
                                       const glm::vec3& pos)
 {
-    _pointSphereProgram.pushProgram();
-    _pointSphereProgram.setMat4f("ViewMat", view);
-    _pointSphereProgram.setVec3f("CameraPosition", pos);
-    _pointSphereProgram.popProgram();
+    _viewMat = view;
+
+    _scaffoldJointProgram.pushProgram();
+    _scaffoldJointProgram.setMat4f("ViewMat", _viewMat);
+    _scaffoldJointProgram.setVec3f("CameraPosition", pos);
+    _scaffoldJointProgram.popProgram();
+
+    _scaffoldTubeProgram.pushProgram();
+    _scaffoldTubeProgram.setMat4f("ViewMat", _viewMat);
+    _scaffoldTubeProgram.setVec3f("CameraPosition", pos);
+    _scaffoldTubeProgram.popProgram();
 
     _wireframeProgram.pushProgram();
-    _wireframeProgram.setMat4f("ViewMat", view);
-    _wireframeProgram.setVec3f("CameraPosition", pos);
+    _wireframeProgram.setMat4f("ProjViewMat", _projMat * _viewMat);
     _wireframeProgram.popProgram();
 }
 
 void ScientificRenderer::updateLight(const glm::mat4&,
                                      const glm::vec3& pos)
 {
-    _pointSphereProgram.pushProgram();
-    _pointSphereProgram.setVec3f("LightDirection", pos);
-    _pointSphereProgram.popProgram();
+    _scaffoldJointProgram.pushProgram();
+    _scaffoldJointProgram.setVec3f("LightDirection", pos);
+    _scaffoldJointProgram.popProgram();
 
-    _wireframeProgram.pushProgram();
-    _wireframeProgram.setVec3f("LightDirection", pos);
-    _wireframeProgram.popProgram();
+    _scaffoldTubeProgram.pushProgram();
+    _scaffoldTubeProgram.setVec3f("LightDirection", pos);
+    _scaffoldTubeProgram.popProgram();
 }
 
 void ScientificRenderer::updateCutPlane(const glm::dvec4& cutEq)
@@ -94,9 +104,13 @@ void ScientificRenderer::updateCutPlane(const glm::dvec4& cutEq)
         _buffNeedUpdate = true;
     }
 
-    _pointSphereProgram.pushProgram();
-    _pointSphereProgram.setVec4f("CutPlaneEq", _cutPlane);
-    _pointSphereProgram.popProgram();
+    _scaffoldJointProgram.pushProgram();
+    _scaffoldJointProgram.setVec4f("CutPlaneEq", _cutPlane);
+    _scaffoldJointProgram.popProgram();
+
+    _scaffoldTubeProgram.pushProgram();
+    _scaffoldTubeProgram.setVec4f("CutPlaneEq",_cutPlane);
+    _scaffoldTubeProgram.popProgram();
 
     _wireframeProgram.pushProgram();
     _wireframeProgram.setVec4f("CutPlaneEq",_cutPlane);
@@ -107,18 +121,22 @@ void ScientificRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
     if(event.getAscii() == 'X')
     {
-        _lightMode = (_lightMode + 1) % 2;
+        _lightMode = (_lightMode + 1) % 3;
 
-        _pointSphereProgram.pushProgram();
-        _pointSphereProgram.setInt("LightMode", _lightMode);
-        _pointSphereProgram.popProgram();
+        _scaffoldJointProgram.pushProgram();
+        _scaffoldJointProgram.setInt("LightMode", _lightMode);
+        _scaffoldJointProgram.popProgram();
 
-        _wireframeProgram.pushProgram();
-        _wireframeProgram.setInt("LightMode", _lightMode);
-        _wireframeProgram.popProgram();
+        _scaffoldTubeProgram.pushProgram();
+        _scaffoldTubeProgram.setInt("LightMode", _lightMode);
+        _scaffoldTubeProgram.popProgram();
 
-        const char* rep = (_lightMode ? "Phong" : "Diffuse") ;
-        cout << "Using " << rep << " light mode" << endl;
+        if(_lightMode == 0)
+            cout << "Using Wireframe light mode" << endl;
+        else if(_lightMode == 1)
+            cout << "Using Diffuse light mode" << endl;
+        else if(_lightMode == 1)
+            cout << "Using Phong light mode" << endl;
 
     }
     else if(event.getAscii() == 'C')
@@ -140,11 +158,27 @@ void ScientificRenderer::handleInputs(const scaena::SynchronousKeyboard& keyboar
 
 void ScientificRenderer::updateGeometry(const Mesh& mesh)
 {
+    // Clear old vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _qbo);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+
+    // Fetch new vertex attributes
     vector<float> verts;
     vector<GLubyte>  quals;
     compileVerts(mesh, verts, quals);
     _vertElemCount = mesh.vert.size();
 
+
+    // Send new vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     GLuint vertSize = verts.size() * sizeof(decltype(verts.front()));
     glBufferData(GL_ARRAY_BUFFER, vertSize, verts.data(), GL_STATIC_DRAW);
@@ -160,13 +194,19 @@ void ScientificRenderer::updateGeometry(const Mesh& mesh)
     quals.shrink_to_fit();
 
 
+    // Fetch new element indices
     vector<GLuint> edges;
     compileEdges(mesh, edges);
     _indxElemCount = edges.size();
+
+
+    // Send new element indices
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
     GLuint edgeSize = edges.size() * sizeof(decltype(edges.front()));
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, edgeSize, edges.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    edges.clear();
+    edges.shrink_to_fit();
 
     _buffNeedUpdate = false;
 }
@@ -277,6 +317,9 @@ void ScientificRenderer::clearResources()
     glDeleteBuffers(1, &_vbo);
     _vbo = 0;
 
+    glDeleteBuffers(1, &_qbo);
+    _qbo = 0;
+
     glDeleteBuffers(1, &_ibo);
     _ibo = 0;
 }
@@ -307,51 +350,71 @@ void ScientificRenderer::resetResources()
 
 void ScientificRenderer::setupShaders()
 {
-    _pointSphereProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/PointSphere.vert");
-    _pointSphereProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/PointSphere.frag");
-    _pointSphereProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
-    _pointSphereProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
-    _pointSphereProgram.link();
-    _pointSphereProgram.pushProgram();
-    _pointSphereProgram.setFloat("PointRadius", _pointRadius);
-    _pointSphereProgram.setFloat("LineWidth", _lineWidth);
-    _pointSphereProgram.setInt("LightMode", _lightMode);
-    _pointSphereProgram.popProgram();
+    _scaffoldJointProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/ScaffoldJoint.vert");
+    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/ScaffoldJoint.frag");
+    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
+    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
+    _scaffoldJointProgram.link();
+    _scaffoldJointProgram.pushProgram();
+    _scaffoldJointProgram.setFloat("PointRadius", _pointRadius);
+    _scaffoldJointProgram.setFloat("LineWidth", _lineWidth);
+    _scaffoldJointProgram.setInt("LightMode", _lightMode);
+    _scaffoldJointProgram.setInt("DiffuseLightMode", 1);
+    _scaffoldJointProgram.popProgram();
+
+    _scaffoldTubeProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/ScaffoldTube.vert");
+    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/ScaffoldTube.frag");
+    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
+    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
+    _scaffoldTubeProgram.link();
+    _scaffoldTubeProgram.pushProgram();
+    _scaffoldTubeProgram.setFloat("LineRadius", _lineWidth / 2.0);
+    _scaffoldTubeProgram.setInt("LightMode", _lightMode);
+    _scaffoldTubeProgram.setInt("DiffuseLightMode", 1);
+    _scaffoldTubeProgram.popProgram();
 
     _wireframeProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Wireframe.vert");
     _wireframeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Wireframe.frag");
     _wireframeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
-    _wireframeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
     _wireframeProgram.link();
-    _wireframeProgram.pushProgram();
-    _wireframeProgram.setFloat("LineRadius", _lineWidth / 2.0);
-    _wireframeProgram.setInt("LightMode", _lightMode);
-    _wireframeProgram.popProgram();
 }
 
 void ScientificRenderer::render()
 {
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearColor(0.3, 0.3, 0.3, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glEnable(GL_PROGRAM_POINT_SIZE);
+    if(_lightMode == 0)
+    {
+        glBindVertexArray(_vao);
+        _wireframeProgram.pushProgram();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+        glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        _wireframeProgram.popProgram();
+        glBindVertexArray(0);
+    }
+    else
+    {
+        glEnable(GL_PROGRAM_POINT_SIZE);
 
-    glBindVertexArray(_vao);
-    _pointSphereProgram.pushProgram();
-    glDrawArrays(GL_POINTS, 0, _vertElemCount);
-    _pointSphereProgram.popProgram();
+        glBindVertexArray(_vao);
+        _scaffoldJointProgram.pushProgram();
+        glDrawArrays(GL_POINTS, 0, _vertElemCount);
+        _scaffoldJointProgram.popProgram();
 
 
-    glDisable(GL_PROGRAM_POINT_SIZE);
-    glLineWidth(_lineWidth);
+        glDisable(GL_PROGRAM_POINT_SIZE);
+        glLineWidth(_lineWidth);
 
-    _wireframeProgram.pushProgram();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
-    glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    _wireframeProgram.popProgram();
+        _scaffoldTubeProgram.pushProgram();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+        glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        _scaffoldTubeProgram.popProgram();
 
-    glLineWidth(1.0f);
+        glLineWidth(1.0f);
 
-    glBindVertexArray(0);
+        glBindVertexArray(0);
+    }
 }

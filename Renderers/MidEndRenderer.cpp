@@ -245,7 +245,7 @@ void MidEndRenderer::updateGeometry(const Mesh& mesh)
     _buffNeedUpdate = false;
 
 
-    // Send new vertex attribute
+    // Send new vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     GLuint verticesSize = vertices.size() * sizeof(decltype(vertices.front()));
     glBufferData(GL_ARRAY_BUFFER, verticesSize, vertices.data(), GL_STATIC_DRAW);
@@ -490,36 +490,39 @@ void MidEndRenderer::clearResources()
     glDeleteBuffers(1, &_qbo);
     _qbo = 0;
 
-    GlToolkit::deleteTextureId(_filterTex);
-    _filterTex = 0;
 
-    glDeleteBuffers(1, &_fullscreenVao);
+    glDeleteVertexArrays(1, &_fullscreenVao);
     _fullscreenVao = 0;
 
     glDeleteBuffers(1, &_fullscreenVbo);
     _fullscreenVbo = 0;
 
+    GlToolkit::deleteTextureId(_filterTex);
+    _filterTex = 0;
+
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteRenderbuffers(1, &_shadowDpt);
     _shadowDpt = 0;
 
-    glDeleteFramebuffers(1, &_shadowFbo);
-    _shadowFbo = 0;
-
     glDeleteTextures(1, &_shadowTex);
     _shadowTex = 0;
 
+    glDeleteFramebuffers(1, &_shadowFbo);
+    _shadowFbo = 0;
+
+
     glDeleteRenderbuffers(1, &_bloomDpt);
     _bloomDpt = 0;
-
-    glDeleteFramebuffers(1, &_bloomFbo);
-    _bloomFbo = 0;
 
     glDeleteTextures(1, &_bloomBaseTex);
     _bloomBaseTex = 0;
 
     glDeleteTextures(1, &_bloomBlurTex);
     _bloomBlurTex = 0;
+
+    glDeleteFramebuffers(1, &_bloomFbo);
+    _bloomFbo = 0;
 
 
     _buffElemCount = 0;

@@ -37,8 +37,12 @@ protected:
     virtual void setupShaders() override;
     virtual void render() override;
 
-    cellar::GlProgram _pointSphereProgram;
+    cellar::GlProgram _scaffoldJointProgram;
+    cellar::GlProgram _scaffoldTubeProgram;
     cellar::GlProgram _wireframeProgram;
+
+    glm::mat4 _projMat;
+    glm::mat4 _viewMat;
 
     int _vertElemCount;
     int _indxElemCount;

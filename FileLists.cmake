@@ -93,8 +93,9 @@ SET(GpuMesh_VERTEX_SHADERS
     ${GpuMesh_SHADER_DIR}/vertex/Shadow.vert
     ${GpuMesh_SHADER_DIR}/vertex/LitMesh.vert
     ${GpuMesh_SHADER_DIR}/vertex/UnlitMesh.vert
+    ${GpuMesh_SHADER_DIR}/vertex/ScaffoldJoint.vert
+    ${GpuMesh_SHADER_DIR}/vertex/ScaffoldTube.vert
     ${GpuMesh_SHADER_DIR}/vertex/Wireframe.vert
-    ${GpuMesh_SHADER_DIR}/vertex/PointSphere.vert
     ${GpuMesh_SHADER_DIR}/vertex/Bloom.vert
     ${GpuMesh_SHADER_DIR}/vertex/Filter.vert)
 
@@ -103,8 +104,9 @@ SET(GpuMesh_FRAGMENT_SHADERS
     ${GpuMesh_SHADER_DIR}/fragment/Shadow.frag
     ${GpuMesh_SHADER_DIR}/fragment/LitMesh.frag
     ${GpuMesh_SHADER_DIR}/fragment/UnlitMesh.frag
+    ${GpuMesh_SHADER_DIR}/fragment/ScaffoldJoint.frag
+    ${GpuMesh_SHADER_DIR}/fragment/ScaffoldTube.frag
     ${GpuMesh_SHADER_DIR}/fragment/Wireframe.frag
-    ${GpuMesh_SHADER_DIR}/fragment/PointSphere.frag
     ${GpuMesh_SHADER_DIR}/fragment/BloomBlur.frag
     ${GpuMesh_SHADER_DIR}/fragment/BloomBlend.frag
     ${GpuMesh_SHADER_DIR}/fragment/Gradient.frag

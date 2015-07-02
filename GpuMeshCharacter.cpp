@@ -5,6 +5,7 @@
 
 #include <GLM/gtx/transform.hpp>
 
+#include <CellarWorkbench/Misc/StringUtils.h>
 #include <CellarWorkbench/Misc/Log.h>
 
 #include <PropRoom2D/Team/AbstractTeam.h>
@@ -48,10 +49,11 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAltitude(-glm::pi<float>() / 2.0),
     _cutDistance(0),
     _mesh(new GpuMesh()),
-    _mesher(new CpuParametricMesher(1e5)),
+    _mesher(new CpuParametricMesher(5e5)),
     _smoother(new GpuLaplacianSmoother(0.3, 0.0)),
     _evaluator(new GpuEvaluator()),
-    _renderer(new ScientificRenderer())
+    _renderer(nullptr),
+    _rendererId(-1)
 {
 }
 
@@ -69,19 +71,7 @@ void GpuMeshCharacter::enterStage()
     _ups->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _ups->setHeight(16);
 
-    _renderer->setup();
-    play().view()->camera3D()->registerObserver(*_renderer);
-
-
-    // Setup view matrix
-    moveCamera(_camAzimuth, _camAltitude, _camDistance);
-
-    // Setup shadow matrix
-    moveLight(_lightAzimuth, _lightAltitude, _lightDistance);
-
-    // Setup cut plane
-    moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
-
+    installNextRenderer();
 
     resetPipeline();
 }
@@ -179,6 +169,13 @@ bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
         {
             scheduleSmoothing();
         }
+        else if(event.getAscii() == 'Z')
+        {
+            installNextRenderer();
+
+            const char* rep = _rendererId == 0 ? "Wireframe" : "Surfacic";
+            cout << "Switching renderer to " << rep << " mode" << endl;
+        }
 
         _renderer->handleKeyPress(event);
     }
@@ -236,6 +233,44 @@ void GpuMeshCharacter::printStep(int step, const std::string& stepName)
     stringstream ss;
     ss << "Step " << step << ": " << stepName;
     getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
+}
+
+int GpuMeshCharacter::installNextRenderer()
+{
+    _rendererId = (_rendererId + 1) % 2;
+    switch(_rendererId)
+    {
+    case 0 : installRenderer(new ScientificRenderer()); break;
+    case 1 : installRenderer(new MidEndRenderer()); break;
+    default : getLog().postMessage(new Message('W', false,
+         "Invalid renderer ID: " + toString(_rendererId), "GpuMeshCharacter"));
+    }
+}
+
+void GpuMeshCharacter::installRenderer(AbstractRenderer* renderer)
+{
+    if(_renderer.get() != nullptr)
+    {
+        play().view()->camera3D()->unregisterObserver(*_renderer);
+        _renderer->tearDown();
+    }
+
+    _renderer.reset(renderer);
+    _renderer->setup();
+
+
+    // Setup view matrix
+    moveCamera(_camAzimuth, _camAltitude, _camDistance);
+
+    // Setup shadow matrix
+    moveLight(_lightAzimuth, _lightAltitude, _lightDistance);
+
+    // Setup cut plane
+    moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
+
+    // Setup viewport
+    play().view()->camera3D()->registerObserver(*_renderer);
+    play().view()->camera3D()->refresh();
 }
 
 void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)

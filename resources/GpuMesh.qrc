@@ -18,11 +18,13 @@
         <file>shaders/compute/ElbowPipeBoundaries.glsl</file>
         <file>shaders/compute/PolyhedronQualityEvaluator.glsl</file>
         <file>shaders/compute/InsphereQualityMeasures.glsl</file>
-        <file>shaders/vertex/Wireframe.vert</file>
-        <file>shaders/fragment/Wireframe.frag</file>
-        <file>shaders/vertex/PointSphere.vert</file>
-        <file>shaders/fragment/PointSphere.frag</file>
         <file>shaders/generic/QualityLut.glsl</file>
         <file>shaders/generic/Lighting.glsl</file>
+        <file>shaders/vertex/ScaffoldTube.vert</file>
+        <file>shaders/vertex/ScaffoldJoint.vert</file>
+        <file>shaders/fragment/ScaffoldTube.frag</file>
+        <file>shaders/fragment/ScaffoldJoint.frag</file>
+        <file>shaders/vertex/Wireframe.vert</file>
+        <file>shaders/fragment/Wireframe.frag</file>
     </qresource>
 </RCC>

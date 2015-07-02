@@ -2,17 +2,19 @@
 
 uniform vec3 CameraPosition;
 uniform vec3 LightDirection;
-uniform float PointRadius;
+uniform float LineRadius;
 uniform int LightMode;
+uniform int DiffuseLightMode;
 
-layout(location = 0) out vec4 FragColor;
 
 in vec3 pos;
+flat in vec3 end;
 noperspective in vec2 pix;
-in float qual;
-in float size;
-in float dept;
 in float dist;
+in float qual;
+
+
+layout(location = 0) out vec4 FragColor;
 
 
 const float MAT_SHINE = 40.0;
@@ -34,22 +36,23 @@ void main()
     if(dist > 0.0)
         discard;
 
-    vec2 rad = (gl_FragCoord.xy - pix) / size;
-    float radDist2 = min(dot(rad, rad), 1.0);
-    vec3 sphere = vec3(rad, sqrt(1.0 - radDist2));
+    vec2 rad = (gl_FragCoord.xy - pix) / LineRadius;
+    float radDist = sqrt(1.0 - min(dot(rad, rad), 1.0));
+    float radLength = length(rad) * sign(rad.y);
 
-    vec3 up = vec3(0, 0, 1);
+    vec3 dir = end - pos;
     vec3 cam = normalize(CameraPosition - pos);
-    vec3 right = normalize(cross(up, cam));
-    up = normalize(cross(cam, right));
+    vec3 up = normalize(cross(cam, dir));
+    vec3 right = normalize(cross(dir, up));
+    if(up.z < 0.0)
+        up = -up;
 
     vec3 normal = normalize(
-            sphere.x * right +
-            sphere.y * up +
-            sphere.z * cam);
+            radLength * up +
+            radDist * right);
 
     vec3 color;
-    if(LightMode == 0)
+    if(LightMode == DiffuseLightMode)
     {
         vec3 diff = LIGHT_DIFFUSE * sphericalDiffuse(normal);
         color = qualityLut(qual) * (LIGHT_AMBIANT + diff * 1.5);
@@ -60,8 +63,6 @@ void main()
         vec3 spec = LIGHT_SPECULAR * phongSpecular(normal, pos, MAT_SHINE);
         color = qualityLut(qual) * (LIGHT_AMBIANT + diff) + spec;
     }
-
-    gl_FragDepth = gl_FragCoord.z + dept * sphere.z;
 
     FragColor = vec4(color, 1.0);
 }
