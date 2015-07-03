@@ -4,6 +4,8 @@
 
 #include <GLM/gtc/matrix_transform.hpp>
 
+#include <CellarWorkbench/Misc/Log.h>
+
 #include <Scaena/StageManagement/Event/KeyboardEvent.h>
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
@@ -19,8 +21,9 @@ ScientificRenderer::ScientificRenderer() :
     _vbo(0),
     _ibo(0),
     _lightMode(0),
-    _lineWidth(5.0f),
-    _pointRadius(0.002f),
+    _tubeRadius(10.0f),
+    _jointRadius(0.002f),
+    _jointTubeMinRatio(1.5f),
     _isPhysicalCut(true),
     _evaluator(new GpuEvaluator())
 {
@@ -47,12 +50,16 @@ void ScientificRenderer::notify(cellar::CameraMsg& msg)
                 (float) viewport.y,
                 n, f);
 
+        glm::mat4 projInv = glm::inverse(_projMat);
+
         _scaffoldJointProgram.pushProgram();
+        _scaffoldJointProgram.setMat4f("ProjInv", projInv);
         _scaffoldJointProgram.setMat4f("ProjMat", _projMat);
         _scaffoldJointProgram.setVec2f("Viewport", viewport);
         _scaffoldJointProgram.popProgram();
 
         _scaffoldTubeProgram.pushProgram();
+        _scaffoldTubeProgram.setMat4f("ProjInv", projInv);
         _scaffoldTubeProgram.setMat4f("ProjMat", _projMat);
         _scaffoldTubeProgram.setVec2f("Viewport", viewport);
         _scaffoldTubeProgram.popProgram();
@@ -350,14 +357,28 @@ void ScientificRenderer::resetResources()
 
 void ScientificRenderer::setupShaders()
 {
+    // Clamp tube radius
+    GLfloat lineWidthRange[2];
+    glGetFloatv(GL_LINE_WIDTH_RANGE, lineWidthRange);
+    float tubeMinRadus = lineWidthRange[0] / 2;
+    float tubeMaxRadus = lineWidthRange[1] / 2;
+    if(!(tubeMinRadus < _tubeRadius && _tubeRadius < tubeMaxRadus))
+    {
+        _tubeRadius = glm::clamp(_tubeRadius, tubeMinRadus, tubeMaxRadus);
+        string log("Tube Radius clamped in range: [");
+        log += to_string(tubeMinRadus) +  ", " + to_string(tubeMaxRadus) + "]";
+        getLog().postMessage(new Message('W', false, log, "ScientificRenderer"));
+    }
+
     _scaffoldJointProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/ScaffoldJoint.vert");
     _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/ScaffoldJoint.frag");
     _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
     _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
     _scaffoldJointProgram.link();
     _scaffoldJointProgram.pushProgram();
-    _scaffoldJointProgram.setFloat("PointRadius", _pointRadius);
-    _scaffoldJointProgram.setFloat("LineWidth", _lineWidth);
+    _scaffoldJointProgram.setFloat("JointTubeMinRatio", _jointTubeMinRatio);
+    _scaffoldJointProgram.setFloat("JointRadius", _jointRadius);
+    _scaffoldJointProgram.setFloat("TubeRadius", _tubeRadius);
     _scaffoldJointProgram.setInt("LightMode", _lightMode);
     _scaffoldJointProgram.setInt("DiffuseLightMode", 1);
     _scaffoldJointProgram.popProgram();
@@ -368,7 +389,8 @@ void ScientificRenderer::setupShaders()
     _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
     _scaffoldTubeProgram.link();
     _scaffoldTubeProgram.pushProgram();
-    _scaffoldTubeProgram.setFloat("LineRadius", _lineWidth / 2.0);
+    _scaffoldTubeProgram.setFloat("JointTubeMinRatio", _jointTubeMinRatio);
+    _scaffoldTubeProgram.setFloat("TubeRadius", _tubeRadius);
     _scaffoldTubeProgram.setInt("LightMode", _lightMode);
     _scaffoldTubeProgram.setInt("DiffuseLightMode", 1);
     _scaffoldTubeProgram.popProgram();
@@ -405,7 +427,7 @@ void ScientificRenderer::render()
 
 
         glDisable(GL_PROGRAM_POINT_SIZE);
-        glLineWidth(_lineWidth);
+        glLineWidth(80.0);
 
         _scaffoldTubeProgram.pushProgram();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);

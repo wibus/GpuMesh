@@ -2,14 +2,13 @@
 
 uniform vec3 CameraPosition;
 uniform vec3 LightDirection;
-uniform float PointRadius;
-uniform int LightMode;
 uniform int DiffuseLightMode;
+uniform int LightMode;
 
 layout(location = 0) out vec4 FragColor;
 
-in vec3 pos;
-noperspective in vec2 pix;
+in vec3 wPos;
+noperspective in vec2 pPos;
 in float qual;
 in float size;
 in float dept;
@@ -35,12 +34,12 @@ void main()
     if(dist > 0.0)
         discard;
 
-    vec2 rad = (gl_FragCoord.xy - pix) / size;
-    float radDist2 = min(dot(rad, rad), 1.0);
-    vec3 sphere = vec3(rad, sqrt(1.0 - radDist2));
+    vec2 pixRad = (gl_FragCoord.xy - pPos) / size;
+    float radDist2 = min(dot(pixRad, pixRad), 1.0);
+    vec3 sphere = vec3(pixRad, sqrt(1.0 - radDist2));
 
     vec3 up = vec3(0, 0, 1);
-    vec3 cam = normalize(CameraPosition - pos);
+    vec3 cam = normalize(CameraPosition - wPos);
     vec3 right = normalize(cross(up, cam));
     up = normalize(cross(cam, right));
 
@@ -53,12 +52,12 @@ void main()
     if(LightMode == DiffuseLightMode)
     {
         vec3 diff = LIGHT_DIFFUSE * sphericalDiffuse(normal);
-        color = qualityLut(qual) * (LIGHT_AMBIANT + diff * 1.5);
+        color = qualityLut(qual) * (LIGHT_AMBIANT + diff * 1.25);
     }
     else
     {
         vec3 diff = LIGHT_DIFFUSE * lambertDiffuse(normal);
-        vec3 spec = LIGHT_SPECULAR * phongSpecular(normal, pos, MAT_SHINE);
+        vec3 spec = LIGHT_SPECULAR * phongSpecular(normal, wPos, MAT_SHINE);
         color = qualityLut(qual) * (LIGHT_AMBIANT + diff) + spec;
     }
 

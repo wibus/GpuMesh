@@ -49,7 +49,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAltitude(-glm::pi<float>() / 2.0),
     _cutDistance(0),
     _mesh(new GpuMesh()),
-    _mesher(new CpuParametricMesher(5e5)),
+    _mesher(new CpuParametricMesher(1e5)),
     _smoother(new GpuLaplacianSmoother(0.3, 0.0)),
     _evaluator(new GpuEvaluator()),
     _renderer(nullptr),

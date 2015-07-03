@@ -53,8 +53,9 @@ protected:
     GLuint _ibo;
 
     int _lightMode;
-    float _lineWidth;
-    float _pointRadius;
+    float _tubeRadius;
+    float _jointRadius;
+    float _jointTubeMinRatio;
     bool _isPhysicalCut;
     glm::dvec4 _cutPlane;
     std::unique_ptr<AbstractEvaluator> _evaluator;
