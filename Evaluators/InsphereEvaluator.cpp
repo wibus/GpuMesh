@@ -1,17 +1,18 @@
-#include "CpuInsphereEvaluator.h"
+#include "InsphereEvaluator.h"
 
 
-CpuInsphereEvaluator::CpuInsphereEvaluator()
+InsphereEvaluator::InsphereEvaluator() :
+    AbstractEvaluator(":/shaders/compute/Quality/InsphereVsEdge.glsl")
 {
 
 }
 
-CpuInsphereEvaluator::~CpuInsphereEvaluator()
+InsphereEvaluator::~InsphereEvaluator()
 {
 
 }
 
-double CpuInsphereEvaluator::tetrahedronQuality(
+double InsphereEvaluator::tetrahedronQuality(
         const Mesh& mesh, const MeshTet& tet) const
 {
     glm::dvec3 A(mesh.vert[tet[0]]);
@@ -52,7 +53,7 @@ double CpuInsphereEvaluator::tetrahedronQuality(
     return (4.89897948557) * R / maxLen;
 }
 
-double CpuInsphereEvaluator::hexahedronQuality(
+double InsphereEvaluator::hexahedronQuality(
         const Mesh& mesh, const MeshHex& hex) const
 {
     // Hexahedron quality ~= mean of two possible internal tetrahedrons
@@ -63,7 +64,7 @@ double CpuInsphereEvaluator::hexahedronQuality(
     return (tetAQuality + tetBQuality) / 2.0;
 }
 
-double CpuInsphereEvaluator::prismQuality(
+double InsphereEvaluator::prismQuality(
         const Mesh& mesh, const MeshPri& pri) const
 {
     // Prism quality ~= mean of 6 possible tetrahedrons from prism triangular faces
@@ -83,11 +84,10 @@ double CpuInsphereEvaluator::prismQuality(
     return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq) / (6.0 * 0.716178);
 }
 
-void CpuInsphereEvaluator::evaluateMeshQuality(
+void InsphereEvaluator::evaluateCpuMeshQuality(
         const Mesh& mesh,
-        double& qualityMean,
-        double& qualityVar,
-        double& minQuality)
+        double& minQuality,
+        double& qualityMean)
 {
     int tetCount = mesh.tetra.size();
     int priCount = mesh.prism.size();
@@ -111,17 +111,11 @@ void CpuInsphereEvaluator::evaluateMeshQuality(
     qualityMean = 0.0;
     for(int i=0; i < elemCount; ++i)
     {
-        if(qualities[i] < minQuality)
-            minQuality = qualities[i];
+        double qual = qualities[i];
 
-        qualityMean = (qualityMean * i + qualities[i]) / (i + 1);
-    }
+        if(qual < minQuality)
+            minQuality = qual;
 
-    qualityVar = 0.0;
-    for(int i=0; i < elemCount; ++i)
-    {
-        double qualityMeanDist = qualityMean - qualities[i];
-        double qualityMeanDist2 = qualityMeanDist*qualityMeanDist;
-        qualityVar = (qualityVar * 1 + qualityMeanDist2) / (1 + 1);
+        qualityMean = (qualityMean * i + qual) / (i + 1);
     }
 }

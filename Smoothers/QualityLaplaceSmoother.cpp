@@ -1,28 +1,29 @@
-#include "CpuLaplacianSmoother.h"
+#include "QualityLaplaceSmoother.h"
 
 #include <iostream>
 
 using namespace std;
 
 
-CpuLaplacianSmoother::CpuLaplacianSmoother(
+QualityLaplaceSmoother::QualityLaplaceSmoother(
+        int minIteration,
         double moveFactor,
         double gainThreshold) :
-    AbstractSmoother(moveFactor, gainThreshold)
+    AbstractSmoother(minIteration, moveFactor, gainThreshold,
+                     ":/shaders/compute/Smoothing/QualityLaplace.glsl")
 {
 
 }
 
-CpuLaplacianSmoother::~CpuLaplacianSmoother()
+QualityLaplaceSmoother::~QualityLaplaceSmoother()
 {
 
 }
 
-void CpuLaplacianSmoother::smoothMesh(Mesh& mesh, AbstractEvaluator& evaluator)
+void QualityLaplaceSmoother::smoothCpuMesh(Mesh& mesh, AbstractEvaluator& evaluator)
 {
-    evaluateInitialMeshQuality(mesh, evaluator);
-
-    while(evaluateIterationMeshQuality(mesh, evaluator))
+    _smoothPassId = 0;
+    while(evaluateCpuMeshQuality(mesh, evaluator))
     {
 
         int vertCount = mesh.vert.size();
@@ -61,6 +62,8 @@ void CpuLaplacianSmoother::smoothMesh(Mesh& mesh, AbstractEvaluator& evaluator)
             }
         }
     }
+
+    mesh.updateGpuVertices();
 
     cout << "#Smoothing finished" << endl << endl;
 }

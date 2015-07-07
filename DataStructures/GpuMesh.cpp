@@ -66,10 +66,13 @@ void GpuMesh::compileTopoly()
         glGenBuffers(1, &_hexSsbo);
     }
 
+    updateGpuVertices();
+    updateGpuTopoly();
+}
 
+void GpuMesh::updateGpuTopoly()
+{
     int nbVert = vertCount();
-
-    std::vector<glm::vec4> vertBuff(nbVert);
     std::vector<GpuTopo> topoBuff(nbVert);
     std::vector<int> neigBuff;
 
@@ -81,7 +84,6 @@ void GpuMesh::compileTopoly()
         int type = meshTopo.isFixed ? -1 :
                 meshTopo.boundaryCallback.id();
 
-        vertBuff[i] = glm::vec4(vert[i].p, 0.0);
         topoBuff[i] = GpuTopo(type, base, count);
 
         for(int n=0; n < count; ++n)
@@ -90,11 +92,6 @@ void GpuMesh::compileTopoly()
         base += count;
     }
 
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    size_t vertSize = sizeof(decltype(vertBuff.front())) * vertBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, vertSize, vertBuff.data(), GL_STATIC_DRAW);
-
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
     size_t topoSize = sizeof(decltype(topoBuff.front())) * topoBuff.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, topoSize, topoBuff.data(), GL_STATIC_DRAW);
@@ -102,10 +99,6 @@ void GpuMesh::compileTopoly()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigSsbo);
     size_t neigSize = sizeof(decltype(neigBuff.front())) * neigBuff.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, neigSize, neigBuff.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    size_t qualSize = sizeof(GpuQual);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, nullptr, GL_STATIC_DRAW);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
     size_t tetSize = sizeof(decltype(tetra.front())) * tetra.size();
@@ -120,6 +113,34 @@ void GpuMesh::compileTopoly()
     glBufferData(GL_SHADER_STORAGE_BUFFER, hexSize, hexa.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void GpuMesh::updateGpuVertices()
+{
+    int nbVert = vertCount();
+    std::vector<glm::vec4> buff(nbVert);
+    size_t size = sizeof(decltype(buff.front())) * nbVert;
+
+    for(int i=0; i < nbVert; ++i)
+        buff[i] = glm::vec4(vert[i].p, 0.0);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, buff.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void GpuMesh::updateCpuVertices()
+{
+    int nbVert = vertCount();
+    std::vector<glm::vec4> buff(nbVert);
+    size_t size = sizeof(decltype(buff.front())) * nbVert;
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, buff.data());
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    for(int i=0; i < nbVert; ++i)
+        vert[i].p = glm::dvec3(buff[i]);
 }
 
 unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const

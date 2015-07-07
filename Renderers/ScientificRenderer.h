@@ -28,9 +28,17 @@ public:
 
 
 protected:
-    virtual void updateGeometry(const Mesh& mesh) override;
-    virtual void compileVerts(const Mesh& mesh, std::vector<float>& verts, std::vector<GLubyte>& quals);
-    virtual void compileEdges(const Mesh& mesh, std::vector<GLuint>& edges);
+    virtual void updateGeometry(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator) override;
+    virtual void compileVerts(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            std::vector<float>& verts,
+            std::vector<GLubyte>& quals);
+    virtual void compileEdges(
+            const Mesh& mesh,
+            std::vector<GLuint>& edges);
 
     virtual void clearResources() override;
     virtual void resetResources() override;
@@ -58,7 +66,6 @@ protected:
     float _jointTubeMinRatio;
     bool _isPhysicalCut;
     glm::dvec4 _cutPlane;
-    std::unique_ptr<AbstractEvaluator> _evaluator;
 };
 
 #endif // GPUMESH_MIDENDRENDERER

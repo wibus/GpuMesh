@@ -18,14 +18,12 @@
 #include <Scaena/StageManagement/Event/StageTime.h>
 
 #include "DataStructures/GpuMesh.h"
-#include "Evaluators/CpuInsphereEvaluator.h"
-#include "Evaluators/GpuEvaluator.h"
+#include "Evaluators/InsphereEvaluator.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
 #include "Renderers/MidEndRenderer.h"
 #include "Renderers/ScientificRenderer.h"
-#include "Smoothers/CpuLaplacianSmoother.h"
-#include "Smoothers/GpuLaplacianSmoother.h"
+#include "Smoothers/QualityLaplaceSmoother.h"
 
 using namespace std;
 using namespace cellar;
@@ -49,9 +47,9 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAltitude(-glm::pi<float>() / 2.0),
     _cutDistance(0),
     _mesh(new GpuMesh()),
-    _mesher(new CpuParametricMesher(1e5)),
-    _smoother(new GpuLaplacianSmoother(0.3, 0.0)),
-    _evaluator(new GpuEvaluator()),
+    _mesher(new CpuParametricMesher(1e6)),
+    _smoother(new QualityLaplaceSmoother(200, 0.3, 0.0)),
+    _evaluator(new InsphereEvaluator()),
     _renderer(nullptr),
     _rendererId(-1)
 {
@@ -153,7 +151,7 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
 void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
 {
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
-    _renderer->display(*_mesh);
+    _renderer->display(*_mesh, *_evaluator);
 }
 
 void GpuMeshCharacter::exitStage()
@@ -165,9 +163,13 @@ bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
 {
     if(_processFinished)
     {
-        if(event.getAscii()  == 'S')
+        if(event.getAscii() == 'A')
         {
-            scheduleSmoothing();
+            scheduleCpuSmoothing();
+        }
+        else if(event.getAscii() == 'S')
+        {
+            scheduleGpuSmoothing();
         }
         else if(event.getAscii() == 'Z')
         {
@@ -206,8 +208,14 @@ void GpuMeshCharacter::processPipeline()
         break;
 
     case 1:
-        printStep(_stepId, "Smoothing internal domain");
-        _smoother->smoothMesh(*_mesh, *_evaluator);
+        printStep(_stepId, string("Smoothing internal domain ")
+                    + (_gpuSmoothing ? "(GPU)" : "CPU") );
+
+        if(_gpuSmoothing)
+            _smoother->smoothGpuMesh(*_mesh, *_evaluator);
+        else
+            _smoother->smoothCpuMesh(*_mesh, *_evaluator);
+
 
         _renderer->notifyMeshUpdate();
         _processFinished = true;
@@ -220,11 +228,21 @@ void GpuMeshCharacter::processPipeline()
     }
 }
 
-void GpuMeshCharacter::scheduleSmoothing()
+void GpuMeshCharacter::scheduleCpuSmoothing()
 {
     if(_processFinished)
     {
         _processFinished = false;
+        _gpuSmoothing = false;
+    }
+}
+
+void GpuMeshCharacter::scheduleGpuSmoothing()
+{
+    if(_processFinished)
+    {
+        _processFinished = false;
+        _gpuSmoothing = true;
     }
 }
 

@@ -17,13 +17,11 @@ SET(GpuMesh_MESHERS_HEADERS
 
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
-    ${GpuMesh_SRC_DIR}/Evaluators/CpuInsphereEvaluator.h
-    ${GpuMesh_SRC_DIR}/Evaluators/GpuEvaluator.h)
+    ${GpuMesh_SRC_DIR}/Evaluators/InsphereEvaluator.h)
 
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/GpuLaplacianSmoother.h)
+    ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.h)
 
 SET(GpuMesh_RENDERERS_HEADERS
     ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.h
@@ -56,13 +54,11 @@ SET(GpuMesh_MESHERS_SOURCES
 
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
-    ${GpuMesh_SRC_DIR}/Evaluators/CpuInsphereEvaluator.cpp
-    ${GpuMesh_SRC_DIR}/Evaluators/GpuEvaluator.cpp)
+    ${GpuMesh_SRC_DIR}/Evaluators/InsphereEvaluator.cpp)
 
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/CpuLaplacianSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/GpuLaplacianSmoother.cpp)
+    ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.cpp)
 
 SET(GpuMesh_RENDERERS_SOURCES
     ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.cpp
@@ -116,10 +112,10 @@ SET(GpuMesh_FRAGMENT_SHADERS
 
 # Compute shaders
 SET(GpuMesh_COMPUTE_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/LaplacianSmoothing.glsl
-    ${GpuMesh_SHADER_DIR}/compute/ElbowPipeBoundaries.glsl
-    ${GpuMesh_SHADER_DIR}/compute/InsphereQualityMeasures.glsl
-    ${GpuMesh_SHADER_DIR}/compute/PolyhedronQualityEvaluator.glsl)
+    ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/SimultaneousEvaluation.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Quality/InsphereVsEdge.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/QualityLaplace.glsl)
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES

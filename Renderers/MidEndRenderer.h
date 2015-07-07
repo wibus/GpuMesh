@@ -29,9 +29,12 @@ public:
 
 
 protected:
-    virtual void updateGeometry(const Mesh& mesh) override;
+    virtual void updateGeometry(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator) override;
     virtual void compileFacesAttributes(
             const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
             std::vector<unsigned char>& triEdges,
@@ -93,7 +96,6 @@ protected:
 
     bool _isPhysicalCut;
     glm::dvec4 _cutPlane;
-    std::unique_ptr<AbstractEvaluator> _evaluator;
 };
 
 #endif // GPUMESH_MIDENDRENDERER

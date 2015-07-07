@@ -10,7 +10,7 @@
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 
-#include "Evaluators/GpuEvaluator.h"
+#include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
 using namespace cellar;
@@ -21,11 +21,10 @@ ScientificRenderer::ScientificRenderer() :
     _vbo(0),
     _ibo(0),
     _lightMode(0),
-    _tubeRadius(10.0f),
+    _tubeRadius(5.0f),
     _jointRadius(0.002f),
     _jointTubeMinRatio(1.5f),
-    _isPhysicalCut(true),
-    _evaluator(new GpuEvaluator())
+    _isPhysicalCut(true)
 {
 }
 
@@ -157,13 +156,16 @@ void ScientificRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
     }
 }
 
-void ScientificRenderer::handleInputs(const scaena::SynchronousKeyboard& keyboard,
-                          const scaena::SynchronousMouse& mouse)
+void ScientificRenderer::handleInputs(
+        const scaena::SynchronousKeyboard& keyboard,
+        const scaena::SynchronousMouse& mouse)
 {
 
 }
 
-void ScientificRenderer::updateGeometry(const Mesh& mesh)
+void ScientificRenderer::updateGeometry(
+        const Mesh& mesh,
+        const AbstractEvaluator& evaluator)
 {
     // Clear old vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -181,7 +183,7 @@ void ScientificRenderer::updateGeometry(const Mesh& mesh)
     // Fetch new vertex attributes
     vector<float> verts;
     vector<GLubyte>  quals;
-    compileVerts(mesh, verts, quals);
+    compileVerts(mesh, evaluator, verts, quals);
     _vertElemCount = mesh.vert.size();
 
 
@@ -218,7 +220,11 @@ void ScientificRenderer::updateGeometry(const Mesh& mesh)
     _buffNeedUpdate = false;
 }
 
-void ScientificRenderer::compileVerts(const Mesh& mesh, std::vector<float>& verts, std::vector<GLubyte>& quals)
+void ScientificRenderer::compileVerts(
+        const Mesh& mesh,
+        const AbstractEvaluator& evaluator,
+        std::vector<float>& verts,
+        std::vector<GLubyte>& quals)
 {
     size_t vertCount = mesh.vert.size();
 
@@ -239,7 +245,7 @@ void ScientificRenderer::compileVerts(const Mesh& mesh, std::vector<float>& vert
     for(int i=0; i < tetCount; ++i)
     {
         const MeshTet& tet = mesh.tetra[i];
-        GLubyte qual = 255 * _evaluator->tetrahedronQuality(mesh, tet);
+        GLubyte qual = 255 * evaluator.tetrahedronQuality(mesh, tet);
         if(qual < quals[tet.v[0]]) quals[tet.v[0]] = qual;
         if(qual < quals[tet.v[1]]) quals[tet.v[1]] = qual;
         if(qual < quals[tet.v[2]]) quals[tet.v[2]] = qual;
@@ -251,7 +257,7 @@ void ScientificRenderer::compileVerts(const Mesh& mesh, std::vector<float>& vert
     for(int i=0; i < priCount; ++i)
     {
         const MeshPri& pri = mesh.prism[i];
-        GLubyte qual = 255 * _evaluator->prismQuality(mesh, pri);
+        GLubyte qual = 255 * evaluator.prismQuality(mesh, pri);
         if(qual < quals[pri.v[0]]) quals[pri.v[0]] = qual;
         if(qual < quals[pri.v[1]]) quals[pri.v[1]] = qual;
         if(qual < quals[pri.v[2]]) quals[pri.v[2]] = qual;
@@ -265,7 +271,7 @@ void ScientificRenderer::compileVerts(const Mesh& mesh, std::vector<float>& vert
     for(int i=0; i < hexCount; ++i)
     {
         const MeshHex& hex = mesh.hexa[i];
-        GLubyte qual = 255 * _evaluator->hexahedronQuality(mesh, hex);
+        GLubyte qual = 255 * evaluator.hexahedronQuality(mesh, hex);
         if(qual < quals[hex.v[0]]) quals[hex.v[0]] = qual;
         if(qual < quals[hex.v[1]]) quals[hex.v[1]] = qual;
         if(qual < quals[hex.v[2]]) quals[hex.v[2]] = qual;
@@ -362,7 +368,7 @@ void ScientificRenderer::setupShaders()
     glGetFloatv(GL_LINE_WIDTH_RANGE, lineWidthRange);
     float tubeMinRadus = lineWidthRange[0] / 2;
     float tubeMaxRadus = lineWidthRange[1] / 2;
-    if(!(tubeMinRadus < _tubeRadius && _tubeRadius < tubeMaxRadus))
+    if(!(tubeMinRadus <= _tubeRadius && _tubeRadius <= tubeMaxRadus))
     {
         _tubeRadius = glm::clamp(_tubeRadius, tubeMinRadus, tubeMaxRadus);
         string log("Tube Radius clamped in range: [");

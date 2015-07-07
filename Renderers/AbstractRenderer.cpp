@@ -29,11 +29,11 @@ void AbstractRenderer::notifyMeshUpdate()
     _buffNeedUpdate = true;
 }
 
-void AbstractRenderer::display(const Mesh& mesh)
+void AbstractRenderer::display(const Mesh& mesh, const AbstractEvaluator& evaluator)
 {
     if(_buffNeedUpdate)
     {
-        updateGeometry(mesh);
+        updateGeometry(mesh, evaluator);
     }
 
     render();

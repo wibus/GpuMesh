@@ -23,27 +23,31 @@ struct Hex
     int v[8];
 };
 
-
-layout(shared, binding = 1) buffer Qual
+struct Qual
 {
-    uint mean;
-    uint var;
     uint min;
+    uint mean;
 };
 
-layout(shared, binding = 2) buffer Tets
+
+layout(shared, binding = 1) buffer Tets
 {
     Tet tets[];
 };
 
-layout(shared, binding = 3) buffer Pris
+layout(shared, binding = 2) buffer Pris
 {
     Pri pris[];
 };
 
-layout(shared, binding = 4) buffer Hexs
+layout(shared, binding = 3) buffer Hexs
 {
     Hex hexs[];
+};
+
+layout(shared, binding = 4) buffer Quals
+{
+    Qual quals[];
 };
 
 
@@ -55,28 +59,29 @@ float hexQuality(Hex hex);
 void main()
 {
     uint uid = gl_GlobalInvocationID.x;
+    uint gid = gl_WorkGroupID.x;
 
     if(uid < TetCount)
     {
         float q = tetQuality(tets[uid]);
         uint qi = uint(q * MaxQuality);
-        atomicAdd(mean, qi);
-        atomicMin(min, qi);
+        atomicMin(quals[gid].min, qi);
+        atomicAdd(quals[gid].mean, qi);
     }
 
     if(uid < PriCount)
     {
         float q = priQuality(pris[uid]);
         uint qi = uint(q * MaxQuality);
-        atomicAdd(mean, qi);
-        atomicMin(min, qi);
+        atomicMin(quals[gid].min, qi);
+        atomicAdd(quals[gid].mean, qi);
     }
 
     if(uid < HexCount)
     {
         float q = hexQuality(hexs[uid]);
         uint qi = uint(q * MaxQuality);
-        atomicAdd(mean, qi);
-        atomicMin(min, qi);
+        atomicMin(quals[gid].min, qi);
+        atomicAdd(quals[gid].mean, qi);
     }
 }

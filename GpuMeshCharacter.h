@@ -31,7 +31,8 @@ public:
 protected:
     virtual void resetPipeline();
     virtual void processPipeline();
-    virtual void scheduleSmoothing();
+    virtual void scheduleCpuSmoothing();
+    virtual void scheduleGpuSmoothing();
     virtual void printStep(int step, const std::string& stepName);
 
     virtual int installNextRenderer();
@@ -54,6 +55,7 @@ protected:
     double _cutDistance;
 
     int _stepId;
+    bool _gpuSmoothing;
     bool _processFinished;
 
 private:

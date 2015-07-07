@@ -14,10 +14,6 @@
         <file>shaders/fragment/Brush.frag</file>
         <file>shaders/fragment/BloomBlur.frag</file>
         <file>shaders/fragment/BloomBlend.frag</file>
-        <file>shaders/compute/LaplacianSmoothing.glsl</file>
-        <file>shaders/compute/ElbowPipeBoundaries.glsl</file>
-        <file>shaders/compute/PolyhedronQualityEvaluator.glsl</file>
-        <file>shaders/compute/InsphereQualityMeasures.glsl</file>
         <file>shaders/generic/QualityLut.glsl</file>
         <file>shaders/generic/Lighting.glsl</file>
         <file>shaders/vertex/ScaffoldTube.vert</file>
@@ -26,5 +22,9 @@
         <file>shaders/fragment/ScaffoldJoint.frag</file>
         <file>shaders/vertex/Wireframe.vert</file>
         <file>shaders/fragment/Wireframe.frag</file>
+        <file>shaders/compute/Smoothing/QualityLaplace.glsl</file>
+        <file>shaders/compute/Quality/InsphereVsEdge.glsl</file>
+        <file>shaders/compute/Boundary/ElbowPipe.glsl</file>
+        <file>shaders/compute/Measuring/SimultaneousEvaluation.glsl</file>
     </qresource>
 </RCC>

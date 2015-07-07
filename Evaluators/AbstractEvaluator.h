@@ -1,13 +1,15 @@
 #ifndef GPUMESH_ABSTRACTEVALUATOR
 #define GPUMESH_ABSTRACTEVALUATOR
 
+#include <CellarWorkbench/GL/GlProgram.h>
+
 #include "DataStructures/Mesh.h"
 
 
 class AbstractEvaluator
 {
 public:
-    AbstractEvaluator();
+    AbstractEvaluator(const std::string& shapeMeasuresShader);
     virtual ~AbstractEvaluator();
 
 
@@ -17,11 +19,25 @@ public:
 
     virtual double prismQuality(const Mesh& mesh, const MeshPri& pri) const = 0;
 
-    virtual void evaluateMeshQuality(
+    virtual void evaluateCpuMeshQuality(
             const Mesh& mesh,
-            double& qualityMean,
-            double& qualityVar,
-            double& minQuality) = 0;
+            double& minQuality,
+            double& qualityMean) = 0;
+
+    virtual void evaluateGpuMeshQuality(
+            const Mesh& mesh,
+            double& minQuality,
+            double& qualityMean);
+
+protected:
+    virtual void initializeProgram();
+
+    bool _initialized;
+    std::string _shapeMeasuresShader;
+    cellar::GlProgram _evaluatorProgram;
+
+    static const double MAX_INTEGER_VALUE;
+    static const double MIN_QUALITY_PRECISION_DENOM;
 };
 
 #endif // GPUMESH_ABSTRACTEVALUATOR

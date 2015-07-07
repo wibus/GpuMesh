@@ -44,6 +44,9 @@ public:
     virtual void clear() override;
 
     virtual void compileTopoly() override;
+    virtual void updateGpuTopoly() override;
+    virtual void updateGpuVertices() override;
+    virtual void updateCpuVertices() override;
 
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const override;
 

@@ -19,7 +19,7 @@ public:
     virtual void setup();
     virtual void tearDown();
     virtual void notifyMeshUpdate();
-    virtual void display(const Mesh& mesh);
+    virtual void display(const Mesh& mesh, const AbstractEvaluator& evaluator);
 
 
     virtual void updateCamera(const glm::mat4& view,
@@ -34,7 +34,9 @@ public:
 
 
 protected:
-    virtual void updateGeometry(const Mesh& mesh) = 0;
+    virtual void updateGeometry(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator) = 0;
 
     virtual void clearResources() = 0;
     virtual void resetResources() = 0;

@@ -12,7 +12,7 @@
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 
-#include "Evaluators/GpuEvaluator.h"
+#include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
 using namespace cellar;
@@ -40,8 +40,7 @@ MidEndRenderer::MidEndRenderer() :
     _updateShadow(false),
     _shadowSize(1024, 1024),
     _isPhysicalCut(true),
-    _cutPlane(0.0),
-    _evaluator(new GpuEvaluator())
+    _cutPlane(0.0)
 {
 
 }
@@ -209,7 +208,7 @@ void MidEndRenderer::handleInputs(const scaena::SynchronousKeyboard& keyboard,
 
 }
 
-void MidEndRenderer::updateGeometry(const Mesh& mesh)
+void MidEndRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator& evaluator)
 {
     // Clear old vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -235,6 +234,7 @@ void MidEndRenderer::updateGeometry(const Mesh& mesh)
 
     compileFacesAttributes(
         mesh,
+        evaluator,
         vertices,
         normals,
         edges,
@@ -275,6 +275,7 @@ void MidEndRenderer::updateGeometry(const Mesh& mesh)
 
 void MidEndRenderer::compileFacesAttributes(
         const Mesh& mesh,
+        const AbstractEvaluator& evaluator,
         std::vector<glm::vec3>& vertices,
         std::vector<signed char>& normals,
         std::vector<unsigned char>& triEdges,
@@ -311,7 +312,7 @@ void MidEndRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = _evaluator->tetrahedronQuality(mesh, tet);
+        double quality = evaluator.tetrahedronQuality(mesh, tet);
 
         for(int f=0; f < MeshTet::FACE_COUNT; ++f)
         {
@@ -350,7 +351,7 @@ void MidEndRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = _evaluator->prismQuality(mesh, pri);
+        double quality = evaluator.prismQuality(mesh, pri);
 
         for(int f=0; f < MeshPri::FACE_COUNT; ++f)
         {
@@ -393,7 +394,7 @@ void MidEndRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = _evaluator->hexahedronQuality(mesh, hex);
+        double quality = evaluator.hexahedronQuality(mesh, hex);
 
         for(int f=0; f < MeshHex::FACE_COUNT; ++f)
         {

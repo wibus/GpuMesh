@@ -185,10 +185,26 @@ void Mesh::compileTopoly()
     }
 }
 
+void Mesh::updateGpuTopoly()
+{
+
+}
+
+void Mesh::updateGpuVertices()
+{
+
+}
+
+void Mesh::updateCpuVertices()
+{
+
+}
+
 unsigned int Mesh::glBuffer(const EMeshBuffer&) const
 {
     return 0;
 }
+
 
 void Mesh::addEdge(int firstVert, int secondVert)
 {

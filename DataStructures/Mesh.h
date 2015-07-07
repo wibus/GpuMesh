@@ -137,6 +137,10 @@ public:
     virtual void clear();
 
     virtual void compileTopoly();
+    virtual void updateGpuTopoly();
+    virtual void updateGpuVertices();
+    virtual void updateCpuVertices();
+
 
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
 
