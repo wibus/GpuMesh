@@ -2,7 +2,7 @@
 
 
 InsphereEvaluator::InsphereEvaluator() :
-    AbstractEvaluator(":/shaders/compute/Quality/InsphereVsEdge.glsl")
+    AbstractEvaluator(":/shaders/compute/Quality/Insphere.glsl")
 {
 
 }
@@ -53,17 +53,6 @@ double InsphereEvaluator::tetrahedronQuality(
     return (4.89897948557) * R / maxLen;
 }
 
-double InsphereEvaluator::hexahedronQuality(
-        const Mesh& mesh, const MeshHex& hex) const
-{
-    // Hexahedron quality ~= mean of two possible internal tetrahedrons
-    MeshTet tetA(hex.v[0], hex.v[3], hex.v[5], hex.v[6]);
-    MeshTet tetB(hex.v[1], hex.v[2], hex.v[7], hex.v[4]);
-    double tetAQuality = tetrahedronQuality(mesh, tetA);
-    double tetBQuality = tetrahedronQuality(mesh, tetB);
-    return (tetAQuality + tetBQuality) / 2.0;
-}
-
 double InsphereEvaluator::prismQuality(
         const Mesh& mesh, const MeshPri& pri) const
 {
@@ -84,38 +73,13 @@ double InsphereEvaluator::prismQuality(
     return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq) / (6.0 * 0.716178);
 }
 
-void InsphereEvaluator::evaluateCpuMeshQuality(
-        const Mesh& mesh,
-        double& minQuality,
-        double& qualityMean)
+double InsphereEvaluator::hexahedronQuality(
+        const Mesh& mesh, const MeshHex& hex) const
 {
-    int tetCount = mesh.tetra.size();
-    int priCount = mesh.prism.size();
-    int hexCount = mesh.hexa.size();
-
-    int elemCount = tetCount + priCount + hexCount;
-    std::vector<double> qualities(elemCount);
-    int idx = 0;
-
-    for(int i=0; i < tetCount; ++i, ++idx)
-        qualities[idx] = tetrahedronQuality(mesh, mesh.tetra[i]);
-
-    for(int i=0; i < priCount; ++i, ++idx)
-        qualities[idx] = prismQuality(mesh, mesh.prism[i]);
-
-    for(int i=0; i < hexCount; ++i, ++idx)
-        qualities[idx] = hexahedronQuality(mesh, mesh.hexa[i]);
-
-
-    minQuality = 1.0;
-    qualityMean = 0.0;
-    for(int i=0; i < elemCount; ++i)
-    {
-        double qual = qualities[i];
-
-        if(qual < minQuality)
-            minQuality = qual;
-
-        qualityMean = (qualityMean * i + qual) / (i + 1);
-    }
+    // Hexahedron quality ~= mean of two possible internal tetrahedrons
+    MeshTet tetA(hex.v[0], hex.v[3], hex.v[5], hex.v[6]);
+    MeshTet tetB(hex.v[1], hex.v[2], hex.v[7], hex.v[4]);
+    double tetAQuality = tetrahedronQuality(mesh, tetA);
+    double tetBQuality = tetrahedronQuality(mesh, tetB);
+    return (tetAQuality + tetBQuality) / 2.0;
 }

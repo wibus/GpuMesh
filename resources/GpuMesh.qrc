@@ -23,8 +23,12 @@
         <file>shaders/vertex/Wireframe.vert</file>
         <file>shaders/fragment/Wireframe.frag</file>
         <file>shaders/compute/Smoothing/QualityLaplace.glsl</file>
-        <file>shaders/compute/Quality/InsphereVsEdge.glsl</file>
         <file>shaders/compute/Boundary/ElbowPipe.glsl</file>
         <file>shaders/compute/Measuring/SimultaneousEvaluation.glsl</file>
+        <file>shaders/compute/Measuring/TetrahedraEvaluation.glsl</file>
+        <file>shaders/compute/Measuring/PrismsEvaluation.glsl</file>
+        <file>shaders/compute/Measuring/HexahedraEvaluation.glsl</file>
+        <file>shaders/compute/Quality/Insphere.glsl</file>
+        <file>shaders/compute/Quality/SolidAngle.glsl</file>
     </qresource>
 </RCC>

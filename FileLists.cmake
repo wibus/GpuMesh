@@ -17,7 +17,8 @@ SET(GpuMesh_MESHERS_HEADERS
 
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
-    ${GpuMesh_SRC_DIR}/Evaluators/InsphereEvaluator.h)
+    ${GpuMesh_SRC_DIR}/Evaluators/InsphereEvaluator.h
+    ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.h)
 
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h
@@ -54,7 +55,8 @@ SET(GpuMesh_MESHERS_SOURCES
 
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
-    ${GpuMesh_SRC_DIR}/Evaluators/InsphereEvaluator.cpp)
+    ${GpuMesh_SRC_DIR}/Evaluators/InsphereEvaluator.cpp
+    ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.cpp)
 
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp
@@ -111,11 +113,27 @@ SET(GpuMesh_FRAGMENT_SHADERS
     ${GpuMesh_SHADER_DIR}/fragment/Grain.frag)
 
 # Compute shaders
-SET(GpuMesh_COMPUTE_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/SimultaneousEvaluation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Quality/InsphereVsEdge.glsl
+SET(GpuMesh_BOUNDARY_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
+
+SET(GpuMesh_MEASURING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/TetrahedraEvaluation.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/PrismsEvaluation.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/HexahedraEvaluation.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/SimultaneousEvaluation.glsl)
+
+SET(GpuMesh_QUALITY_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Quality/Insphere.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Quality/SolidAngle.glsl)
+
+SET(GpuMesh_SMOOTHING_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Smoothing/QualityLaplace.glsl)
+
+SET(GpuMesh_COMPUTE_SHADERS
+    ${GpuMesh_BOUNDARY_SHADERS}
+    ${GpuMesh_MEASURING_SHADERS}
+    ${GpuMesh_QUALITY_SHADERS}
+    ${GpuMesh_SMOOTHING_SHADERS})
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES

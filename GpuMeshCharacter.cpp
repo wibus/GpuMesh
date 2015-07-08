@@ -19,6 +19,7 @@
 
 #include "DataStructures/GpuMesh.h"
 #include "Evaluators/InsphereEvaluator.h"
+#include "Evaluators/SolidAngleEvaluator.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
 #include "Renderers/MidEndRenderer.h"
@@ -49,7 +50,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _mesh(new GpuMesh()),
     _mesher(new CpuParametricMesher(1e6)),
     _smoother(new QualityLaplaceSmoother(200, 0.3, 0.0)),
-    _evaluator(new InsphereEvaluator()),
+    _evaluator(new SolidAngleEvaluator()),
     _renderer(nullptr),
     _rendererId(-1)
 {
