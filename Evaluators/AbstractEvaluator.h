@@ -44,9 +44,14 @@ protected:
     cellar::GlProgram _hexProgram;
     GLuint _qualSsbo;
 
+    static const size_t WORKGROUP_SIZE;
+    static const size_t POLYHEDRON_TYPE_COUNT;
+    static const size_t MAX_GROUP_PARTICIPANTS;
+
     static const double VALIDITY_EPSILON;
     static const double MAX_INTEGER_VALUE;
     static const double MIN_QUALITY_PRECISION_DENOM;
+    static const double MAX_QUALITY_VALUE;
 };
 
 #endif // GPUMESH_ABSTRACTEVALUATOR

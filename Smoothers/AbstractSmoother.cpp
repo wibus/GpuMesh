@@ -94,7 +94,6 @@ void AbstractSmoother::smoothGpuMesh(Mesh& mesh, AbstractEvaluator& evaluator)
     int vertCount = mesh.vertCount();
 
     _smoothingProgram.pushProgram();
-    _smoothingProgram.setInt("VertCount", vertCount);
     _smoothingProgram.setFloat("MoveCoeff", _moveFactor);
 
     auto tStart = chrono::high_resolution_clock::now();

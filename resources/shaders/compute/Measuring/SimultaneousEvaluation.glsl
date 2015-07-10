@@ -1,10 +1,5 @@
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
-uniform int TetCount;
-uniform int PriCount;
-uniform int HexCount;
-uniform float MaxQuality;
-
 
 struct Qual
 {
@@ -18,6 +13,9 @@ layout(shared, binding = 6) buffer Quals
 };
 
 
+uniform float MaxQuality;
+
+
 float tetQuality(Tet tet);
 float priQuality(Pri pri);
 float hexQuality(Hex hex);
@@ -28,7 +26,7 @@ void main()
     uint uid = gl_GlobalInvocationID.x;
     uint gid = gl_WorkGroupID.x;
 
-    if(uid < TetCount)
+    if(uid < tets.length())
     {
         float q = tetQuality(tets[uid]);
         uint qi = uint(q * MaxQuality);
@@ -36,7 +34,7 @@ void main()
         atomicAdd(quals[gid].mean, qi);
     }
 
-    if(uid < PriCount)
+    if(uid < pris.length())
     {
         float q = priQuality(pris[uid]);
         uint qi = uint(q * MaxQuality);
@@ -44,7 +42,7 @@ void main()
         atomicAdd(quals[gid].mean, qi);
     }
 
-    if(uid < HexCount)
+    if(uid < hexs.length())
     {
         float q = hexQuality(hexs[uid]);
         uint qi = uint(q * MaxQuality);

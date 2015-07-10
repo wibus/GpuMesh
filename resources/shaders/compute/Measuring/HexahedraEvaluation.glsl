@@ -1,10 +1,6 @@
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 
-uniform int HexCount;
-uniform float MaxQuality;
-
-
 struct Qual
 {
     uint min;
@@ -17,6 +13,9 @@ layout(shared, binding = 6) buffer Quals
 };
 
 
+uniform float MaxQuality;
+
+
 float hexQuality(Hex hex);
 
 
@@ -26,7 +25,7 @@ void main()
     uint gid = gl_WorkGroupID.x;
 
 
-    if(uid < HexCount)
+    if(uid < hexs.length())
     {
         float q = hexQuality(hexs[uid]);
         uint qi = uint(q * MaxQuality);
