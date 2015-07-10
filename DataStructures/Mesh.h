@@ -11,11 +11,89 @@ struct MeshVert
 {
     glm::dvec3 p;
 
-    MeshVert() : p(0) {}
-    MeshVert(const glm::dvec3 p) : p(p){}
+    inline MeshVert() : p(0) {}
+    inline MeshVert(const glm::dvec3 p) : p(p){}
     inline double& operator[] (int c) { return p[c]; }
     inline const double& operator[] (int c) const { return p[c]; }
     inline operator glm::dvec3() const { return p; }
+};
+
+struct MeshEdge
+{
+    int v[2];
+
+    inline MeshEdge() : v{-1, -1} {}
+    inline MeshEdge(int v0, int v1) : v{v0, v1} {}
+    inline int& operator[] (int i) { return v[i]; }
+    inline const int& operator[] (int i) const { return v[i]; }
+};
+
+struct MeshTri
+{
+    int v[3];
+
+    inline MeshTri() : v{-1, -1, -1} {}
+    inline MeshTri(int v0, int v1, int v2) : v{v0, v1, v2} {}
+    inline int& operator[] (int i) { return v[i]; }
+    inline const int& operator[] (int i) const { return v[i]; }
+};
+
+
+struct MeshTet
+{
+    int v[4];
+
+    inline MeshTet() : v{-1, -1, -1, -1} {}
+    inline MeshTet(int v0, int v1, int v2, int v3) : v{v0, v1, v2, v3} {}
+    inline int& operator[] (int i) { return v[i]; }
+    inline const int& operator[] (int i) const { return v[i]; }
+
+    static const int EDGE_COUNT = 6;
+    static const MeshEdge edges[EDGE_COUNT];
+    static const int TRI_COUNT = 4;
+    static const MeshTri tris[TRI_COUNT];
+    static const int TET_COUNT = 1;
+    static const MeshTet tets[TET_COUNT];
+};
+
+
+struct MeshPri
+{
+    int v[6];
+
+    inline MeshPri() : v{-1, -1, -1, -1, -1, -1} {}
+    inline MeshPri(int v0, int v1, int v2,
+            int v3, int v4, int v5) :
+        v{v0, v1, v2, v3, v4, v5} {}
+    inline int operator[] (int i) { return v[i]; }
+    inline const int& operator[] (int i) const { return v[i]; }
+
+    static const int EDGE_COUNT = 9;
+    static const MeshEdge edges[EDGE_COUNT];
+    static const int TRI_COUNT = 8;
+    static const MeshTri tris[TRI_COUNT];
+    static const int TET_COUNT = 3;
+    static const MeshTet tets[TET_COUNT];
+};
+
+
+struct MeshHex
+{
+    int v[8];
+
+    inline MeshHex() : v{-1, -1, -1, -1, -1, -1, -1, -1} {}
+    inline MeshHex(int v0, int v1, int v2, int v3,
+            int v4, int v5, int v6, int v7) :
+        v{v0, v1, v2, v3, v4, v5, v6, v7} {}
+    inline int operator[] (int i) { return v[i]; }
+    inline const int& operator[] (int i) const { return v[i]; }
+
+    static const int EDGE_COUNT = 12;
+    static const MeshEdge edges[EDGE_COUNT];
+    static const int TRI_COUNT = 12;
+    static const MeshTri tris[TRI_COUNT];
+    static const int TET_COUNT = 5;
+    static const MeshTet tets[TET_COUNT];
 };
 
 class MeshBound
@@ -46,70 +124,6 @@ struct MeshTopo
     MeshTopo(const MeshBound& boundaryCallback);
 };
 
-struct MeshTri
-{
-    int v[3];
-
-    MeshTri() : v{-1, -1, -1} {}
-    MeshTri(int v0, int v1, int v2) : v{v0, v1, v2} {}
-    inline int& operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
-};
-
-
-struct MeshTet
-{
-    int v[4];
-
-    MeshTet() : v{-1, -1, -1, -1} {}
-    MeshTet(int v0, int v1, int v2, int v3) : v{v0, v1, v2, v3} {}
-    inline int& operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
-
-    static const int FACE_COUNT = 4;
-    static const MeshTri faces[FACE_COUNT];
-    static const int EDGE_COUNT = 6;
-    static const int edges[EDGE_COUNT][2];
-};
-
-
-struct MeshPri
-{
-    int v[6];
-
-    MeshPri() : v{-1, -1, -1, -1, -1, -1} {}
-    MeshPri(int v0, int v1, int v2,
-            int v3, int v4, int v5) :
-        v{v0, v1, v2, v3, v4, v5} {}
-    inline int operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
-
-    static const int FACE_COUNT = 8;
-    static const MeshTri faces[FACE_COUNT];
-    static const int EDGE_COUNT = 9;
-    static const int edges[EDGE_COUNT][2];
-};
-
-
-struct MeshHex
-{
-    int v[8];
-
-    MeshHex() : v{-1, -1, -1, -1, -1, -1, -1, -1} {}
-    MeshHex(int v0, int v1, int v2, int v3,
-            int v4, int v5, int v6, int v7) :
-        v{v0, v1, v2, v3, v4, v5, v6, v7} {}
-    inline int operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
-
-    static const int FACE_COUNT = 12;
-    static const MeshTri faces[FACE_COUNT];
-    static const int EDGE_COUNT = 12;
-    static const int edges[EDGE_COUNT][2];
-};
-
-
-class AbstractEvaluator;
 
 enum class EMeshBuffer
 {
@@ -118,12 +132,15 @@ enum class EMeshBuffer
     TOPO,
     NEIG,
 
-    QUAL,
     TET,
     PRI,
     HEX,
 };
 
+namespace cellar
+{
+    class GlProgram;
+}
 
 class Mesh
 {
@@ -141,8 +158,10 @@ public:
     virtual void updateGpuVertices();
     virtual void updateCpuVertices();
 
-
+    virtual std::string meshGeometryShaderName() const;
+    virtual void uploadGeometry(cellar::GlProgram& program) const;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
+    virtual void bindShaderStorageBuffers() const;
 
 
     std::vector<MeshVert> vert;

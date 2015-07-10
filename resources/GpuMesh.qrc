@@ -28,7 +28,9 @@
         <file>shaders/compute/Measuring/TetrahedraEvaluation.glsl</file>
         <file>shaders/compute/Measuring/PrismsEvaluation.glsl</file>
         <file>shaders/compute/Measuring/HexahedraEvaluation.glsl</file>
-        <file>shaders/compute/Quality/Insphere.glsl</file>
         <file>shaders/compute/Quality/SolidAngle.glsl</file>
+        <file>shaders/compute/Quality/VolumeEdge.glsl</file>
+        <file>shaders/compute/Quality/InsphereEdge.glsl</file>
+        <file>shaders/compute/Mesh.glsl</file>
     </qresource>
 </RCC>

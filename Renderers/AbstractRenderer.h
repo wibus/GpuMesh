@@ -8,6 +8,8 @@
 
 #include "DataStructures/Mesh.h"
 
+class AbstractEvaluator;
+
 
 class AbstractRenderer:
         public cellar::SpecificObserver<cellar::CameraMsg>

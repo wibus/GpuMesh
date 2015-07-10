@@ -1,5 +1,3 @@
-#version 440
-
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 uniform int TetCount;
@@ -8,44 +6,13 @@ uniform int HexCount;
 uniform float MaxQuality;
 
 
-struct Tet
-{
-    int v[4];
-};
-
-struct Pri
-{
-    int v[6];
-};
-
-struct Hex
-{
-    int v[8];
-};
-
 struct Qual
 {
     uint min;
     uint mean;
 };
 
-
-layout(shared, binding = 1) buffer Tets
-{
-    Tet tets[];
-};
-
-layout(shared, binding = 2) buffer Pris
-{
-    Pri pris[];
-};
-
-layout(shared, binding = 3) buffer Hexs
-{
-    Hex hexs[];
-};
-
-layout(shared, binding = 4) buffer Quals
+layout(shared, binding = 6) buffer Quals
 {
     Qual quals[];
 };

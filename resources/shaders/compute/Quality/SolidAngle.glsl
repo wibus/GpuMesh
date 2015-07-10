@@ -1,29 +1,3 @@
-#version 440
-
-
-struct Tet
-{
-    int v[4];
-};
-
-struct Pri
-{
-    int v[6];
-};
-
-struct Hex
-{
-    int v[8];
-};
-
-
-// Vertices positions
-// vec4 is only for alignment
-layout (std140, binding=0) buffer Vert
-{
-    vec4 vert[];
-};
-
 
 float solidAngle(in vec3 a, in vec3 b, in vec3 c)
 {
@@ -39,10 +13,10 @@ float solidAngle(in vec3 a, in vec3 b, in vec3 c)
 
 float tetQuality(Tet tet)
 {
-    vec3 t0 = vec3(vert[tet.v[0]]);
-    vec3 t1 = vec3(vert[tet.v[1]]);
-    vec3 t2 = vec3(vert[tet.v[2]]);
-    vec3 t3 = vec3(vert[tet.v[3]]);
+    vec3 t0 = vec3(verts[tet.v[0]].p);
+    vec3 t1 = vec3(verts[tet.v[1]].p);
+    vec3 t2 = vec3(verts[tet.v[2]].p);
+    vec3 t3 = vec3(verts[tet.v[3]].p);
 
     float q0 = solidAngle(t1 - t0, t2 - t0, t3 - t0);
     float q1 = solidAngle(t0 - t1, t2 - t1, t3 - t1);
@@ -55,12 +29,12 @@ float tetQuality(Tet tet)
 
 float priQuality(Pri pri)
 {
-    vec3 t0 = vec3(vert[pri.v[0]]);
-    vec3 t1 = vec3(vert[pri.v[1]]);
-    vec3 t2 = vec3(vert[pri.v[2]]);
-    vec3 t3 = vec3(vert[pri.v[3]]);
-    vec3 t4 = vec3(vert[pri.v[4]]);
-    vec3 t5 = vec3(vert[pri.v[5]]);
+    vec3 t0 = vec3(verts[pri.v[0]].p);
+    vec3 t1 = vec3(verts[pri.v[1]].p);
+    vec3 t2 = vec3(verts[pri.v[2]].p);
+    vec3 t3 = vec3(verts[pri.v[3]].p);
+    vec3 t4 = vec3(verts[pri.v[4]].p);
+    vec3 t5 = vec3(verts[pri.v[5]].p);
 
     float q0 = solidAngle(t1 - t0, t2 - t0, t4 - t0);
     float q1 = solidAngle(t0 - t1, t3 - t1, t5 - t1);
@@ -77,14 +51,14 @@ float priQuality(Pri pri)
 
 float hexQuality(Hex hex)
 {
-    vec3 t0 = vec3(vert[hex.v[0]]);
-    vec3 t1 = vec3(vert[hex.v[1]]);
-    vec3 t2 = vec3(vert[hex.v[2]]);
-    vec3 t3 = vec3(vert[hex.v[3]]);
-    vec3 t4 = vec3(vert[hex.v[4]]);
-    vec3 t5 = vec3(vert[hex.v[5]]);
-    vec3 t6 = vec3(vert[hex.v[6]]);
-    vec3 t7 = vec3(vert[hex.v[7]]);
+    vec3 t0 = vec3(verts[hex.v[0]].p);
+    vec3 t1 = vec3(verts[hex.v[1]].p);
+    vec3 t2 = vec3(verts[hex.v[2]].p);
+    vec3 t3 = vec3(verts[hex.v[3]].p);
+    vec3 t4 = vec3(verts[hex.v[4]].p);
+    vec3 t5 = vec3(verts[hex.v[5]].p);
+    vec3 t6 = vec3(verts[hex.v[6]].p);
+    vec3 t7 = vec3(verts[hex.v[7]].p);
 
     float q0 = solidAngle(t1 - t0, t2 - t0, t4 - t0);
     float q1 = solidAngle(t0 - t1, t3 - t1, t5 - t1);

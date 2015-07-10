@@ -1,14 +1,14 @@
-#ifndef GPUMESH_INSPHEREEVALUATOR
-#define GPUMESH_INSPHEREEVALUATOR
+#ifndef GPUMESH_INSPHEREEDGEEVALUATOR
+#define GPUMESH_INSPHEREEDGEEVALUATOR
 
 #include "AbstractEvaluator.h"
 
 
-class InsphereEvaluator : public AbstractEvaluator
+class InsphereEdgeEvaluator : public AbstractEvaluator
 {
 public:
-    InsphereEvaluator();
-    virtual ~InsphereEvaluator();
+    InsphereEdgeEvaluator();
+    virtual ~InsphereEdgeEvaluator();
 
 
     virtual double tetrahedronQuality(const Mesh& mesh, const MeshTet& tet) const override;
@@ -18,4 +18,4 @@ public:
     virtual double hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const override;
 };
 
-#endif // GPUMESH_INSPHEREEVALUATOR
+#endif // GPUMESH_INSPHEREEDGEEVALUATOR

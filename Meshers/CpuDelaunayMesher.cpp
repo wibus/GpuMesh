@@ -729,9 +729,7 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
     for(int i = _externalVertCount; i < delaunayVertCount; ++i)
     {
         Vertex& dVert = vert[i];
-        MeshVert& mVert = meshVert[i-_externalVertCount];
-
-        mVert.p = dVert.p;
+        meshVert[i-_externalVertCount].p = dVert.p;
 
         TetListNode* node = dVert.tetList.head;
         while(node != nullptr)

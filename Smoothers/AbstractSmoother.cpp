@@ -3,9 +3,12 @@
 #include <chrono>
 #include <iostream>
 
+#include <CellarWorkbench/Misc/Log.h>
+
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
+using namespace cellar;
 
 
 AbstractSmoother::AbstractSmoother(
@@ -73,10 +76,6 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evalua
 
 void AbstractSmoother::smoothGpuMesh(Mesh& mesh, AbstractEvaluator& evaluator)
 {
-    GLuint vertSsbo = mesh.glBuffer(EMeshBuffer::VERT);
-    GLuint topoSsbo = mesh.glBuffer(EMeshBuffer::TOPO);
-    GLuint neigSsbo = mesh.glBuffer(EMeshBuffer::NEIG);
-
     if(!_initialized)
     {
         initializeProgram(mesh);
@@ -105,10 +104,7 @@ void AbstractSmoother::smoothGpuMesh(Mesh& mesh, AbstractEvaluator& evaluator)
     _smoothPassId = 0;
     while(evaluateGpuMeshQuality(mesh, evaluator))
     {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, topoSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, neigSsbo);
-
+        mesh.bindShaderStorageBuffers();
         glDispatchCompute(ceil(vertCount / 256.0), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
@@ -132,10 +128,15 @@ void AbstractSmoother::smoothGpuMesh(Mesh& mesh, AbstractEvaluator& evaluator)
 
 void AbstractSmoother::initializeProgram(Mesh& mesh)
 {
-    cout << "Initializing Laplacian smoothing compute shader" << endl;
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, _smoothShader);
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER,
-        ":/shaders/compute/Boundary/ElbowPipe.glsl");
-    _smoothingProgram.link();
+    getLog().postMessage(new Message('I', false,
+        "Initializing smoothing compute shader", "AbstractSmoother"));
 
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        _smoothShader.c_str()});
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Boundary/ElbowPipe.glsl"});
+    _smoothingProgram.link();
+    mesh.uploadGeometry(_smoothingProgram);
 }

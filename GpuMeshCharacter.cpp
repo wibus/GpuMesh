@@ -18,8 +18,9 @@
 #include <Scaena/StageManagement/Event/StageTime.h>
 
 #include "DataStructures/GpuMesh.h"
-#include "Evaluators/InsphereEvaluator.h"
+#include "Evaluators/InsphereEdgeEvaluator.h"
 #include "Evaluators/SolidAngleEvaluator.h"
+#include "Evaluators/VolumeEdgeEvaluator.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
 #include "Renderers/MidEndRenderer.h"
@@ -49,8 +50,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutDistance(0),
     _mesh(new GpuMesh()),
     _mesher(new CpuParametricMesher(1e6)),
-    _smoother(new QualityLaplaceSmoother(200, 0.3, 0.0)),
-    _evaluator(new SolidAngleEvaluator()),
+    _smoother(new QualityLaplaceSmoother(0, 0.3, 0.0)),
+    _evaluator(new VolumeEdgeEvaluator()),
     _renderer(nullptr),
     _rendererId(-1)
 {
@@ -69,6 +70,8 @@ void GpuMeshCharacter::enterStage()
     _ups->setHorizontalAnchor(EHorizontalAnchor::LEFT);
     _ups->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _ups->setHeight(16);
+
+    _evaluator->assessMeasureValidy();
 
     installNextRenderer();
 

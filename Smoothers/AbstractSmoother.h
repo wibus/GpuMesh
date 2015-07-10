@@ -5,6 +5,8 @@
 
 #include "DataStructures/Mesh.h"
 
+class AbstractEvaluator;
+
 
 class AbstractSmoother
 {

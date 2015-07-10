@@ -19,6 +19,8 @@ public:
 
     virtual double hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const = 0;
 
+    virtual bool assessMeasureValidy();
+
     virtual void evaluateCpuMeshQuality(
             const Mesh& mesh,
             double& minQuality,
@@ -29,8 +31,9 @@ public:
             double& minQuality,
             double& qualityMean);
 
+
 protected:
-    virtual void initializeProgram();
+    virtual void initializeProgram(const Mesh& mesh);
 
     bool _initialized;
     bool _computeSimultaneously;
@@ -39,7 +42,9 @@ protected:
     cellar::GlProgram _tetProgram;
     cellar::GlProgram _priProgram;
     cellar::GlProgram _hexProgram;
+    GLuint _qualSsbo;
 
+    static const double VALIDITY_EPSILON;
     static const double MAX_INTEGER_VALUE;
     static const double MIN_QUALITY_PRECISION_DENOM;
 };

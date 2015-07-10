@@ -314,9 +314,9 @@ void MidEndRenderer::compileFacesAttributes(
 
         double quality = evaluator.tetrahedronQuality(mesh, tet);
 
-        for(int f=0; f < MeshTet::FACE_COUNT; ++f)
+        for(int f=0; f < MeshTet::TRI_COUNT; ++f)
         {
-            const MeshTri& tri = MeshTet::faces[f];
+            const MeshTri& tri = MeshTet::tris[f];
             glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
             glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
@@ -353,9 +353,9 @@ void MidEndRenderer::compileFacesAttributes(
 
         double quality = evaluator.prismQuality(mesh, pri);
 
-        for(int f=0; f < MeshPri::FACE_COUNT; ++f)
+        for(int f=0; f < MeshPri::TRI_COUNT; ++f)
         {
-            const MeshTri& tri = MeshPri::faces[f];
+            const MeshTri& tri = MeshPri::tris[f];
             glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
             glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));
@@ -396,9 +396,9 @@ void MidEndRenderer::compileFacesAttributes(
 
         double quality = evaluator.hexahedronQuality(mesh, hex);
 
-        for(int f=0; f < MeshHex::FACE_COUNT; ++f)
+        for(int f=0; f < MeshHex::TRI_COUNT; ++f)
         {
-            const MeshTri& tri = MeshHex::faces[f];
+            const MeshTri& tri = MeshHex::tris[f];
             glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
             glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
             glm::dvec3 normal = glm::normalize(glm::cross(A, B));

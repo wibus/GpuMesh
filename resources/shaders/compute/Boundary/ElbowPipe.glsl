@@ -1,5 +1,3 @@
-#version 440
-
 const int PIPE_SURFACE_ID = 1;
 const int PIPE_EXTREMITY_FACE_ID = 2;
 const int PIPE_EXTREMITY_EDGE_ID = 3;

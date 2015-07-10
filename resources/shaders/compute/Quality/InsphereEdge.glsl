@@ -1,36 +1,10 @@
-#version 440
-
-
-struct Tet
-{
-    int v[4];
-};
-
-struct Pri
-{
-    int v[6];
-};
-
-struct Hex
-{
-    int v[8];
-};
-
-
-// Vertices positions
-// vec4 is only for alignment
-layout (std140, binding=0) buffer Vert
-{
-    vec4 vert[];
-};
-
 
 float tetQuality(Tet tet)
 {
-    vec3 A = vec3(vert[tet.v[0]]);
-    vec3 B = vec3(vert[tet.v[1]]);
-    vec3 C = vec3(vert[tet.v[2]]);
-    vec3 D = vec3(vert[tet.v[3]]);
+    vec3 A = vec3(verts[tet.v[0]].p);
+    vec3 B = vec3(verts[tet.v[1]].p);
+    vec3 C = vec3(verts[tet.v[2]].p);
+    vec3 D = vec3(verts[tet.v[3]].p);
 
     float u = distance(A, B);
     float v = distance(A, C);
@@ -47,10 +21,10 @@ float tetQuality(Tet tet)
     Volume = sqrt(Volume);
     Volume /= 12.0;
 
-    float s1 = float((U + V + W) / 2.0);
-    float s2 = float((u + v + W) / 2.0);
-    float s3 = float((u + V + w) / 2.0);
-    float s4 = float((U + v + w) / 2.0);
+    float s1 = (U + V + W) / 2.0;
+    float s2 = (u + v + W) / 2.0;
+    float s3 = (u + V + w) / 2.0;
+    float s4 = (U + v + w) / 2.0;
 
     float L1 = sqrt(s1*(s1-U)*(s1-V)*(s1-W));
     float L2 = sqrt(s2*(s2-u)*(s2-v)*(s2-W));
@@ -81,7 +55,8 @@ float priQuality(Pri pri)
     float tetDq = tetQuality(tetD);
     float tetEq = tetQuality(tetE);
     float tetFq = tetQuality(tetF);
-    return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq) / (6.0 * 0.716178);
+    return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq)
+            / 3.9067138981002011988; // C/6
 }
 
 float hexQuality(Hex hex)
@@ -91,5 +66,5 @@ float hexQuality(Hex hex)
 
     float tetAQuality = tetQuality(tetA);
     float tetBQuality = tetQuality(tetB);
-    return (tetAQuality + tetBQuality) / 2.0;
+    return (tetAQuality + tetBQuality) * 0.5; // 1/2
 }

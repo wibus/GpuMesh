@@ -1,15 +1,9 @@
-#version 440
-
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
 
 uniform int HexCount;
 uniform float MaxQuality;
 
-
-struct Hex
-{
-    int v[8];
-};
 
 struct Qual
 {
@@ -17,13 +11,7 @@ struct Qual
     uint mean;
 };
 
-
-layout(shared, binding = 3) buffer Hexs
-{
-    Hex hexs[];
-};
-
-layout(shared, binding = 4) buffer Quals
+layout(shared, binding = 6) buffer Quals
 {
     Qual quals[];
 };

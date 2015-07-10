@@ -1,15 +1,9 @@
-#version 440
-
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
 
 uniform int PriCount;
 uniform float MaxQuality;
 
-
-struct Pri
-{
-    int v[6];
-};
 
 struct Qual
 {
@@ -17,13 +11,7 @@ struct Qual
     uint mean;
 };
 
-
-layout(shared, binding = 2) buffer Pris
-{
-    Pri pris[];
-};
-
-layout(shared, binding = 4) buffer Quals
+layout(shared, binding = 6) buffer Quals
 {
     Qual quals[];
 };
