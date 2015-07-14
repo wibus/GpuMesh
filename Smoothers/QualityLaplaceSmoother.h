@@ -13,10 +13,7 @@ public:
 
     virtual void smoothCpuMesh(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            int minIteration,
-            double moveFactor,
-            double gainThreshold) override;
+            AbstractEvaluator& evaluator) override;
 };
 
 #endif // GPUMESH_CPULAPLACIANSMOOTHER

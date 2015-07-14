@@ -1,9 +1,6 @@
 #ifndef GPUMESH_MIDENDRENDERER
 #define GPUMESH_MIDENDRENDERER
 
-#include <map>
-#include <functional>
-
 #include <GL3/gl3w.h>
 
 #include <CellarWorkbench/GL/GlProgram.h>
@@ -16,10 +13,6 @@ class SurfacicRenderer : public AbstractRenderer
 public:
     SurfacicRenderer();
     virtual ~SurfacicRenderer();
-
-    virtual std::vector<std::string> availableShadings() const override;
-    virtual void useShading(const std::string& shadingName) override;
-    virtual void useVirtualCutPlane(bool use) override;
 
     virtual void notify(cellar::CameraMsg& msg) override;
 
@@ -102,12 +95,6 @@ protected:
     GLuint _bloomDpt;
     GLuint _bloomBaseTex;
     GLuint _bloomBlurTex;
-
-
-    bool _isPhysicalCut;
-    glm::dvec4 _cutPlane;
-
-    std::map<std::string, std::function<void(void)>> _shadingFuncs;
 };
 
 #endif // GPUMESH_MIDENDRENDERER

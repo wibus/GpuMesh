@@ -23,13 +23,12 @@ ScaffoldRenderer::ScaffoldRenderer() :
     _lightMode(0),
     _tubeRadius(5.0f),
     _jointRadius(0.002f),
-    _jointTubeMinRatio(1.5f),
-    _isPhysicalCut(true)
+    _jointTubeMinRatio(1.5f)
 {
     _shadingFuncs = decltype(_shadingFuncs) {
-        {string("Wirframe"), function<void()>(bind(&ScaffoldRenderer::useWireframeShading, this))},
-        {string("Diffuse"),  function<void()>(bind(&ScaffoldRenderer::useDiffuseShading,   this))},
-        {string("Phong"),    function<void()>(bind(&ScaffoldRenderer::usePhongShading,     this))},
+        {string("Wireframe"), function<void()>(bind(&ScaffoldRenderer::useWireframeShading, this))},
+        {string("Diffuse"),   function<void()>(bind(&ScaffoldRenderer::useDiffuseShading,   this))},
+        {string("Phong"),     function<void()>(bind(&ScaffoldRenderer::usePhongShading,     this))},
     };
 }
 
@@ -37,35 +36,6 @@ ScaffoldRenderer::ScaffoldRenderer() :
 ScaffoldRenderer::~ScaffoldRenderer()
 {
     clearResources();
-}
-
-std::vector<std::string> ScaffoldRenderer::availableShadings() const
-{
-    std::vector<std::string> names;
-    for(const auto& keyValue : _shadingFuncs)
-        names.push_back(keyValue.first);
-    return names;
-}
-
-void ScaffoldRenderer::useShading(const std::string& shadingName)
-{
-    auto it = _shadingFuncs.find(shadingName);
-    if(it != _shadingFuncs.end())
-    {
-        it->second();
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + shadingName + "' shading", "ScaffoldRenderer"));
-    }
-}
-
-void ScaffoldRenderer::useVirtualCutPlane(bool use)
-{
-    _isPhysicalCut = !use;
-    updateCutPlane(_cutPlane);
-    _buffNeedUpdate = true;
 }
 
 void ScaffoldRenderer::notify(cellar::CameraMsg& msg)
@@ -394,7 +364,7 @@ void ScaffoldRenderer::setupShaders()
         _tubeRadius = glm::clamp(_tubeRadius, tubeMinRadus, tubeMaxRadus);
         string log("Tube Radius clamped in range: [");
         log += to_string(tubeMinRadus) +  ", " + to_string(tubeMaxRadus) + "]";
-        getLog().postMessage(new Message('W', false, log, "ScientificRenderer"));
+        getLog().postMessage(new Message('W', false, log, "ScaffoldRenderer"));
     }
 
     _scaffoldJointProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/ScaffoldJoint.vert");

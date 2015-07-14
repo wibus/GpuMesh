@@ -1,6 +1,9 @@
 #ifndef GPUMESH_ABSTRACTRENDERER
 #define GPUMESH_ABSTRACTRENDERER
 
+#include <map>
+#include <functional>
+
 #include <CellarWorkbench/Camera/Camera.h>
 #include <CellarWorkbench/DesignPattern/SpecificObserver.h>
 
@@ -23,9 +26,9 @@ public:
     virtual void notifyMeshUpdate();
     virtual void display(const Mesh& mesh, const AbstractEvaluator& evaluator);
 
-    virtual std::vector<std::string> availableShadings() const = 0;
-    virtual void useShading(const std::string& shadingName) = 0;
-    virtual void useVirtualCutPlane(bool use) = 0;
+    virtual std::vector<std::string> availableShadings() const;
+    virtual void useShading(const std::string& shadingName);
+    virtual void useVirtualCutPlane(bool use);
 
 
     virtual void updateCamera(const glm::mat4& view,
@@ -49,8 +52,13 @@ protected:
     virtual void setupShaders() = 0;
     virtual void render() = 0;
 
-
     bool _buffNeedUpdate;
+    bool _isPhysicalCut;
+    glm::dvec4 _cutPlane;
+
+    // Shadings
+    typedef std::function<void(void)> ShadingFunc;
+    std::map<std::string, ShadingFunc> _shadingFuncs;
 };
 
 #endif // GPUMESH_ABSTRACTRENDERER

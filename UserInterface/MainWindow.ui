@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="geometryTab">
        <attribute name="title">
@@ -47,14 +47,14 @@
           </property>
           <layout class="QFormLayout" name="formLayout">
            <item row="0" column="0">
-            <widget class="QLabel" name="geometryMethodLabel">
+            <widget class="QLabel" name="geometryTechniqueLabel">
              <property name="text">
-              <string>Method</string>
+              <string>Technique</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="geometryMethodMenu"/>
+            <widget class="QComboBox" name="geometryTechniqueMenu"/>
            </item>
            <item row="1" column="0">
             <widget class="QLabel" name="geometryModelLabel">
@@ -132,24 +132,24 @@
           </property>
           <layout class="QFormLayout" name="formLayout_2">
            <item row="0" column="0">
-            <widget class="QLabel" name="smoothingMethodLabel">
+            <widget class="QLabel" name="smoothingTechniqueLabel">
              <property name="text">
-              <string>Method</string>
+              <string>Technique</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="smoothingMethodMenu"/>
+            <widget class="QComboBox" name="smoothingTechniqueMenu"/>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="qualityMeasureLabel">
+            <widget class="QLabel" name="smoothShapeMeasureLabel">
              <property name="text">
-              <string>Quality measure</string>
+              <string>Shape measure</string>
              </property>
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QComboBox" name="qualityMeasureMenu"/>
+            <widget class="QComboBox" name="smoothShapeMeasureMenu"/>
            </item>
            <item row="2" column="0">
             <widget class="QLabel" name="smoothingImplementationLabel">
@@ -204,11 +204,17 @@
            </item>
            <item row="5" column="1">
             <widget class="QDoubleSpinBox" name="gainThresholdSpin">
+             <property name="decimals">
+              <number>4</number>
+             </property>
              <property name="maximum">
               <double>1.000000000000000</double>
              </property>
              <property name="singleStep">
-              <double>0.010000000000000</double>
+              <double>0.000100000000000</double>
+             </property>
+             <property name="value">
+              <double>0.000100000000000</double>
              </property>
             </widget>
            </item>
@@ -276,14 +282,14 @@
             </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="visualQualityLabel">
+            <widget class="QLabel" name="visualShapeMeasureLabel">
              <property name="text">
-              <string>Quality</string>
+              <string>Shape measure</string>
              </property>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QComboBox" name="visualQualityMenu"/>
+            <widget class="QComboBox" name="visualShapeMeasureMenu"/>
            </item>
           </layout>
          </widget>

@@ -22,11 +22,11 @@ public:
     virtual ~GeometryTab();
 
 protected slots:
-    virtual void methodChanged(const QString& methodName);
-    virtual void generateMesh(bool checked);
+    virtual void techniqueChanged(const QString&);
+    virtual void generateMesh();
 
 protected:
-    virtual void deployMethods();
+    virtual void deployTechniques();
     virtual void deployModels();
 
 private:

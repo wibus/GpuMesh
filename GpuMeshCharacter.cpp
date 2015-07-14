@@ -94,22 +94,6 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
 {
     _ups->setText("UPS: " + to_string(time.framesPerSecond()));
 
-    /*
-    if(!_processFinished)
-    {
-        auto startTime = chrono::high_resolution_clock::now();
-
-        processPipeline();
-
-        auto endTime = chrono::high_resolution_clock::now();
-        auto dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
-
-        stringstream ss;
-        ss << "Step took " << dt.count() / 1000.0 << "ms to execute";
-        getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
-    }    
-*/
-
     std::shared_ptr<SynchronousKeyboard> keyboard = play().synchronousKeyboard();
     std::shared_ptr<SynchronousMouse> mouse = play().synchronousMouse();
 
@@ -194,9 +178,15 @@ std::vector<std::string> GpuMeshCharacter::availableMeshModels(const string& mes
 {
     auto it = _availableMeshers.find(mesherName);
     if(it != _availableMeshers.end())
+    {
         return it->second->availableMeshModels();
+    }
     else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + mesherName + "' mesher", "GpuMeshCharacter"));
         return std::vector<std::string>();
+    }
 }
 
 std::vector<std::string> GpuMeshCharacter::availableEvaluators() const
@@ -213,6 +203,21 @@ std::vector<std::string> GpuMeshCharacter::availableSmoothers() const
     for(const auto& keyValue : _availableSmoothers)
         keyVec.push_back(keyValue.first);
     return keyVec;
+}
+
+std::vector<std::string> GpuMeshCharacter::availableImplementations(const string& smootherName) const
+{
+    auto it = _availableSmoothers.find(smootherName);
+    if(it != _availableSmoothers.end())
+    {
+        return it->second->availableImplementations();
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + smootherName + "' smoother", "GpuMeshCharacter"));
+        return std::vector<std::string>();
+    }
 }
 
 std::vector<std::string> GpuMeshCharacter::availableRenderers() const
@@ -247,9 +252,7 @@ void GpuMeshCharacter::generateMesh(
                     modelName,
                     vertexCount);
 
-        printStep("Generating vertex adjacency lists");
         _mesh->compileTopoly();
-
         _renderer->notifyMeshUpdate();
     }
     else

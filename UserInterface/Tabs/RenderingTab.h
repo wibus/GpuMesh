@@ -24,13 +24,13 @@ public:
 protected slots:
     virtual void renderTypeChanged(QString text);
     virtual void shadingChanged(QString text);
-    virtual void qualityChanged(QString text);
+    virtual void shapeMeasureChanged(QString text);
     virtual void useVirtualCutPlane(bool checked);
 
 protected:
     virtual void deployRenderTypes();
     virtual void deployShadings();
-    virtual void deployQualities();
+    virtual void deployShapeMeasures();
 
 private:
     Ui::MainWindow* _ui;

@@ -18,10 +18,7 @@ QualityLaplaceSmoother::~QualityLaplaceSmoother()
 
 void QualityLaplaceSmoother::smoothCpuMesh(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        int minIteration,
-        double moveFactor,
-        double gainThreshold)
+        AbstractEvaluator& evaluator)
 {
     _smoothPassId = 0;
     while(evaluateCpuMeshQuality(mesh, evaluator))

@@ -1,16 +1,17 @@
 #include "CpuDelaunayMesher.h"
 
-#include <chrono>
-#include <iostream>
 #include <algorithm>
 
 #include <GLM/glm.hpp>
 #include <GLM/gtc/random.hpp>
 #include <GLM/gtc/constants.hpp>
 
+#include <CellarWorkbench/Misc/Log.h>
+
 #include "DataStructures/TetList.h"
 
 using namespace std;
+using namespace cellar;
 
 
 struct Vertex
@@ -53,9 +54,9 @@ CpuDelaunayMesher::CpuDelaunayMesher()
 {
     using namespace std::placeholders;
     _modelFuncs = decltype(_modelFuncs) {
-        {string("Box"),    ModelFunc(std::bind(&CpuDelaunayMesher::genBoxVertices,    this, _1))},
-        {string("Sphere"), ModelFunc(std::bind(&CpuDelaunayMesher::genSphereVertices, this, _1))},
-        {string("Cap"),    ModelFunc(std::bind(&CpuDelaunayMesher::genCapVertices,    this, _1))},
+        {string("Box"),    ModelFunc(bind(&CpuDelaunayMesher::genBox,    this, _1, _2))},
+        {string("Cap"),    ModelFunc(bind(&CpuDelaunayMesher::genCap,    this, _1, _2))},
+        {string("Sphere"), ModelFunc(bind(&CpuDelaunayMesher::genSphere, this, _1, _2))},
     };
 }
 
@@ -63,34 +64,81 @@ CpuDelaunayMesher::~CpuDelaunayMesher()
 {
 }
 
-std::vector<std::string> CpuDelaunayMesher::availableMeshModels() const
+void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
 {
-    std::vector<std::string> modelNames;
-    for(const auto& keyValue : _modelFuncs)
-        modelNames.push_back(keyValue.first);
-    return modelNames;
-}
+    std::vector<glm::dvec3> vertices;
+    glm::dvec3 cMin(-1);
+    glm::dvec3 cMax( 1);
 
-void CpuDelaunayMesher::generateMesh(
-        Mesh& mesh,
-        const string& modelName,
-        size_t vertexCount)
-{
-    genBoundingMesh();
+    vertices.resize(vertexCount);
+    int surfCount = glm::sqrt(vertexCount) * 10;
+    int padding = glm::pow(vertexCount, 1/3.0);
+    for(int iv=0; iv < surfCount; ++iv)
+    {
+        glm::dvec3 val = glm::linearRand(cMin, cMax);
+        val[iv%3] = glm::mix(-1.0, 1.0, (double)(iv%2));
+        vertices[iv] = val;
+    }
 
-    std::vector<glm::dvec3> vertices = _modelFuncs[modelName](vertexCount);
+    for(int iv=surfCount; iv<vertexCount; ++iv)
+        vertices[iv] = glm::linearRand(cMin, cMax) * (1.0 - 1.0 / padding);
 
-    chrono::high_resolution_clock::time_point startTime, endTime;
-    startTime = chrono::high_resolution_clock::now();
+
     insertVertices(mesh, vertices);
-    endTime = chrono::high_resolution_clock::now();
-
-    chrono::microseconds dt;
-    dt = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
-    cout << "Total meshing time = " << dt.count() / 1000.0 << "ms" << endl;
 }
 
-void CpuDelaunayMesher::genBoundingMesh()
+void CpuDelaunayMesher::genCap(Mesh& mesh, size_t vertexCount)
+{
+    std::vector<glm::dvec3> vertices;
+
+    int stackCount = glm::pow(vertexCount/2.3, 1/3.0);
+    glm::dvec3 minPerturb(-0.1 / stackCount);
+    glm::dvec3 maxPerturb(0.1 / stackCount);
+    for(int s=0; s <= stackCount; ++s)
+    {
+        double sProg = s / (double) stackCount;
+        double height = sProg;
+        vertices.push_back(glm::dvec3(0, 0, height));
+
+        for(int r=1; r <= s; ++r)
+        {
+            double rProg = r / (double) s;
+            double ringRadius = r / (double) stackCount;
+            double ringHeight = height * (1.0 - rProg*rProg);
+            double ringVertCount = stackCount * glm::sqrt(1.0 + r);
+            for(int v=0; v < ringVertCount; ++v)
+            {
+                double vProg = v / (double) ringVertCount;
+                double vAngle = glm::pi<double>() * vProg * 2;
+                vertices.push_back(glm::dvec3(
+                    glm::cos(vAngle) * ringRadius,
+                    glm::sin(vAngle) * ringRadius * 0.75,
+                    ringHeight)
+                                   +
+                    glm::linearRand(minPerturb, maxPerturb)
+                     * (1.1 - rProg) * (1.1 - sProg));
+            }
+        }
+    }
+
+
+    insertVertices(mesh, vertices);
+}
+
+void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
+{
+    std::vector<glm::dvec3> vertices;
+    double sphereRadius = 1.0;
+
+    vertices.resize(vertexCount);
+    for(int iv=0; iv < vertexCount; ++iv)
+        vertices[iv] = glm::ballRand(sphereRadius * 1.41);
+
+
+    insertVertices(mesh, vertices);
+}
+
+void CpuDelaunayMesher::insertBoundingMesh()
 {
     const double a = 20.0;
 
@@ -131,79 +179,12 @@ void CpuDelaunayMesher::genBoundingMesh()
     _externalVertCount = vertCount;
 }
 
-std::vector<glm::dvec3> CpuDelaunayMesher::genBoxVertices(size_t vertexCount)
-{
-    std::vector<glm::dvec3> vertices;
-    glm::dvec3 cMin(-1);
-    glm::dvec3 cMax( 1);
-
-    vertices.resize(vertexCount);
-    int surfCount = glm::sqrt(vertexCount) * 10;
-    int padding = glm::pow(vertexCount, 1/3.0);
-    for(int iv=0; iv < surfCount; ++iv)
-    {
-        glm::dvec3 val = glm::linearRand(cMin, cMax);
-        val[iv%3] = glm::mix(-1.0, 1.0, (double)(iv%2));
-        vertices[iv] = val;
-    }
-
-    for(int iv=surfCount; iv<vertexCount; ++iv)
-        vertices[iv] = glm::linearRand(cMin, cMax) * (1.0 - 1.0 / padding);
-
-    return vertices;
-}
-
-std::vector<glm::dvec3> CpuDelaunayMesher::genSphereVertices(size_t vertexCount)
-{
-    std::vector<glm::dvec3> vertices;
-    double sphereRadius = 1.0;
-
-    vertices.resize(vertexCount);
-    for(int iv=0; iv < vertexCount; ++iv)
-        vertices[iv] = glm::ballRand(sphereRadius * 1.41);
-
-    return vertices;
-}
-
-std::vector<glm::dvec3> CpuDelaunayMesher::genCapVertices(size_t vertexCount)
-{
-    std::vector<glm::dvec3> vertices;
-
-    int stackCount = glm::pow(vertexCount/2.3, 1/3.0);
-    glm::dvec3 minPerturb(-0.1 / stackCount);
-    glm::dvec3 maxPerturb(0.1 / stackCount);
-    for(int s=0; s <= stackCount; ++s)
-    {
-        double sProg = s / (double) stackCount;
-        double height = sProg;
-        vertices.push_back(glm::dvec3(0, 0, height));
-
-        for(int r=1; r <= s; ++r)
-        {
-            double rProg = r / (double) s;
-            double ringRadius = r / (double) stackCount;
-            double ringHeight = height * (1.0 - rProg*rProg);
-            double ringVertCount = stackCount * glm::sqrt(1.0 + r);
-            for(int v=0; v < ringVertCount; ++v)
-            {
-                double vProg = v / (double) ringVertCount;
-                double vAngle = glm::pi<double>() * vProg * 2;
-                vertices.push_back(glm::dvec3(
-                    glm::cos(vAngle) * ringRadius,
-                    glm::sin(vAngle) * ringRadius * 0.75,
-                    ringHeight)
-                                   +
-                    glm::linearRand(minPerturb, maxPerturb)
-                     * (1.1 - rProg) * (1.1 - sProg));
-            }
-        }
-    }
-
-    return vertices;
-}
-
 void CpuDelaunayMesher::insertVertices(Mesh& mesh, const std::vector<glm::dvec3>& vertices)
 {
+    getLog().postMessage(new Message('I', false,
+        "Inserting bounding mesh", "CpuDelaunayMesher"));
+    insertBoundingMesh();
+
     int idStart = vert.size();
     int idEnd = idStart + vertices.size();
 
@@ -221,12 +202,14 @@ void CpuDelaunayMesher::insertVertices(Mesh& mesh, const std::vector<glm::dvec3>
     cExtMax = cMax + dim / 1000000.0;
     cExtDim = (cExtMax - cExtMin);
 
-    std::cout << "Initializing grid" << endl;
+
+    getLog().postMessage(new Message('I', false,
+        "Initializing insertion grid", "CpuDelaunayMesher"));
     initializeGrid(idStart, idEnd);
-    int cellCount = gridSize.x*gridSize.y*gridSize.z;
 
 
-    std::cout << "Inserting vertices in the mesh" << endl;
+    getLog().postMessage(new Message('I', false,
+        "Inserting vertices in the mesh... (may take a while)", "CpuDelaunayMesher"));
     int cId = 0;
     for(int k=0; k<gridSize.z; ++k)
     {
@@ -237,13 +220,11 @@ void CpuDelaunayMesher::insertVertices(Mesh& mesh, const std::vector<glm::dvec3>
                 insertCell(glm::ivec3(i, j, k));
             }
         }
-
-        double progress = (cId) / (double) (cellCount);
-        std::cout <<  progress * 100 << "% done" << endl;
     }
 
 
-    std::cout << "Collecting tetrahedrons" << endl;
+    getLog().postMessage(new Message('I', false,
+        "Collecting tetrahedrons", "CpuDelaunayMesher"));
     tearDownGrid(mesh);
 }
 
@@ -254,15 +235,20 @@ void CpuDelaunayMesher::initializeGrid(int idStart, int idEnd)
     int vCount = idEnd - idStart;
     int sideLen = (int) glm::ceil(glm::pow(vCount / VERT_PER_CELL, 1/3.0));
     int height = (int) glm::ceil(vCount / (sideLen * sideLen * VERT_PER_CELL) );
+
     gridSize = glm::ivec3(sideLen, sideLen, height);
     int cellCount = gridSize.x*gridSize.y*gridSize.z;
-    std::cout << "Grid size: "
-              << gridSize.x << "x"
-              << gridSize.y << "x"
-              << gridSize.z << endl;
-    std::cout << "Cell density: vert count/cell count = " <<
-                 (idEnd-idStart) << " / " << cellCount << " = " <<
-                 (idEnd-idStart) / (double) cellCount << endl;
+
+    getLog().postMessage(new Message('I', false,
+        "Grid size: " + to_string(gridSize.x) + "x"
+                      + to_string(gridSize.y) + "x"
+                      + to_string(gridSize.z), "CpuDelaunayMesher"));
+
+    getLog().postMessage(new Message('I', false,
+        "Vertices / Cells = " + to_string(idEnd-idStart) +
+                        " / " + to_string(cellCount) + " = " +
+        to_string((idEnd-idStart) / (double) cellCount), "CpuDelaunayMesher"));
+
 
     // Reset visit time
     _currentVisitTime = 0;
@@ -630,32 +616,49 @@ void CpuDelaunayMesher::findDelaunayBall(const glm::ivec3& cId, int vId)
                     _ball.xOrTri(tet->t3());
 
 
-                    Vertex* tv0 = &vert[tet->v[0]];
-                    if(tv0->visitTime < _currentVisitTime)
+                    // First 8 vertices are corner vertices and are generally
+                    // touching a large 'fan' of tetrahedron. Those tetrahedrons
+                    // are still accessible via inserted neighboring vertices.
+                    const int BOUNDING_VERTICES = 8;
+
+                    if(tet->v[0] >= BOUNDING_VERTICES)
                     {
-                        tv0->visitTime = _currentVisitTime;
-                        _ballQueue.push_back(tv0);
+                        Vertex* tv0 = &vert[tet->v[0]];
+                        if(tv0->visitTime < _currentVisitTime)
+                        {
+                            tv0->visitTime = _currentVisitTime;
+                            _ballQueue.push_back(tv0);
+                        }
                     }
 
-                    Vertex* tv1 = &vert[tet->v[1]];
-                    if(tv1->visitTime < _currentVisitTime)
+                    if(tet->v[1] >= BOUNDING_VERTICES)
                     {
-                        tv1->visitTime = _currentVisitTime;
-                        _ballQueue.push_back(tv1);
+                        Vertex* tv1 = &vert[tet->v[1]];
+                        if(tv1->visitTime < _currentVisitTime)
+                        {
+                            tv1->visitTime = _currentVisitTime;
+                            _ballQueue.push_back(tv1);
+                        }
                     }
 
-                    Vertex* tv2 = &vert[tet->v[2]];
-                    if(tv2->visitTime < _currentVisitTime)
+                    if(tet->v[2] >= BOUNDING_VERTICES)
                     {
-                        tv2->visitTime = _currentVisitTime;
-                        _ballQueue.push_back(tv2);
+                        Vertex* tv2 = &vert[tet->v[2]];
+                        if(tv2->visitTime < _currentVisitTime)
+                        {
+                            tv2->visitTime = _currentVisitTime;
+                            _ballQueue.push_back(tv2);
+                        }
                     }
 
-                    Vertex* tv3 = &vert[tet->v[3]];
-                    if(tv3->visitTime < _currentVisitTime)
+                    if(tet->v[3] >= BOUNDING_VERTICES)
                     {
-                        tv3->visitTime = _currentVisitTime;
-                        _ballQueue.push_back(tv3);
+                        Vertex* tv3 = &vert[tet->v[3]];
+                        if(tv3->visitTime < _currentVisitTime)
+                        {
+                            tv3->visitTime = _currentVisitTime;
+                            _ballQueue.push_back(tv3);
+                        }
                     }
 
 
@@ -804,11 +807,6 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
 
     // Release just deleted tetrahedrons
     _tetPool.releaseMemoryPool();
-
-
-    cout << "Elements / Vertices = " <<
-            mesh.elemCount() << " / " << mesh.vertCount() << " = " <<
-            mesh.elemCount()  / (double) mesh.vertCount() << endl;
 }
 
 bool CpuDelaunayMesher::intersects(const glm::dvec3& v, Tetrahedron* tet)

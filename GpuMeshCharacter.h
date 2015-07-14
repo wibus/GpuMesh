@@ -39,6 +39,7 @@ public:
     virtual std::vector<std::string> availableMeshModels(const std::string& mesherName) const;
     virtual std::vector<std::string> availableEvaluators() const;
     virtual std::vector<std::string> availableSmoothers() const;
+    virtual std::vector<std::string> availableImplementations(const std::string& smootherName) const;
     virtual std::vector<std::string> availableRenderers() const;
     virtual std::vector<std::string> availableShadings() const;
 

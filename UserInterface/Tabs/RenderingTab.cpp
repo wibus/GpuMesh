@@ -23,13 +23,14 @@ RenderingTab::RenderingTab(Ui::MainWindow* ui,
     connect(_ui->shadingMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
             this, &RenderingTab::shadingChanged);
+    _ui->shadingMenu->setCurrentText("Wireframe");
 
 
     // Defining visual quality measures
-    deployQualities();
-    connect(_ui->visualQualityMenu,
+    deployShapeMeasures();
+    connect(_ui->visualShapeMeasureMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &RenderingTab::qualityChanged);
+            this, &RenderingTab::shapeMeasureChanged);
 
 
     // Define virtual cut plane usage
@@ -71,33 +72,38 @@ void RenderingTab::deployShadings()
     _character->useShading(shadingNames[defaultShading]);
 }
 
-void RenderingTab::deployQualities()
+void RenderingTab::deployShapeMeasures()
 {
     vector<string> evaluatorNames = _character->availableEvaluators();
 
-    _ui->visualQualityMenu->clear();
+    _ui->visualShapeMeasureMenu->clear();
     for(const auto& name : evaluatorNames)
-        _ui->visualQualityMenu->addItem(QString(name.c_str()));
+        _ui->visualShapeMeasureMenu->addItem(QString(name.c_str()));
 
-    size_t defaultQuality = 0;
-    _ui->visualQualityMenu->setCurrentIndex(defaultQuality);
+    size_t defaultMeasure = 0;
+    _ui->visualShapeMeasureMenu->setCurrentIndex(defaultMeasure);
     // Shading must be set here, or no shading will be installed
-    _character->displayQuality(evaluatorNames[defaultQuality]);
+    _character->displayQuality(evaluatorNames[defaultMeasure]);
 }
 
 void RenderingTab::renderTypeChanged(QString text)
 {
     _character->useRenderer(text.toStdString());
+
     deployShadings();
+    _character->useVirtualCutPlane(
+        _ui->virtualCutPlaneCheck->isChecked());
 }
 
 void RenderingTab::shadingChanged(QString text)
 {
     if(text.length() != 0)
+    {
         _character->useShading(text.toStdString());
+    }
 }
 
-void RenderingTab::qualityChanged(QString text)
+void RenderingTab::shapeMeasureChanged(QString text)
 {
     _character->displayQuality(text.toStdString());
 }

@@ -1,10 +1,10 @@
 #include "GpuMesh.h"
 
-#include <iostream>
-
+#include <CellarWorkbench/Misc/Log.h>
 #include <CellarWorkbench/GL/GlProgram.h>
 
 using namespace std;
+using namespace cellar;
 
 
 GpuMesh::GpuMesh() :
@@ -51,7 +51,8 @@ void GpuMesh::compileTopoly()
 {
     Mesh::compileTopoly();
 
-    cout << "Generating mesh shader storage buffers" << endl;
+    getLog().postMessage(new Message('I', false,
+        "Generating mesh shader storage buffers", "GpuMesh"));
 
     if(_vertSsbo == 0)
     {

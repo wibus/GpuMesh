@@ -11,13 +11,14 @@ GeometryTab::GeometryTab(Ui::MainWindow* ui,
     _ui(ui),
     _character(character)
 {
-    deployMethods();
-    connect(_ui->geometryMethodMenu, &QComboBox::currentTextChanged,
-            this, &GeometryTab::methodChanged);
+    deployTechniques();
+    connect(_ui->geometryTechniqueMenu, &QComboBox::currentTextChanged,
+            this, &GeometryTab::techniqueChanged);
 
     deployModels();
 
-    connect(_ui->generateMeshButton, static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+    connect(_ui->generateMeshButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &GeometryTab::generateMesh);
 }
 
@@ -26,31 +27,31 @@ GeometryTab::~GeometryTab()
 
 }
 
-void GeometryTab::methodChanged(const QString& methodName)
+void GeometryTab::techniqueChanged(const QString&)
 {
     deployModels();
 }
 
-void GeometryTab::generateMesh(bool)
+void GeometryTab::generateMesh()
 {
     _character->generateMesh(
-        _ui->geometryMethodMenu->currentText().toStdString(),
+        _ui->geometryTechniqueMenu->currentText().toStdString(),
         _ui->geometryModelMenu->currentText().toStdString(),
         _ui->vertexCountSpin->value());
 }
 
-void GeometryTab::deployMethods()
+void GeometryTab::deployTechniques()
 {
-    vector<string> methodNames = _character->availableMeshers();
+    vector<string> techniqueNames = _character->availableMeshers();
 
-    _ui->geometryMethodMenu->clear();
-    for(const auto& name : methodNames)
-        _ui->geometryMethodMenu->addItem(QString(name.c_str()));
+    _ui->geometryTechniqueMenu->clear();
+    for(const auto& name : techniqueNames)
+        _ui->geometryTechniqueMenu->addItem(QString(name.c_str()));
 }
 
 void GeometryTab::deployModels()
 {
-    string mesher = _ui->geometryMethodMenu->currentText().toStdString();
+    string mesher = _ui->geometryTechniqueMenu->currentText().toStdString();
     vector<string> modelNames = _character->availableMeshModels(mesher);
 
     _ui->geometryModelMenu->clear();

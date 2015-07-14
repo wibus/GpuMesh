@@ -15,6 +15,11 @@ AbstractSmoother::AbstractSmoother(const string& smoothShader) :
     _initialized(false),
     _smoothShader(smoothShader)
 {
+    using namespace std::placeholders;
+    _implementationFuncs = decltype(_implementationFuncs) {
+        {string("C++"),  ImplementationFunc(bind(&AbstractSmoother::smoothCpuMesh, this, _1, _2))},
+        {string("GLSL"), ImplementationFunc(bind(&AbstractSmoother::smoothGpuMesh, this, _1, _2))},
+    };
 }
 
 AbstractSmoother::~AbstractSmoother()
@@ -22,51 +27,13 @@ AbstractSmoother::~AbstractSmoother()
 
 }
 
-bool AbstractSmoother::evaluateCpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
+std::vector<std::string> AbstractSmoother::availableImplementations() const
 {
-    return evaluateMeshQuality(mesh, evaluator, false);
+    std::vector<std::string> names;
+    for(const auto& keyValue : _implementationFuncs)
+        names.push_back(keyValue.first);
+    return names;
 }
-
-bool AbstractSmoother::evaluateGpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
-{
-    return evaluateMeshQuality(mesh, evaluator, true);
-}
-
-bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, bool gpu)
-{
-    bool continueSmoothing = true;
-    if(_smoothPassId >= _minIteration)
-    {
-        double qualMean, qualMin;
-        if(gpu)
-        {
-            evaluator.evaluateGpuMeshQuality(
-                mesh, qualMin, qualMean);
-        }
-        else
-        {
-            evaluator.evaluateCpuMeshQuality(
-                mesh, qualMin, qualMean);
-        }
-
-        cout << "Smooth pass number " << _smoothPassId << endl;
-        cout << "Mesh minimum quality: " << qualMin << endl;
-        cout << "Mesh quality mean: " << qualMean << endl;
-
-
-        if(_smoothPassId > _minIteration)
-        {
-            continueSmoothing = (qualMean - _lastQualityMean) > _gainThreshold;
-        }
-
-        _lastQualityMean = qualMean;
-        _lastMinQuality = qualMin;
-    }
-
-    ++_smoothPassId;
-    return continueSmoothing;
-}
-
 
 void AbstractSmoother::smoothMesh(
         Mesh& mesh,
@@ -76,18 +43,24 @@ void AbstractSmoother::smoothMesh(
         double moveFactor,
         double gainThreshold)
 {
-    if(implementationName == "C++")
-        smoothCpuMesh(mesh, evaluator, minIteration, moveFactor, gainThreshold);
-    else if(implementationName == "GLSL")
-        smoothGpuMesh(mesh, evaluator, minIteration, moveFactor, gainThreshold);
+    auto it = _implementationFuncs.find(implementationName);
+    if(it != _implementationFuncs.end())
+    {
+        _minIteration = minIteration;
+        _moveFactor = moveFactor;
+        _gainThreshold = gainThreshold;
+        it->second(mesh, evaluator);
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + implementationName + "' implementation", "AbstractSmoother"));
+    }
 }
 
 void AbstractSmoother::smoothGpuMesh(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        int minIteration,
-        double moveFactor,
-        double gainThreshold)
+        AbstractEvaluator& evaluator)
 {
     if(!_initialized)
     {
@@ -151,4 +124,49 @@ void AbstractSmoother::initializeProgram(Mesh& mesh)
         ":/shaders/compute/Boundary/ElbowPipe.glsl"});
     _smoothingProgram.link();
     mesh.uploadGeometry(_smoothingProgram);
+}
+
+bool AbstractSmoother::evaluateCpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
+{
+    return evaluateMeshQuality(mesh, evaluator, false);
+}
+
+bool AbstractSmoother::evaluateGpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
+{
+    return evaluateMeshQuality(mesh, evaluator, true);
+}
+
+bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, bool gpu)
+{
+    bool continueSmoothing = true;
+    if(_smoothPassId >= _minIteration)
+    {
+        double qualMean, qualMin;
+        if(gpu)
+        {
+            evaluator.evaluateGpuMeshQuality(
+                mesh, qualMin, qualMean);
+        }
+        else
+        {
+            evaluator.evaluateCpuMeshQuality(
+                mesh, qualMin, qualMean);
+        }
+
+        cout << "Smooth pass number " << _smoothPassId << endl;
+        cout << "Mesh minimum quality: " << qualMin << endl;
+        cout << "Mesh quality mean: " << qualMean << endl;
+
+
+        if(_smoothPassId > _minIteration)
+        {
+            continueSmoothing = (qualMean - _lastQualityMean) > _gainThreshold;
+        }
+
+        _lastQualityMean = qualMean;
+        _lastMinQuality = qualMin;
+    }
+
+    ++_smoothPassId;
+    return continueSmoothing;
 }

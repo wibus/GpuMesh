@@ -4,7 +4,6 @@
 
 #include <GLM/gtc/matrix_transform.hpp>
 
-#include <CellarWorkbench/Misc/Log.h>
 #include <CellarWorkbench/Image/Image.h>
 #include <CellarWorkbench/Image/ImageBank.h>
 #include <CellarWorkbench/GL/GlToolkit.h>
@@ -39,9 +38,7 @@ SurfacicRenderer::SurfacicRenderer() :
     _filterTex(0),
     _lightingEnabled(false),
     _updateShadow(false),
-    _shadowSize(1024, 1024),
-    _isPhysicalCut(true),
-    _cutPlane(0.0)
+    _shadowSize(1024, 1024)
 {
     _shadingFuncs = decltype(_shadingFuncs){
         {string("Diffuse"),  function<void()>(bind(&SurfacicRenderer::useDiffuseShading,  this))},
@@ -52,35 +49,6 @@ SurfacicRenderer::SurfacicRenderer() :
 SurfacicRenderer::~SurfacicRenderer()
 {
     clearResources();
-}
-
-std::vector<std::string> SurfacicRenderer::availableShadings() const
-{
-    std::vector<std::string> names;
-    for(const auto& keyValue : _shadingFuncs)
-        names.push_back(keyValue.first);
-    return names;
-}
-
-void SurfacicRenderer::useShading(const std::string& shadingName)
-{
-    auto it = _shadingFuncs.find(shadingName);
-    if(it != _shadingFuncs.end())
-    {
-        it->second();
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + shadingName + "' shading", "SurfacicRenderer"));
-    }
-}
-
-void SurfacicRenderer::useVirtualCutPlane(bool use)
-{
-    _isPhysicalCut = !use;
-    updateCutPlane(_cutPlane);
-    _buffNeedUpdate = true;
 }
 
 void SurfacicRenderer::notify(cellar::CameraMsg& msg)
@@ -200,18 +168,6 @@ void SurfacicRenderer::updateCutPlane(const glm::dvec4& cutEq)
     {
         _buffNeedUpdate = true;
     }
-
-    _litShader.pushProgram();
-    _litShader.setVec4f("CutPlaneEq", _cutPlane);
-    _litShader.popProgram();
-
-    _unlitShader.pushProgram();
-    _unlitShader.setVec4f("CutPlaneEq",_cutPlane);
-    _unlitShader.popProgram();
-
-    _shadowShader.pushProgram();
-    _shadowShader.setVec4f("CutPlaneEq", _cutPlane);
-    _shadowShader.popProgram();
 }
 
 void SurfacicRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
@@ -813,6 +769,7 @@ void SurfacicRenderer::render()
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
             _shadowShader.pushProgram();
+            _shadowShader.setVec4f("CutPlaneEq", _cutPlane);
             glDisableVertexAttribArray(1);
             glDisableVertexAttribArray(2);
             glDisableVertexAttribArray(3);
@@ -831,10 +788,12 @@ void SurfacicRenderer::render()
         }
 
         _litShader.pushProgram();
+        _litShader.setVec4f("CutPlaneEq", _cutPlane);
     }
     else
     {
         _unlitShader.pushProgram();
+        _unlitShader.setVec4f("CutPlaneEq", _cutPlane);
     }
 
 

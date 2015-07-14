@@ -2,9 +2,10 @@
 
 #include <GLM/gtc/matrix_transform.hpp>
 
-#include <iostream>
+#include <CellarWorkbench/Misc/Log.h>
 
 using namespace std;
+using namespace cellar;
 
 
 const double PIPE_RADIUS = 0.3;
@@ -87,7 +88,7 @@ CpuParametricMesher::CpuParametricMesher() :
 {
     using namespace std::placeholders;
     _modelFuncs = decltype(_modelFuncs) {
-        {string("Elbow Pipe"), ModelFunc(std::bind(&CpuParametricMesher::genElbowPipe, this, _1, _2))},
+        {string("Elbow Pipe"), ModelFunc(bind(&CpuParametricMesher::genElbowPipe, this, _1, _2))},
     };
 }
 
@@ -95,27 +96,6 @@ CpuParametricMesher::~CpuParametricMesher()
 {
 
 }
-
-std::vector<std::string> CpuParametricMesher::availableMeshModels() const
-{
-    std::vector<std::string> modelNames;
-    for(const auto& keyValue : _modelFuncs)
-        modelNames.push_back(keyValue.first);
-    return modelNames;
-}
-
-void CpuParametricMesher::generateMesh(
-        Mesh& mesh,
-        const string& modelName,
-        size_t vertexCount)
-{
-    _modelFuncs[modelName](mesh, vertexCount);
-
-    cout << "Elements / Vertices = " <<
-            mesh.elemCount() << " / " << mesh.vertCount() << " = " <<
-            mesh.elemCount()  / (double) mesh.vertCount() << endl;
-}
-
 
 void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
 {

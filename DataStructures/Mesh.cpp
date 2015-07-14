@@ -3,9 +3,12 @@
 #include <algorithm>
 #include <iostream>
 
+#include <CellarWorkbench/Misc/Log.h>
+
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
+using namespace cellar;
 
 
 const MeshEdge MeshTet::edges[MeshTet::EDGE_COUNT] = {
@@ -162,6 +165,9 @@ void Mesh::clear()
 
 void Mesh::compileTopoly()
 {
+    getLog().postMessage(new Message('I', false,
+        "Compiling mesh topology", "Mesh"));
+
     int vertCount = vert.size();
 
     topo.resize(vertCount);
