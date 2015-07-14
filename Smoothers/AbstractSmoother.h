@@ -11,15 +11,30 @@ class AbstractEvaluator;
 class AbstractSmoother
 {
 public:
-    AbstractSmoother(
-            int minIteration,
-            double moveFactor,
-            double gainThreshold,
-            const std::string& smoothShader);
+    AbstractSmoother(const std::string& smoothShader);
     virtual ~AbstractSmoother();
 
-    virtual void smoothCpuMesh(Mesh& mesh, AbstractEvaluator& evaluator) = 0;
-    virtual void smoothGpuMesh(Mesh& mesh, AbstractEvaluator& evaluator);
+    virtual void smoothMesh(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator,
+            const std::string& implementationName,
+            int minIteration,
+            double moveFactor,
+            double gainThreshold);
+
+    virtual void smoothCpuMesh(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator,
+            int minIteration,
+            double moveFactor,
+            double gainThreshold) = 0;
+
+    virtual void smoothGpuMesh(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator,
+            int minIteration,
+            double moveFactor,
+            double gainThreshold);
 
 
 protected:

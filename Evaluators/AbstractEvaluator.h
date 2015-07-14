@@ -31,6 +31,10 @@ public:
             double& minQuality,
             double& qualityMean);
 
+    virtual void gpuSpin(Mesh& mesh, size_t cycleCount);
+
+    virtual void cpuSpin(Mesh& mesh, size_t cycleCount);
+
 
 protected:
     virtual void initializeProgram(const Mesh& mesh);

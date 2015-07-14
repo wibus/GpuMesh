@@ -5,12 +5,8 @@
 using namespace std;
 
 
-QualityLaplaceSmoother::QualityLaplaceSmoother(
-        int minIteration,
-        double moveFactor,
-        double gainThreshold) :
-    AbstractSmoother(minIteration, moveFactor, gainThreshold,
-                     ":/shaders/compute/Smoothing/QualityLaplace.glsl")
+QualityLaplaceSmoother::QualityLaplaceSmoother() :
+    AbstractSmoother(":/shaders/compute/Smoothing/QualityLaplace.glsl")
 {
 
 }
@@ -20,7 +16,12 @@ QualityLaplaceSmoother::~QualityLaplaceSmoother()
 
 }
 
-void QualityLaplaceSmoother::smoothCpuMesh(Mesh& mesh, AbstractEvaluator& evaluator)
+void QualityLaplaceSmoother::smoothCpuMesh(
+        Mesh& mesh,
+        AbstractEvaluator& evaluator,
+        int minIteration,
+        double moveFactor,
+        double gainThreshold)
 {
     _smoothPassId = 0;
     while(evaluateCpuMeshQuality(mesh, evaluator))

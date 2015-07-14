@@ -6,6 +6,7 @@
 
 #include <GLM/glm.hpp>
 #include <GLM/gtc/random.hpp>
+#include <GLM/gtc/constants.hpp>
 
 #include "DataStructures/TetList.h"
 
@@ -48,22 +49,40 @@ const glm::ivec3 DIR[DIR_COUNT] = {
 };
 
 
-CpuDelaunayMesher::CpuDelaunayMesher(unsigned int vertCount) :
-    AbstractMesher(vertCount)
+CpuDelaunayMesher::CpuDelaunayMesher()
 {
-
+    using namespace std::placeholders;
+    _modelFuncs = decltype(_modelFuncs) {
+        {string("Box"),    ModelFunc(std::bind(&CpuDelaunayMesher::genBoxVertices,    this, _1))},
+        {string("Sphere"), ModelFunc(std::bind(&CpuDelaunayMesher::genSphereVertices, this, _1))},
+        {string("Cap"),    ModelFunc(std::bind(&CpuDelaunayMesher::genCapVertices,    this, _1))},
+    };
 }
 
 CpuDelaunayMesher::~CpuDelaunayMesher()
 {
-
 }
 
-void CpuDelaunayMesher::triangulateDomain(Mesh& mesh)
+std::vector<std::string> CpuDelaunayMesher::availableMeshModels() const
 {
+    std::vector<std::string> modelNames;
+    for(const auto& keyValue : _modelFuncs)
+        modelNames.push_back(keyValue.first);
+    return modelNames;
+}
+
+void CpuDelaunayMesher::generateMesh(
+        Mesh& mesh,
+        const string& modelName,
+        size_t vertexCount)
+{
+    genBoundingMesh();
+
+    std::vector<glm::dvec3> vertices = _modelFuncs[modelName](vertexCount);
+
     chrono::high_resolution_clock::time_point startTime, endTime;
     startTime = chrono::high_resolution_clock::now();
-    insertVertices(mesh);
+    insertVertices(mesh, vertices);
     endTime = chrono::high_resolution_clock::now();
 
     chrono::microseconds dt;
@@ -112,17 +131,15 @@ void CpuDelaunayMesher::genBoundingMesh()
     _externalVertCount = vertCount;
 }
 
-void CpuDelaunayMesher::genVertices(std::vector<glm::dvec3>& vertices)
+std::vector<glm::dvec3> CpuDelaunayMesher::genBoxVertices(size_t vertexCount)
 {
-    double sphereRadius = 1.0;
-    glm::dvec3 cMin(-sphereRadius);
-    glm::dvec3 cMax( sphereRadius);
+    std::vector<glm::dvec3> vertices;
+    glm::dvec3 cMin(-1);
+    glm::dvec3 cMax( 1);
 
-
-    //* Box distribution
-    vertices.resize(_vertCount);
-    int surfCount = glm::sqrt(_vertCount) * 10;
-    int padding = glm::pow(_vertCount, 1/3.0);
+    vertices.resize(vertexCount);
+    int surfCount = glm::sqrt(vertexCount) * 10;
+    int padding = glm::pow(vertexCount, 1/3.0);
     for(int iv=0; iv < surfCount; ++iv)
     {
         glm::dvec3 val = glm::linearRand(cMin, cMax);
@@ -130,20 +147,29 @@ void CpuDelaunayMesher::genVertices(std::vector<glm::dvec3>& vertices)
         vertices[iv] = val;
     }
 
-    for(int iv=surfCount; iv<_vertCount; ++iv)
+    for(int iv=surfCount; iv<vertexCount; ++iv)
         vertices[iv] = glm::linearRand(cMin, cMax) * (1.0 - 1.0 / padding);
 
-    //*/
+    return vertices;
+}
 
-    /* Sphere distribution
-    vertices.resize(_vertCount);
-    for(int iv=0; iv<_vertCount; ++iv)
+std::vector<glm::dvec3> CpuDelaunayMesher::genSphereVertices(size_t vertexCount)
+{
+    std::vector<glm::dvec3> vertices;
+    double sphereRadius = 1.0;
+
+    vertices.resize(vertexCount);
+    for(int iv=0; iv < vertexCount; ++iv)
         vertices[iv] = glm::ballRand(sphereRadius * 1.41);
-    //*/
 
+    return vertices;
+}
 
-    /* Paraboloid cap
-    int stackCount = glm::pow(_vertCount/2.3, 1/3.0);
+std::vector<glm::dvec3> CpuDelaunayMesher::genCapVertices(size_t vertexCount)
+{
+    std::vector<glm::dvec3> vertices;
+
+    int stackCount = glm::pow(vertexCount/2.3, 1/3.0);
     glm::dvec3 minPerturb(-0.1 / stackCount);
     glm::dvec3 maxPerturb(0.1 / stackCount);
     for(int s=0; s <= stackCount; ++s)
@@ -172,16 +198,12 @@ void CpuDelaunayMesher::genVertices(std::vector<glm::dvec3>& vertices)
             }
         }
     }
-    //*/
+
+    return vertices;
 }
 
-void CpuDelaunayMesher::insertVertices(Mesh& mesh)
+void CpuDelaunayMesher::insertVertices(Mesh& mesh, const std::vector<glm::dvec3>& vertices)
 {
-    genBoundingMesh();
-
-    std::vector<glm::dvec3> vertices;
-    genVertices(vertices);
-
     int idStart = vert.size();
     int idEnd = idStart + vertices.size();
 
@@ -193,9 +215,6 @@ void CpuDelaunayMesher::insertVertices(Mesh& mesh)
         cMax = glm::max(cMax, pos);
         vert[i] = Vertex(pos);
     }
-
-    vertices.clear();
-    vertices.shrink_to_fit();
 
     glm::dvec3 dim = cMax - cMin;
     cExtMin = cMin - dim / 1000000.0;

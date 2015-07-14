@@ -80,13 +80,15 @@ public:
 };
 
 
-CpuParametricMesher::CpuParametricMesher(unsigned int vertCount) :
-    AbstractMesher(vertCount),
+CpuParametricMesher::CpuParametricMesher() :
     _pipeSurface(new PipeSurfaceBoundary()),
     _pipeExtFace(new PipeExtFaceBoundary()),
     _pipeExtEdge(new PipeExtEdgeBoundary())
 {
-
+    using namespace std::placeholders;
+    _modelFuncs = decltype(_modelFuncs) {
+        {string("Elbow Pipe"), ModelFunc(std::bind(&CpuParametricMesher::genElbowPipe, this, _1, _2))},
+    };
 }
 
 CpuParametricMesher::~CpuParametricMesher()
@@ -94,7 +96,28 @@ CpuParametricMesher::~CpuParametricMesher()
 
 }
 
-void CpuParametricMesher::triangulateDomain(Mesh& mesh)
+std::vector<std::string> CpuParametricMesher::availableMeshModels() const
+{
+    std::vector<std::string> modelNames;
+    for(const auto& keyValue : _modelFuncs)
+        modelNames.push_back(keyValue.first);
+    return modelNames;
+}
+
+void CpuParametricMesher::generateMesh(
+        Mesh& mesh,
+        const string& modelName,
+        size_t vertexCount)
+{
+    _modelFuncs[modelName](mesh, vertexCount);
+
+    cout << "Elements / Vertices = " <<
+            mesh.elemCount() << " / " << mesh.vertCount() << " = " <<
+            mesh.elemCount()  / (double) mesh.vertCount() << endl;
+}
+
+
+void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
 {
     // Give proportianl dimensions
     int layerCount = 6;
@@ -105,7 +128,7 @@ void CpuParametricMesher::triangulateDomain(Mesh& mesh)
 
     // Rescale dimension to fit vert count hint
     int vertCount = (layerCount * sliceCount + 1) * totalStackCount;
-    double scaleFactor = glm::pow(_vertCount / (double) vertCount, 1/3.0);
+    double scaleFactor = glm::pow(vertexCount / (double) vertCount, 1/3.0);
     layerCount = glm::floor(layerCount * scaleFactor);
     sliceCount = glm::ceil(sliceCount * scaleFactor);
     arcPipeStackCount = glm::ceil(arcPipeStackCount * scaleFactor);
@@ -150,11 +173,6 @@ void CpuParametricMesher::triangulateDomain(Mesh& mesh)
                     true);
 
     meshPipe(mesh, totalStackCount, sliceCount, layerCount);
-
-
-    cout << "Elements / Vertices = " <<
-            mesh.elemCount() << " / " << mesh.vertCount() << " = " <<
-            mesh.elemCount()  / (double) mesh.vertCount() << endl;
 }
 
 void CpuParametricMesher::genStraightPipe(

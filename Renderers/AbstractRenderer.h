@@ -23,6 +23,10 @@ public:
     virtual void notifyMeshUpdate();
     virtual void display(const Mesh& mesh, const AbstractEvaluator& evaluator);
 
+    virtual std::vector<std::string> availableShadings() const = 0;
+    virtual void useShading(const std::string& shadingName) = 0;
+    virtual void useVirtualCutPlane(bool use) = 0;
+
 
     virtual void updateCamera(const glm::mat4& view,
                               const glm::vec3& pos) = 0;

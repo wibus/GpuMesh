@@ -10,32 +10,42 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Triangle.h
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h)
 
-SET(GpuMesh_MESHERS_HEADERS
-    ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.h
-    ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.h
-    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.h)
-
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/InsphereEdgeEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
 
+SET(GpuMesh_MESHERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.h
+    ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.h
+    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.h)
+
+SET(GpuMesh_RENDERERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.h
+    ${GpuMesh_SRC_DIR}/Renderers/ScaffoldRenderer.h
+    ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.h)
+
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.h)
 
-SET(GpuMesh_RENDERERS_HEADERS
-    ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.h
-    ${GpuMesh_SRC_DIR}/Renderers/ScientificRenderer.h
-    ${GpuMesh_SRC_DIR}/Renderers/MidEndRenderer.h)
+SET(GpuMesh_UITABS_HEADERS
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/GeometryTab.h
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/OptimisationTab.h
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderingTab.h)
+
+SET(GpuMesh_USERINTERFACE_HEADERS
+    ${GpuMesh_UITABS_HEADERS}
+    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.h)
 
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
-    ${GpuMesh_MESHERS_HEADERS}
     ${GpuMesh_EVALUATORS_HEADERS}
-    ${GpuMesh_SMOOTHERS_HEADERS}
+    ${GpuMesh_MESHERS_HEADERS}
     ${GpuMesh_RENDERERS_HEADERS}
+    ${GpuMesh_SMOOTHERS_HEADERS}
+    ${GpuMesh_USERINTERFACE_HEADERS}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
 
 
@@ -49,34 +59,50 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp)
 
-SET(GpuMesh_MESHERS_SOURCES
-    ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.cpp
-    ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.cpp
-    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.cpp)
-
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/InsphereEdgeEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
 
+SET(GpuMesh_MESHERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.cpp
+    ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.cpp
+    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.cpp)
+
+SET(GpuMesh_RENDERERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.cpp
+    ${GpuMesh_SRC_DIR}/Renderers/ScaffoldRenderer.cpp
+    ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.cpp)
+
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.cpp)
 
-SET(GpuMesh_RENDERERS_SOURCES
-    ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.cpp
-    ${GpuMesh_SRC_DIR}/Renderers/ScientificRenderer.cpp
-    ${GpuMesh_SRC_DIR}/Renderers/MidEndRenderer.cpp)
+SET(GpuMesh_UITABS_SOURCES
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/GeometryTab.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/OptimisationTab.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderingTab.cpp)
+
+SET(GpuMesh_USERINTERFACE_SOURCES
+    ${GpuMesh_UITABS_SOURCES}
+    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.cpp)
 
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
-    ${GpuMesh_MESHERS_SOURCES}
     ${GpuMesh_EVALUATORS_SOURCES}
-    ${GpuMesh_SMOOTHERS_SOURCES}
+    ${GpuMesh_MESHERS_SOURCES}
     ${GpuMesh_RENDERERS_SOURCES}
+    ${GpuMesh_SMOOTHERS_SOURCES}
+    ${GpuMesh_USERINTERFACE_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp
     ${GpuMesh_SRC_DIR}/main.cpp)
+
+
+## UI
+SET(GpuMesh_UI_FILES
+    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.ui)
+QT5_WRAP_UI(GpuMesh_UI_SRCS ${GpuMesh_UI_FILES})
 
 
 ## Resrouces ##
@@ -153,6 +179,7 @@ SET(GpuMesh_CONFIG_FILES
 SET(GpuMesh_SRC_FILES
     ${GpuMesh_HEADERS}
     ${GpuMesh_SOURCES}
+    ${GpuMesh_UI_SRCS}
     ${GpuMesh_GENERIC_SHADERS}
     ${GpuMesh_VERTEX_SHADERS}
     ${GpuMesh_FRAGMENT_SHADERS}

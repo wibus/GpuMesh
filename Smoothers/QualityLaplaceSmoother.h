@@ -8,13 +8,15 @@
 class QualityLaplaceSmoother : public AbstractSmoother
 {
 public:
-    QualityLaplaceSmoother(
-            int minIteration,
-            double moveFactor,
-            double gainThreshold);
+    QualityLaplaceSmoother();
     virtual ~QualityLaplaceSmoother();
 
-    virtual void smoothCpuMesh(Mesh& mesh, AbstractEvaluator& evaluator) override;
+    virtual void smoothCpuMesh(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator,
+            int minIteration,
+            double moveFactor,
+            double gainThreshold) override;
 };
 
 #endif // GPUMESH_CPULAPLACIANSMOOTHER

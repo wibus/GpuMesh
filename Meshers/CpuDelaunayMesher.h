@@ -1,6 +1,9 @@
 #ifndef GPUMESH_CPUDELAUNAYMESHER
 #define GPUMESH_CPUDELAUNAYMESHER
 
+#include <map>
+#include <functional>
+
 #include "AbstractMesher.h"
 
 #include "DataStructures/Tetrahedron.h"
@@ -31,15 +34,22 @@ enum EDir {
 class CpuDelaunayMesher : public AbstractMesher
 {
 public:
-    CpuDelaunayMesher(unsigned int vertCount);
+    CpuDelaunayMesher();
     virtual ~CpuDelaunayMesher();
 
-    virtual void triangulateDomain(Mesh& mesh) override;
+    virtual std::vector<std::string> availableMeshModels() const override;
+
+    virtual void generateMesh(
+            Mesh& mesh,
+            const std::string& modelName,
+            size_t vertexCount) override;
 
 protected:
     virtual void genBoundingMesh();
-    virtual void genVertices(std::vector<glm::dvec3>& vertices);
-    virtual void insertVertices(Mesh& mesh);
+    virtual std::vector<glm::dvec3> genBoxVertices(size_t vertexCount);
+    virtual std::vector<glm::dvec3> genSphereVertices(size_t vertexCount);
+    virtual std::vector<glm::dvec3> genCapVertices(size_t vertexCount);
+    virtual void insertVertices(Mesh& mesh, const std::vector<glm::dvec3>& vertices);
 
     void initializeGrid(int idStart, int idEnd);
     void insertCell(const glm::ivec3& cId);
@@ -59,6 +69,10 @@ private:
     // Main data structures
     std::vector<Vertex> vert;
     std::vector<Tetrahedron*> tetra;
+
+    // Models
+    typedef std::function<std::vector<glm::dvec3>(size_t)> ModelFunc;
+    std::map<std::string, ModelFunc> _modelFuncs;
 
     // Bounding polyhedron dimensions
     glm::dvec3 cMin;

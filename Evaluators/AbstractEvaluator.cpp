@@ -293,3 +293,38 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     // Shader storage quality blocks
     glGenBuffers(1, &_qualSsbo);
 }
+
+
+void AbstractEvaluator::gpuSpin(Mesh& mesh, size_t cycleCount)
+{
+    double minQual, qualMean;
+    const size_t MARK_SIZE = 100;
+    size_t mark = cycleCount / MARK_SIZE;
+    for(size_t i=0, m=mark; i < cycleCount; ++i)
+    {
+        evaluateGpuMeshQuality(mesh, minQual, qualMean);
+        if(i == m)
+        {
+            cout << "Benchmark progress : " <<
+                    MARK_SIZE * i / (float) cycleCount << "%" << endl;
+            m += mark;
+        }
+    }
+}
+
+void AbstractEvaluator::cpuSpin(Mesh& mesh, size_t cycleCount)
+{
+    double minQual, qualMean;
+    const size_t MARK_SIZE = 100;
+    size_t mark = cycleCount / MARK_SIZE;
+    for(size_t i=0, m=mark; i < cycleCount; ++i)
+    {
+        evaluateCpuMeshQuality(mesh, minQual, qualMean);
+        if(i == m)
+        {
+            cout << "Benchmark progress : " <<
+                    MARK_SIZE * i / (float) cycleCount << "%" << endl;
+            m += mark;
+        }
+    }
+}

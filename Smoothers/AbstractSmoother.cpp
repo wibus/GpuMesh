@@ -11,14 +11,7 @@ using namespace std;
 using namespace cellar;
 
 
-AbstractSmoother::AbstractSmoother(
-        int minIteration,
-        double moveFactor,
-        double gainThreshold,
-        const string& smoothShader) :
-    _minIteration(minIteration),
-    _moveFactor(moveFactor),
-    _gainThreshold(gainThreshold),
+AbstractSmoother::AbstractSmoother(const string& smoothShader) :
     _initialized(false),
     _smoothShader(smoothShader)
 {
@@ -74,7 +67,27 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evalua
     return continueSmoothing;
 }
 
-void AbstractSmoother::smoothGpuMesh(Mesh& mesh, AbstractEvaluator& evaluator)
+
+void AbstractSmoother::smoothMesh(
+        Mesh& mesh,
+        AbstractEvaluator& evaluator,
+        const std::string& implementationName,
+        int minIteration,
+        double moveFactor,
+        double gainThreshold)
+{
+    if(implementationName == "C++")
+        smoothCpuMesh(mesh, evaluator, minIteration, moveFactor, gainThreshold);
+    else if(implementationName == "GLSL")
+        smoothGpuMesh(mesh, evaluator, minIteration, moveFactor, gainThreshold);
+}
+
+void AbstractSmoother::smoothGpuMesh(
+        Mesh& mesh,
+        AbstractEvaluator& evaluator,
+        int minIteration,
+        double moveFactor,
+        double gainThreshold)
 {
     if(!_initialized)
     {

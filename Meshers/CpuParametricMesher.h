@@ -1,7 +1,9 @@
 #ifndef GPUMESH_CPUPARAMETRICMESHER
 #define GPUMESH_CPUPARAMETRICMESHER
 
+#include <map>
 #include <memory>
+#include <functional>
 
 #include "AbstractMesher.h"
 
@@ -9,13 +11,20 @@
 class CpuParametricMesher : public AbstractMesher
 {
 public:
-    CpuParametricMesher(unsigned int vertCount);
+    CpuParametricMesher();
     virtual ~CpuParametricMesher();
 
-    virtual void triangulateDomain(Mesh& mesh) override;
+    virtual std::vector<std::string> availableMeshModels() const override;
+
+    virtual void generateMesh(
+            Mesh& mesh,
+            const std::string& modelName,
+            size_t vertexCount) override;
 
 
 protected:
+    virtual void genElbowPipe(Mesh& mesh, size_t vertexCount);
+
     virtual void genStraightPipe(
             Mesh& mesh,
             const glm::dvec3& begin,
@@ -63,6 +72,12 @@ protected:
     std::unique_ptr<MeshBound> _pipeSurface;
     std::unique_ptr<MeshBound> _pipeExtFace;
     std::unique_ptr<MeshBound> _pipeExtEdge;
+
+
+private:
+    // Models
+    typedef std::function<void(Mesh&, size_t)> ModelFunc;
+    std::map<std::string, ModelFunc> _modelFuncs;
 };
 
 #endif // GPUMESH_CPUPARAMETRICMESHER

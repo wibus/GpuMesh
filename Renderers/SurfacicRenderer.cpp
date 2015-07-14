@@ -1,9 +1,10 @@
-#include "MidEndRenderer.h"
+#include "SurfacicRenderer.h"
 
 #include <iostream>
 
 #include <GLM/gtc/matrix_transform.hpp>
 
+#include <CellarWorkbench/Misc/Log.h>
 #include <CellarWorkbench/Image/Image.h>
 #include <CellarWorkbench/Image/ImageBank.h>
 #include <CellarWorkbench/GL/GlToolkit.h>
@@ -18,7 +19,7 @@ using namespace std;
 using namespace cellar;
 
 
-MidEndRenderer::MidEndRenderer() :
+SurfacicRenderer::SurfacicRenderer() :
     _buffElemCount(0),
     _meshVao(0),
     _vbo(0),
@@ -42,15 +43,47 @@ MidEndRenderer::MidEndRenderer() :
     _isPhysicalCut(true),
     _cutPlane(0.0)
 {
-
+    _shadingFuncs = decltype(_shadingFuncs){
+        {string("Diffuse"),  function<void()>(bind(&SurfacicRenderer::useDiffuseShading,  this))},
+        {string("Specular"), function<void()>(bind(&SurfacicRenderer::useSpecularShading, this))},
+    };
 }
 
-MidEndRenderer::~MidEndRenderer()
+SurfacicRenderer::~SurfacicRenderer()
 {
     clearResources();
 }
 
-void MidEndRenderer::notify(cellar::CameraMsg& msg)
+std::vector<std::string> SurfacicRenderer::availableShadings() const
+{
+    std::vector<std::string> names;
+    for(const auto& keyValue : _shadingFuncs)
+        names.push_back(keyValue.first);
+    return names;
+}
+
+void SurfacicRenderer::useShading(const std::string& shadingName)
+{
+    auto it = _shadingFuncs.find(shadingName);
+    if(it != _shadingFuncs.end())
+    {
+        it->second();
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + shadingName + "' shading", "SurfacicRenderer"));
+    }
+}
+
+void SurfacicRenderer::useVirtualCutPlane(bool use)
+{
+    _isPhysicalCut = !use;
+    updateCutPlane(_cutPlane);
+    _buffNeedUpdate = true;
+}
+
+void SurfacicRenderer::notify(cellar::CameraMsg& msg)
 {
     if(msg.change == CameraMsg::EChange::VIEWPORT)
     {
@@ -117,7 +150,7 @@ void MidEndRenderer::notify(cellar::CameraMsg& msg)
     }
 }
 
-void MidEndRenderer::updateCamera(const glm::mat4& view,
+void SurfacicRenderer::updateCamera(const glm::mat4& view,
                                   const glm::vec3& pos)
 {
     _litShader.pushProgram();
@@ -131,7 +164,7 @@ void MidEndRenderer::updateCamera(const glm::mat4& view,
     _unlitShader.popProgram();
 }
 
-void MidEndRenderer::updateLight(const glm::mat4& view,
+void SurfacicRenderer::updateLight(const glm::mat4& view,
                                  const glm::vec3& pos)
 {
     glm::mat4 pvMat = _shadowProj * view;
@@ -158,7 +191,7 @@ void MidEndRenderer::updateLight(const glm::mat4& view,
     _updateShadow = true;
 }
 
-void MidEndRenderer::updateCutPlane(const glm::dvec4& cutEq)
+void SurfacicRenderer::updateCutPlane(const glm::dvec4& cutEq)
 {
     _cutPlane = cutEq;
     _updateShadow = true;
@@ -181,34 +214,35 @@ void MidEndRenderer::updateCutPlane(const glm::dvec4& cutEq)
     _shadowShader.popProgram();
 }
 
-void MidEndRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
+void SurfacicRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
     if(event.getAscii() == 'X')
     {
-        _lightingEnabled = !_lightingEnabled;
-        _updateShadow = true;
+        if(_lightingEnabled)
+            useDiffuseShading();
+        else
+            useSpecularShading();
 
         const char* rep = (_lightingEnabled ? "true" : "false");
         cout << "Lighting enabled : " << rep << endl;
     }
     else if(event.getAscii() == 'C')
     {
-        _isPhysicalCut = !_isPhysicalCut;
-        updateCutPlane(_cutPlane);
-        _buffNeedUpdate = true;
+        // This call actually toggles virtual cut plane
+        useVirtualCutPlane(_isPhysicalCut);
 
         const char* rep = (_isPhysicalCut ? "true" : "false") ;
         cout << "Physical cut : " << rep << endl;
     }
 }
 
-void MidEndRenderer::handleInputs(const scaena::SynchronousKeyboard& keyboard,
+void SurfacicRenderer::handleInputs(const scaena::SynchronousKeyboard& keyboard,
                                   const scaena::SynchronousMouse& mouse)
 {
 
 }
 
-void MidEndRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator& evaluator)
+void SurfacicRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator& evaluator)
 {
     // Clear old vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -273,7 +307,7 @@ void MidEndRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator& e
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void MidEndRenderer::compileFacesAttributes(
+void SurfacicRenderer::compileFacesAttributes(
         const Mesh& mesh,
         const AbstractEvaluator& evaluator,
         std::vector<glm::vec3>& vertices,
@@ -409,7 +443,7 @@ void MidEndRenderer::compileFacesAttributes(
     }
 }
 
-void MidEndRenderer::pushTriangle(
+void SurfacicRenderer::pushTriangle(
         std::vector<glm::vec3>& vertices,
         std::vector<signed char>& normals,
         std::vector<unsigned char>& triEdges,
@@ -473,7 +507,7 @@ void MidEndRenderer::pushTriangle(
     qualities.push_back(quality * 255);
 }
 
-void MidEndRenderer::clearResources()
+void SurfacicRenderer::clearResources()
 {
     // Delete old buffers
     glDeleteVertexArrays(1, &_meshVao);
@@ -529,7 +563,7 @@ void MidEndRenderer::clearResources()
     _buffElemCount = 0;
 }
 
-void MidEndRenderer::resetResources()
+void SurfacicRenderer::resetResources()
 {
     // Generate new buffers
     glGenVertexArrays(1, &_meshVao);
@@ -649,7 +683,7 @@ void MidEndRenderer::resetResources()
     glBindVertexArray(0);
 }
 
-void MidEndRenderer::setupShaders()
+void SurfacicRenderer::setupShaders()
 {
     // Compile shaders
     _gradientShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Filter.vert");
@@ -733,7 +767,7 @@ void MidEndRenderer::setupShaders()
             -2.0f, 2.0f);
 }
 
-void MidEndRenderer::render()
+void SurfacicRenderer::render()
 {
     int viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -858,4 +892,16 @@ void MidEndRenderer::render()
     }
 
     glBindVertexArray(0);
+}
+
+void SurfacicRenderer::useDiffuseShading()
+{
+    _lightingEnabled = false;
+    _updateShadow = true;
+}
+
+void SurfacicRenderer::useSpecularShading()
+{
+    _lightingEnabled = true;
+    _updateShadow = true;
 }

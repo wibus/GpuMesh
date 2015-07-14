@@ -1,6 +1,9 @@
 #ifndef GPUMESH_SCIENTIFICRENDERER
 #define GPUMESH_SCIENTIFICRENDERER
 
+#include <map>
+#include <functional>
+
 #include <GL3/gl3w.h>
 
 #include <CellarWorkbench/GL/GlProgram.h>
@@ -8,11 +11,15 @@
 #include "AbstractRenderer.h"
 
 
-class ScientificRenderer : public AbstractRenderer
+class ScaffoldRenderer : public AbstractRenderer
 {
 public:
-    ScientificRenderer();
-    virtual ~ScientificRenderer();
+    ScaffoldRenderer();
+    virtual ~ScaffoldRenderer();
+
+    virtual std::vector<std::string> availableShadings() const override;
+    virtual void useShading(const std::string& shadingName) override;
+    virtual void useVirtualCutPlane(bool use) override;
 
     virtual void notify(cellar::CameraMsg& msg) override;
 
@@ -45,6 +52,10 @@ protected:
     virtual void setupShaders() override;
     virtual void render() override;
 
+    virtual void useWireframeShading();
+    virtual void useDiffuseShading();
+    virtual void usePhongShading();
+
     cellar::GlProgram _scaffoldJointProgram;
     cellar::GlProgram _scaffoldTubeProgram;
     cellar::GlProgram _wireframeProgram;
@@ -66,6 +77,8 @@ protected:
     float _jointTubeMinRatio;
     bool _isPhysicalCut;
     glm::dvec4 _cutPlane;
+
+    std::map<std::string, std::function<void(void)>> _shadingFuncs;
 };
 
 #endif // GPUMESH_MIDENDRENDERER

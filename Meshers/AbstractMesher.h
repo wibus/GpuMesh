@@ -9,14 +9,15 @@
 class AbstractMesher
 {
 public:
-    AbstractMesher(unsigned int vertCount);
+    AbstractMesher();
     virtual ~AbstractMesher() = 0;
 
-    virtual void triangulateDomain(Mesh& mesh) = 0;
+    virtual std::vector<std::string> availableMeshModels() const = 0;
 
-
-protected:
-    unsigned int _vertCount;
+    virtual void generateMesh(
+            Mesh& mesh,
+            const std::string& modelName,
+            size_t vertexCount) = 0;
 };
 
 #endif // GPUMESH_ABSTRACTMESHER

@@ -23,8 +23,8 @@
 #include "Evaluators/VolumeEdgeEvaluator.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
-#include "Renderers/MidEndRenderer.h"
-#include "Renderers/ScientificRenderer.h"
+#include "Renderers/ScaffoldRenderer.h"
+#include "Renderers/SurfacicRenderer.h"
 #include "Smoothers/QualityLaplaceSmoother.h"
 
 using namespace std;
@@ -39,6 +39,7 @@ const glm::vec3 GpuMeshCharacter::upVec = glm::vec3(0, 0, 1);
 
 GpuMeshCharacter::GpuMeshCharacter() :
     Character("GpuMeshChracter"),
+    _isEntered(false),
     _camAzimuth(-glm::pi<float>() / 2.0),
     _camAltitude(-glm::pi<float>() / 2.0),
     _camDistance(3.8),
@@ -48,13 +49,27 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAzimuth(0),
     _cutAltitude(-glm::pi<float>() / 2.0),
     _cutDistance(0),
-    _mesh(new GpuMesh()),
-    _mesher(new CpuParametricMesher(1e6)),
-    _smoother(new QualityLaplaceSmoother(0, 0.3, 0.0)),
-    _evaluator(new VolumeEdgeEvaluator()),
-    _renderer(nullptr),
-    _rendererId(-1)
+    _mesh(new GpuMesh())
 {
+    _availableMeshers = decltype(_availableMeshers){
+        {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
+        {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
+    };
+
+    _availableEvaluators = decltype(_availableEvaluators){
+        {string("Insphere Edge"), shared_ptr<AbstractEvaluator>(new InsphereEdgeEvaluator())},
+        {string("Solid Angle"),   shared_ptr<AbstractEvaluator>(new SolidAngleEvaluator())},
+        {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
+    };
+
+    _availableSmoothers = decltype(_availableSmoothers){
+        {string("Quality Laplace"), shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
+    };
+
+    _availableRenderers = decltype(_availableRenderers){
+        {string("Scaffold"), shared_ptr<AbstractRenderer>(new ScaffoldRenderer())},
+        {string("Surfacic"), shared_ptr<AbstractRenderer>(new SurfacicRenderer())},
+    };
 }
 
 void GpuMeshCharacter::enterStage()
@@ -71,17 +86,15 @@ void GpuMeshCharacter::enterStage()
     _ups->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _ups->setHeight(16);
 
-    _evaluator->assessMeasureValidy();
-
-    installNextRenderer();
-
-    resetPipeline();
+    setupInstalledRenderer();
+    _isEntered = true;
 }
 
 void GpuMeshCharacter::beginStep(const StageTime &time)
 {
     _ups->setText("UPS: " + to_string(time.framesPerSecond()));
 
+    /*
     if(!_processFinished)
     {
         auto startTime = chrono::high_resolution_clock::now();
@@ -95,7 +108,7 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
         ss << "Step took " << dt.count() / 1000.0 << "ms to execute";
         getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
     }    
-
+*/
 
     std::shared_ptr<SynchronousKeyboard> keyboard = play().synchronousKeyboard();
     std::shared_ptr<SynchronousMouse> mouse = play().synchronousMouse();
@@ -155,144 +168,221 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
 void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
 {
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
-    _renderer->display(*_mesh, *_evaluator);
+    _renderer->display(*_mesh, *_visualEvaluator);
 }
 
 void GpuMeshCharacter::exitStage()
 {
-    _renderer->tearDown();
+    tearDownInstalledRenderer();
+    _isEntered = false;
 }
 
 bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
 {
-    if(_processFinished)
-    {
-        if(event.getAscii() == 'A')
-        {
-            scheduleCpuSmoothing();
-        }
-        else if(event.getAscii() == 'S')
-        {
-            scheduleGpuSmoothing();
-        }
-        else if(event.getAscii() == 'Z')
-        {
-            installNextRenderer();
-
-            const char* rep = _rendererId == 0 ? "Wireframe" : "Surfacic";
-            cout << "Switching renderer to " << rep << " mode" << endl;
-        }
-
-        _renderer->handleKeyPress(event);
-    }
+    _renderer->handleKeyPress(event);
 }
 
-void GpuMeshCharacter::resetPipeline()
+std::vector<std::string> GpuMeshCharacter::availableMeshers() const
 {
-    _stepId = 0;
-    _processFinished = false;
+    std::vector<std::string> keyVec;
+    for(const auto& keyValue : _availableMeshers)
+        keyVec.push_back(keyValue.first);
+    return keyVec;
+}
 
+std::vector<std::string> GpuMeshCharacter::availableMeshModels(const string& mesherName) const
+{
+    auto it = _availableMeshers.find(mesherName);
+    if(it != _availableMeshers.end())
+        return it->second->availableMeshModels();
+    else
+        return std::vector<std::string>();
+}
+
+std::vector<std::string> GpuMeshCharacter::availableEvaluators() const
+{
+    std::vector<std::string> keyVec;
+    for(const auto& keyValue : _availableEvaluators)
+        keyVec.push_back(keyValue.first);
+    return keyVec;
+}
+
+std::vector<std::string> GpuMeshCharacter::availableSmoothers() const
+{
+    std::vector<std::string> keyVec;
+    for(const auto& keyValue : _availableSmoothers)
+        keyVec.push_back(keyValue.first);
+    return keyVec;
+}
+
+std::vector<std::string> GpuMeshCharacter::availableRenderers() const
+{
+    std::vector<std::string> keyVec;
+    for(const auto& keyValue : _availableRenderers)
+        keyVec.push_back(keyValue.first);
+    return keyVec;
+}
+
+std::vector<std::string> GpuMeshCharacter::availableShadings() const
+{
+    return _renderer->availableShadings();
+}
+
+void GpuMeshCharacter::generateMesh(
+        const std::string& mesherName,
+        const std::string& modelName,
+        size_t vertexCount)
+{
     _mesh->clear();
-}
 
-void GpuMeshCharacter::processPipeline()
-{
-    switch(_stepId)
+    printStep("Mesh Generation: mesher=" + mesherName +
+              ", model=" + modelName +
+              ", vertex count=" + to_string(vertexCount));
+
+    auto it = _availableMeshers.find(mesherName);
+    if(it != _availableMeshers.end())
     {
-    case 0:
-        printStep(_stepId, "Triangulating internal domain");
-        _mesher->triangulateDomain(*_mesh);
+        _availableMeshers[mesherName]->generateMesh(
+                    *_mesh,
+                    modelName,
+                    vertexCount);
 
-        printStep(_stepId, "Generating vertex adjacency lists");
+        printStep("Generating vertex adjacency lists");
         _mesh->compileTopoly();
 
         _renderer->notifyMeshUpdate();
-        _processFinished = true;
-        ++_stepId;
-        break;
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + mesherName + "' mesher", "GpuMeshCharacter"));
+    }
+}
 
-    case 1:
-        printStep(_stepId, string("Smoothing internal domain ")
-                    + (_gpuSmoothing ? "(GPU)" : "CPU") );
+void GpuMeshCharacter::smoothMesh(
+        const std::string& smootherName,
+        const std::string& evaluatorName,
+        const std::string& implementationName,
+        size_t minIterationCount,
+        double moveFactor,
+        double gainThreshold)
+{
+    printStep("Mesh Smoothing: smoother=" + smootherName +
+              ", quality measure=" + evaluatorName +
+              ", implementation=" + implementationName);
 
-        if(_gpuSmoothing)
-            _smoother->smoothGpuMesh(*_mesh, *_evaluator);
+    auto it = _availableSmoothers.find(smootherName);
+    if(it != _availableSmoothers.end())
+    {
+        auto evaluator = _availableEvaluators.find(evaluatorName);
+        if(evaluator != _availableEvaluators.end())
+        {
+            _availableSmoothers[smootherName]->smoothMesh(
+                        *_mesh,
+                        *evaluator->second,
+                        implementationName,
+                        minIterationCount,
+                        moveFactor,
+                        gainThreshold);
+
+            _renderer->notifyMeshUpdate();
+        }
         else
-            _smoother->smoothCpuMesh(*_mesh, *_evaluator);
+        {
+            getLog().postMessage(new Message('E', false,
+                "Failed to find '" + evaluatorName + "' evaluator", "GpuMeshCharacter"));
+        }
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + smootherName + "' smoother", "GpuMeshCharacter"));
+    }
+}
 
+void GpuMeshCharacter::useRenderer(const std::string& rendererName)
+{
+    auto it = _availableRenderers.find(rendererName);
+    if(it != _availableRenderers.end())
+    {
+        installRenderer(it->second);
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + rendererName + "' renderer", "GpuMeshCharacter"));
+    }
+}
 
+void GpuMeshCharacter::useShading(const std::string& shadingName)
+{
+    _renderer->useShading(shadingName);
+}
+
+void GpuMeshCharacter::displayQuality(const std::string& evaluatorName)
+{
+    auto it = _availableEvaluators.find(evaluatorName);
+    if(it != _availableEvaluators.end())
+    {
+        _visualEvaluator = it->second;
         _renderer->notifyMeshUpdate();
-        _processFinished = true;
-        break;
-
-    default:
-        _processFinished = true;
-        getLog().postMessage(new Message(
-            'E', false, "Invalid step", "GpuMeshCharacter"));
     }
-}
-
-void GpuMeshCharacter::scheduleCpuSmoothing()
-{
-    if(_processFinished)
+    else
     {
-        _processFinished = false;
-        _gpuSmoothing = false;
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + evaluatorName + "' evaluator", "GpuMeshCharacter"));
     }
 }
 
-void GpuMeshCharacter::scheduleGpuSmoothing()
+void GpuMeshCharacter::useVirtualCutPlane(bool use)
 {
-    if(_processFinished)
+    _renderer->useVirtualCutPlane(use);
+}
+
+void GpuMeshCharacter::printStep(const std::string& stepDescription)
+{
+    getLog().postMessage(new Message('I', false, stepDescription, "GpuMeshCharacter"));
+}
+
+void GpuMeshCharacter::setupInstalledRenderer()
+{
+    if(_renderer.get() != nullptr)
     {
-        _processFinished = false;
-        _gpuSmoothing = true;
+        _renderer->setup();
+
+        // Setup view matrix
+        moveCamera(_camAzimuth, _camAltitude, _camDistance);
+
+        // Setup shadow matrix
+        moveLight(_lightAzimuth, _lightAltitude, _lightDistance);
+
+        // Setup cut plane
+        moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
+
+        // Setup viewport
+        play().view()->camera3D()->registerObserver(*_renderer);
+        play().view()->camera3D()->refresh();
     }
 }
 
-void GpuMeshCharacter::printStep(int step, const std::string& stepName)
-{
-    stringstream ss;
-    ss << "Step " << step << ": " << stepName;
-    getLog().postMessage(new Message('I', false, ss.str(), "GpuMeshCharacter"));
-}
-
-int GpuMeshCharacter::installNextRenderer()
-{
-    _rendererId = (_rendererId + 1) % 2;
-    switch(_rendererId)
-    {
-    case 0 : installRenderer(new ScientificRenderer()); break;
-    case 1 : installRenderer(new MidEndRenderer()); break;
-    default : getLog().postMessage(new Message('W', false,
-         "Invalid renderer ID: " + toString(_rendererId), "GpuMeshCharacter"));
-    }
-}
-
-void GpuMeshCharacter::installRenderer(AbstractRenderer* renderer)
+void GpuMeshCharacter::tearDownInstalledRenderer()
 {
     if(_renderer.get() != nullptr)
     {
         play().view()->camera3D()->unregisterObserver(*_renderer);
         _renderer->tearDown();
     }
+}
 
-    _renderer.reset(renderer);
-    _renderer->setup();
+void GpuMeshCharacter::installRenderer(const std::shared_ptr<AbstractRenderer>& renderer)
+{
+    if(_isEntered)
+        tearDownInstalledRenderer();
 
+    _renderer = renderer;
 
-    // Setup view matrix
-    moveCamera(_camAzimuth, _camAltitude, _camDistance);
-
-    // Setup shadow matrix
-    moveLight(_lightAzimuth, _lightAltitude, _lightDistance);
-
-    // Setup cut plane
-    moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
-
-    // Setup viewport
-    play().view()->camera3D()->registerObserver(*_renderer);
-    play().view()->camera3D()->refresh();
+    if(_isEntered)
+        setupInstalledRenderer();
 }
 
 void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)

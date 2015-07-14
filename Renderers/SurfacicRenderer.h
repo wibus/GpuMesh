@@ -1,6 +1,9 @@
 #ifndef GPUMESH_MIDENDRENDERER
 #define GPUMESH_MIDENDRENDERER
 
+#include <map>
+#include <functional>
+
 #include <GL3/gl3w.h>
 
 #include <CellarWorkbench/GL/GlProgram.h>
@@ -8,11 +11,15 @@
 #include "AbstractRenderer.h"
 
 
-class MidEndRenderer : public AbstractRenderer
+class SurfacicRenderer : public AbstractRenderer
 {
 public:
-    MidEndRenderer();
-    virtual ~MidEndRenderer();
+    SurfacicRenderer();
+    virtual ~SurfacicRenderer();
+
+    virtual std::vector<std::string> availableShadings() const override;
+    virtual void useShading(const std::string& shadingName) override;
+    virtual void useVirtualCutPlane(bool use) override;
 
     virtual void notify(cellar::CameraMsg& msg) override;
 
@@ -56,6 +63,9 @@ protected:
     virtual void setupShaders() override;
     virtual void render() override;
 
+    virtual void useDiffuseShading();
+    virtual void useSpecularShading();
+
     cellar::GlProgram _litShader;
     cellar::GlProgram _unlitShader;
     cellar::GlProgram _shadowShader;
@@ -96,6 +106,8 @@ protected:
 
     bool _isPhysicalCut;
     glm::dvec4 _cutPlane;
+
+    std::map<std::string, std::function<void(void)>> _shadingFuncs;
 };
 
 #endif // GPUMESH_MIDENDRENDERER

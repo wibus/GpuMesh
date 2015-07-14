@@ -1,4 +1,4 @@
-#include "ScientificRenderer.h"
+#include "ScaffoldRenderer.h"
 
 #include <iostream>
 
@@ -16,7 +16,7 @@ using namespace std;
 using namespace cellar;
 
 
-ScientificRenderer::ScientificRenderer() :
+ScaffoldRenderer::ScaffoldRenderer() :
     _vao(0),
     _vbo(0),
     _ibo(0),
@@ -26,15 +26,49 @@ ScientificRenderer::ScientificRenderer() :
     _jointTubeMinRatio(1.5f),
     _isPhysicalCut(true)
 {
+    _shadingFuncs = decltype(_shadingFuncs) {
+        {string("Wirframe"), function<void()>(bind(&ScaffoldRenderer::useWireframeShading, this))},
+        {string("Diffuse"),  function<void()>(bind(&ScaffoldRenderer::useDiffuseShading,   this))},
+        {string("Phong"),    function<void()>(bind(&ScaffoldRenderer::usePhongShading,     this))},
+    };
 }
 
 
-ScientificRenderer::~ScientificRenderer()
+ScaffoldRenderer::~ScaffoldRenderer()
 {
     clearResources();
 }
 
-void ScientificRenderer::notify(cellar::CameraMsg& msg)
+std::vector<std::string> ScaffoldRenderer::availableShadings() const
+{
+    std::vector<std::string> names;
+    for(const auto& keyValue : _shadingFuncs)
+        names.push_back(keyValue.first);
+    return names;
+}
+
+void ScaffoldRenderer::useShading(const std::string& shadingName)
+{
+    auto it = _shadingFuncs.find(shadingName);
+    if(it != _shadingFuncs.end())
+    {
+        it->second();
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Failed to find '" + shadingName + "' shading", "ScaffoldRenderer"));
+    }
+}
+
+void ScaffoldRenderer::useVirtualCutPlane(bool use)
+{
+    _isPhysicalCut = !use;
+    updateCutPlane(_cutPlane);
+    _buffNeedUpdate = true;
+}
+
+void ScaffoldRenderer::notify(cellar::CameraMsg& msg)
 {
     if(msg.change == CameraMsg::EChange::VIEWPORT)
     {
@@ -69,7 +103,7 @@ void ScientificRenderer::notify(cellar::CameraMsg& msg)
     }
 }
 
-void ScientificRenderer::updateCamera(const glm::mat4& view,
+void ScaffoldRenderer::updateCamera(const glm::mat4& view,
                                       const glm::vec3& pos)
 {
     _viewMat = view;
@@ -89,7 +123,7 @@ void ScientificRenderer::updateCamera(const glm::mat4& view,
     _wireframeProgram.popProgram();
 }
 
-void ScientificRenderer::updateLight(const glm::mat4&,
+void ScaffoldRenderer::updateLight(const glm::mat4&,
                                      const glm::vec3& pos)
 {
     _scaffoldJointProgram.pushProgram();
@@ -101,7 +135,7 @@ void ScientificRenderer::updateLight(const glm::mat4&,
     _scaffoldTubeProgram.popProgram();
 }
 
-void ScientificRenderer::updateCutPlane(const glm::dvec4& cutEq)
+void ScaffoldRenderer::updateCutPlane(const glm::dvec4& cutEq)
 {
     _cutPlane = cutEq;
 
@@ -109,21 +143,9 @@ void ScientificRenderer::updateCutPlane(const glm::dvec4& cutEq)
     {
         _buffNeedUpdate = true;
     }
-
-    _scaffoldJointProgram.pushProgram();
-    _scaffoldJointProgram.setVec4f("CutPlaneEq", _cutPlane);
-    _scaffoldJointProgram.popProgram();
-
-    _scaffoldTubeProgram.pushProgram();
-    _scaffoldTubeProgram.setVec4f("CutPlaneEq",_cutPlane);
-    _scaffoldTubeProgram.popProgram();
-
-    _wireframeProgram.pushProgram();
-    _wireframeProgram.setVec4f("CutPlaneEq",_cutPlane);
-    _wireframeProgram.popProgram();
 }
 
-void ScientificRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
+void ScaffoldRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
     if(event.getAscii() == 'X')
     {
@@ -147,23 +169,22 @@ void ScientificRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
     }
     else if(event.getAscii() == 'C')
     {
-        _isPhysicalCut = !_isPhysicalCut;
-        updateCutPlane(_cutPlane);
-        _buffNeedUpdate = true;
+        // This call actually toggles virtual cut plane
+        useVirtualCutPlane(_isPhysicalCut);
 
         const char* rep = (_isPhysicalCut ? "true" : "false") ;
         cout << "Physical cut : " << rep << endl;
     }
 }
 
-void ScientificRenderer::handleInputs(
+void ScaffoldRenderer::handleInputs(
         const scaena::SynchronousKeyboard& keyboard,
         const scaena::SynchronousMouse& mouse)
 {
 
 }
 
-void ScientificRenderer::updateGeometry(
+void ScaffoldRenderer::updateGeometry(
         const Mesh& mesh,
         const AbstractEvaluator& evaluator)
 {
@@ -220,7 +241,7 @@ void ScientificRenderer::updateGeometry(
     _buffNeedUpdate = false;
 }
 
-void ScientificRenderer::compileVerts(
+void ScaffoldRenderer::compileVerts(
         const Mesh& mesh,
         const AbstractEvaluator& evaluator,
         std::vector<float>& verts,
@@ -283,7 +304,7 @@ void ScientificRenderer::compileVerts(
     }
 }
 
-void ScientificRenderer::compileEdges(const Mesh& mesh, std::vector<GLuint>& edges)
+void ScaffoldRenderer::compileEdges(const Mesh& mesh, std::vector<GLuint>& edges)
 {
     glm::dvec3 cutNormal(_cutPlane);
     double cutDistance = _cutPlane.w;
@@ -322,7 +343,7 @@ void ScientificRenderer::compileEdges(const Mesh& mesh, std::vector<GLuint>& edg
     }
 }
 
-void ScientificRenderer::clearResources()
+void ScaffoldRenderer::clearResources()
 {
     glDeleteVertexArrays(1, &_vao);
     _vao = 0;
@@ -337,7 +358,7 @@ void ScientificRenderer::clearResources()
     _ibo = 0;
 }
 
-void ScientificRenderer::resetResources()
+void ScaffoldRenderer::resetResources()
 {
     glGenVertexArrays(1, &_vao);
     glBindVertexArray(_vao);
@@ -361,7 +382,7 @@ void ScientificRenderer::resetResources()
     glBindVertexArray(0);
 }
 
-void ScientificRenderer::setupShaders()
+void ScaffoldRenderer::setupShaders()
 {
     // Clamp tube radius
     GLfloat lineWidthRange[2];
@@ -407,7 +428,7 @@ void ScientificRenderer::setupShaders()
     _wireframeProgram.link();
 }
 
-void ScientificRenderer::render()
+void ScaffoldRenderer::render()
 {
     glClearColor(0.3, 0.3, 0.3, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -416,6 +437,7 @@ void ScientificRenderer::render()
     {
         glBindVertexArray(_vao);
         _wireframeProgram.pushProgram();
+        _wireframeProgram.setVec4f("CutPlaneEq", _cutPlane);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
         glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -428,14 +450,17 @@ void ScientificRenderer::render()
 
         glBindVertexArray(_vao);
         _scaffoldJointProgram.pushProgram();
+        _scaffoldJointProgram.setInt("LightMode", _lightMode);
+        _scaffoldJointProgram.setVec4f("CutPlaneEq", _cutPlane);
         glDrawArrays(GL_POINTS, 0, _vertElemCount);
         _scaffoldJointProgram.popProgram();
 
-
         glDisable(GL_PROGRAM_POINT_SIZE);
-        glLineWidth(80.0);
+        glLineWidth(2.0 * _tubeRadius);
 
         _scaffoldTubeProgram.pushProgram();
+        _scaffoldTubeProgram.setInt("LightMode", _lightMode);
+        _scaffoldTubeProgram.setVec4f("CutPlaneEq", _cutPlane);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
         glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -445,4 +470,19 @@ void ScientificRenderer::render()
 
         glBindVertexArray(0);
     }
+}
+
+void ScaffoldRenderer::useWireframeShading()
+{
+    _lightMode = 0;
+}
+
+void ScaffoldRenderer::useDiffuseShading()
+{
+    _lightMode = 1;
+}
+
+void ScaffoldRenderer::usePhongShading()
+{
+    _lightMode = 2;
 }
