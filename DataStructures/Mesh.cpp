@@ -176,6 +176,12 @@ void Mesh::compileTopoly()
     int tetCount = tetra.size();
     for(int i=0; i < tetCount; ++i)
     {
+        for(int v=0; v < MeshTet::VERTEX_COUNT; ++v)
+        {
+            topo[tetra[i].v[v]].neighborElems.push_back(
+                MeshNeigElem(MeshTet::ELEMENT_TYPE, i));
+        }
+
         for(int e=0; e < MeshTet::EDGE_COUNT; ++e)
         {
             addEdge(tetra[i].v[MeshTet::edges[e][0]],
@@ -186,6 +192,12 @@ void Mesh::compileTopoly()
     int prismCount = prism.size();
     for(int i=0; i < prismCount; ++i)
     {
+        for(int v=0; v < MeshPri::VERTEX_COUNT; ++v)
+        {
+            topo[prism[i].v[v]].neighborElems.push_back(
+                MeshNeigElem(MeshPri::ELEMENT_TYPE, i));
+        }
+
         for(int e=0; e < MeshPri::EDGE_COUNT; ++e)
         {
             addEdge(prism[i].v[MeshPri::edges[e][0]],
@@ -196,6 +208,12 @@ void Mesh::compileTopoly()
     int hexCount = hexa.size();
     for(int i=0; i < hexCount; ++i)
     {
+        for(int v=0; v < MeshHex::VERTEX_COUNT; ++v)
+        {
+            topo[hexa[i].v[v]].neighborElems.push_back(
+                MeshNeigElem(MeshHex::ELEMENT_TYPE, i));
+        }
+
         for(int e=0; e < MeshHex::EDGE_COUNT; ++e)
         {
             addEdge(hexa[i].v[MeshHex::edges[e][0]],
@@ -205,7 +223,8 @@ void Mesh::compileTopoly()
 
     for(int i=0; i < vertCount; ++i)
     {
-        topo[i].neighbors.shrink_to_fit();
+        topo[i].neighborVerts.shrink_to_fit();
+        topo[i].neighborElems.shrink_to_fit();
     }
 }
 
@@ -244,9 +263,14 @@ void Mesh::bindShaderStorageBuffers() const
 
 }
 
+size_t Mesh::firstFreeBufferBinding() const
+{
+    return 0;
+}
+
 void Mesh::addEdge(int firstVert, int secondVert)
 {
-    vector<int>& neighbors = topo[firstVert].neighbors;
+    vector<MeshNeigVert>& neighbors = topo[firstVert].neighborVerts;
     int neighborCount = neighbors.size();
     for(int n=0; n < neighborCount; ++n)
     {
@@ -255,6 +279,6 @@ void Mesh::addEdge(int firstVert, int secondVert)
     }
 
     // This really is a new edge
-    topo[firstVert].neighbors.push_back(secondVert);
-    topo[secondVert].neighbors.push_back(firstVert);
+    topo[firstVert].neighborVerts.push_back(secondVert);
+    topo[secondVert].neighborVerts.push_back(firstVert);
 }

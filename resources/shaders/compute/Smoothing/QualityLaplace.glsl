@@ -19,16 +19,16 @@ void main()
 
         // Modification
         int type = topos[uid].type;
-        int count = topos[uid].neigCount;
+        int count = topos[uid].neigVertCount;
         if(type >= 0 && count > 0)
         {
             float weightSum = 0.0;
             vec3 barycenter = vec3(0.0);
 
-            int n = topos[uid].neigBase;
+            int n = topos[uid].neigVertBase;
             for(int i=0; i<count; ++i, ++n)
             {
-                vec3 npos = vec3(verts[neigs[n].v].p);
+                vec3 npos = vec3(verts[neigVerts[n].v].p);
 
                 vec3 dist = npos - pos;
                 float weight = dot(dist, dist) + 0.0001;

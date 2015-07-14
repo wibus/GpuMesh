@@ -10,10 +10,11 @@ using namespace cellar;
 GpuMesh::GpuMesh() :
     _vertSsbo(0),
     _topoSsbo(0),
-    _neigSsbo(0),
-    _tetSsbo(0),
     _priSsbo(0),
-    _hexSsbo(0)
+    _hexSsbo(0),
+    _tetSsbo(0),
+    _neigVertSsbo(0),
+    _neigElemSsbo(0)
 {
 
 }
@@ -21,11 +22,12 @@ GpuMesh::GpuMesh() :
 GpuMesh::~GpuMesh()
 {
     glDeleteBuffers(1, &_vertSsbo);
-    glDeleteBuffers(1, &_topoSsbo);
-    glDeleteBuffers(1, &_neigSsbo);
     glDeleteBuffers(1, &_tetSsbo);
     glDeleteBuffers(1, &_priSsbo);
     glDeleteBuffers(1, &_hexSsbo);
+    glDeleteBuffers(1, &_topoSsbo);
+    glDeleteBuffers(1, &_neigVertSsbo);
+    glDeleteBuffers(1, &_neigElemSsbo);
 }
 
 void GpuMesh::clear()
@@ -33,18 +35,20 @@ void GpuMesh::clear()
     Mesh::clear();
 
     glDeleteBuffers(1, &_vertSsbo);
-    glDeleteBuffers(1, &_topoSsbo);
-    glDeleteBuffers(1, &_neigSsbo);
     glDeleteBuffers(1, &_tetSsbo);
     glDeleteBuffers(1, &_priSsbo);
     glDeleteBuffers(1, &_hexSsbo);
+    glDeleteBuffers(1, &_topoSsbo);
+    glDeleteBuffers(1, &_neigVertSsbo);
+    glDeleteBuffers(1, &_neigElemSsbo);
 
     _vertSsbo = 0;
-    _topoSsbo = 0;
-    _neigSsbo = 0;
     _tetSsbo = 0;
     _priSsbo = 0;
     _hexSsbo = 0;
+    _topoSsbo = 0;
+    _neigVertSsbo = 0;
+    _neigElemSsbo = 0;
 }
 
 void GpuMesh::compileTopoly()
@@ -57,11 +61,12 @@ void GpuMesh::compileTopoly()
     if(_vertSsbo == 0)
     {
         glGenBuffers(1, &_vertSsbo);
-        glGenBuffers(1, &_topoSsbo);
-        glGenBuffers(1, &_neigSsbo);
         glGenBuffers(1, &_tetSsbo);
         glGenBuffers(1, &_priSsbo);
         glGenBuffers(1, &_hexSsbo);
+        glGenBuffers(1, &_topoSsbo);
+        glGenBuffers(1, &_neigVertSsbo);
+        glGenBuffers(1, &_neigElemSsbo);
     }
 
     updateGpuVertices();
@@ -70,24 +75,33 @@ void GpuMesh::compileTopoly()
 
 void GpuMesh::updateGpuTopoly()
 {
+    // Send mesh topology
     int nbVert = vertCount();
     std::vector<GpuTopo> topoBuff(nbVert);
-    std::vector<GpuNeig> neigBuff;
+    std::vector<GpuNeigVert> neigVertBuff;
+    std::vector<GpuNeigElem> neigElemBuff;
 
-    int base = 0;
+    int neigVertBase = 0;
+    int neigElemBase = 0;
     for(int i=0; i < nbVert; ++i)
     {
         const MeshTopo& meshTopo = topo[i];
-        int count = meshTopo.neighbors.size();
+        int neigVertCount = meshTopo.neighborVerts.size();
+        int neigElemCount = meshTopo.neighborElems.size();
         int type = meshTopo.isFixed ? -1 :
                 meshTopo.boundaryCallback.id();
 
-        topoBuff[i] = GpuTopo(type, base, count);
+        topoBuff[i] = GpuTopo(type, neigVertBase, neigVertCount,
+                                    neigElemBase, neigElemCount);
 
-        for(int n=0; n < count; ++n)
-            neigBuff.push_back(GpuNeig(meshTopo.neighbors[n]));
+        for(int n=0; n < neigVertCount; ++n)
+            neigVertBuff.push_back(GpuNeigVert(meshTopo.neighborVerts[n]));
 
-        base += count;
+        for(int n=0; n < neigElemCount; ++n)
+            neigElemBuff.push_back(GpuNeigElem(meshTopo.neighborElems[n]));
+
+        neigVertBase += neigVertCount;
+        neigElemBase += neigElemCount;
     }
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
@@ -96,13 +110,20 @@ void GpuMesh::updateGpuTopoly()
     topoBuff.clear();
     topoBuff.shrink_to_fit();
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigSsbo);
-    size_t neigSize = sizeof(decltype(neigBuff.front())) * neigBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, neigSize, neigBuff.data(), GL_STATIC_DRAW);
-    neigBuff.clear();
-    neigBuff.shrink_to_fit();
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigVertSsbo);
+    size_t neigVertSize = sizeof(decltype(neigVertBuff.front())) * neigVertBuff.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, neigVertSize, neigVertBuff.data(), GL_STATIC_DRAW);
+    neigVertBuff.clear();
+    neigVertBuff.shrink_to_fit();
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigElemSsbo);
+    size_t neigElemSize = sizeof(decltype(neigElemBuff.front())) * neigElemBuff.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, neigElemSize, neigElemBuff.data(), GL_STATIC_DRAW);
+    neigElemBuff.clear();
+    neigElemBuff.shrink_to_fit();
 
 
+    // Send individual elements
     size_t tetCount = tetra.size();
     std::vector<GpuTet> tetBuff(tetCount);
     for(int i=0; i < tetCount; ++i)
@@ -174,11 +195,12 @@ unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const
     switch(buffer)
     {
     case EMeshBuffer::VERT: return _vertSsbo;
-    case EMeshBuffer::TOPO: return _topoSsbo;
-    case EMeshBuffer::NEIG: return _neigSsbo;
     case EMeshBuffer::TET:  return _tetSsbo;
     case EMeshBuffer::PRI:  return _priSsbo;
     case EMeshBuffer::HEX:  return _hexSsbo;
+    case EMeshBuffer::TOPO: return _topoSsbo;
+    case EMeshBuffer::NEIG_VERT: return _neigVertSsbo;
+    case EMeshBuffer::NEIG_ELEM: return _neigElemSsbo;
     default : return 0;
     }
 }
@@ -244,5 +266,11 @@ void GpuMesh::bindShaderStorageBuffers() const
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _priSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, _hexSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, _topoSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, _neigSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, _neigVertSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, _neigElemSsbo);
+}
+
+size_t GpuMesh::firstFreeBufferBinding() const
+{
+    return 7;
 }

@@ -7,7 +7,7 @@ struct Qual
     uint mean;
 };
 
-layout(shared, binding = 6) buffer Quals
+layout(shared, binding = FIRST_FREE_BUFFER_BINDING) buffer Quals
 {
     Qual quals[];
 };

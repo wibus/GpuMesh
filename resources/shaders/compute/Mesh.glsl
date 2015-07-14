@@ -42,17 +42,22 @@ struct Hex
 struct Topo
 {
     int type;
-    int neigBase;
-    int neigCount;
-
-    int pad0;
+    int neigVertBase;
+    int neigVertCount;
+    int neigElemBase;
+    int neigElemCount;
 };
 
-struct Neig
+struct NeigVert
 {
     int v;
 };
 
+struct NeigElem
+{
+    int type;
+    int id;
+};
 
 ///////////////////////
 // Mesh data buffers //
@@ -77,22 +82,30 @@ layout(shared, binding = 3) buffer Hexs
     Hex hexs[];
 };
 
-layout(std140, binding = 4) buffer Topos
+layout(shared, binding = 4) buffer Topos
 {
     Topo topos[];
 };
 
-layout(packed, binding = 5) buffer Neigs
+layout(shared, binding = 5) buffer NeigVerts
 {
-    Neig neigs[];
+    NeigVert neigVerts[];
 };
 
+layout(shared, binding = 6) buffer NeigElems
+{
+    NeigElem neigElems[];
+};
+
+const int FIRST_FREE_BUFFER_BINDING = 7;
 
 //////////////////////////////////
 // Mesh elements decompositions //
 //////////////////////////////////
 
 // Tetrahedron
+const int TET_ELEMENT_TYPE = 0;
+
 const int TET_EDGE_COUNT = 6;
 uniform Edge TET_EDGES[TET_EDGE_COUNT];
 
@@ -104,6 +117,8 @@ uniform Tet TET_TETS[TET_TET_COUNT];
 
 
 // Prism
+const int PRI_ELEMENT_TYPE = 1;
+
 const int PRI_EDGE_COUNT = 9;
 uniform Edge PRI_EDGES[PRI_EDGE_COUNT];
 
@@ -115,6 +130,8 @@ uniform Tet PRI_TETS[PRI_TET_COUNT];
 
 
 // Hexahedron
+const int HEX_ELEMENT_TYPE = 2;
+
 const int HEX_EDGE_COUNT = 12;
 uniform Edge HEX_EDGES[HEX_EDGE_COUNT];
 

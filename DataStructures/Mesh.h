@@ -7,6 +7,11 @@
 #include <GLM/glm.hpp>
 
 
+namespace cellar
+{
+    class GlProgram;
+}
+
 struct MeshVert
 {
     glm::dvec3 p;
@@ -48,6 +53,8 @@ struct MeshTet
     inline int& operator[] (int i) { return v[i]; }
     inline const int& operator[] (int i) const { return v[i]; }
 
+    static const int ELEMENT_TYPE = 0;
+    static const int VERTEX_COUNT = 4;
     static const int EDGE_COUNT = 6;
     static const MeshEdge edges[EDGE_COUNT];
     static const int TRI_COUNT = 4;
@@ -68,6 +75,8 @@ struct MeshPri
     inline int operator[] (int i) { return v[i]; }
     inline const int& operator[] (int i) const { return v[i]; }
 
+    static const int ELEMENT_TYPE = 1;
+    static const int VERTEX_COUNT = 6;
     static const int EDGE_COUNT = 9;
     static const MeshEdge edges[EDGE_COUNT];
     static const int TRI_COUNT = 8;
@@ -88,6 +97,8 @@ struct MeshHex
     inline int operator[] (int i) { return v[i]; }
     inline const int& operator[] (int i) const { return v[i]; }
 
+    static const int ELEMENT_TYPE = 2;
+    static const int VERTEX_COUNT = 8;
     static const int EDGE_COUNT = 12;
     static const MeshEdge edges[EDGE_COUNT];
     static const int TRI_COUNT = 12;
@@ -110,10 +121,29 @@ private:
     int _id;
 };
 
+struct MeshNeigVert
+{
+    int v;
+
+    inline MeshNeigVert() : v(0) {}
+    inline MeshNeigVert(int v) : v(v) {}
+    inline operator int() const {return v;}
+};
+
+struct MeshNeigElem
+{
+    int type;
+    int id;
+
+    inline MeshNeigElem() : type(-1), id(0) {}
+    inline MeshNeigElem(int type, int id) : type(type), id(id) {}
+};
+
 struct MeshTopo
 {
     bool isFixed;
-    std::vector<int> neighbors;
+    std::vector<MeshNeigVert> neighborVerts;
+    std::vector<MeshNeigElem> neighborElems;
 
     bool isBoundary;
     const MeshBound& boundaryCallback;
@@ -129,18 +159,15 @@ enum class EMeshBuffer
 {
     VERT,
 
-    TOPO,
-    NEIG,
-
     TET,
     PRI,
     HEX,
+
+    TOPO,
+    NEIG_VERT,
+    NEIG_ELEM,
 };
 
-namespace cellar
-{
-    class GlProgram;
-}
 
 class Mesh
 {
@@ -162,13 +189,14 @@ public:
     virtual void uploadGeometry(cellar::GlProgram& program) const;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
     virtual void bindShaderStorageBuffers() const;
+    virtual size_t firstFreeBufferBinding() const;
 
 
     std::vector<MeshVert> vert;
+    std::vector<MeshTet>  tetra;
+    std::vector<MeshPri>  prism;
+    std::vector<MeshHex>  hexa;
     std::vector<MeshTopo> topo;
-    std::vector<MeshTet> tetra;
-    std::vector<MeshPri> prism;
-    std::vector<MeshHex> hexa;
 
 
 protected:

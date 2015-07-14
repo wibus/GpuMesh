@@ -32,7 +32,7 @@ void QualityLaplaceSmoother::smoothCpuMesh(
             if(topo.isFixed)
                 continue;
 
-            const vector<int>& neighbors = topo.neighbors;
+            const vector<MeshNeigVert>& neighbors = topo.neighborVerts;
             if(!neighbors.empty())
             {
                 double weightSum = 0.0;
@@ -62,6 +62,4 @@ void QualityLaplaceSmoother::smoothCpuMesh(
     }
 
     mesh.updateGpuVertices();
-
-    cout << "#Smoothing finished" << endl << endl;
 }

@@ -291,10 +291,10 @@ void ScaffoldRenderer::compileEdges(const Mesh& mesh, std::vector<GLuint>& edges
     size_t vertCount = mesh.vertCount();
     for(int i=0; i < vertCount; ++i)
     {
-        size_t neighCount = mesh.topo[i].neighbors.size();
-        for(int n=0; n < neighCount; ++n)
+        size_t neigVertCount = mesh.topo[i].neighborVerts.size();
+        for(int n=0; n < neigVertCount; ++n)
         {
-            int neig = mesh.topo[i].neighbors[n];
+            int neig = mesh.topo[i].neighborVerts[n];
             if(i < neig)
                 edgeSet.insert(pair<GLuint, GLuint>(i, neig));
             else

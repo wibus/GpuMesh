@@ -17,15 +17,6 @@ struct GpuVert
     inline operator MeshVert() const { return glm::dvec3(p); }
 };
 
-struct GpuNeig
-{
-    int v;
-
-    inline GpuNeig() {}
-    inline GpuNeig(int v) : v(v) {}
-    inline operator int() const {return v; }
-};
-
 struct GpuEdge
 {
     int v[2];
@@ -74,6 +65,25 @@ struct GpuHex
     inline operator MeshHex() const { return MeshHex(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]); }
 };
 
+struct GpuNeigVert
+{
+    int v;
+
+    inline GpuNeigVert() {}
+    inline GpuNeigVert(const MeshNeigVert& n) : v(n.v) {}
+    inline operator MeshNeigVert() const {return MeshNeigVert(v); }
+};
+
+struct GpuNeigElem
+{
+    int type;
+    int id;
+
+    inline GpuNeigElem() {}
+    inline GpuNeigElem(const MeshNeigElem& n) : type(n.type), id(n.id) {}
+    inline operator MeshNeigElem() const {return MeshNeigElem(type, id); }
+};
+
 struct GpuTopo
 {
     // Type of vertex :
@@ -82,17 +92,24 @@ struct GpuTopo
     //  * >0 = boundary
     int type;
 
-    // Neighbors list start location
-    int neigBase;
+    // Neighbor vertices list start location
+    int neigVertBase;
 
-    // Neighbors count
-    int neigCount;
+    // Neighbor vertices count
+    int neigVertCount;
 
-    int pad0;
+    // Neighbor elements list start location
+    int neigElemBase;
 
-    inline GpuTopo() : type(0), neigBase(0), neigCount(0) {}
-    inline GpuTopo(int type, int neigBase, int neigCount) :
-        type(type), neigBase(neigBase), neigCount(neigCount) {}
+    // Neighbor elements count
+    int neigElemCount;
+
+    inline GpuTopo() : type(0), neigVertBase(0), neigVertCount(0),
+                                neigElemBase(0), neigElemCount(0)  {}
+    inline GpuTopo(int type, int neigVertBase, int neigVertCount,
+                             int neigElemBase, int neigElemCount) :
+        type(type), neigVertBase(neigVertBase), neigVertCount(neigVertCount),
+                    neigElemBase(neigElemBase), neigElemCount(neigElemCount) {}
 };
 
 
@@ -113,6 +130,7 @@ public:
     virtual void uploadGeometry(cellar::GlProgram& program) const override;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const override;
     virtual void bindShaderStorageBuffers() const override;
+    virtual size_t firstFreeBufferBinding() const override;
 
 protected:
     virtual void uploadElement(
@@ -123,11 +141,12 @@ protected:
             int tetCount,  const MeshTet tets[]) const;
 
     GLuint _vertSsbo;
-    GLuint _topoSsbo;
-    GLuint _neigSsbo;
     GLuint _tetSsbo;
     GLuint _priSsbo;
     GLuint _hexSsbo;
+    GLuint _topoSsbo;
+    GLuint _neigVertSsbo;
+    GLuint _neigElemSsbo;
 };
 
 

@@ -170,7 +170,8 @@ void AbstractEvaluator::evaluateGpuMeshQuality(
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     mesh.bindShaderStorageBuffers();
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, _qualSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     mesh.firstFreeBufferBinding(), _qualSsbo);
 
 
     // Simulataneous and specialized series gives about the same performance
