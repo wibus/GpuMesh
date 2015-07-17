@@ -10,21 +10,11 @@ public:
     VolumeEdgeEvaluator();
     virtual ~VolumeEdgeEvaluator();
 
+    virtual double tetrahedronQuality(const glm::dvec3 verts[]) const override;
 
-    virtual double tetrahedronQuality(const Mesh& mesh, const MeshTet& tet) const override;
+    virtual double prismQuality(const glm::dvec3 verts[]) const override;
 
-    virtual double prismQuality(const Mesh& mesh, const MeshPri& pri) const override;
-
-    virtual double hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const override;
-
-
-protected:
-    double volumeEdgeRatio(
-            const glm::dvec3 ev[],
-            size_t tetCount,
-            const MeshTet tets[],
-            size_t edgeCount,
-            const MeshEdge edges[]) const;
+    virtual double hexahedronQuality(const glm::dvec3 verts[]) const override;
 };
 
 #endif // GPUMESH_VOLUMEEDGEEVALUATOR

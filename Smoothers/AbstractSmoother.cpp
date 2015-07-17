@@ -1,7 +1,6 @@
 #include "AbstractSmoother.h"
 
 #include <chrono>
-#include <iostream>
 
 #include <CellarWorkbench/Misc/Log.h>
 
@@ -49,7 +48,14 @@ void AbstractSmoother::smoothMesh(
         _minIteration = minIteration;
         _moveFactor = moveFactor;
         _gainThreshold = gainThreshold;
+
+        auto tStart = chrono::high_resolution_clock::now();
         it->second(mesh, evaluator);
+        auto tEnd = chrono::high_resolution_clock::now();
+
+        auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart);
+        getLog().postMessage(new Message('I', true,
+            "Smoothing time: " + to_string(dt.count() / 1000.0) + "s", "AbstractSmoother"));
     }
     else
     {
@@ -104,11 +110,13 @@ void AbstractSmoother::smoothGpuMesh(
 
     // Display time profiling
     chrono::microseconds dtMid;
-    dtMid = chrono::duration_cast<chrono::microseconds>(tMiddle - tStart);
-    cout << "Total shader time = " << dtMid.count() / 1000.0 << "ms" << endl;
+    dtMid = chrono::duration_cast<chrono::milliseconds>(tMiddle - tStart);
+    getLog().postMessage(new Message('I', true,
+        "Total shader time = " + to_string(dtMid.count() / 1000.0) + "ms", "AbstractSmoother"));
     chrono::microseconds dtEnd;
-    dtEnd = chrono::duration_cast<chrono::microseconds>(tEnd - tMiddle);
-    cout << "Get buffer time = " << dtEnd.count() / 1000.0 << "ms" << endl;
+    dtEnd = chrono::duration_cast<chrono::milliseconds>(tEnd - tMiddle);
+    getLog().postMessage(new Message('I', true,
+        "Get buffer time = " + to_string(dtEnd.count() / 1000.0) + "ms", "AbstractSmoother"));
 }
 
 void AbstractSmoother::initializeProgram(Mesh& mesh)
@@ -153,9 +161,9 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evalua
                 mesh, qualMin, qualMean);
         }
 
-        cout << "Smooth pass number " << _smoothPassId << endl;
-        cout << "Mesh minimum quality: " << qualMin << endl;
-        cout << "Mesh quality mean: " << qualMean << endl;
+        getLog().postMessage(new Message('I', true,
+            "Smooth pass " + to_string(_smoothPassId) + ": " +
+            "min=" + to_string(qualMin) + "\t mean=" + to_string(qualMean), "AbstractSmoother"));
 
 
         if(_smoothPassId > _minIteration)

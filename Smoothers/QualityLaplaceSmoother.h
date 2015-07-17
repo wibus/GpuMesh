@@ -1,5 +1,5 @@
-#ifndef GPUMESH_CPULAPLACIANSMOOTHER
-#define GPUMESH_CPULAPLACIANSMOOTHER
+#ifndef GPUMESH_QUALITYLAPLACESMOOTHER
+#define GPUMESH_QUALITYLAPLACESMOOTHER
 
 
 #include "AbstractSmoother.h"
@@ -16,4 +16,4 @@ public:
             AbstractEvaluator& evaluator) override;
 };
 
-#endif // GPUMESH_CPULAPLACIANSMOOTHER
+#endif // GPUMESH_QUALITYLAPLACESMOOTHER

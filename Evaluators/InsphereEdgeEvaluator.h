@@ -10,12 +10,11 @@ public:
     InsphereEdgeEvaluator();
     virtual ~InsphereEdgeEvaluator();
 
+    virtual double tetrahedronQuality(const glm::dvec3 verts[]) const override;
 
-    virtual double tetrahedronQuality(const Mesh& mesh, const MeshTet& tet) const override;
+    virtual double prismQuality(const glm::dvec3 verts[]) const override;
 
-    virtual double prismQuality(const Mesh& mesh, const MeshPri& pri) const override;
-
-    virtual double hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const override;
+    virtual double hexahedronQuality(const glm::dvec3 verts[]) const override;
 };
 
 #endif // GPUMESH_INSPHEREEDGEEVALUATOR

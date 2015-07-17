@@ -10,18 +10,13 @@ public:
     SolidAngleEvaluator();
     virtual ~SolidAngleEvaluator();
 
+    virtual double solidAngle(const glm::dvec3& a, const glm::dvec3& b, const glm::dvec3& c) const;
 
-    virtual double tetrahedronQuality(const Mesh& mesh, const MeshTet& tet) const override;
+    virtual double tetrahedronQuality(const glm::dvec3 verts[]) const override;
 
-    virtual double prismQuality(const Mesh& mesh, const MeshPri& pri) const override;
+    virtual double prismQuality(const glm::dvec3 verts[]) const override;
 
-    virtual double hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const override;
-
-protected:
-    virtual double solidAngle(
-            const glm::dvec3& a,
-            const glm::dvec3& b,
-            const glm::dvec3& c) const;
+    virtual double hexahedronQuality(const glm::dvec3 verts[]) const override;
 };
 
 #endif // GPUMESH_SOLIDANGLEEVALUATOR

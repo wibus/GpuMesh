@@ -5,7 +5,7 @@
 #include <QDesktopWidget>
 
 #include "Tabs/GeometryTab.h"
-#include "Tabs/OptimisationTab.h"
+#include "Tabs/SmoothingTab.h"
 #include "Tabs/RenderingTab.h"
 
 using namespace scaena;
@@ -23,7 +23,7 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
     _play->addView(_view);
 
     _geometryTab.reset(new GeometryTab(_ui, character));
-    _optimisationTab.reset(new OptimisationTab(_ui, character));
+    _smoothingTab.reset(new SmoothingTab(_ui, character));
     _renderingTab.reset(new RenderingTab(_ui, character));
 
     resize(1200, 720);

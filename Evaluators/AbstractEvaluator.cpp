@@ -1,6 +1,5 @@
 #include "AbstractEvaluator.h"
 
-#include <iostream>
 #include <sstream>
 
 #include <CellarWorkbench/Misc/Log.h>
@@ -43,7 +42,8 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
 {
     static_assert(AbstractEvaluator::MAX_QUALITY_VALUE >=
                   AbstractEvaluator::MIN_QUALITY_PRECISION_DENOM,
-                  "Shape measure on GPU may not be siffciently precise.");
+                  "Shape measure on GPU may not be suffciently precise \
+                   given this workgroup size.");
 }
 
 AbstractEvaluator::~AbstractEvaluator()
@@ -51,61 +51,46 @@ AbstractEvaluator::~AbstractEvaluator()
     glDeleteBuffers(1, &_qualSsbo);
 }
 
-
-bool AbstractEvaluator::assessMeasureValidy()
+double AbstractEvaluator::tetrahedronQuality(const Mesh& mesh, const MeshTet& tet) const
 {
-    Mesh mesh;
-    mesh.vert.push_back(glm::dvec3(0, 0, 0));
-    mesh.vert.push_back(glm::dvec3(1, 0, 0));
-    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3)/6.0, sqrt(2.0/3)));
-    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3)/2.0, 0));
+    const glm::dvec3 verts[] = {
+        mesh.vert[tet.v[0]],
+        mesh.vert[tet.v[1]],
+        mesh.vert[tet.v[2]],
+        mesh.vert[tet.v[3]],
+    };
 
-    mesh.vert.push_back(glm::dvec3(0, 0, 0));
-    mesh.vert.push_back(glm::dvec3(1, 0, 0));
-    mesh.vert.push_back(glm::dvec3(0, 1, 0));
-    mesh.vert.push_back(glm::dvec3(1, 1, 0));
-    mesh.vert.push_back(glm::dvec3(0, sqrt(3)/2, sqrt(3)/2));
-    mesh.vert.push_back(glm::dvec3(1, sqrt(3)/2, sqrt(3)/2));
+    return tetrahedronQuality(verts);
+}
 
-    mesh.vert.push_back(glm::dvec3(0, 0, 0));
-    mesh.vert.push_back(glm::dvec3(1, 0, 0));
-    mesh.vert.push_back(glm::dvec3(0, 1, 0));
-    mesh.vert.push_back(glm::dvec3(1, 1, 0));
-    mesh.vert.push_back(glm::dvec3(0, 0, 1));
-    mesh.vert.push_back(glm::dvec3(1, 0, 1));
-    mesh.vert.push_back(glm::dvec3(0, 1, 1));
-    mesh.vert.push_back(glm::dvec3(1, 1, 1));
+double AbstractEvaluator::prismQuality(const Mesh& mesh, const MeshPri& pri) const
+{
+    const glm::dvec3 verts[] = {
+        mesh.vert[pri.v[0]],
+        mesh.vert[pri.v[1]],
+        mesh.vert[pri.v[2]],
+        mesh.vert[pri.v[3]],
+        mesh.vert[pri.v[4]],
+        mesh.vert[pri.v[5]]
+    };
 
-    const MeshTet tet = MeshTet(0, 1, 2, 3);
-    const MeshPri pri = MeshPri(4, 5, 6, 7, 8, 9);
-    const MeshHex hex = MeshHex(10, 11, 12, 13, 14, 15, 16, 17);
-    double regularTet = tetrahedronQuality(mesh, tet);
-    double regularPri = prismQuality(mesh, pri);
-    double regularHex = hexahedronQuality(mesh, hex);
+    return prismQuality(verts);
+}
 
-    if(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
-       glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
-       glm::abs(regularHex - 1.0) < VALIDITY_EPSILON)
-    {
-        getLog().postMessage(new Message('I', false,
-            "Quality evaluator's measure is valid.", "AbstractEvaluator"));
-        return true;
-    }
-    else
-    {
-        stringstream log;
-        log.precision(20);
-        log << "Quality evaluator's measure is invalid." << endl;
-        log << "Regular tetrahedron quality: " << regularTet << endl;
-        log << "Regular prism quality: " << regularPri << endl;
-        log << "Regular hexahedron quality: " << regularHex << endl;
-        getLog().postMessage(new Message('E', true, log.str(), "AbstractEvaluator"));
+double AbstractEvaluator::hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const
+{
+    const glm::dvec3 verts[] = {
+        mesh.vert[hex.v[0]],
+        mesh.vert[hex.v[1]],
+        mesh.vert[hex.v[2]],
+        mesh.vert[hex.v[3]],
+        mesh.vert[hex.v[4]],
+        mesh.vert[hex.v[5]],
+        mesh.vert[hex.v[6]],
+        mesh.vert[hex.v[7]]
+    };
 
-        assert(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
-               glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
-               glm::abs(regularHex - 1.0) < VALIDITY_EPSILON);
-        return false;
-    }
+    return hexahedronQuality(verts);
 }
 
 void AbstractEvaluator::evaluateCpuMeshQuality(
@@ -247,8 +232,7 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     };
 
 
-
-    // Simultenous evalution shader
+    // Simultenous evaluation shader
     _simultaneousProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
     _simultaneousProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
@@ -295,6 +279,61 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     glGenBuffers(1, &_qualSsbo);
 }
 
+bool AbstractEvaluator::assessMeasureValidy()
+{
+    Mesh mesh;
+    mesh.vert.push_back(glm::dvec3(0, 0, 0));
+    mesh.vert.push_back(glm::dvec3(1, 0, 0));
+    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3)/6.0, sqrt(2.0/3)));
+    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3)/2.0, 0));
+
+    mesh.vert.push_back(glm::dvec3(0, 0, 0));
+    mesh.vert.push_back(glm::dvec3(1, 0, 0));
+    mesh.vert.push_back(glm::dvec3(0, 1, 0));
+    mesh.vert.push_back(glm::dvec3(1, 1, 0));
+    mesh.vert.push_back(glm::dvec3(0, sqrt(3)/2, sqrt(3)/2));
+    mesh.vert.push_back(glm::dvec3(1, sqrt(3)/2, sqrt(3)/2));
+
+    mesh.vert.push_back(glm::dvec3(0, 0, 0));
+    mesh.vert.push_back(glm::dvec3(1, 0, 0));
+    mesh.vert.push_back(glm::dvec3(0, 1, 0));
+    mesh.vert.push_back(glm::dvec3(1, 1, 0));
+    mesh.vert.push_back(glm::dvec3(0, 0, 1));
+    mesh.vert.push_back(glm::dvec3(1, 0, 1));
+    mesh.vert.push_back(glm::dvec3(0, 1, 1));
+    mesh.vert.push_back(glm::dvec3(1, 1, 1));
+
+    const MeshTet tet = MeshTet(0, 1, 2, 3);
+    const MeshPri pri = MeshPri(4, 5, 6, 7, 8, 9);
+    const MeshHex hex = MeshHex(10, 11, 12, 13, 14, 15, 16, 17);
+    double regularTet = tetrahedronQuality(mesh, tet);
+    double regularPri = prismQuality(mesh, pri);
+    double regularHex = hexahedronQuality(mesh, hex);
+
+    if(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
+       glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
+       glm::abs(regularHex - 1.0) < VALIDITY_EPSILON)
+    {
+        getLog().postMessage(new Message('I', false,
+            "Quality evaluator's measure is valid.", "AbstractEvaluator"));
+        return true;
+    }
+    else
+    {
+        stringstream log;
+        log.precision(20);
+        log << "Quality evaluator's measure is invalid." << endl;
+        log << "Regular tetrahedron quality: " << regularTet << endl;
+        log << "Regular prism quality: " << regularPri << endl;
+        log << "Regular hexahedron quality: " << regularHex << endl;
+        getLog().postMessage(new Message('E', true, log.str(), "AbstractEvaluator"));
+
+        assert(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
+               glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
+               glm::abs(regularHex - 1.0) < VALIDITY_EPSILON);
+        return false;
+    }
+}
 
 void AbstractEvaluator::gpuSpin(Mesh& mesh, size_t cycleCount)
 {
@@ -306,8 +345,8 @@ void AbstractEvaluator::gpuSpin(Mesh& mesh, size_t cycleCount)
         evaluateGpuMeshQuality(mesh, minQual, qualMean);
         if(i == m)
         {
-            cout << "Benchmark progress : " <<
-                    MARK_SIZE * i / (float) cycleCount << "%" << endl;
+            //cout << "Benchmark progress : " <<
+            //        MARK_SIZE * i / (float) cycleCount << "%" << endl;
             m += mark;
         }
     }
@@ -323,8 +362,8 @@ void AbstractEvaluator::cpuSpin(Mesh& mesh, size_t cycleCount)
         evaluateCpuMeshQuality(mesh, minQual, qualMean);
         if(i == m)
         {
-            cout << "Benchmark progress : " <<
-                    MARK_SIZE * i / (float) cycleCount << "%" << endl;
+            //cout << "Benchmark progress : " <<
+            //        MARK_SIZE * i / (float) cycleCount << "%" << endl;
             m += mark;
         }
     }

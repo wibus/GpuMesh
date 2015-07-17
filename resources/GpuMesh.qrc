@@ -32,5 +32,6 @@
         <file>shaders/compute/Quality/VolumeEdge.glsl</file>
         <file>shaders/compute/Quality/InsphereEdge.glsl</file>
         <file>shaders/compute/Mesh.glsl</file>
+        <file>shaders/compute/Smoothing/CheapLaplace.glsl</file>
     </qresource>
 </RCC>

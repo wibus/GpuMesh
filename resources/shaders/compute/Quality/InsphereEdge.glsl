@@ -18,7 +18,7 @@ float tetQuality(Tet tet)
     Volume -= v*v*pow(w*w+u*u-V*V, 2.0);
     Volume -= w*w*pow(u*u+v*v-W*W, 2.0);
     Volume += (v*v+w*w-U*U)*(w*w+u*u-V*V)*(u*u+v*v-W*W);
-    Volume = sqrt(Volume);
+    Volume = sqrt(max(Volume, 0.0));
     Volume /= 12.0;
 
     float s1 = (U + V + W) / 2.0;

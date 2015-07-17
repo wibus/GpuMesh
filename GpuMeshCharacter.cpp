@@ -25,6 +25,7 @@
 #include "Meshers/CpuParametricMesher.h"
 #include "Renderers/ScaffoldRenderer.h"
 #include "Renderers/SurfacicRenderer.h"
+#include "Smoothers/CheapLaplaceSmoother.h"
 #include "Smoothers/QualityLaplaceSmoother.h"
 
 using namespace std;
@@ -63,6 +64,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     };
 
     _availableSmoothers = decltype(_availableSmoothers){
+        {string("Cheap Laplace"), shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"), shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
     };
 
