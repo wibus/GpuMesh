@@ -1,11 +1,10 @@
 #ifndef GPUMESH_ABSTRACTMESHER
 #define GPUMESH_ABSTRACTMESHER
 
-#include <map>
-#include <string>
 #include <functional>
 
 #include "DataStructures/Mesh.h"
+#include "DataStructures/OptionMap.h"
 
 
 class AbstractMesher
@@ -14,7 +13,7 @@ public:
     AbstractMesher();
     virtual ~AbstractMesher() = 0;
 
-    virtual std::vector<std::string> availableMeshModels() const;
+    virtual OptionMapDetails availableMeshModels() const;
 
     virtual void generateMesh(
             Mesh& mesh,
@@ -25,7 +24,7 @@ public:
 protected:
     // Models
     typedef std::function<void(Mesh&, size_t)> ModelFunc;
-    std::map<std::string, ModelFunc> _modelFuncs;
+    OptionMap<ModelFunc> _modelFuncs;
 };
 
 #endif // GPUMESH_ABSTRACTMESHER

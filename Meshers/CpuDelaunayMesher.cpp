@@ -53,11 +53,12 @@ const glm::ivec3 DIR[DIR_COUNT] = {
 CpuDelaunayMesher::CpuDelaunayMesher()
 {
     using namespace std::placeholders;
-    _modelFuncs = decltype(_modelFuncs) {
+    _modelFuncs.setDefault("Sphere");
+    _modelFuncs.setContent({
         {string("Box"),    ModelFunc(bind(&CpuDelaunayMesher::genBox,    this, _1, _2))},
         {string("Cap"),    ModelFunc(bind(&CpuDelaunayMesher::genCap,    this, _1, _2))},
         {string("Sphere"), ModelFunc(bind(&CpuDelaunayMesher::genSphere, this, _1, _2))},
-    };
+    });
 }
 
 CpuDelaunayMesher::~CpuDelaunayMesher()

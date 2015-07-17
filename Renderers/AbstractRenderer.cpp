@@ -8,7 +8,8 @@ using namespace cellar;
 AbstractRenderer::AbstractRenderer() :
     _buffNeedUpdate(false),
     _isPhysicalCut(true),
-    _cutPlane(0.0)
+    _cutPlane(0.0),
+    _shadingFuncs("Shadings")
 {
 
 }
@@ -45,26 +46,16 @@ void AbstractRenderer::display(const Mesh& mesh, const AbstractEvaluator& evalua
     render();
 }
 
-std::vector<std::string> AbstractRenderer::availableShadings() const
+OptionMapDetails AbstractRenderer::availableShadings() const
 {
-    std::vector<std::string> names;
-    for(const auto& keyValue : _shadingFuncs)
-        names.push_back(keyValue.first);
-    return names;
+    return _shadingFuncs.details();
 }
 
 void AbstractRenderer::useShading(const std::string& shadingName)
 {
-    auto it = _shadingFuncs.find(shadingName);
-    if(it != _shadingFuncs.end())
-    {
-        it->second();
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + shadingName + "' shading", "AbstractRenderer"));
-    }
+    ShadingFunc shadingFunc;
+    if(_shadingFuncs.select(shadingName, shadingFunc))
+        shadingFunc();
 }
 
 void AbstractRenderer::useVirtualCutPlane(bool use)

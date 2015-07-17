@@ -42,19 +42,21 @@ void GeometryTab::generateMesh()
 
 void GeometryTab::deployTechniques()
 {
-    vector<string> techniqueNames = _character->availableMeshers();
+    OptionMapDetails techniques = _character->availableMeshers();
 
     _ui->geometryTechniqueMenu->clear();
-    for(const auto& name : techniqueNames)
+    for(const auto& name : techniques.options)
         _ui->geometryTechniqueMenu->addItem(QString(name.c_str()));
+    _ui->geometryTechniqueMenu->setCurrentText(techniques.defaultOption.c_str());
 }
 
 void GeometryTab::deployModels()
 {
-    string mesher = _ui->geometryTechniqueMenu->currentText().toStdString();
-    vector<string> modelNames = _character->availableMeshModels(mesher);
+    OptionMapDetails models = _character->availableMeshModels(
+        _ui->geometryTechniqueMenu->currentText().toStdString());
 
     _ui->geometryModelMenu->clear();
-    for(const auto& name : modelNames)
+    for(const auto& name : models.options)
         _ui->geometryModelMenu->addItem(QString(name.c_str()));
+    _ui->geometryModelMenu->setCurrentText(models.defaultOption.c_str());
 }

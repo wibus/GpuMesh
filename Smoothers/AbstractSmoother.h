@@ -1,12 +1,12 @@
 #ifndef GPUMESH_ABSTRACTSMOOTHER
 #define GPUMESH_ABSTRACTSMOOTHER
 
-#include <map>
 #include <functional>
 
 #include <CellarWorkbench/GL/GlProgram.h>
 
 #include "DataStructures/Mesh.h"
+#include "DataStructures/OptionMap.h"
 
 class AbstractEvaluator;
 
@@ -17,7 +17,7 @@ public:
     AbstractSmoother(const std::string& smoothShader);
     virtual ~AbstractSmoother();
 
-    virtual std::vector<std::string> availableImplementations() const;
+    virtual OptionMapDetails availableImplementations() const;
 
     virtual void smoothMesh(
             Mesh& mesh,
@@ -57,7 +57,7 @@ protected:
     cellar::GlProgram _smoothingProgram;
 
     typedef std::function<void(Mesh&, AbstractEvaluator&)> ImplementationFunc;
-    std::map<std::string, ImplementationFunc> _implementationFuncs;
+    OptionMap<ImplementationFunc> _implementationFuncs;
 };
 
 #endif // GPUMESH_ABSTRACTSMOOTHER

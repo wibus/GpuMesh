@@ -49,28 +49,31 @@ void SmoothingTab::smoothMesh()
 
 void SmoothingTab::deployTechniques()
 {
-    vector<string> techniqueNames = _character->availableSmoothers();
+    OptionMapDetails techniques = _character->availableSmoothers();
 
     _ui->smoothingTechniqueMenu->clear();
-    for(const auto& name : techniqueNames)
+    for(const auto& name : techniques.options)
         _ui->smoothingTechniqueMenu->addItem(QString(name.c_str()));
+    _ui->smoothingTechniqueMenu->setCurrentText(techniques.defaultOption.c_str());
 }
 
 void SmoothingTab::deployShapeMeasures()
 {
-    vector<string> evaluatorNames = _character->availableEvaluators();
+    OptionMapDetails evaluators = _character->availableEvaluators();
 
     _ui->smoothShapeMeasureMenu->clear();
-    for(const auto& name : evaluatorNames)
+    for(const auto& name : evaluators.options)
         _ui->smoothShapeMeasureMenu->addItem(QString(name.c_str()));
+    _ui->smoothShapeMeasureMenu->setCurrentText(evaluators.defaultOption.c_str());
 }
 
 void SmoothingTab::deployImplementations()
 {
-    string smoother = _ui->smoothingTechniqueMenu->currentText().toStdString();
-    vector<string> implementationNames = _character->availableImplementations(smoother);
+    OptionMapDetails implementations = _character->availableImplementations(
+        _ui->smoothingTechniqueMenu->currentText().toStdString());
 
     _ui->smoothingImplementationMenu->clear();
-    for(const auto& name : implementationNames)
+    for(const auto& name : implementations.options)
         _ui->smoothingImplementationMenu->addItem(QString(name.c_str()));
+    _ui->smoothingImplementationMenu->setCurrentText(implementations.defaultOption.c_str());
 }

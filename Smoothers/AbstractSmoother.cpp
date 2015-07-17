@@ -12,13 +12,15 @@ using namespace cellar;
 
 AbstractSmoother::AbstractSmoother(const string& smoothShader) :
     _initialized(false),
-    _smoothShader(smoothShader)
+    _smoothShader(smoothShader),
+    _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs = decltype(_implementationFuncs) {
+    _implementationFuncs.setDefault("C++");
+    _implementationFuncs.setContent({
         {string("C++"),  ImplementationFunc(bind(&AbstractSmoother::smoothCpuMesh, this, _1, _2))},
         {string("GLSL"), ImplementationFunc(bind(&AbstractSmoother::smoothGpuMesh, this, _1, _2))},
-    };
+    });
 }
 
 AbstractSmoother::~AbstractSmoother()
@@ -26,12 +28,9 @@ AbstractSmoother::~AbstractSmoother()
 
 }
 
-std::vector<std::string> AbstractSmoother::availableImplementations() const
+OptionMapDetails AbstractSmoother::availableImplementations() const
 {
-    std::vector<std::string> names;
-    for(const auto& keyValue : _implementationFuncs)
-        names.push_back(keyValue.first);
-    return names;
+    return _implementationFuncs.details();
 }
 
 void AbstractSmoother::smoothMesh(
@@ -42,25 +41,20 @@ void AbstractSmoother::smoothMesh(
         double moveFactor,
         double gainThreshold)
 {
-    auto it = _implementationFuncs.find(implementationName);
-    if(it != _implementationFuncs.end())
+    ImplementationFunc implementationFunc;
+    if(_implementationFuncs.select(implementationName, implementationFunc))
     {
         _minIteration = minIteration;
         _moveFactor = moveFactor;
         _gainThreshold = gainThreshold;
 
         auto tStart = chrono::high_resolution_clock::now();
-        it->second(mesh, evaluator);
+        implementationFunc(mesh, evaluator);
         auto tEnd = chrono::high_resolution_clock::now();
 
         auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart);
         getLog().postMessage(new Message('I', true,
             "Smoothing time: " + to_string(dt.count() / 1000.0) + "s", "AbstractSmoother"));
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + implementationName + "' implementation", "AbstractSmoother"));
     }
 }
 

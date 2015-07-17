@@ -50,28 +50,36 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAzimuth(0),
     _cutAltitude(-glm::pi<float>() / 2.0),
     _cutDistance(0),
-    _mesh(new GpuMesh())
+    _mesh(new GpuMesh()),
+    _availableMeshers("Available Meshers"),
+    _availableEvaluators("Available Evaluators"),
+    _availableSmoothers("Available Smoothers"),
+    _availableRenderers("Available Renderers")
 {
-    _availableMeshers = decltype(_availableMeshers){
+    _availableMeshers.setDefault("Parametric");
+    _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
-    };
+    });
 
-    _availableEvaluators = decltype(_availableEvaluators){
+    _availableEvaluators.setDefault("Volume Edge");
+    _availableEvaluators.setContent({
         {string("Insphere Edge"), shared_ptr<AbstractEvaluator>(new InsphereEdgeEvaluator())},
         {string("Solid Angle"),   shared_ptr<AbstractEvaluator>(new SolidAngleEvaluator())},
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
-    };
+    });
 
-    _availableSmoothers = decltype(_availableSmoothers){
-        {string("Spring Laplace"), shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
+    _availableSmoothers.setDefault("Spring Laplace");
+    _availableSmoothers.setContent({
         {string("Quality Laplace"), shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
-    };
+        {string("Spring Laplace"), shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
+    });
 
-    _availableRenderers = decltype(_availableRenderers){
+    _availableRenderers.setDefault("Scaffold");
+    _availableRenderers.setContent({
         {string("Scaffold"), shared_ptr<AbstractRenderer>(new ScaffoldRenderer())},
         {string("Surfacic"), shared_ptr<AbstractRenderer>(new SurfacicRenderer())},
-    };
+    });
 }
 
 void GpuMeshCharacter::enterStage()
@@ -168,69 +176,45 @@ bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
     _renderer->handleKeyPress(event);
 }
 
-std::vector<std::string> GpuMeshCharacter::availableMeshers() const
+OptionMapDetails GpuMeshCharacter::availableMeshers() const
 {
-    std::vector<std::string> keyVec;
-    for(const auto& keyValue : _availableMeshers)
-        keyVec.push_back(keyValue.first);
-    return keyVec;
+    return _availableMeshers.details();
 }
 
-std::vector<std::string> GpuMeshCharacter::availableMeshModels(const string& mesherName) const
+OptionMapDetails GpuMeshCharacter::availableMeshModels(const string& mesherName) const
 {
-    auto it = _availableMeshers.find(mesherName);
-    if(it != _availableMeshers.end())
-    {
-        return it->second->availableMeshModels();
-    }
+    std::shared_ptr<AbstractMesher> mesher;
+    if(_availableMeshers.select(mesherName, mesher))
+        return mesher->availableMeshModels();
     else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + mesherName + "' mesher", "GpuMeshCharacter"));
-        return std::vector<std::string>();
-    }
+        return OptionMapDetails();
 }
 
-std::vector<std::string> GpuMeshCharacter::availableEvaluators() const
+OptionMapDetails GpuMeshCharacter::availableEvaluators() const
 {
-    std::vector<std::string> keyVec;
-    for(const auto& keyValue : _availableEvaluators)
-        keyVec.push_back(keyValue.first);
-    return keyVec;
+    return _availableEvaluators.details();
 }
 
-std::vector<std::string> GpuMeshCharacter::availableSmoothers() const
+OptionMapDetails GpuMeshCharacter::availableSmoothers() const
 {
-    std::vector<std::string> keyVec;
-    for(const auto& keyValue : _availableSmoothers)
-        keyVec.push_back(keyValue.first);
-    return keyVec;
+    return _availableSmoothers.details();
 }
 
-std::vector<std::string> GpuMeshCharacter::availableImplementations(const string& smootherName) const
+OptionMapDetails GpuMeshCharacter::availableImplementations(const string& smootherName) const
 {
-    auto it = _availableSmoothers.find(smootherName);
-    if(it != _availableSmoothers.end())
-    {
-        return it->second->availableImplementations();
-    }
+    std::shared_ptr<AbstractSmoother> smoother;
+    if(_availableSmoothers.select(smootherName, smoother))
+        return smoother->availableImplementations();
     else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + smootherName + "' smoother", "GpuMeshCharacter"));
-        return std::vector<std::string>();
-    }
+        return OptionMapDetails();
 }
 
-std::vector<std::string> GpuMeshCharacter::availableRenderers() const
+OptionMapDetails GpuMeshCharacter::availableRenderers() const
 {
-    std::vector<std::string> keyVec;
-    for(const auto& keyValue : _availableRenderers)
-        keyVec.push_back(keyValue.first);
-    return keyVec;
+    return _availableRenderers.details();
 }
 
-std::vector<std::string> GpuMeshCharacter::availableShadings() const
+OptionMapDetails GpuMeshCharacter::availableShadings() const
 {
     return _renderer->availableShadings();
 }
@@ -246,21 +230,13 @@ void GpuMeshCharacter::generateMesh(
               ", model=" + modelName +
               ", vertex count=" + to_string(vertexCount));
 
-    auto it = _availableMeshers.find(mesherName);
-    if(it != _availableMeshers.end())
+    std::shared_ptr<AbstractMesher> mesher;
+    if(_availableMeshers.select(mesherName, mesher))
     {
-        _availableMeshers[mesherName]->generateMesh(
-                    *_mesh,
-                    modelName,
-                    vertexCount);
+        mesher->generateMesh( *_mesh, modelName, vertexCount);
 
         _mesh->compileTopoly();
         _renderer->notifyMeshUpdate();
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + mesherName + "' mesher", "GpuMeshCharacter"));
     }
 }
 
@@ -276,47 +252,30 @@ void GpuMeshCharacter::smoothMesh(
               ", quality measure=" + evaluatorName +
               ", implementation=" + implementationName);
 
-    auto it = _availableSmoothers.find(smootherName);
-    if(it != _availableSmoothers.end())
+    std::shared_ptr<AbstractSmoother> smoother;
+    if(_availableSmoothers.select(smootherName, smoother))
     {
-        auto evaluator = _availableEvaluators.find(evaluatorName);
-        if(evaluator != _availableEvaluators.end())
+        std::shared_ptr<AbstractEvaluator> evaluator;
+        if(_availableEvaluators.select(evaluatorName, evaluator))
         {
-            _availableSmoothers[smootherName]->smoothMesh(
-                        *_mesh,
-                        *evaluator->second,
-                        implementationName,
-                        minIterationCount,
-                        moveFactor,
-                        gainThreshold);
+            smoother->smoothMesh(
+                *_mesh,
+                *evaluator,
+                implementationName,
+                minIterationCount,
+                moveFactor,
+                gainThreshold);
 
             _renderer->notifyMeshUpdate();
         }
-        else
-        {
-            getLog().postMessage(new Message('E', false,
-                "Failed to find '" + evaluatorName + "' evaluator", "GpuMeshCharacter"));
-        }
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + smootherName + "' smoother", "GpuMeshCharacter"));
     }
 }
 
 void GpuMeshCharacter::useRenderer(const std::string& rendererName)
 {
-    auto it = _availableRenderers.find(rendererName);
-    if(it != _availableRenderers.end())
-    {
-        installRenderer(it->second);
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + rendererName + "' renderer", "GpuMeshCharacter"));
-    }
+    std::shared_ptr<AbstractRenderer> renderer;
+    if(_availableRenderers.select(rendererName, renderer))
+        installRenderer(renderer);
 }
 
 void GpuMeshCharacter::useShading(const std::string& shadingName)
@@ -326,16 +285,11 @@ void GpuMeshCharacter::useShading(const std::string& shadingName)
 
 void GpuMeshCharacter::displayQuality(const std::string& evaluatorName)
 {
-    auto it = _availableEvaluators.find(evaluatorName);
-    if(it != _availableEvaluators.end())
+    std::shared_ptr<AbstractEvaluator> evaluator;
+    if(_availableEvaluators.select(evaluatorName, evaluator))
     {
-        _visualEvaluator = it->second;
+        _visualEvaluator = evaluator;
         _renderer->notifyMeshUpdate();
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + evaluatorName + "' evaluator", "GpuMeshCharacter"));
     }
 }
 

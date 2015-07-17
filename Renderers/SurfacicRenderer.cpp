@@ -40,10 +40,11 @@ SurfacicRenderer::SurfacicRenderer() :
     _updateShadow(false),
     _shadowSize(1024, 1024)
 {
-    _shadingFuncs = decltype(_shadingFuncs){
+    _shadingFuncs.setDefault("Diffuse");
+    _shadingFuncs.setContent({
         {string("Diffuse"),  function<void()>(bind(&SurfacicRenderer::useDiffuseShading,  this))},
         {string("Specular"), function<void()>(bind(&SurfacicRenderer::useSpecularShading, this))},
-    };
+    });
 }
 
 SurfacicRenderer::~SurfacicRenderer()

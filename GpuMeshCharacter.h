@@ -1,12 +1,13 @@
 #ifndef GpuMesh_CHARACTER
 #define GpuMesh_CHARACTER
 
-#include <map>
 #include <vector>
 
 #include <PropRoom2D/Prop/Hud/TextHud.h>
 
 #include <Scaena/Play/Character.h>
+
+#include "DataStructures/OptionMap.h"
 
 class Mesh;
 class AbstractMesher;
@@ -35,13 +36,13 @@ public:
     virtual bool keyPressEvent(const scaena::KeyboardEvent &event) override;
 
 
-    virtual std::vector<std::string> availableMeshers() const;
-    virtual std::vector<std::string> availableMeshModels(const std::string& mesherName) const;
-    virtual std::vector<std::string> availableEvaluators() const;
-    virtual std::vector<std::string> availableSmoothers() const;
-    virtual std::vector<std::string> availableImplementations(const std::string& smootherName) const;
-    virtual std::vector<std::string> availableRenderers() const;
-    virtual std::vector<std::string> availableShadings() const;
+    virtual OptionMapDetails availableMeshers() const;
+    virtual OptionMapDetails availableMeshModels(const std::string& mesherName) const;
+    virtual OptionMapDetails availableEvaluators() const;
+    virtual OptionMapDetails availableSmoothers() const;
+    virtual OptionMapDetails availableImplementations(const std::string& smootherName) const;
+    virtual OptionMapDetails availableRenderers() const;
+    virtual OptionMapDetails availableShadings() const;
 
     virtual void generateMesh(
             const std::string& mesherName,
@@ -97,10 +98,10 @@ private:
     std::shared_ptr<prop2::TextHud> _fps;
     std::shared_ptr<prop2::TextHud> _ups;
 
-    std::map<std::string, std::shared_ptr<AbstractMesher>> _availableMeshers;
-    std::map<std::string, std::shared_ptr<AbstractEvaluator>> _availableEvaluators;
-    std::map<std::string, std::shared_ptr<AbstractSmoother>> _availableSmoothers;
-    std::map<std::string, std::shared_ptr<AbstractRenderer>> _availableRenderers;
+    OptionMap<std::shared_ptr<AbstractMesher>> _availableMeshers;
+    OptionMap<std::shared_ptr<AbstractEvaluator>> _availableEvaluators;
+    OptionMap<std::shared_ptr<AbstractSmoother>> _availableSmoothers;
+    OptionMap<std::shared_ptr<AbstractRenderer>> _availableRenderers;
 
 };
 

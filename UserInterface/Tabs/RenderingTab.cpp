@@ -46,44 +46,41 @@ RenderingTab::~RenderingTab()
 
 void RenderingTab::deployRenderTypes()
 {
-    vector<string> rendererNames = _character->availableRenderers();
+    OptionMapDetails renderers = _character->availableRenderers();
 
     _ui->renderingTypeMenu->clear();
-    for(const auto& name : rendererNames)
+    for(const auto& name : renderers.options)
         _ui->renderingTypeMenu->addItem(QString(name.c_str()));
+    _ui->renderingTypeMenu->setCurrentText(renderers.defaultOption.c_str());
 
-    size_t defaultRenderer = 0;
-    _ui->renderingTypeMenu->setCurrentIndex(defaultRenderer);
     // Renderer must be set here, or no renderer will be installed
-    _character->useRenderer(rendererNames[defaultRenderer]);
+    _character->useRenderer(renderers.defaultOption);
 }
 
 void RenderingTab::deployShadings()
 {
-    vector<string> shadingNames = _character->availableShadings();
+    OptionMapDetails shadings = _character->availableShadings();
 
     _ui->shadingMenu->clear();
-    for(const auto& name : shadingNames)
+    for(const auto& name : shadings.options)
         _ui->shadingMenu->addItem(QString(name.c_str()));
+    _ui->shadingMenu->setCurrentText(shadings.defaultOption.c_str());
 
-    size_t defaultShading = 0;
-    _ui->shadingMenu->setCurrentIndex(defaultShading);
     // Shading must be set here, or no shading will be installed
-    _character->useShading(shadingNames[defaultShading]);
+    _character->useShading(shadings.defaultOption);
 }
 
 void RenderingTab::deployShapeMeasures()
 {
-    vector<string> evaluatorNames = _character->availableEvaluators();
+    OptionMapDetails evaluators = _character->availableEvaluators();
 
     _ui->visualShapeMeasureMenu->clear();
-    for(const auto& name : evaluatorNames)
+    for(const auto& name : evaluators.options)
         _ui->visualShapeMeasureMenu->addItem(QString(name.c_str()));
+    _ui->visualShapeMeasureMenu->setCurrentText(evaluators.defaultOption.c_str());
 
-    size_t defaultMeasure = 0;
-    _ui->visualShapeMeasureMenu->setCurrentIndex(defaultMeasure);
     // Shading must be set here, or no shading will be installed
-    _character->displayQuality(evaluatorNames[defaultMeasure]);
+    _character->displayQuality(evaluators.defaultOption);
 }
 
 void RenderingTab::renderTypeChanged(QString text)

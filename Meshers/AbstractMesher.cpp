@@ -7,7 +7,8 @@
 using namespace std;
 using namespace cellar;
 
-AbstractMesher::AbstractMesher()
+AbstractMesher::AbstractMesher() :
+    _modelFuncs("Mesh Models")
 {
 
 }
@@ -17,12 +18,9 @@ AbstractMesher::~AbstractMesher()
 
 }
 
-std::vector<std::string> AbstractMesher::availableMeshModels() const
+OptionMapDetails AbstractMesher::availableMeshModels() const
 {
-    std::vector<std::string> names;
-    for(const auto& keyValue : _modelFuncs)
-        names.push_back(keyValue.first);
-    return names;
+    return _modelFuncs.details();
 }
 
 void AbstractMesher::generateMesh(
@@ -30,13 +28,12 @@ void AbstractMesher::generateMesh(
         const string& modelName,
         size_t vertexCount)
 {
-
-    auto it = _modelFuncs.find(modelName);
-    if(it != _modelFuncs.end())
+    ModelFunc modelFunc;
+    if(_modelFuncs.select(modelName, modelFunc))
     {
         chrono::high_resolution_clock::time_point startTime, endTime;
         startTime = chrono::high_resolution_clock::now();
-        it->second(mesh, vertexCount);
+        modelFunc(mesh, vertexCount);
         endTime = chrono::high_resolution_clock::now();
 
         chrono::microseconds dt;
@@ -49,12 +46,6 @@ void AbstractMesher::generateMesh(
             "Elements / Vertices = " + to_string(mesh.elemCount()) +
                                " / " + to_string(mesh.vertCount()) + " = " +
             to_string(mesh.elemCount()  / (double) mesh.vertCount()),
-            "AbstractMesher"));
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "Failed to find '" + modelName + "' model",
             "AbstractMesher"));
     }
 }

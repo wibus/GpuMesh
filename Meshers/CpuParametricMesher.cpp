@@ -87,9 +87,10 @@ CpuParametricMesher::CpuParametricMesher() :
     _pipeExtEdge(new PipeExtEdgeBoundary())
 {
     using namespace std::placeholders;
-    _modelFuncs = decltype(_modelFuncs) {
+    _modelFuncs.setDefault("Elbow Pipe");
+    _modelFuncs.setContent({
         {string("Elbow Pipe"), ModelFunc(bind(&CpuParametricMesher::genElbowPipe, this, _1, _2))},
-    };
+    });
 }
 
 CpuParametricMesher::~CpuParametricMesher()

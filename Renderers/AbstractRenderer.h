@@ -1,7 +1,6 @@
 #ifndef GPUMESH_ABSTRACTRENDERER
 #define GPUMESH_ABSTRACTRENDERER
 
-#include <map>
 #include <functional>
 
 #include <CellarWorkbench/Camera/Camera.h>
@@ -10,6 +9,7 @@
 #include <Scaena/Play/Play.h>
 
 #include "DataStructures/Mesh.h"
+#include "DataStructures/OptionMap.h"
 
 class AbstractEvaluator;
 
@@ -26,7 +26,7 @@ public:
     virtual void notifyMeshUpdate();
     virtual void display(const Mesh& mesh, const AbstractEvaluator& evaluator);
 
-    virtual std::vector<std::string> availableShadings() const;
+    virtual OptionMapDetails availableShadings() const;
     virtual void useShading(const std::string& shadingName);
     virtual void useVirtualCutPlane(bool use);
 
@@ -58,7 +58,7 @@ protected:
 
     // Shadings
     typedef std::function<void(void)> ShadingFunc;
-    std::map<std::string, ShadingFunc> _shadingFuncs;
+    OptionMap<ShadingFunc> _shadingFuncs;
 };
 
 #endif // GPUMESH_ABSTRACTRENDERER
