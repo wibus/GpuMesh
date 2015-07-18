@@ -64,12 +64,17 @@ void AbstractSmoother::smoothGpuMesh(
 {
     if(!_initialized)
     {
-        initializeProgram(mesh);
+        initializeProgram(mesh, evaluator);
 
         _initialized = true;
     }
     else
     {
+        if(_shapeMeasureShader != evaluator.shapeMeasureShader())
+        {
+            initializeProgram(mesh, evaluator);
+        }
+
         // Absurdly make subsequent passes much more faster...
         // I guess it's because the driver put buffer back on GPU.
         // It looks like glGetBufferSubData take it out of the GPU.
@@ -113,18 +118,25 @@ void AbstractSmoother::smoothGpuMesh(
         "Get buffer time = " + to_string(dtEnd.count() / 1000.0) + "ms", "AbstractSmoother"));
 }
 
-void AbstractSmoother::initializeProgram(Mesh& mesh)
+void AbstractSmoother::initializeProgram(Mesh& mesh, AbstractEvaluator& evaluator)
 {
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractSmoother"));
 
+    _shapeMeasureShader = evaluator.shapeMeasureShader();
+
+    _smoothingProgram.clearShaders();
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         _smoothShader.c_str()});
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
+        _shapeMeasureShader.c_str()});
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
         ":/shaders/compute/Boundary/ElbowPipe.glsl"});
     _smoothingProgram.link();
+
     mesh.uploadGeometry(_smoothingProgram);
 }
 

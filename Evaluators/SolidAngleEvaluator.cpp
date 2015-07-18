@@ -29,7 +29,7 @@ inline double SolidAngleEvaluator::solidAngle(
                         (cl*al + dot(c, a)));
 }
 
-double SolidAngleEvaluator::tetrahedronQuality(const dvec3 verts[]) const
+double SolidAngleEvaluator::tetQuality(const dvec3 verts[]) const
 {
     double q0 = solidAngle(verts[1] - verts[0], verts[2] - verts[0], verts[3] - verts[0]);
     double q1 = solidAngle(verts[0] - verts[1], verts[2] - verts[1], verts[3] - verts[1]);
@@ -41,7 +41,7 @@ double SolidAngleEvaluator::tetrahedronQuality(const dvec3 verts[]) const
     return minQ * 3.67423461417; // 9 / sqrt(6)
 }
 
-double SolidAngleEvaluator::prismQuality(const dvec3 verts[]) const
+double SolidAngleEvaluator::priQuality(const dvec3 verts[]) const
 {
     double q0 = solidAngle(verts[1] - verts[0], verts[2] - verts[0], verts[4] - verts[0]);
     double q1 = solidAngle(verts[0] - verts[1], verts[3] - verts[1], verts[5] - verts[1]);
@@ -56,7 +56,7 @@ double SolidAngleEvaluator::prismQuality(const dvec3 verts[]) const
     return minQ * 2.61312592975; // 1.0 / <max val for regular prism>
 }
 
-double SolidAngleEvaluator::hexahedronQuality(const dvec3 verts[]) const
+double SolidAngleEvaluator::hexQuality(const dvec3 verts[]) const
 {
     double q0 = solidAngle(verts[1] - verts[0], verts[2] - verts[0], verts[4] - verts[0]);
     double q1 = solidAngle(verts[0] - verts[1], verts[3] - verts[1], verts[5] - verts[1]);

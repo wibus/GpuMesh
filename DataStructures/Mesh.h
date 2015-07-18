@@ -6,6 +6,9 @@
 
 #include <GLM/glm.hpp>
 
+#ifndef uint
+typedef unsigned int uint;
+#endif // uint
 
 namespace cellar
 {
@@ -25,85 +28,85 @@ struct MeshVert
 
 struct MeshEdge
 {
-    int v[2];
+    uint v[2];
 
-    inline MeshEdge() : v{-1, -1} {}
-    inline MeshEdge(int v0, int v1) : v{v0, v1} {}
-    inline int& operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
+    inline MeshEdge() : v{0, 0} {}
+    inline MeshEdge(uint v0, uint v1) : v{v0, v1} {}
+    inline uint& operator[] (uint i) { return v[i]; }
+    inline const uint& operator[] (uint i) const { return v[i]; }
 };
 
 struct MeshTri
 {
-    int v[3];
+    uint v[3];
 
-    inline MeshTri() : v{-1, -1, -1} {}
-    inline MeshTri(int v0, int v1, int v2) : v{v0, v1, v2} {}
-    inline int& operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
+    inline MeshTri() : v{0, 0, 0} {}
+    inline MeshTri(uint v0, uint v1, uint v2) : v{v0, v1, v2} {}
+    inline uint& operator[] (uint i) { return v[i]; }
+    inline const uint& operator[] (uint i) const { return v[i]; }
 };
 
 
 struct MeshTet
 {
-    int v[4];
+    uint v[4];
 
-    inline MeshTet() : v{-1, -1, -1, -1} {}
-    inline MeshTet(int v0, int v1, int v2, int v3) : v{v0, v1, v2, v3} {}
-    inline int& operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
+    inline MeshTet() : v{0, 0, 0, 0} {}
+    inline MeshTet(uint v0, uint v1, uint v2, uint v3) : v{v0, v1, v2, v3} {}
+    inline uint& operator[] (uint i) { return v[i]; }
+    inline const uint& operator[] (uint i) const { return v[i]; }
 
     static const int ELEMENT_TYPE = 0;
-    static const int VERTEX_COUNT = 4;
-    static const int EDGE_COUNT = 6;
+    static const uint VERTEX_COUNT = 4;
+    static const uint EDGE_COUNT = 6;
     static const MeshEdge edges[EDGE_COUNT];
-    static const int TRI_COUNT = 4;
+    static const uint TRI_COUNT = 4;
     static const MeshTri tris[TRI_COUNT];
-    static const int TET_COUNT = 1;
+    static const uint TET_COUNT = 1;
     static const MeshTet tets[TET_COUNT];
 };
 
 
 struct MeshPri
 {
-    int v[6];
+    uint v[6];
 
-    inline MeshPri() : v{-1, -1, -1, -1, -1, -1} {}
-    inline MeshPri(int v0, int v1, int v2,
-            int v3, int v4, int v5) :
+    inline MeshPri() : v{0, 0, 0, 0, 0, 0} {}
+    inline MeshPri(uint v0, uint v1, uint v2,
+                   uint v3, uint v4, uint v5) :
         v{v0, v1, v2, v3, v4, v5} {}
-    inline int operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
+    inline uint operator[] (uint i) { return v[i]; }
+    inline const uint& operator[] (uint i) const { return v[i]; }
 
     static const int ELEMENT_TYPE = 1;
-    static const int VERTEX_COUNT = 6;
-    static const int EDGE_COUNT = 9;
+    static const uint VERTEX_COUNT = 6;
+    static const uint EDGE_COUNT = 9;
     static const MeshEdge edges[EDGE_COUNT];
-    static const int TRI_COUNT = 8;
+    static const uint TRI_COUNT = 8;
     static const MeshTri tris[TRI_COUNT];
-    static const int TET_COUNT = 3;
+    static const uint TET_COUNT = 3;
     static const MeshTet tets[TET_COUNT];
 };
 
 
 struct MeshHex
 {
-    int v[8];
+    uint v[8];
 
-    inline MeshHex() : v{-1, -1, -1, -1, -1, -1, -1, -1} {}
-    inline MeshHex(int v0, int v1, int v2, int v3,
-            int v4, int v5, int v6, int v7) :
+    inline MeshHex() : v{0, 0, 0, 0, 0, 0, 0, 0} {}
+    inline MeshHex(uint v0, uint v1, uint v2, uint v3,
+                   uint v4, uint v5, uint v6, uint v7) :
         v{v0, v1, v2, v3, v4, v5, v6, v7} {}
-    inline int operator[] (int i) { return v[i]; }
-    inline const int& operator[] (int i) const { return v[i]; }
+    inline uint operator[] (uint i) { return v[i]; }
+    inline const uint& operator[] (uint i) const { return v[i]; }
 
     static const int ELEMENT_TYPE = 2;
-    static const int VERTEX_COUNT = 8;
-    static const int EDGE_COUNT = 12;
+    static const uint VERTEX_COUNT = 8;
+    static const uint EDGE_COUNT = 12;
     static const MeshEdge edges[EDGE_COUNT];
-    static const int TRI_COUNT = 12;
+    static const uint TRI_COUNT = 12;
     static const MeshTri tris[TRI_COUNT];
-    static const int TET_COUNT = 5;
+    static const uint TET_COUNT = 5;
     static const MeshTet tets[TET_COUNT];
 };
 
@@ -123,20 +126,20 @@ private:
 
 struct MeshNeigVert
 {
-    int v;
+    uint v;
 
     inline MeshNeigVert() : v(0) {}
-    inline MeshNeigVert(int v) : v(v) {}
-    inline operator int() const {return v;}
+    inline MeshNeigVert(uint v) : v(v) {}
+    inline operator uint() const {return v;}
 };
 
 struct MeshNeigElem
 {
     int type;
-    int id;
+    uint id;
 
     inline MeshNeigElem() : type(-1), id(0) {}
-    inline MeshNeigElem(int type, int id) : type(type), id(id) {}
+    inline MeshNeigElem(int type, uint id) : type(type), id(id) {}
 };
 
 struct MeshTopo
@@ -146,12 +149,12 @@ struct MeshTopo
     std::vector<MeshNeigElem> neighborElems;
 
     bool isBoundary;
-    const MeshBound& boundaryCallback;
+    const MeshBound& snapToBoundary;
     static const MeshBound NO_BOUNDARY;
 
     MeshTopo();
     MeshTopo(bool isFixed);
-    MeshTopo(const MeshBound& boundaryCallback);
+    MeshTopo(const MeshBound& snapToBoundary);
 };
 
 

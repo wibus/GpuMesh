@@ -19,7 +19,7 @@ struct GpuVert
 
 struct GpuEdge
 {
-    int v[2];
+    GLuint v[2];
 
     inline GpuEdge() {}
     inline GpuEdge(const MeshEdge& e) : v{e.v[0], e.v[1]} {}
@@ -29,7 +29,7 @@ struct GpuEdge
 
 struct GpuTri
 {
-    int v[3];
+    GLuint v[3];
 
     inline GpuTri() {}
     inline GpuTri(const MeshTri& t) : v{t.v[0], t.v[1], t.v[2]} {}
@@ -39,7 +39,7 @@ struct GpuTri
 
 struct GpuTet
 {
-    int v[4];
+    GLuint v[4];
 
     inline GpuTet() {}
     inline GpuTet(const MeshTet& t) : v{t.v[0], t.v[1], t.v[2], t.v[3]} {}
@@ -49,7 +49,7 @@ struct GpuTet
 
 struct GpuPri
 {
-    int v[6];
+    GLuint v[6];
 
     inline GpuPri() {}
     inline GpuPri(const MeshPri& p) : v{p.v[0], p.v[1], p.v[2], p.v[3], p.v[4], p.v[5]} {}
@@ -58,7 +58,7 @@ struct GpuPri
 
 struct GpuHex
 {
-    int v[8];
+    GLuint v[8];
 
     inline GpuHex() {}
     inline GpuHex(const MeshHex& h) : v{h.v[0], h.v[1], h.v[2], h.v[3], h.v[4], h.v[5], h.v[6], h.v[7]} {}
@@ -67,7 +67,7 @@ struct GpuHex
 
 struct GpuNeigVert
 {
-    int v;
+    GLuint v;
 
     inline GpuNeigVert() {}
     inline GpuNeigVert(const MeshNeigVert& n) : v(n.v) {}
@@ -77,7 +77,7 @@ struct GpuNeigVert
 struct GpuNeigElem
 {
     int type;
-    int id;
+    GLuint id;
 
     inline GpuNeigElem() {}
     inline GpuNeigElem(const MeshNeigElem& n) : type(n.type), id(n.id) {}
@@ -93,21 +93,21 @@ struct GpuTopo
     int type;
 
     // Neighbor vertices list start location
-    int neigVertBase;
+    GLuint neigVertBase;
 
     // Neighbor vertices count
-    int neigVertCount;
+    GLuint neigVertCount;
 
     // Neighbor elements list start location
-    int neigElemBase;
+    GLuint neigElemBase;
 
     // Neighbor elements count
-    int neigElemCount;
+    GLuint neigElemCount;
 
     inline GpuTopo() : type(0), neigVertBase(0), neigVertCount(0),
                                 neigElemBase(0), neigElemCount(0)  {}
-    inline GpuTopo(int type, int neigVertBase, int neigVertCount,
-                             int neigElemBase, int neigElemCount) :
+    inline GpuTopo(int type, uint neigVertBase, uint neigVertCount,
+                             uint neigElemBase, uint neigElemCount) :
         type(type), neigVertBase(neigVertBase), neigVertCount(neigVertCount),
                     neigElemBase(neigElemBase), neigElemCount(neigElemCount) {}
 };

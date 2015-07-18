@@ -51,7 +51,7 @@ AbstractEvaluator::~AbstractEvaluator()
     glDeleteBuffers(1, &_qualSsbo);
 }
 
-double AbstractEvaluator::tetrahedronQuality(const Mesh& mesh, const MeshTet& tet) const
+double AbstractEvaluator::tetQuality(const Mesh& mesh, const MeshTet& tet) const
 {
     const glm::dvec3 verts[] = {
         mesh.vert[tet.v[0]],
@@ -60,10 +60,10 @@ double AbstractEvaluator::tetrahedronQuality(const Mesh& mesh, const MeshTet& te
         mesh.vert[tet.v[3]],
     };
 
-    return tetrahedronQuality(verts);
+    return tetQuality(verts);
 }
 
-double AbstractEvaluator::prismQuality(const Mesh& mesh, const MeshPri& pri) const
+double AbstractEvaluator::priQuality(const Mesh& mesh, const MeshPri& pri) const
 {
     const glm::dvec3 verts[] = {
         mesh.vert[pri.v[0]],
@@ -74,10 +74,10 @@ double AbstractEvaluator::prismQuality(const Mesh& mesh, const MeshPri& pri) con
         mesh.vert[pri.v[5]]
     };
 
-    return prismQuality(verts);
+    return priQuality(verts);
 }
 
-double AbstractEvaluator::hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const
+double AbstractEvaluator::hexQuality(const Mesh& mesh, const MeshHex& hex) const
 {
     const glm::dvec3 verts[] = {
         mesh.vert[hex.v[0]],
@@ -90,7 +90,7 @@ double AbstractEvaluator::hexahedronQuality(const Mesh& mesh, const MeshHex& hex
         mesh.vert[hex.v[7]]
     };
 
-    return hexahedronQuality(verts);
+    return hexQuality(verts);
 }
 
 void AbstractEvaluator::evaluateCpuMeshQuality(
@@ -107,13 +107,13 @@ void AbstractEvaluator::evaluateCpuMeshQuality(
     int idx = 0;
 
     for(int i=0; i < tetCount; ++i, ++idx)
-        qualities[idx] = tetrahedronQuality(mesh, mesh.tetra[i]);
+        qualities[idx] = tetQuality(mesh, mesh.tetra[i]);
 
     for(int i=0; i < priCount; ++i, ++idx)
-        qualities[idx] = prismQuality(mesh, mesh.prism[i]);
+        qualities[idx] = priQuality(mesh, mesh.prism[i]);
 
     for(int i=0; i < hexCount; ++i, ++idx)
-        qualities[idx] = hexahedronQuality(mesh, mesh.hexa[i]);
+        qualities[idx] = hexQuality(mesh, mesh.hexa[i]);
 
 
     minQuality = 1.0;
@@ -279,6 +279,11 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     glGenBuffers(1, &_qualSsbo);
 }
 
+string AbstractEvaluator::shapeMeasureShader() const
+{
+    return _shapeMeasuresShader;
+}
+
 bool AbstractEvaluator::assessMeasureValidy()
 {
     Mesh mesh;
@@ -306,9 +311,9 @@ bool AbstractEvaluator::assessMeasureValidy()
     const MeshTet tet = MeshTet(0, 1, 2, 3);
     const MeshPri pri = MeshPri(4, 5, 6, 7, 8, 9);
     const MeshHex hex = MeshHex(10, 11, 12, 13, 14, 15, 16, 17);
-    double regularTet = tetrahedronQuality(mesh, tet);
-    double regularPri = prismQuality(mesh, pri);
-    double regularHex = hexahedronQuality(mesh, hex);
+    double regularTet = tetQuality(mesh, tet);
+    double regularPri = priQuality(mesh, pri);
+    double regularHex = hexQuality(mesh, hex);
 
     if(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
        glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&

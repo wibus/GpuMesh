@@ -37,7 +37,7 @@ public:
 
 
 protected:
-    virtual void initializeProgram(Mesh& mesh);
+    virtual void initializeProgram(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateCpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateGpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, bool gpu);
@@ -54,6 +54,7 @@ protected:
 
     bool _initialized;
     std::string _smoothShader;
+    std::string _shapeMeasureShader;
     cellar::GlProgram _smoothingProgram;
 
     typedef std::function<void(Mesh&, AbstractEvaluator&)> ImplementationFunc;

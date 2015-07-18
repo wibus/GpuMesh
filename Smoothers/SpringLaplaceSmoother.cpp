@@ -57,7 +57,7 @@ void SpringLaplaceSmoother::smoothCpuMesh(
                 pos += _moveFactor * (patchCenter - pos);
 
                 if(topo.isBoundary)
-                    pos = topo.boundaryCallback(pos);
+                    pos = topo.snapToBoundary(pos);
             }
         }
     }

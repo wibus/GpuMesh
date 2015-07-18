@@ -22,102 +22,121 @@ void QualityLaplaceSmoother::smoothCpuMesh(
         Mesh& mesh,
         AbstractEvaluator& evaluator)
 {
+    std::vector<MeshVert>& verts = mesh.vert;
+    std::vector<MeshTet>& tets = mesh.tetra;
+    std::vector<MeshPri>& pris = mesh.prism;
+    std::vector<MeshHex>& hexs = mesh.hexa;
+
+
     _smoothPassId = 0;
     while(evaluateCpuMeshQuality(mesh, evaluator))
     {
-        size_t propositionCounts[] = {0, 0, 0, 0};
-
-        int vertCount = mesh.vert.size();
-        for(int v = 0; v < vertCount; ++v)
+        size_t vertCount = verts.size();
+        for(size_t v = 0; v < vertCount; ++v)
         {
-            glm::dvec3& pos = mesh.vert[v].p;
             const MeshTopo& topo = mesh.topo[v];
-            if(topo.isFixed)
+            const vector<MeshNeigElem>& neighborElems = topo.neighborElems;
+            size_t neigElemCount = neighborElems.size();
+            if(topo.isFixed || neigElemCount == 0)
                 continue;
 
-            const vector<MeshNeigVert>& neighborVerts = topo.neighborVerts;
-            if(!neighborVerts.empty())
+            // Compute patch center
+            size_t totalVertCount = 0;
+            glm::dvec3 patchCenter(0.0);
+            for(size_t n=0; n < neigElemCount; ++n)
             {
-                // Compute patch center
-                glm::dvec3 patchCenter(0.0);
-                int neigVertCount = neighborVerts.size();
-                for(int i=0; i < neigVertCount; ++i)
+                const MeshNeigElem& neigElem = neighborElems[n];
+                switch(neigElem.type)
                 {
-                    patchCenter += glm::dvec3(mesh.vert[neighborVerts[i]]);
+                case MeshTet::ELEMENT_TYPE:
+                    totalVertCount += MeshTet::VERTEX_COUNT - 1;
+                    for(size_t i=0; i < MeshTet::VERTEX_COUNT; ++i)
+                        patchCenter += verts[tets[neigElem.id].v[i]].p;
+                    break;
+
+                case MeshPri::ELEMENT_TYPE:
+                    totalVertCount += MeshPri::VERTEX_COUNT - 1;
+                    for(size_t i=0; i < MeshPri::VERTEX_COUNT; ++i)
+                        patchCenter += verts[pris[neigElem.id].v[i]].p;
+                    break;
+
+                case MeshHex::ELEMENT_TYPE:
+                    totalVertCount += MeshHex::VERTEX_COUNT - 1;
+                    for(size_t i=0; i < MeshHex::VERTEX_COUNT; ++i)
+                        patchCenter += verts[hexs[neigElem.id].v[i]].p;
+                    break;
                 }
-                patchCenter /= (double) neigVertCount;
-                glm::dvec3 centerDist = patchCenter - pos;
-
-
-                // Define propositions for new vertex's position
-                const int PROPOSITION_COUNT = 4;
-                const double AUX_DISTANCE = 0.2;
-                glm::dvec3 propositions[PROPOSITION_COUNT] = {
-                    pos,
-                    patchCenter - AUX_DISTANCE * centerDist,
-                    patchCenter,
-                    patchCenter + AUX_DISTANCE * centerDist,
-                };
-
-                if(topo.isBoundary)
-                    for(int p=1; p < PROPOSITION_COUNT; ++p)
-                        propositions[p] = topo.boundaryCallback(propositions[p]);
-
-
-                // Choose best position based on quality geometric mean
-                int bestProposition = 0;
-                double bestQualityMean = 0.0;
-                size_t neighborElemCount = topo.neighborElems.size();
-                for(int p=0; p < PROPOSITION_COUNT; ++p)
-                {
-                    double qualityGeometricMean = 1.0;
-                    for(int n=0; n < neighborElemCount; ++n)
-                    {
-                        // Since 'pos' is a reference on vertex's position
-                        // modifing its value here should be seen by the evaluator
-                        pos = propositions[p];
-
-                        const MeshNeigElem& neighborElem = topo.neighborElems[n];
-                        if(neighborElem.type == MeshTet::ELEMENT_TYPE)
-                        {
-                            qualityGeometricMean *= evaluator.tetrahedronQuality(
-                                mesh, mesh.tetra[neighborElem.id]);
-                        }
-                        else if(neighborElem.type == MeshPri::ELEMENT_TYPE)
-                        {
-                            qualityGeometricMean *= evaluator.prismQuality(
-                                mesh, mesh.prism[neighborElem.id]);
-                        }
-                        else if(neighborElem.type == MeshHex::ELEMENT_TYPE)
-                        {
-                            qualityGeometricMean *= evaluator.hexahedronQuality(
-                                mesh, mesh.hexa[neighborElem.id]);
-                        }
-                    }
-
-                    qualityGeometricMean = glm::pow(
-                        qualityGeometricMean,
-                        1.0 / neighborElemCount);
-
-                    if(qualityGeometricMean > bestQualityMean)
-                    {
-                        bestQualityMean = qualityGeometricMean;
-                        bestProposition = p;
-                    }
-                }
-
-
-                // Update vertex's position
-                pos = propositions[bestProposition];
-                ++propositionCounts[bestProposition];
             }
-        }
 
-        cout << "Propositions counts"
-             << ": " << propositionCounts[0]
-             << ", " << propositionCounts[1]
-             << ", " << propositionCounts[2]
-             << ", " << propositionCounts[3] << endl;
+            glm::dvec3& pos = verts[v].p;
+            patchCenter = (patchCenter - pos * double(neigElemCount))
+                            / double(totalVertCount);
+            glm::dvec3 centerDist = patchCenter - pos;
+
+
+            // Define propositions for new vertex's position
+            const uint PROPOSITION_COUNT = 4;
+            glm::dvec3 propositions[PROPOSITION_COUNT] = {
+                pos,
+                patchCenter - centerDist * _moveFactor,
+                patchCenter,
+                patchCenter + centerDist * _moveFactor,
+            };
+
+            if(topo.isBoundary)
+                for(uint p=1; p < PROPOSITION_COUNT; ++p)
+                    propositions[p] = topo.snapToBoundary(propositions[p]);
+
+
+            // Choose best position based on quality geometric mean
+            uint bestProposition = 0;
+            double bestQualityMean = 0.0;
+            for(uint p=0; p < PROPOSITION_COUNT; ++p)
+            {
+                double qualityGeometricMean = 1.0;
+                for(size_t n=0; n < neigElemCount; ++n)
+                {
+                    // Since 'pos' is a reference on vertex's position
+                    // modifing its value here should be seen by the evaluator
+                    pos = propositions[p];
+
+                    const MeshNeigElem& neigElem = topo.neighborElems[n];
+                    switch(neigElem.type)
+                    {
+                    case MeshTet::ELEMENT_TYPE:
+                        qualityGeometricMean *= evaluator.tetQuality(
+                            mesh, tets[neigElem.id]);
+                        break;
+
+                    case MeshPri::ELEMENT_TYPE:
+                        qualityGeometricMean *= evaluator.priQuality(
+                            mesh, pris[neigElem.id]);
+                        break;
+
+                    case MeshHex::ELEMENT_TYPE:
+                        qualityGeometricMean *= evaluator.hexQuality(
+                            mesh, hexs[neigElem.id]);
+                        break;
+                    }
+
+                    if(qualityGeometricMean <= 0.0)
+                    {
+                        qualityGeometricMean = 0.0;
+                        break;
+                    }
+                }
+
+                if(qualityGeometricMean > bestQualityMean)
+                {
+                    bestQualityMean = qualityGeometricMean;
+                    bestProposition = p;
+                }
+            }
+
+
+            // Update vertex's position
+            pos = propositions[bestProposition];
+        }
     }
 
 

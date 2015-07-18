@@ -4,50 +4,117 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 uniform float MoveCoeff;
 
 
+float tetQuality(Tet tet);
+float priQuality(Pri pri);
+float hexQuality(Hex hex);
 vec3 snapToBoundary(int boundaryID, vec3 pos);
+
 
 void main()
 {
     uint uid = gl_GlobalInvocationID.x;
 
-    if(uid < verts.length())
+    if(uid >= verts.length())
+        return;
+
+    Topo topo = topos[uid];
+    uint neigElemCount = topo.neigElemCount;
+    if(topo.type == TOPO_FIXED || neigElemCount == 0)
+        return;
+
+
+    // Compute patch center
+    uint totalVertCount = 0;
+    vec3 patchCenter = vec3(0.0);
+    for(uint i=0, n = topo.neigElemBase; i<neigElemCount; ++i, ++n)
     {
-
-        // Read
-        vec3 pos = vec3(verts[uid].p);
-
-
-        // Modification
-        int type = topos[uid].type;
-        int count = topos[uid].neigVertCount;
-        if(type >= 0 && count > 0)
+        NeigElem neigElem = neigElems[n];
+        switch(neigElem.type)
         {
-            float weightSum = 0.0;
-            vec3 barycenter = vec3(0.0);
+        case TET_ELEMENT_TYPE:
+            totalVertCount += TET_VERTEX_COUNT - 1;
+            for(uint i=0; i < TET_VERTEX_COUNT; ++i)
+                patchCenter += vec3(verts[tets[neigElem.id].v[i]].p);
+            break;
 
-            int n = topos[uid].neigVertBase;
-            for(int i=0; i<count; ++i, ++n)
+        case PRI_ELEMENT_TYPE:
+            totalVertCount += PRI_VERTEX_COUNT - 1;
+            for(uint i=0; i < PRI_VERTEX_COUNT; ++i)
+                patchCenter += vec3(verts[pris[neigElem.id].v[i]].p);
+            break;
+
+        case HEX_ELEMENT_TYPE:
+            totalVertCount += HEX_VERTEX_COUNT - 1;
+            for(uint i=0; i < HEX_VERTEX_COUNT; ++i)
+                patchCenter += vec3(verts[hexs[neigElem.id].v[i]].p);
+            break;
+        }
+    }
+
+    vec3 pos = vec3(verts[uid].p);
+    patchCenter = (patchCenter - pos * float(neigElemCount))
+                    / float(totalVertCount);
+    vec3 centerDist = patchCenter - pos;
+
+
+    // Define propositions for new vertex's position
+    const uint PROPOSITION_COUNT = 4;
+    vec3 propositions[PROPOSITION_COUNT] = vec3[](
+        pos,
+        patchCenter - centerDist * MoveCoeff,
+        patchCenter,
+        patchCenter + centerDist * MoveCoeff
+    );
+
+    if(topo.type > 0)
+        for(uint p=1; p < PROPOSITION_COUNT; ++p)
+            propositions[p] = snapToBoundary(topo.type, propositions[p]);
+
+
+
+    // Choose best position based on quality geometric mean
+    uint bestProposition = 0;
+    float bestQualityMean = 0.0;
+    for(uint p=0; p < PROPOSITION_COUNT; ++p)
+    {
+        float qualityGeometricMean = 1.0;
+        for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
+        {
+            // Quality evaluation functions will use this updated position
+            // to compute element shape measures.
+            verts[uid].p = vec4(propositions[p], 0.0);
+
+            NeigElem neigElem = neigElems[n];
+            switch(neigElem.type)
             {
-                vec3 npos = vec3(verts[neigVerts[n].v].p);
+            case TET_ELEMENT_TYPE:
+                qualityGeometricMean *= tetQuality(tets[neigElem.id]);
+                break;
 
-                vec3 dist = npos - pos;
-                float weight = dot(dist, dist) + 0.0001;
+            case PRI_ELEMENT_TYPE:
+                qualityGeometricMean *= priQuality(pris[neigElem.id]);
+                break;
 
-                barycenter += npos * weight;
-                weightSum += weight;
+            case HEX_ELEMENT_TYPE:
+                qualityGeometricMean *= hexQuality(hexs[neigElem.id]);
+                break;
             }
 
-            barycenter /= weightSum;
-            pos = mix(pos, barycenter, MoveCoeff);
-
-            if(type > 0)
+            if(qualityGeometricMean <= 0.0)
             {
-                pos = snapToBoundary(type, pos);
+                qualityGeometricMean = 0.0;
+                break;
             }
         }
 
-
-        // Write
-        verts[uid].p = vec4(pos, 0.0);
+        if(qualityGeometricMean > bestQualityMean)
+        {
+            bestQualityMean = qualityGeometricMean;
+            bestProposition = p;
+        }
     }
+
+
+    // Update vertex's position
+    verts[uid].p = vec4(propositions[bestProposition], 0.0);
 }

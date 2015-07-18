@@ -12,14 +12,14 @@ public:
     AbstractEvaluator(const std::string& shapeMeasuresShader);
     virtual ~AbstractEvaluator();
 
-    virtual double tetrahedronQuality(const Mesh& mesh, const MeshTet& tet) const;
-    virtual double prismQuality(const glm::dvec3 verts[]) const = 0;
+    virtual double tetQuality(const Mesh& mesh, const MeshTet& tet) const;
+    virtual double tetQuality(const glm::dvec3 verts[]) const = 0;
 
-    virtual double prismQuality(const Mesh& mesh, const MeshPri& pri) const;
-    virtual double hexahedronQuality(const glm::dvec3 verts[]) const = 0;
+    virtual double priQuality(const Mesh& mesh, const MeshPri& pri) const;
+    virtual double priQuality(const glm::dvec3 verts[]) const = 0;
 
-    virtual double hexahedronQuality(const Mesh& mesh, const MeshHex& hex) const;
-    virtual double tetrahedronQuality(const glm::dvec3 verts[]) const = 0;
+    virtual double hexQuality(const Mesh& mesh, const MeshHex& hex) const;
+    virtual double hexQuality(const glm::dvec3 verts[]) const = 0;
 
 
     virtual void evaluateCpuMeshQuality(
@@ -31,6 +31,8 @@ public:
             const Mesh& mesh,
             double& minQuality,
             double& qualityMean);
+
+    virtual std::string shapeMeasureShader() const;
 
 
     virtual bool assessMeasureValidy();

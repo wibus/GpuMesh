@@ -303,7 +303,7 @@ void SurfacicRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = evaluator.tetrahedronQuality(mesh, tet);
+        double quality = evaluator.tetQuality(mesh, tet);
 
         for(int f=0; f < MeshTet::TRI_COUNT; ++f)
         {
@@ -342,7 +342,7 @@ void SurfacicRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = evaluator.prismQuality(mesh, pri);
+        double quality = evaluator.priQuality(mesh, pri);
 
         for(int f=0; f < MeshPri::TRI_COUNT; ++f)
         {
@@ -385,7 +385,7 @@ void SurfacicRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = evaluator.hexahedronQuality(mesh, hex);
+        double quality = evaluator.hexQuality(mesh, hex);
 
         for(int f=0; f < MeshHex::TRI_COUNT; ++f)
         {

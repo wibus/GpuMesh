@@ -96,6 +96,16 @@ void GpuMeshCharacter::enterStage()
     _ups->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _ups->setHeight(16);
 
+    // Assess evaluators validy
+    for(auto evalName : _availableEvaluators.details().options)
+    {
+        std::shared_ptr<AbstractEvaluator> evaluator;
+        if(_availableEvaluators.select(evalName, evaluator))
+        {
+            evaluator->assessMeasureValidy();
+        }
+    }
+
     setupInstalledRenderer();
     _isEntered = true;
 }

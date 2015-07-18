@@ -89,7 +89,7 @@ void GpuMesh::updateGpuTopoly()
         int neigVertCount = meshTopo.neighborVerts.size();
         int neigElemCount = meshTopo.neighborElems.size();
         int type = meshTopo.isFixed ? -1 :
-                meshTopo.boundaryCallback.id();
+                meshTopo.snapToBoundary.id();
 
         topoBuff[i] = GpuTopo(type, neigVertBase, neigVertCount,
                                     neigElemBase, neigElemCount);
@@ -239,23 +239,23 @@ void GpuMesh::uploadElement(
 {
     for(int i=0; i < edgeCount; ++i)
     {
-        program.setInt(prefix + "_EDGES[" + to_string(i) + "].v[0]", edges[i][0]);
-        program.setInt(prefix + "_EDGES[" + to_string(i) + "].v[1]", edges[i][1]);
+        program.setUnsigned(prefix + "_EDGES[" + to_string(i) + "].v[0]", edges[i][0]);
+        program.setUnsigned(prefix + "_EDGES[" + to_string(i) + "].v[1]", edges[i][1]);
     }
 
     for(int i=0; i < triCount; ++i)
     {
-        program.setInt(prefix + "_TRIS[" + to_string(i) + "].v[0]", tris[i][0]);
-        program.setInt(prefix + "_TRIS[" + to_string(i) + "].v[1]", tris[i][1]);
-        program.setInt(prefix + "_TRIS[" + to_string(i) + "].v[2]", tris[i][2]);
+        program.setUnsigned(prefix + "_TRIS[" + to_string(i) + "].v[0]", tris[i][0]);
+        program.setUnsigned(prefix + "_TRIS[" + to_string(i) + "].v[1]", tris[i][1]);
+        program.setUnsigned(prefix + "_TRIS[" + to_string(i) + "].v[2]", tris[i][2]);
     }
 
     for(int i=0; i < tetCount; ++i)
     {
-        program.setInt(prefix + "_TETS[" + to_string(i) + "].v[0]", tets[i][0]);
-        program.setInt(prefix + "_TETS[" + to_string(i) + "].v[1]", tets[i][1]);
-        program.setInt(prefix + "_TETS[" + to_string(i) + "].v[2]", tets[i][2]);
-        program.setInt(prefix + "_TETS[" + to_string(i) + "].v[3]", tets[i][3]);
+        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[0]", tets[i][0]);
+        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[1]", tets[i][1]);
+        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[2]", tets[i][2]);
+        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[3]", tets[i][3]);
     }
 }
 

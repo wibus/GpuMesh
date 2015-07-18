@@ -94,7 +94,7 @@ const MeshTri MeshHex::tris[MeshHex::TRI_COUNT] = {
 
 const MeshTet MeshHex::tets[MeshHex::TET_COUNT] = {
     MeshTet(0, 1, 4, 2),
-    MeshTet(3, 1, 7, 2),
+    MeshTet(3, 2, 7, 1),
     MeshTet(5, 1, 7, 4),
     MeshTet(6, 2, 4, 7),
     MeshTet(1, 7, 4, 2)
@@ -123,7 +123,7 @@ const MeshBound MeshTopo::NO_BOUNDARY = MeshBound(0);
 MeshTopo::MeshTopo() :
     isFixed(false),
     isBoundary(false),
-    boundaryCallback(NO_BOUNDARY)
+    snapToBoundary(NO_BOUNDARY)
 {
 }
 
@@ -131,7 +131,7 @@ MeshTopo::MeshTopo(
         bool isFixed) :
     isFixed(isFixed),
     isBoundary(false),
-    boundaryCallback(NO_BOUNDARY)
+    snapToBoundary(NO_BOUNDARY)
 {
 }
 
@@ -139,7 +139,7 @@ MeshTopo::MeshTopo(
         const MeshBound& boundaryCallback) :
     isFixed(false),
     isBoundary(&boundaryCallback != &NO_BOUNDARY),
-    boundaryCallback(boundaryCallback)
+    snapToBoundary(boundaryCallback)
 {
 }
 

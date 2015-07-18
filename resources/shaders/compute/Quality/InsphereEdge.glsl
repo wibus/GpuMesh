@@ -42,12 +42,12 @@ float tetQuality(Tet tet)
 float priQuality(Pri pri)
 {
     // Prism quality ~= mean of 6 possible tetrahedrons from prism triangular faces
-    Tet tetA = Tet(int[] (pri.v[4], pri.v[1], pri.v[5], pri.v[3]));
-    Tet tetB = Tet(int[] (pri.v[5], pri.v[2], pri.v[4], pri.v[0]));
-    Tet tetC = Tet(int[] (pri.v[2], pri.v[1], pri.v[5], pri.v[3]));
-    Tet tetD = Tet(int[] (pri.v[3], pri.v[2], pri.v[4], pri.v[0]));
-    Tet tetE = Tet(int[] (pri.v[0], pri.v[1], pri.v[5], pri.v[3]));
-    Tet tetF = Tet(int[] (pri.v[1], pri.v[2], pri.v[4], pri.v[0]));
+    Tet tetA = Tet(uint[] (pri.v[4], pri.v[1], pri.v[5], pri.v[3]));
+    Tet tetB = Tet(uint[] (pri.v[5], pri.v[2], pri.v[4], pri.v[0]));
+    Tet tetC = Tet(uint[] (pri.v[2], pri.v[1], pri.v[5], pri.v[3]));
+    Tet tetD = Tet(uint[] (pri.v[3], pri.v[2], pri.v[4], pri.v[0]));
+    Tet tetE = Tet(uint[] (pri.v[0], pri.v[1], pri.v[5], pri.v[3]));
+    Tet tetF = Tet(uint[] (pri.v[1], pri.v[2], pri.v[4], pri.v[0]));
 
     float tetAq = tetQuality(tetA);
     float tetBq = tetQuality(tetB);
@@ -61,8 +61,8 @@ float priQuality(Pri pri)
 
 float hexQuality(Hex hex)
 {
-    Tet tetA = Tet(int[] (hex.v[0], hex.v[3], hex.v[5], hex.v[6]));
-    Tet tetB = Tet(int[] (hex.v[1], hex.v[2], hex.v[7], hex.v[4]));
+    Tet tetA = Tet(uint[] (hex.v[0], hex.v[3], hex.v[5], hex.v[6]));
+    Tet tetB = Tet(uint[] (hex.v[1], hex.v[2], hex.v[7], hex.v[4]));
 
     float tetAQuality = tetQuality(tetA);
     float tetBQuality = tetQuality(tetB);

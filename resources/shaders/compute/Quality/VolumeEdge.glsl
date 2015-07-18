@@ -26,8 +26,8 @@ float tetQuality(Tet tet)
     }
     float edgeSum = sqrt(edge2Sum);
 
-    return volume / (edgeSum*edgeSum*edgeSum)
-             * 20.7846096908; // Normalization constant
+    return min(volume / (edgeSum*edgeSum*edgeSum)
+            / 0.048112522432468815548, 1.0); // Normalization constant
 }
 
 float priQuality(Pri pri)
@@ -59,8 +59,8 @@ float priQuality(Pri pri)
     }
     float edgeSum = sqrt(edge2Sum);
 
-    return volume / (edgeSum*edgeSum*edgeSum)
-             * 11.3341912208; // Normalization constant
+    return min(volume / (edgeSum*edgeSum*edgeSum)
+            / 0.088228615568855695006, 1.0); // Normalization constant
 }
 
 float hexQuality(Hex hex)
@@ -94,6 +94,6 @@ float hexQuality(Hex hex)
     }
     float edgeSum = sqrt(edge2Sum);
 
-    return volume / (edgeSum*edgeSum*edgeSum)
-            * 10.3923048454; // Normalization constant
+    return min(volume / (edgeSum*edgeSum*edgeSum)
+            / 0.14433756729740643276, 1.0); // Normalization constant
 }

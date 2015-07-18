@@ -11,27 +11,27 @@ struct Vert
 
 struct Edge
 {
-    int v[2];
+    uint v[2];
 };
 
 struct Tri
 {
-    int v[3];
+    uint v[3];
 };
 
 struct Tet
 {
-    int v[4];
+    uint v[4];
 };
 
 struct Pri
 {
-    int v[6];
+    uint v[6];
 };
 
 struct Hex
 {
-    int v[8];
+    uint v[8];
 };
 
 // Topology indirection table
@@ -39,24 +39,27 @@ struct Hex
 // type ==  0 : free vertex
 // type  >  0 : boundary vertex
 // When type > 0, type is boundary's ID
+const int TOPO_FIXED = -1;
+const int TOPO_FREE = 0;
+
 struct Topo
 {
     int type;
-    int neigVertBase;
-    int neigVertCount;
-    int neigElemBase;
-    int neigElemCount;
+    uint neigVertBase;
+    uint neigVertCount;
+    uint neigElemBase;
+    uint neigElemCount;
 };
 
 struct NeigVert
 {
-    int v;
+    uint v;
 };
 
 struct NeigElem
 {
     int type;
-    int id;
+    uint id;
 };
 
 ///////////////////////
@@ -97,7 +100,8 @@ layout(shared, binding = 6) buffer NeigElems
     NeigElem neigElems[];
 };
 
-const int FIRST_FREE_BUFFER_BINDING = 7;
+const uint FIRST_FREE_BUFFER_BINDING = 7;
+
 
 //////////////////////////////////
 // Mesh elements decompositions //
@@ -106,37 +110,43 @@ const int FIRST_FREE_BUFFER_BINDING = 7;
 // Tetrahedron
 const int TET_ELEMENT_TYPE = 0;
 
-const int TET_EDGE_COUNT = 6;
+const uint TET_VERTEX_COUNT = 4;
+
+const uint TET_EDGE_COUNT = 6;
 uniform Edge TET_EDGES[TET_EDGE_COUNT];
 
-const int TET_TRI_COUNT = 4;
+const uint TET_TRI_COUNT = 4;
 uniform Tri TET_TRIS[TET_TRI_COUNT];
 
-const int TET_TET_COUNT = 1;
+const uint TET_TET_COUNT = 1;
 uniform Tet TET_TETS[TET_TET_COUNT];
 
 
 // Prism
 const int PRI_ELEMENT_TYPE = 1;
 
-const int PRI_EDGE_COUNT = 9;
+const uint PRI_VERTEX_COUNT = 6;
+
+const uint PRI_EDGE_COUNT = 9;
 uniform Edge PRI_EDGES[PRI_EDGE_COUNT];
 
-const int PRI_TRI_COUNT = 8;
+const uint PRI_TRI_COUNT = 8;
 uniform Tri PRI_TRIS[PRI_TRI_COUNT];
 
-const int PRI_TET_COUNT = 3;
+const uint PRI_TET_COUNT = 3;
 uniform Tet PRI_TETS[PRI_TET_COUNT];
 
 
 // Hexahedron
 const int HEX_ELEMENT_TYPE = 2;
 
-const int HEX_EDGE_COUNT = 12;
+const uint HEX_VERTEX_COUNT = 8;
+
+const uint HEX_EDGE_COUNT = 12;
 uniform Edge HEX_EDGES[HEX_EDGE_COUNT];
 
-const int HEX_TRI_COUNT = 12;
+const uint HEX_TRI_COUNT = 12;
 uniform Tri HEX_TRIS[HEX_TRI_COUNT];
 
-const int HEX_TET_COUNT = 5;
+const uint HEX_TET_COUNT = 5;
 uniform Tet HEX_TETS[HEX_TET_COUNT];

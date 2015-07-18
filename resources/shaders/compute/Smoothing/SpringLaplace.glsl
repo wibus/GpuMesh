@@ -18,32 +18,33 @@ void main()
 
 
         // Modification
-        int type = topos[uid].type;
-        int count = topos[uid].neigVertCount;
-        if(type >= 0 && count > 0)
+        Topo topo = topos[uid];
+        uint neigVertCount = topo.neigVertCount;
+        if(topo.type == TOPO_FIXED || neigVertCount == 0)
+            return;
+
+
+        float weightSum = 0.0;
+        vec3 patchCenter = vec3(0.0);
+
+        uint n = topo.neigVertBase;
+        for(uint i=0; i<neigVertCount; ++i, ++n)
         {
-            float weightSum = 0.0;
-            vec3 patchCenter = vec3(0.0);
+            vec3 npos = vec3(verts[neigVerts[n].v].p);
 
-            int n = topos[uid].neigVertBase;
-            for(int i=0; i<count; ++i, ++n)
-            {
-                vec3 npos = vec3(verts[neigVerts[n].v].p);
+            vec3 dist = npos - pos;
+            float weight = dot(dist, dist) + 0.0001;
 
-                vec3 dist = npos - pos;
-                float weight = dot(dist, dist) + 0.0001;
+            patchCenter += npos * weight;
+            weightSum += weight;
+        }
 
-                patchCenter += npos * weight;
-                weightSum += weight;
-            }
+        patchCenter /= weightSum;
+        pos += MoveCoeff * (patchCenter - pos);
 
-            patchCenter /= weightSum;
-            pos += MoveCoeff * (patchCenter - pos);
-
-            if(type > 0)
-            {
-                pos = snapToBoundary(type, pos);
-            }
+        if(topo.type > 0)
+        {
+            pos = snapToBoundary(topo.type, pos);
         }
 
 

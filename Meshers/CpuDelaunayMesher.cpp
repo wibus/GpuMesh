@@ -742,17 +742,17 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
     int meshVertCount = delaunayVertCount - _externalVertCount;
 
     // Shorthands
-    decltype(mesh.vert)& meshVert = mesh.vert;
-    decltype(mesh.tetra)& meshTetra = mesh.tetra;
-    decltype(mesh.topo)& meshTopo = mesh.topo;
+    decltype(mesh.vert)& verts = mesh.vert;
+    decltype(mesh.tetra)& tets = mesh.tetra;
+    decltype(mesh.topo)& topos = mesh.topo;
 
-    meshTetra.clear();
-    meshVert.resize(meshVertCount);
-    meshTopo.resize(meshVertCount);
+    tets.clear();
+    verts.resize(meshVertCount);
+    topos.resize(meshVertCount);
     for(int i = _externalVertCount; i < delaunayVertCount; ++i)
     {
         Vertex& dVert = vert[i];
-        meshVert[i-_externalVertCount].p = dVert.p;
+        verts[i-_externalVertCount].p = dVert.p;
 
         TetListNode* node = dVert.tetList.head;
         while(node != nullptr)
@@ -763,25 +763,25 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
                 tet->visitTime = _currentVisitTime;
                 makeTetrahedronPositive(tet);
 
-                MeshTet meshTet(
-                    tet->v[0] - _externalVertCount,
-                    tet->v[1] - _externalVertCount,
-                    tet->v[2] - _externalVertCount,
-                    tet->v[3] - _externalVertCount);
+                MeshTet meshTet(tet->v[0], tet->v[1], tet->v[2], tet->v[3]);
 
-                if(meshTet[0] < 0 || meshTet[1] < 0 ||
-                   meshTet[2] < 0 || meshTet[3] < 0)
+                if(meshTet[0] < _externalVertCount || meshTet[1] < _externalVertCount ||
+                   meshTet[2] < _externalVertCount || meshTet[3] < _externalVertCount)
                 {
                     // It's a bounding tetrahedron
-                    if(meshTet[0] >= 0) meshTopo[meshTet[0]].isFixed = true;
-                    if(meshTet[1] >= 0) meshTopo[meshTet[1]].isFixed = true;
-                    if(meshTet[2] >= 0) meshTopo[meshTet[2]].isFixed = true;
-                    if(meshTet[3] >= 0) meshTopo[meshTet[3]].isFixed = true;
+                    if(meshTet[0] >= 0) topos[meshTet[0]].isFixed = true;
+                    if(meshTet[1] >= 0) topos[meshTet[1]].isFixed = true;
+                    if(meshTet[2] >= 0) topos[meshTet[2]].isFixed = true;
+                    if(meshTet[3] >= 0) topos[meshTet[3]].isFixed = true;
                 }
                 else
                 {
                     // It's a real tetrahedron
-                    meshTetra.push_back(meshTet);
+                    meshTet.v[0] -= _externalVertCount;
+                    meshTet.v[1] -= _externalVertCount;
+                    meshTet.v[2] -= _externalVertCount;
+                    meshTet.v[3] -= _externalVertCount;
+                    tets.push_back(meshTet);
                 }
 
                 // Tetrahedrons are not directly deleted
@@ -795,7 +795,7 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
 
         dVert.tetList.clrTet();
     }
-    meshTetra.shrink_to_fit();
+    tets.shrink_to_fit();
 
 
     // Discard unused memory

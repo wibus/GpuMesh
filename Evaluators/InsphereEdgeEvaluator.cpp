@@ -14,7 +14,7 @@ InsphereEdgeEvaluator::~InsphereEdgeEvaluator()
 
 }
 
-double InsphereEdgeEvaluator::tetrahedronQuality(const dvec3 verts[]) const
+double InsphereEdgeEvaluator::tetQuality(const dvec3 verts[]) const
 {
     double u = distance(verts[0], verts[1]);
     double v = distance(verts[0], verts[2]);
@@ -49,7 +49,7 @@ double InsphereEdgeEvaluator::tetrahedronQuality(const dvec3 verts[]) const
     return (4.89897948557) * R / maxLen;
 }
 
-double InsphereEdgeEvaluator::prismQuality(const dvec3 verts[]) const
+double InsphereEdgeEvaluator::priQuality(const dvec3 verts[]) const
 {
     // Prism quality ~= mean of 6 possible tetrahedrons from prism triangular faces
     const dvec3 tetA[] = {verts[4], verts[1], verts[5], verts[3]};
@@ -59,23 +59,23 @@ double InsphereEdgeEvaluator::prismQuality(const dvec3 verts[]) const
     const dvec3 tetE[] = {verts[0], verts[1], verts[5], verts[3]};
     const dvec3 tetF[] = {verts[1], verts[2], verts[4], verts[0]};
 
-    double tetAq = tetrahedronQuality(tetA);
-    double tetBq = tetrahedronQuality(tetB);
-    double tetCq = tetrahedronQuality(tetC);
-    double tetDq = tetrahedronQuality(tetD);
-    double tetEq = tetrahedronQuality(tetE);
-    double tetFq = tetrahedronQuality(tetF);
+    double tetAq = tetQuality(tetA);
+    double tetBq = tetQuality(tetB);
+    double tetCq = tetQuality(tetC);
+    double tetDq = tetQuality(tetD);
+    double tetEq = tetQuality(tetE);
+    double tetFq = tetQuality(tetF);
     return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq)
                 / 3.9067138981002011988;
 }
 
-double InsphereEdgeEvaluator::hexahedronQuality(const dvec3 verts[]) const
+double InsphereEdgeEvaluator::hexQuality(const dvec3 verts[]) const
 {
     // Hexahedron quality ~= mean of two possible internal tetrahedrons
     const dvec3 tetA[] = {verts[0], verts[3], verts[5], verts[6]};
     const dvec3 tetB[] = {verts[1], verts[2], verts[7], verts[4]};
-    double tetAQuality = tetrahedronQuality(tetA);
-    double tetBQuality = tetrahedronQuality(tetB);
+    double tetAQuality = tetQuality(tetA);
+    double tetBQuality = tetQuality(tetB);
     return (tetAQuality + tetBQuality)
                 / 2.0;
 }
