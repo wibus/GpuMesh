@@ -315,6 +315,50 @@ bool AbstractEvaluator::assessMeasureValidy()
     double regularPri = priQuality(mesh, pri);
     double regularHex = hexQuality(mesh, hex);
 
+    /*
+    Mesh gammaMesh;
+    gammaMesh.vert.push_back(glm::dvec3(0, 0, 0));
+    gammaMesh.vert.push_back(glm::dvec3(1, 0, 0));
+    gammaMesh.vert.push_back(glm::dvec3(0, 1, 0));
+    gammaMesh.vert.push_back(glm::dvec3(1, 1, 0));
+    gammaMesh.vert.push_back(glm::dvec3(0, 0, 1));
+    gammaMesh.vert.push_back(glm::dvec3(1, 0, 1));
+    gammaMesh.vert.push_back(glm::dvec3(0, 1, 1));
+    gammaMesh.vert.push_back(glm::dvec3(1, 1, 1));
+
+    gammaMesh.vert[0] =
+            (gammaMesh.vert[1].p + gammaMesh.vert[4].p + gammaMesh.vert[2].p) / 3.0 +
+            glm::normalize(glm::cross(
+                gammaMesh.vert[4].p - gammaMesh.vert[1].p,
+                gammaMesh.vert[2].p - gammaMesh.vert[4].p))
+                    * glm::sqrt(2.0 / 3.0);
+
+    gammaMesh.vert[3] =
+            (gammaMesh.vert[2].p + gammaMesh.vert[7].p + gammaMesh.vert[1].p) / 3.0 +
+            glm::normalize(glm::cross(
+                gammaMesh.vert[7].p - gammaMesh.vert[2].p,
+                gammaMesh.vert[1].p - gammaMesh.vert[7].p))
+                    * glm::sqrt(2.0 / 3.0);
+
+    gammaMesh.vert[5] =
+            (gammaMesh.vert[1].p + gammaMesh.vert[7].p + gammaMesh.vert[4].p) / 3.0 +
+            glm::normalize(glm::cross(
+                gammaMesh.vert[7].p - gammaMesh.vert[1].p,
+                gammaMesh.vert[4].p - gammaMesh.vert[7].p))
+                    * glm::sqrt(2.0 / 3.0);
+
+    gammaMesh.vert[6] =
+            (gammaMesh.vert[2].p + gammaMesh.vert[4].p + gammaMesh.vert[7].p) / 3.0 +
+            glm::normalize(glm::cross(
+                gammaMesh.vert[4].p - gammaMesh.vert[2].p,
+                gammaMesh.vert[7].p - gammaMesh.vert[4].p))
+                    * glm::sqrt(2.0 / 3.0);
+
+    const MeshHex gammaHex = MeshHex(0, 1, 2, 3, 4, 5, 6, 7);
+
+    cout << "Gamma flaw: " << hexQuality(gammaMesh, gammaHex) << endl;
+    */
+
     if(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
        glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
        glm::abs(regularHex - 1.0) < VALIDITY_EPSILON)

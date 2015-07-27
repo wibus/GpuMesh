@@ -22,15 +22,17 @@ public:
     virtual ~RenderingTab();
 
 protected slots:
-    virtual void renderTypeChanged(QString text);
-    virtual void shadingChanged(QString text);
-    virtual void shapeMeasureChanged(QString text);
+    virtual void renderTypeChanged(const QString& text);
+    virtual void shadingChanged(const QString& text);
+    virtual void shapeMeasureChanged(const QString& text);
+    virtual void useCameraMan(const QString& text);
     virtual void useVirtualCutPlane(bool checked);
 
 protected:
     virtual void deployRenderTypes();
     virtual void deployShadings();
     virtual void deployShapeMeasures();
+    virtual void deployCameraMen();
 
 private:
     Ui::MainWindow* _ui;

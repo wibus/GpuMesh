@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <CellarWorkbench/Camera/CameraManFree.h>
+
 #include <PropRoom2D/Prop/Hud/TextHud.h>
 
 #include <Scaena/Play/Character.h>
@@ -15,11 +17,10 @@ class AbstractEvaluator;
 class AbstractSmoother;
 class AbstractRenderer;
 
-
-enum class EMeshType
+enum class ECameraMan
 {
-    Delaunay,
-    Parametric
+    Sphere,
+    Free
 };
 
 class GpuMeshCharacter : public scaena::Character
@@ -43,6 +44,7 @@ public:
     virtual OptionMapDetails availableImplementations(const std::string& smootherName) const;
     virtual OptionMapDetails availableRenderers() const;
     virtual OptionMapDetails availableShadings() const;
+    virtual OptionMapDetails availableCameraMen() const;
 
     virtual void generateMesh(
             const std::string& mesherName,
@@ -61,10 +63,12 @@ public:
     virtual void useShading(const std::string& shadingName);
     virtual void displayQuality(const std::string& evaluatorName);
     virtual void useVirtualCutPlane(bool use);
+    virtual void useCameraMan(const std::string& cameraManName);
 
 protected:
     virtual void printStep(const std::string& stepDescription);
 
+    virtual void refreshCamera();
     virtual void setupInstalledRenderer();
     virtual void tearDownInstalledRenderer();
     virtual void installRenderer(const std::shared_ptr<AbstractRenderer>& renderer);
@@ -78,6 +82,7 @@ protected:
     float _camAzimuth;
     float _camAltitude;
     float _camDistance;
+    ECameraMan _cameraMan;
 
     float _lightAzimuth;
     float _lightAltitude;
@@ -91,6 +96,7 @@ private:
     std::unique_ptr<Mesh> _mesh;
     std::shared_ptr<AbstractRenderer> _renderer;
     std::shared_ptr<AbstractEvaluator> _visualEvaluator;
+    std::shared_ptr<cellar::CameraManFree> _cameraManFree;
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;
@@ -102,7 +108,7 @@ private:
     OptionMap<std::shared_ptr<AbstractEvaluator>> _availableEvaluators;
     OptionMap<std::shared_ptr<AbstractSmoother>> _availableSmoothers;
     OptionMap<std::shared_ptr<AbstractRenderer>> _availableRenderers;
-
+    OptionMap<ECameraMan> _availableCameraMen;
 };
 
 #endif //GpuMesh_CHARACTER

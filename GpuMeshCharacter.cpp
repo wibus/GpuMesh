@@ -44,6 +44,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _camAzimuth(-glm::pi<float>() / 2.0),
     _camAltitude(-glm::pi<float>() / 2.0),
     _camDistance(3.8),
+    _cameraMan(ECameraMan::Sphere),
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 2.0 / 4.0),
     _lightDistance(1.0),
@@ -54,7 +55,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableMeshers("Available Meshers"),
     _availableEvaluators("Available Evaluators"),
     _availableSmoothers("Available Smoothers"),
-    _availableRenderers("Available Renderers")
+    _availableRenderers("Available Renderers"),
+    _availableCameraMen("Available Camera Men")
 {
     _availableMeshers.setDefault("Parametric");
     _availableMeshers.setContent({
@@ -79,6 +81,12 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableRenderers.setContent({
         {string("Scaffold"), shared_ptr<AbstractRenderer>(new ScaffoldRenderer())},
         {string("Surfacic"), shared_ptr<AbstractRenderer>(new SurfacicRenderer())},
+    });
+
+    _availableCameraMen.setDefault("Sphere");
+    _availableCameraMen.setContent({
+        {string("Sphere"), ECameraMan::Sphere},
+        {string("Free"),   ECameraMan::Free},
     });
 }
 
@@ -105,6 +113,11 @@ void GpuMeshCharacter::enterStage()
             evaluator->assessMeasureValidy();
         }
     }
+
+    _cameraManFree.reset(new CameraManFree(play().view()->camera3D(), false));
+    _cameraManFree->setPosition(glm::vec3(0, 0, _camDistance));
+    _cameraManFree->setOrientation( glm::pi<float>() * 0.5f,
+                                   -glm::pi<float>() * 0.48f);
 
     setupInstalledRenderer();
     _isEntered = true;
@@ -152,17 +165,59 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
     else
     {
         // Camera management
-        if(mouse->buttonIsPressed(EMouseButton::LEFT))
+        if(_cameraMan == ECameraMan::Sphere)
         {
-            moveCamera(_camAzimuth - mouse->displacement().x / 100.0f,
-                       _camAltitude - mouse->displacement().y / 100.0f,
-                       _camDistance);
+            if(mouse->buttonIsPressed(EMouseButton::LEFT))
+            {
+                moveCamera(_camAzimuth - mouse->displacement().x / 100.0f,
+                           _camAltitude - mouse->displacement().y / 100.0f,
+                           _camDistance);
+            }
+            else if(mouse->degreeDelta() != 0)
+            {
+                moveCamera(_camAzimuth,
+                           _camAltitude,
+                           _camDistance + mouse->degreeDelta() / 80.0f);
+            }
         }
-        else if(mouse->degreeDelta() != 0)
+        else if(_cameraMan == ECameraMan::Free)
         {
-            moveCamera(_camAzimuth,
-                       _camAltitude,
-                       _camDistance + mouse->degreeDelta() / 80.0f);
+            float velocity  = 0.5f * time.elapsedTime();
+            float turnSpeed = 0.004f;
+            bool updated = false;
+
+            if(keyboard->isAsciiPressed('w'))
+            {
+                _cameraManFree->forward(velocity);
+                updated = true;
+            }
+            if(keyboard->isAsciiPressed('s'))
+            {
+                _cameraManFree->forward(-velocity);
+                updated = true;
+            }
+            if(keyboard->isAsciiPressed('a'))
+            {
+                _cameraManFree->sideward(-velocity / 3.0f);
+                updated = true;
+            }
+            if(keyboard->isAsciiPressed('d'))
+            {
+                _cameraManFree->sideward(velocity / 3.0f);
+                updated = true;
+            }
+
+            if(mouse->displacement() != glm::ivec2(0, 0) &&
+               mouse->buttonIsPressed(EMouseButton::LEFT))
+            {
+                _cameraManFree->pan( mouse->displacement().x * -turnSpeed);
+                _cameraManFree->tilt(mouse->displacement().y * -turnSpeed);
+                updated = true;
+            }
+
+            if(updated)
+                _renderer->updateCamera(_cameraManFree->camera()->viewMatrix(),
+                                        _cameraManFree->position());
         }
     }
 
@@ -227,6 +282,11 @@ OptionMapDetails GpuMeshCharacter::availableRenderers() const
 OptionMapDetails GpuMeshCharacter::availableShadings() const
 {
     return _renderer->availableShadings();
+}
+
+OptionMapDetails GpuMeshCharacter::availableCameraMen() const
+{
+    return _availableCameraMen.details();
 }
 
 void GpuMeshCharacter::generateMesh(
@@ -308,9 +368,24 @@ void GpuMeshCharacter::useVirtualCutPlane(bool use)
     _renderer->useVirtualCutPlane(use);
 }
 
+void GpuMeshCharacter::useCameraMan(const string& cameraManName)
+{
+    _availableCameraMen.select(cameraManName, _cameraMan);
+    refreshCamera();
+}
+
 void GpuMeshCharacter::printStep(const std::string& stepDescription)
 {
     getLog().postMessage(new Message('I', false, stepDescription, "GpuMeshCharacter"));
+}
+
+void GpuMeshCharacter::refreshCamera()
+{
+    if(_cameraMan == ECameraMan::Sphere)
+        moveCamera(_camAzimuth, _camAltitude, _camDistance);
+    else if(_cameraMan == ECameraMan::Free)
+        _renderer->updateCamera(_cameraManFree->camera()->viewMatrix(),
+                                _cameraManFree->position());
 }
 
 void GpuMeshCharacter::setupInstalledRenderer()
@@ -320,7 +395,7 @@ void GpuMeshCharacter::setupInstalledRenderer()
         _renderer->setup();
 
         // Setup view matrix
-        moveCamera(_camAzimuth, _camAltitude, _camDistance);
+        refreshCamera();
 
         // Setup shadow matrix
         moveLight(_lightAzimuth, _lightAltitude, _lightDistance);

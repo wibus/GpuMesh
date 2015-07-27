@@ -33,6 +33,13 @@ RenderingTab::RenderingTab(Ui::MainWindow* ui,
             this, &RenderingTab::shapeMeasureChanged);
 
 
+    // Defining camera man
+    deployCameraMen();
+    connect(_ui->cameraManMenu,
+            static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
+            this, &RenderingTab::useCameraMan);
+
+
     // Define virtual cut plane usage
     _character->useVirtualCutPlane(_ui->virtualCutPlaneCheck->isChecked());
     connect(_ui->virtualCutPlaneCheck, &QCheckBox::stateChanged,
@@ -79,11 +86,21 @@ void RenderingTab::deployShapeMeasures()
         _ui->visualShapeMeasureMenu->addItem(QString(name.c_str()));
     _ui->visualShapeMeasureMenu->setCurrentText(evaluators.defaultOption.c_str());
 
-    // Shading must be set here, or no shading will be installed
+    // Quality must be set here, or no shape measure will be installed
     _character->displayQuality(evaluators.defaultOption);
 }
 
-void RenderingTab::renderTypeChanged(QString text)
+void RenderingTab::deployCameraMen()
+{
+    OptionMapDetails cameraMen = _character->availableCameraMen();
+
+    _ui->cameraManMenu->clear();
+    for(const auto& name : cameraMen.options)
+        _ui->cameraManMenu->addItem(QString(name.c_str()));
+    _ui->cameraManMenu->setCurrentText(cameraMen.defaultOption.c_str());
+}
+
+void RenderingTab::renderTypeChanged(const QString& text)
 {
     _character->useRenderer(text.toStdString());
 
@@ -92,7 +109,7 @@ void RenderingTab::renderTypeChanged(QString text)
         _ui->virtualCutPlaneCheck->isChecked());
 }
 
-void RenderingTab::shadingChanged(QString text)
+void RenderingTab::shadingChanged(const QString& text)
 {
     if(text.length() != 0)
     {
@@ -100,9 +117,14 @@ void RenderingTab::shadingChanged(QString text)
     }
 }
 
-void RenderingTab::shapeMeasureChanged(QString text)
+void RenderingTab::shapeMeasureChanged(const QString& text)
 {
     _character->displayQuality(text.toStdString());
+}
+
+void RenderingTab::useCameraMan(const QString& text)
+{
+    _character->useCameraMan(text.toStdString());
 }
 
 void RenderingTab::useVirtualCutPlane(bool checked)
