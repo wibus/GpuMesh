@@ -33,5 +33,7 @@
         <file>shaders/compute/Quality/InsphereEdge.glsl</file>
         <file>shaders/compute/Mesh.glsl</file>
         <file>shaders/compute/Smoothing/SpringLaplace.glsl</file>
+        <file>shaders/compute/Quality/MeanRatio.glsl</file>
+        <file>shaders/compute/Quality/QualityInterface.glsl</file>
     </qresource>
 </RCC>

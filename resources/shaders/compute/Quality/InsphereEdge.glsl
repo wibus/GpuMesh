@@ -1,17 +1,12 @@
 
-float tetQuality(Tet tet)
+float tetQuality(in vec3 vp[4])
 {
-    vec3 A = vec3(verts[tet.v[0]].p);
-    vec3 B = vec3(verts[tet.v[1]].p);
-    vec3 C = vec3(verts[tet.v[2]].p);
-    vec3 D = vec3(verts[tet.v[3]].p);
-
-    float u = distance(A, B);
-    float v = distance(A, C);
-    float w = distance(A, D);
-    float U = distance(C, D);
-    float V = distance(D, B);
-    float W = distance(B, C);
+    float u = distance(vp[0], vp[1]);
+    float v = distance(vp[0], vp[2]);
+    float w = distance(vp[0], vp[3]);
+    float U = distance(vp[2], vp[3]);
+    float V = distance(vp[3], vp[1]);
+    float W = distance(vp[1], vp[2]);
 
     float Volume = 4.0*u*u*v*v*w*w;
     Volume -= u*u*pow(v*v+w*w-U*U, 2.0);
@@ -39,15 +34,14 @@ float tetQuality(Tet tet)
     return (4.89897948557) * R / maxLen;
 }
 
-float priQuality(Pri pri)
+float priQuality(in vec3 vp[6])
 {
-    // Prism quality ~= mean of 6 possible tetrahedrons from prism triangular faces
-    Tet tetA = Tet(uint[] (pri.v[4], pri.v[1], pri.v[5], pri.v[3]));
-    Tet tetB = Tet(uint[] (pri.v[5], pri.v[2], pri.v[4], pri.v[0]));
-    Tet tetC = Tet(uint[] (pri.v[2], pri.v[1], pri.v[5], pri.v[3]));
-    Tet tetD = Tet(uint[] (pri.v[3], pri.v[2], pri.v[4], pri.v[0]));
-    Tet tetE = Tet(uint[] (pri.v[0], pri.v[1], pri.v[5], pri.v[3]));
-    Tet tetF = Tet(uint[] (pri.v[1], pri.v[2], pri.v[4], pri.v[0]));
+    vec3 tetA[] = vec3[](vp[4], vp[1], vp[5], vp[3]);
+    vec3 tetB[] = vec3[](vp[5], vp[2], vp[4], vp[0]);
+    vec3 tetC[] = vec3[](vp[2], vp[1], vp[5], vp[3]);
+    vec3 tetD[] = vec3[](vp[3], vp[2], vp[4], vp[0]);
+    vec3 tetE[] = vec3[](vp[0], vp[1], vp[5], vp[3]);
+    vec3 tetF[] = vec3[](vp[1], vp[2], vp[4], vp[0]);
 
     float tetAq = tetQuality(tetA);
     float tetBq = tetQuality(tetB);
@@ -56,15 +50,16 @@ float priQuality(Pri pri)
     float tetEq = tetQuality(tetE);
     float tetFq = tetQuality(tetF);
     return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq)
-            / 3.9067138981002011988; // C/6
+            / 4.2970697433826288147;
 }
 
-float hexQuality(Hex hex)
+float hexQuality(in vec3 vp[8])
 {
-    Tet tetA = Tet(uint[] (hex.v[0], hex.v[3], hex.v[5], hex.v[6]));
-    Tet tetB = Tet(uint[] (hex.v[1], hex.v[2], hex.v[7], hex.v[4]));
+    vec3 tetA[] = vec3[](vp[0], vp[3], vp[5], vp[6]);
+    vec3 tetB[] = vec3[](vp[1], vp[2], vp[7], vp[4]);
 
     float tetAQuality = tetQuality(tetA);
     float tetBQuality = tetQuality(tetB);
-    return (tetAQuality + tetBQuality) * 0.5; // 1/2
+    return (tetAQuality + tetBQuality)
+            / 2.0;
 }

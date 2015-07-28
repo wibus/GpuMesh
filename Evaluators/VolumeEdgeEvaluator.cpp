@@ -1,5 +1,7 @@
 #include "VolumeEdgeEvaluator.h"
 
+#include <GLM/gtx/norm.hpp>
+
 using namespace glm;
 
 
@@ -7,8 +9,8 @@ VolumeEdgeEvaluator::VolumeEdgeEvaluator() :
     AbstractEvaluator(":/shaders/compute/Quality/VolumeEdge.glsl")
 {
     // This algorithm seems to be numerically unstable.
-    // That is wy we use min(quality, 1.0) on the final result.
-    // The instability must come from the sum of
+    // That is why we use min(quality, 1.0) on the final result.
+    // The instability must come from the sums of
     // determinants and edge's dot products.
 }
 
@@ -17,70 +19,93 @@ VolumeEdgeEvaluator::~VolumeEdgeEvaluator()
 
 }
 
-double VolumeEdgeEvaluator::tetQuality(const dvec3 verts[]) const
+double VolumeEdgeEvaluator::tetQuality(const dvec3 vp[]) const
 {
-    double volume = 0.0;
-    for(int t=0; t < MeshTet::TET_COUNT; ++t)
-    {
-        volume += determinant(dmat3(
-            verts[MeshTet::tets[t][0]] - verts[MeshTet::tets[t][3]],
-            verts[MeshTet::tets[t][1]] - verts[MeshTet::tets[t][3]],
-            verts[MeshTet::tets[t][2]] - verts[MeshTet::tets[t][3]]));
-    }
+    double volume = determinant(dmat3(
+        vp[MeshTet::tets[0][0]] - vp[MeshTet::tets[0][3]],
+        vp[MeshTet::tets[0][1]] - vp[MeshTet::tets[0][3]],
+        vp[MeshTet::tets[0][2]] - vp[MeshTet::tets[0][3]]));
 
     double edge2Sum = 0.0;
-    for(int e=0; e < MeshTet::EDGE_COUNT; ++e)
-    {
-        dvec3 edge = verts[MeshTet::edges[e][0]] -
-                     verts[MeshTet::edges[e][1]];
-        edge2Sum += dot(edge, edge);
-    }
+    edge2Sum += length2(vp[MeshTet::edges[0][0]] - vp[MeshTet::edges[0][1]]);
+    edge2Sum += length2(vp[MeshTet::edges[1][0]] - vp[MeshTet::edges[1][1]]);
+    edge2Sum += length2(vp[MeshTet::edges[2][0]] - vp[MeshTet::edges[2][1]]);
+    edge2Sum += length2(vp[MeshTet::edges[3][0]] - vp[MeshTet::edges[3][1]]);
+    edge2Sum += length2(vp[MeshTet::edges[4][0]] - vp[MeshTet::edges[4][1]]);
+    edge2Sum += length2(vp[MeshTet::edges[5][0]] - vp[MeshTet::edges[5][1]]);
 
     return min(volume / (edge2Sum*sqrt(edge2Sum))
             / 0.048112522432468815548, 1.0); // Normalization constant
 }
 
-double VolumeEdgeEvaluator::priQuality(const dvec3 verts[]) const
+double VolumeEdgeEvaluator::priQuality(const dvec3 vp[]) const
 {
     double volume = 0.0;
-    for(int t=0; t < MeshPri::TET_COUNT; ++t)
-    {
-        volume += determinant(dmat3(
-            verts[MeshPri::tets[t][0]] - verts[MeshPri::tets[t][3]],
-            verts[MeshPri::tets[t][1]] - verts[MeshPri::tets[t][3]],
-            verts[MeshPri::tets[t][2]] - verts[MeshPri::tets[t][3]]));
-    }
+    volume += determinant(dmat3(
+        vp[MeshPri::tets[0][0]] - vp[MeshPri::tets[0][3]],
+        vp[MeshPri::tets[0][1]] - vp[MeshPri::tets[0][3]],
+        vp[MeshPri::tets[0][2]] - vp[MeshPri::tets[0][3]]));
+    volume += determinant(dmat3(
+        vp[MeshPri::tets[1][0]] - vp[MeshPri::tets[1][3]],
+        vp[MeshPri::tets[1][1]] - vp[MeshPri::tets[1][3]],
+        vp[MeshPri::tets[1][2]] - vp[MeshPri::tets[1][3]]));
+    volume += determinant(dmat3(
+        vp[MeshPri::tets[2][0]] - vp[MeshPri::tets[2][3]],
+        vp[MeshPri::tets[2][1]] - vp[MeshPri::tets[2][3]],
+        vp[MeshPri::tets[2][2]] - vp[MeshPri::tets[2][3]]));
 
     double edge2Sum = 0.0;
-    for(int e=0; e < MeshPri::EDGE_COUNT; ++e)
-    {
-        dvec3 edge = verts[MeshPri::edges[e][0]] -
-                     verts[MeshPri::edges[e][1]];
-        edge2Sum += dot(edge, edge);
-    }
+    edge2Sum += length2(vp[MeshPri::edges[0][0]] - vp[MeshPri::edges[0][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[1][0]] - vp[MeshPri::edges[1][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[2][0]] - vp[MeshPri::edges[2][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[3][0]] - vp[MeshPri::edges[3][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[4][0]] - vp[MeshPri::edges[4][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[5][0]] - vp[MeshPri::edges[5][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[6][0]] - vp[MeshPri::edges[6][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[7][0]] - vp[MeshPri::edges[7][1]]);
+    edge2Sum += length2(vp[MeshPri::edges[8][0]] - vp[MeshPri::edges[8][1]]);
 
     return min(volume / (edge2Sum*sqrt(edge2Sum))
-            / 0.088228615568855695006, 1.0); // Normalization constant
+            / 0.096225044864937631095, 1.0); // Normalization constant
 }
 
-double VolumeEdgeEvaluator::hexQuality(const dvec3 verts[]) const
+double VolumeEdgeEvaluator::hexQuality(const dvec3 vp[]) const
 {
     double volume = 0.0;
-    for(int t=0; t < MeshHex::TET_COUNT; ++t)
-    {
-        volume += determinant(dmat3(
-            verts[MeshHex::tets[t][0]] - verts[MeshHex::tets[t][3]],
-            verts[MeshHex::tets[t][1]] - verts[MeshHex::tets[t][3]],
-            verts[MeshHex::tets[t][2]] - verts[MeshHex::tets[t][3]]));
-    }
+    volume += determinant(dmat3(
+        vp[MeshHex::tets[0][0]] - vp[MeshHex::tets[0][3]],
+        vp[MeshHex::tets[0][1]] - vp[MeshHex::tets[0][3]],
+        vp[MeshHex::tets[0][2]] - vp[MeshHex::tets[0][3]]));
+    volume += determinant(dmat3(
+        vp[MeshHex::tets[1][0]] - vp[MeshHex::tets[1][3]],
+        vp[MeshHex::tets[1][1]] - vp[MeshHex::tets[1][3]],
+        vp[MeshHex::tets[1][2]] - vp[MeshHex::tets[1][3]]));
+    volume += determinant(dmat3(
+        vp[MeshHex::tets[2][0]] - vp[MeshHex::tets[2][3]],
+        vp[MeshHex::tets[2][1]] - vp[MeshHex::tets[2][3]],
+        vp[MeshHex::tets[2][2]] - vp[MeshHex::tets[2][3]]));
+    volume += determinant(dmat3(
+        vp[MeshHex::tets[3][0]] - vp[MeshHex::tets[3][3]],
+        vp[MeshHex::tets[3][1]] - vp[MeshHex::tets[3][3]],
+        vp[MeshHex::tets[3][2]] - vp[MeshHex::tets[3][3]]));
+    volume += determinant(dmat3(
+        vp[MeshHex::tets[4][0]] - vp[MeshHex::tets[4][3]],
+        vp[MeshHex::tets[4][1]] - vp[MeshHex::tets[4][3]],
+        vp[MeshHex::tets[4][2]] - vp[MeshHex::tets[4][3]]));
 
     double edge2Sum = 0.0;
-    for(int e=0; e < MeshHex::EDGE_COUNT; ++e)
-    {
-        dvec3 edge = verts[MeshHex::edges[e][0]] -
-                     verts[MeshHex::edges[e][1]];
-        edge2Sum += dot(edge, edge);
-    }
+    edge2Sum += length2(vp[MeshHex::edges[0][0]] - vp[MeshHex::edges[0][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[1][0]] - vp[MeshHex::edges[1][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[2][0]] - vp[MeshHex::edges[2][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[3][0]] - vp[MeshHex::edges[3][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[4][0]] - vp[MeshHex::edges[4][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[5][0]] - vp[MeshHex::edges[5][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[6][0]] - vp[MeshHex::edges[6][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[7][0]] - vp[MeshHex::edges[7][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[8][0]] - vp[MeshHex::edges[8][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[9][0]] - vp[MeshHex::edges[9][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[10][0]] - vp[MeshHex::edges[10][1]]);
+    edge2Sum += length2(vp[MeshHex::edges[11][0]] - vp[MeshHex::edges[11][1]]);
 
     return min(volume / (edge2Sum*sqrt(edge2Sum))
             / 0.14433756729740643276, 1.0); // Normalization constant

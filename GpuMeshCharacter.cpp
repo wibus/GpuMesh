@@ -19,6 +19,7 @@
 
 #include "DataStructures/GpuMesh.h"
 #include "Evaluators/InsphereEdgeEvaluator.h"
+#include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/SolidAngleEvaluator.h"
 #include "Evaluators/VolumeEdgeEvaluator.h"
 #include "Meshers/CpuDelaunayMesher.h"
@@ -67,6 +68,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableEvaluators.setDefault("Volume Edge");
     _availableEvaluators.setContent({
         {string("Insphere Edge"), shared_ptr<AbstractEvaluator>(new InsphereEdgeEvaluator())},
+        {string("Mean Ratio"),    shared_ptr<AbstractEvaluator>(new MeanRatioEvaluator())},
         {string("Solid Angle"),   shared_ptr<AbstractEvaluator>(new SolidAngleEvaluator())},
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
     });

@@ -131,11 +131,14 @@ void AbstractSmoother::initializeProgram(Mesh& mesh, AbstractEvaluator& evaluato
         _smoothShader.c_str()});
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Quality/QualityInterface.glsl"});
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
         _shapeMeasureShader.c_str()});
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Boundary/ElbowPipe.glsl"});
-    _smoothingProgram.link();
+    _smoothingProgram.link();\
 
     mesh.uploadGeometry(_smoothingProgram);
 }

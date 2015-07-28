@@ -14,14 +14,14 @@ InsphereEdgeEvaluator::~InsphereEdgeEvaluator()
 
 }
 
-double InsphereEdgeEvaluator::tetQuality(const dvec3 verts[]) const
+double InsphereEdgeEvaluator::tetQuality(const dvec3 vp[]) const
 {
-    double u = distance(verts[0], verts[1]);
-    double v = distance(verts[0], verts[2]);
-    double w = distance(verts[0], verts[3]);
-    double U = distance(verts[2], verts[3]);
-    double V = distance(verts[3], verts[1]);
-    double W = distance(verts[1], verts[2]);
+    double u = distance(vp[0], vp[1]);
+    double v = distance(vp[0], vp[2]);
+    double w = distance(vp[0], vp[3]);
+    double U = distance(vp[2], vp[3]);
+    double V = distance(vp[3], vp[1]);
+    double W = distance(vp[1], vp[2]);
 
     double Volume = 4.0*u*u*v*v*w*w;
     Volume -= u*u*pow(v*v+w*w-U*U, 2.0);
@@ -49,15 +49,15 @@ double InsphereEdgeEvaluator::tetQuality(const dvec3 verts[]) const
     return (4.89897948557) * R / maxLen;
 }
 
-double InsphereEdgeEvaluator::priQuality(const dvec3 verts[]) const
+double InsphereEdgeEvaluator::priQuality(const dvec3 vp[]) const
 {
     // Prism quality ~= mean of 6 possible tetrahedrons from prism triangular faces
-    const dvec3 tetA[] = {verts[4], verts[1], verts[5], verts[3]};
-    const dvec3 tetB[] = {verts[5], verts[2], verts[4], verts[0]};
-    const dvec3 tetC[] = {verts[2], verts[1], verts[5], verts[3]};
-    const dvec3 tetD[] = {verts[3], verts[2], verts[4], verts[0]};
-    const dvec3 tetE[] = {verts[0], verts[1], verts[5], verts[3]};
-    const dvec3 tetF[] = {verts[1], verts[2], verts[4], verts[0]};
+    const dvec3 tetA[] = {vp[4], vp[1], vp[5], vp[3]};
+    const dvec3 tetB[] = {vp[5], vp[2], vp[4], vp[0]};
+    const dvec3 tetC[] = {vp[2], vp[1], vp[5], vp[3]};
+    const dvec3 tetD[] = {vp[3], vp[2], vp[4], vp[0]};
+    const dvec3 tetE[] = {vp[0], vp[1], vp[5], vp[3]};
+    const dvec3 tetF[] = {vp[1], vp[2], vp[4], vp[0]};
 
     double tetAq = tetQuality(tetA);
     double tetBq = tetQuality(tetB);
@@ -66,14 +66,14 @@ double InsphereEdgeEvaluator::priQuality(const dvec3 verts[]) const
     double tetEq = tetQuality(tetE);
     double tetFq = tetQuality(tetF);
     return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq)
-                / 3.9067138981002011988;
+                / 4.2970697433826288147;
 }
 
-double InsphereEdgeEvaluator::hexQuality(const dvec3 verts[]) const
+double InsphereEdgeEvaluator::hexQuality(const dvec3 vp[]) const
 {
     // Hexahedron quality ~= mean of two possible internal tetrahedrons
-    const dvec3 tetA[] = {verts[0], verts[3], verts[5], verts[6]};
-    const dvec3 tetB[] = {verts[1], verts[2], verts[7], verts[4]};
+    const dvec3 tetA[] = {vp[0], vp[3], vp[5], vp[6]};
+    const dvec3 tetB[] = {vp[1], vp[2], vp[7], vp[4]};
     double tetAQuality = tetQuality(tetA);
     double tetBQuality = tetQuality(tetB);
     return (tetAQuality + tetBQuality)

@@ -13,13 +13,13 @@ public:
     virtual ~AbstractEvaluator();
 
     virtual double tetQuality(const Mesh& mesh, const MeshTet& tet) const;
-    virtual double tetQuality(const glm::dvec3 verts[]) const = 0;
+    virtual double tetQuality(const glm::dvec3 vp[]) const = 0;
 
     virtual double priQuality(const Mesh& mesh, const MeshPri& pri) const;
-    virtual double priQuality(const glm::dvec3 verts[]) const = 0;
+    virtual double priQuality(const glm::dvec3 vp[]) const = 0;
 
     virtual double hexQuality(const Mesh& mesh, const MeshHex& hex) const;
-    virtual double hexQuality(const glm::dvec3 verts[]) const = 0;
+    virtual double hexQuality(const glm::dvec3 vp[]) const = 0;
 
 
     virtual void evaluateCpuMeshQuality(

@@ -14,6 +14,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/InsphereEdgeEvaluator.h
+    ${GpuMesh_SRC_DIR}/Evaluators/MeanRatioEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
 
@@ -64,6 +65,7 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/InsphereEdgeEvaluator.cpp
+    ${GpuMesh_SRC_DIR}/Evaluators/MeanRatioEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
 
@@ -154,7 +156,9 @@ SET(GpuMesh_MEASURING_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Measuring/SimultaneousEvaluation.glsl)
 
 SET(GpuMesh_QUALITY_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Quality/QualityInterface.glsl
     ${GpuMesh_SHADER_DIR}/compute/Quality/InsphereEdge.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Quality/MeanRatio.glsl
     ${GpuMesh_SHADER_DIR}/compute/Quality/SolidAngle.glsl
     ${GpuMesh_SHADER_DIR}/compute/Quality/VolumeEdge.glsl)
 

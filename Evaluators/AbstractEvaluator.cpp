@@ -226,6 +226,11 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     getLog().postMessage(new Message('I', false,
         "Initializing evaluator compute shader", "AbstractEvaluator"));
 
+    std::vector<std::string> qualityInterface = {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Quality/QualityInterface.glsl"
+    };
+
     std::vector<std::string> shapeMeasure = {
         mesh.meshGeometryShaderName(),
         _shapeMeasuresShader
@@ -233,6 +238,7 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
 
 
     // Simultenous evaluation shader
+    _simultaneousProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
     _simultaneousProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
     _simultaneousProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
@@ -245,6 +251,7 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
 
 
     // Specialized evaluation shader series
+    _tetProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
     _tetProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
     _tetProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
@@ -255,6 +262,7 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     _tetProgram.popProgram();
     mesh.uploadGeometry(_tetProgram);
 
+    _priProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
     _priProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
     _priProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
@@ -265,6 +273,7 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     _priProgram.popProgram();
     mesh.uploadGeometry(_priProgram);
 
+    _hexProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
     _hexProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
     _hexProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
@@ -289,15 +298,15 @@ bool AbstractEvaluator::assessMeasureValidy()
     Mesh mesh;
     mesh.vert.push_back(glm::dvec3(0, 0, 0));
     mesh.vert.push_back(glm::dvec3(1, 0, 0));
-    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3)/6.0, sqrt(2.0/3)));
-    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3)/2.0, 0));
+    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
+    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
 
     mesh.vert.push_back(glm::dvec3(0, 0, 0));
     mesh.vert.push_back(glm::dvec3(1, 0, 0));
     mesh.vert.push_back(glm::dvec3(0, 1, 0));
     mesh.vert.push_back(glm::dvec3(1, 1, 0));
-    mesh.vert.push_back(glm::dvec3(0, sqrt(3)/2, sqrt(3)/2));
-    mesh.vert.push_back(glm::dvec3(1, sqrt(3)/2, sqrt(3)/2));
+    mesh.vert.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
+    mesh.vert.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
 
     mesh.vert.push_back(glm::dvec3(0, 0, 0));
     mesh.vert.push_back(glm::dvec3(1, 0, 0));
@@ -377,9 +386,9 @@ bool AbstractEvaluator::assessMeasureValidy()
         log << "Regular hexahedron quality: " << regularHex << endl;
         getLog().postMessage(new Message('E', true, log.str(), "AbstractEvaluator"));
 
-        assert(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
-               glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
-               glm::abs(regularHex - 1.0) < VALIDITY_EPSILON);
+        assert(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON);
+        assert(glm::abs(regularPri - 1.0) < VALIDITY_EPSILON);
+        assert(glm::abs(regularHex - 1.0) < VALIDITY_EPSILON);
         return false;
     }
 }
