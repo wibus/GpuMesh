@@ -153,7 +153,8 @@ SET(GpuMesh_MEASURING_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Measuring/TetrahedraEvaluation.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/PrismsEvaluation.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/HexahedraEvaluation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/SimultaneousEvaluation.glsl)
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/SimultaneousEvaluation.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/StatisticsReduction.glsl)
 
 SET(GpuMesh_QUALITY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Quality/QualityInterface.glsl

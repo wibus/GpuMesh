@@ -11,16 +11,6 @@ using namespace cellar;
 using namespace std;
 
 
-
-struct GpuQual
-{
-    GLuint min;
-    GLuint mean;
-
-    inline GpuQual() : min(UINT32_MAX), mean(0) {}
-};
-
-
 const size_t AbstractEvaluator::WORKGROUP_SIZE = 256;
 const size_t AbstractEvaluator::POLYHEDRON_TYPE_COUNT = 3;
 const size_t AbstractEvaluator::MAX_GROUP_PARTICIPANTS =
@@ -50,6 +40,7 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
 AbstractEvaluator::~AbstractEvaluator()
 {
     glDeleteBuffers(1, &_qualSsbo);
+    glDeleteBuffers(1, &_meanSsbo);
 }
 
 double AbstractEvaluator::tetQuality(const Mesh& mesh, const MeshTet& tet) const
@@ -201,15 +192,23 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
 
 
-    std::vector<GpuQual> qualBuff(workgroupCount);
+    std::vector<GLuint> qualBuff(1 + workgroupCount, 0);
+    qualBuff[0] = MAX_QUALITY_VALUE;
+    GLuint meanBuff = 0;
+
     size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_STATIC_DRAW);
+    size_t meanSize = sizeof(GLuint);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _meanSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, meanSize, &meanBuff, GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     mesh.bindShaderStorageBuffers();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
                      mesh.firstFreeBufferBinding(), _qualSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     mesh.firstFreeBufferBinding()+1, _meanSsbo);
 
 
     // Simulataneous and specialized series gives about the same performance
@@ -245,33 +244,34 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
         }
     }
 
+    _statsReduceProgram.pushProgram();
+    _statsReduceProgram.setUnsigned("GroupCount", ceil(workgroupCount / (double)WORKGROUP_SIZE));
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glDispatchCompute(1, 1, 1);
+    _statsReduceProgram.popProgram();
+
     // Fetch workgroup's statistics from GPU
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, qualSize, qualBuff.data());
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, meanSize, qualBuff.data());
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _meanSsbo);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, meanSize, &meanBuff);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
-    // Combine workgroup's statistics
-    minQuality = 1.0;
+    // Get minimum quality
+    minQuality = qualBuff[0] / MAX_QUALITY_VALUE;
+    const double MEAN_COEFF = WORKGROUP_SIZE / MAX_QUALITY_VALUE;
+    qualityMean = MEAN_COEFF * meanBuff / (tetCount + priCount + hexCount);
+
+/*
+    // Combine workgroup means
+    size_t i = 0;
     qualityMean = 0.0;
-    double meanWeight = 0.0;
-    for(size_t i=0, polyId=0; i < workgroupCount; ++i, polyId+=WORKGROUP_SIZE)
-    {
-        minQuality = glm::min(minQuality, qualBuff[i].min / MAX_QUALITY_VALUE);
-
-        size_t groupTet = (tetCount > polyId) ? glm::min(tetCount - polyId, WORKGROUP_SIZE) : 0;
-        size_t groupPri = (priCount > polyId) ? glm::min(priCount - polyId, WORKGROUP_SIZE) : 0;
-        size_t groupHex = (hexCount > polyId) ? glm::min(hexCount - polyId, WORKGROUP_SIZE) : 0;
-        double groupParticipants = (groupTet + groupPri + groupHex);
-        double groupWeight = groupParticipants / MAX_GROUP_PARTICIPANTS;
-        double groupMean = (qualBuff[i].mean / MAX_INTEGER_VALUE);
-
-        // 'groupMean' is implicitly multiplied by 'groupWeight'
-        qualityMean = (qualityMean*meanWeight + groupMean) /
-                      (meanWeight + groupWeight);
-        meanWeight += groupWeight;
-    }
+    while(i <= workgroupCount)
+        qualityMean += qualBuff[++i];
+    qualityMean /= MAX_QUALITY_VALUE * (tetCount + priCount + hexCount);
+*/
 }
 
 void AbstractEvaluator::initializeProgram(const Mesh& mesh)
@@ -341,8 +341,14 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     _hexProgram.popProgram();
     mesh.uploadGeometry(_hexProgram);
 
+    _statsReduceProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Measuring/StatisticsReduction.glsl"});
+    _statsReduceProgram.link();
+
     // Shader storage quality blocks
     glGenBuffers(1, &_qualSsbo);
+    glGenBuffers(1, &_meanSsbo);
 
 
     _initialized = true;
@@ -366,7 +372,7 @@ void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
        "AbstractEvaluator"));
 
     high_resolution_clock::duration cppTime(0);
-    for(size_t i=0, m=markSize; i < cycleCount; ++i)
+    for(size_t i=0, m=0; i < 1; ++i)
     {
         minQual = 0;
         qualMean = 0;

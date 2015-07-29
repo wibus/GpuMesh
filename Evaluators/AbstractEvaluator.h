@@ -49,7 +49,9 @@ protected:
     cellar::GlProgram _tetProgram;
     cellar::GlProgram _priProgram;
     cellar::GlProgram _hexProgram;
+    cellar::GlProgram _statsReduceProgram;
     GLuint _qualSsbo;
+    GLuint _meanSsbo;
 
     static const size_t WORKGROUP_SIZE;
     static const size_t POLYHEDRON_TYPE_COUNT;

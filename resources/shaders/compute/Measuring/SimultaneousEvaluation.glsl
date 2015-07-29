@@ -1,19 +1,12 @@
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
-
-struct Qual
-{
-    uint min;
-    uint mean;
-};
+uniform float MaxQuality;
 
 layout(shared, binding = FIRST_FREE_BUFFER_BINDING) buffer Quals
 {
-    Qual quals[];
+    uint qualMin;
+    uint means[];
 };
-
-
-uniform float MaxQuality;
 
 
 float tetQuality(Tet tet);
@@ -30,23 +23,23 @@ void main()
     {
         float q = tetQuality(tets[uid]);
         uint qi = uint(q * MaxQuality);
-        atomicMin(quals[gid].min, qi);
-        atomicAdd(quals[gid].mean, qi);
+        atomicMin(qualMin, qi);
+        atomicAdd(means[gid], qi);
     }
 
     if(uid < pris.length())
     {
         float q = priQuality(pris[uid]);
         uint qi = uint(q * MaxQuality);
-        atomicMin(quals[gid].min, qi);
-        atomicAdd(quals[gid].mean, qi);
+        atomicMin(qualMin, qi);
+        atomicAdd(means[gid], qi);
     }
 
     if(uid < hexs.length())
     {
         float q = hexQuality(hexs[uid]);
         uint qi = uint(q * MaxQuality);
-        atomicMin(quals[gid].min, qi);
-        atomicAdd(quals[gid].mean, qi);
+        atomicMin(qualMin, qi);
+        atomicAdd(means[gid], qi);
     }
 }

@@ -35,5 +35,6 @@
         <file>shaders/compute/Smoothing/SpringLaplace.glsl</file>
         <file>shaders/compute/Quality/MeanRatio.glsl</file>
         <file>shaders/compute/Quality/QualityInterface.glsl</file>
+        <file>shaders/compute/Measuring/StatisticsReduction.glsl</file>
     </qresource>
 </RCC>
