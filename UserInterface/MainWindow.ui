@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="geometryTab">
        <attribute name="title">
@@ -222,6 +222,52 @@
             <widget class="QPushButton" name="smoothMeshButton">
              <property name="text">
               <string>Smooth Mesh</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="benchmarkingGroup">
+          <property name="title">
+           <string>Benchmarking</string>
+          </property>
+          <layout class="QFormLayout" name="formLayout_4">
+           <item row="0" column="0">
+            <widget class="QLabel" name="benchmarkCycleCountLabel">
+             <property name="text">
+              <string>Cycle count</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="benchmarkCycleCountSpin">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>500</number>
+             </property>
+             <property name="singleStep">
+              <number>10</number>
+             </property>
+             <property name="value">
+              <number>100</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QPushButton" name="benchmarkTechniqueButton">
+             <property name="text">
+              <string>Technique</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QPushButton" name="benchmarkShapeMeasureButton">
+             <property name="text">
+              <string>Shape measure</string>
              </property>
             </widget>
            </item>

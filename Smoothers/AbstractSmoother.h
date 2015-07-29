@@ -36,6 +36,8 @@ public:
             AbstractEvaluator& evaluator);
 
 
+    virtual void benchmark(const Mesh& mesh, uint cycleCount) const;
+
 protected:
     virtual void initializeProgram(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateCpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator);

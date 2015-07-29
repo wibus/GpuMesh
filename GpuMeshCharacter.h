@@ -59,6 +59,10 @@ public:
             double moveFactor,
             double gainThreshold);
 
+    virtual void benchmarkSmoother(const std::string& smootherName, uint cycleCount);
+
+    virtual void benchmarkEvaluator(const std::string& evaluatorName, uint cycleCount);
+
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
     virtual void displayQuality(const std::string& evaluatorName);

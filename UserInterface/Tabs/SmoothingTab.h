@@ -26,6 +26,8 @@ protected slots:
     virtual void techniqueChanged(const QString&);
     virtual void smoothMesh();
 
+    virtual void benchmarkTechnique();
+    virtual void benchmarkShapeMeasure();
 
 protected:
     virtual void deployTechniques();

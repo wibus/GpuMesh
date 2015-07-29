@@ -343,6 +343,24 @@ void GpuMeshCharacter::smoothMesh(
     }
 }
 
+void GpuMeshCharacter::benchmarkSmoother(const std::string& smootherName, uint cycleCount)
+{
+    std::shared_ptr<AbstractSmoother> smoother;
+    if(_availableSmoothers.select(smootherName, smoother))
+    {
+        smoother->benchmark(*_mesh, cycleCount);
+    }
+}
+
+void GpuMeshCharacter::benchmarkEvaluator(const std::string& evaluatorName, uint cycleCount)
+{
+    std::shared_ptr<AbstractEvaluator> evaluator;
+    if(_availableEvaluators.select(evaluatorName, evaluator))
+    {
+        evaluator->benchmark(*_mesh, cycleCount);
+    }
+}
+
 void GpuMeshCharacter::useRenderer(const std::string& rendererName)
 {
     std::shared_ptr<AbstractRenderer> renderer;

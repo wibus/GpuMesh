@@ -187,3 +187,8 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evalua
     ++_smoothPassId;
     return continueSmoothing;
 }
+
+void AbstractSmoother::benchmark(const Mesh& mesh, uint cycleCount) const
+{
+
+}

@@ -21,6 +21,7 @@ public:
     virtual double hexQuality(const Mesh& mesh, const MeshHex& hex) const;
     virtual double hexQuality(const glm::dvec3 vp[]) const = 0;
 
+    virtual bool assessMeasureValidy();
 
     virtual void evaluateCpuMeshQuality(
             const Mesh& mesh,
@@ -32,19 +33,14 @@ public:
             double& minQuality,
             double& qualityMean);
 
+    virtual void benchmark(const Mesh& mesh, uint cycleCount);
+
     virtual std::string shapeMeasureShader() const;
 
 
-    virtual bool assessMeasureValidy();
-
-    virtual void gpuSpin(Mesh& mesh, size_t cycleCount);
-
-    virtual void cpuSpin(Mesh& mesh, size_t cycleCount);
-
-
 protected:
-
     virtual void initializeProgram(const Mesh& mesh);
+
 
     bool _initialized;
     bool _computeSimultaneously;

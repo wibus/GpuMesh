@@ -23,6 +23,14 @@ SmoothingTab::SmoothingTab(Ui::MainWindow* ui,
     connect(_ui->smoothMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &SmoothingTab::smoothMesh);
+
+    connect(_ui->benchmarkTechniqueButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &SmoothingTab::benchmarkTechnique);
+
+    connect(_ui->benchmarkShapeMeasureButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &SmoothingTab::benchmarkShapeMeasure);
 }
 
 SmoothingTab::~SmoothingTab()
@@ -38,14 +46,27 @@ void SmoothingTab::techniqueChanged(const QString&)
 void SmoothingTab::smoothMesh()
 {
     _character->smoothMesh(
-                _ui->smoothingTechniqueMenu->currentText().toStdString(),
-                _ui->smoothShapeMeasureMenu->currentText().toStdString(),
-                _ui->smoothingImplementationMenu->currentText().toStdString(),
-                _ui->minIterationSpin->value(),
-                _ui->moveFactorSpin->value(),
-                _ui->gainThresholdSpin->value());
+        _ui->smoothingTechniqueMenu->currentText().toStdString(),
+        _ui->smoothShapeMeasureMenu->currentText().toStdString(),
+        _ui->smoothingImplementationMenu->currentText().toStdString(),
+        _ui->minIterationSpin->value(),
+        _ui->moveFactorSpin->value(),
+        _ui->gainThresholdSpin->value());
 }
 
+void SmoothingTab::benchmarkTechnique()
+{
+    _character->benchmarkSmoother(
+        _ui->smoothingTechniqueMenu->currentText().toStdString(),
+        _ui->benchmarkCycleCountSpin->value());
+}
+
+void SmoothingTab::benchmarkShapeMeasure()
+{
+    _character->benchmarkEvaluator(
+        _ui->smoothShapeMeasureMenu->currentText().toStdString(),
+        _ui->benchmarkCycleCountSpin->value());
+}
 
 void SmoothingTab::deployTechniques()
 {
