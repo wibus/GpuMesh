@@ -23,12 +23,12 @@ public:
 
     virtual bool assessMeasureValidy();
 
-    virtual void evaluateCpuMeshQuality(
+    virtual void evaluateMeshQualityCpp(
             const Mesh& mesh,
             double& minQuality,
             double& qualityMean);
 
-    virtual void evaluateGpuMeshQuality(
+    virtual void evaluateMeshQualityGlsl(
             const Mesh& mesh,
             double& minQuality,
             double& qualityMean);

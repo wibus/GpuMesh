@@ -58,7 +58,10 @@ void SmoothingTab::benchmarkTechnique()
 {
     _character->benchmarkSmoother(
         _ui->smoothingTechniqueMenu->currentText().toStdString(),
-        _ui->benchmarkCycleCountSpin->value());
+        _ui->smoothShapeMeasureMenu->currentText().toStdString(),
+        _ui->minIterationSpin->value(),
+        _ui->moveFactorSpin->value(),
+        _ui->gainThresholdSpin->value());
 }
 
 void SmoothingTab::benchmarkShapeMeasure()

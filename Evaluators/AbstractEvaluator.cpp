@@ -125,50 +125,6 @@ bool AbstractEvaluator::assessMeasureValidy()
     double regularPri = priQuality(mesh, pri);
     double regularHex = hexQuality(mesh, hex);
 
-    /*
-    Mesh gammaMesh;
-    gammaMesh.vert.push_back(glm::dvec3(0, 0, 0));
-    gammaMesh.vert.push_back(glm::dvec3(1, 0, 0));
-    gammaMesh.vert.push_back(glm::dvec3(0, 1, 0));
-    gammaMesh.vert.push_back(glm::dvec3(1, 1, 0));
-    gammaMesh.vert.push_back(glm::dvec3(0, 0, 1));
-    gammaMesh.vert.push_back(glm::dvec3(1, 0, 1));
-    gammaMesh.vert.push_back(glm::dvec3(0, 1, 1));
-    gammaMesh.vert.push_back(glm::dvec3(1, 1, 1));
-
-    gammaMesh.vert[0] =
-            (gammaMesh.vert[1].p + gammaMesh.vert[4].p + gammaMesh.vert[2].p) / 3.0 +
-            glm::normalize(glm::cross(
-                gammaMesh.vert[4].p - gammaMesh.vert[1].p,
-                gammaMesh.vert[2].p - gammaMesh.vert[4].p))
-                    * glm::sqrt(2.0 / 3.0);
-
-    gammaMesh.vert[3] =
-            (gammaMesh.vert[2].p + gammaMesh.vert[7].p + gammaMesh.vert[1].p) / 3.0 +
-            glm::normalize(glm::cross(
-                gammaMesh.vert[7].p - gammaMesh.vert[2].p,
-                gammaMesh.vert[1].p - gammaMesh.vert[7].p))
-                    * glm::sqrt(2.0 / 3.0);
-
-    gammaMesh.vert[5] =
-            (gammaMesh.vert[1].p + gammaMesh.vert[7].p + gammaMesh.vert[4].p) / 3.0 +
-            glm::normalize(glm::cross(
-                gammaMesh.vert[7].p - gammaMesh.vert[1].p,
-                gammaMesh.vert[4].p - gammaMesh.vert[7].p))
-                    * glm::sqrt(2.0 / 3.0);
-
-    gammaMesh.vert[6] =
-            (gammaMesh.vert[2].p + gammaMesh.vert[4].p + gammaMesh.vert[7].p) / 3.0 +
-            glm::normalize(glm::cross(
-                gammaMesh.vert[4].p - gammaMesh.vert[2].p,
-                gammaMesh.vert[7].p - gammaMesh.vert[4].p))
-                    * glm::sqrt(2.0 / 3.0);
-
-    const MeshHex gammaHex = MeshHex(0, 1, 2, 3, 4, 5, 6, 7);
-
-    cout << "Gamma flaw: " << hexQuality(gammaMesh, gammaHex) << endl;
-    */
-
     if(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
        glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
        glm::abs(regularHex - 1.0) < VALIDITY_EPSILON)
@@ -194,7 +150,7 @@ bool AbstractEvaluator::assessMeasureValidy()
     }
 }
 
-void AbstractEvaluator::evaluateCpuMeshQuality(
+void AbstractEvaluator::evaluateMeshQualityCpp(
         const Mesh& mesh,
         double& minQuality,
         double& qualityMean)
@@ -230,17 +186,13 @@ void AbstractEvaluator::evaluateCpuMeshQuality(
     }
 }
 
-void AbstractEvaluator::evaluateGpuMeshQuality(
+void AbstractEvaluator::evaluateMeshQualityGlsl(
         const Mesh& mesh,
         double& minQuality,
         double& qualityMean)
 {
-    if(!_initialized)
-    {
-        initializeProgram(mesh);
+    initializeProgram(mesh);
 
-        _initialized = true;
-    }
 
     size_t tetCount = mesh.tetra.size();
     size_t priCount = mesh.prism.size();
@@ -324,6 +276,10 @@ void AbstractEvaluator::evaluateGpuMeshQuality(
 
 void AbstractEvaluator::initializeProgram(const Mesh& mesh)
 {
+    if(_initialized)
+        return;
+
+
     getLog().postMessage(new Message('I', false,
         "Initializing evaluator compute shader", "AbstractEvaluator"));
 
@@ -387,27 +343,36 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
 
     // Shader storage quality blocks
     glGenBuffers(1, &_qualSsbo);
+
+
+    _initialized = true;
 }
 
 void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
 {
+    initializeProgram(mesh);
+
     double minQual, qualMean;
-    const size_t MARK_COUNT = 50;
-    size_t markSize = cycleCount / MARK_COUNT;
+    const uint MARK_COUNT = 50;
+    size_t markSize = cycleCount / glm::min(MARK_COUNT, cycleCount);
 
     using std::chrono::high_resolution_clock;
     high_resolution_clock::time_point tStart;
     high_resolution_clock::time_point tEnd;
 
 
-    high_resolution_clock::duration cppTime;
+    getLog().postMessage(new Message('I', false,
+       "Benchmarking C++ implementation",
+       "AbstractEvaluator"));
+
+    high_resolution_clock::duration cppTime(0);
     for(size_t i=0, m=markSize; i < cycleCount; ++i)
     {
         minQual = 0;
         qualMean = 0;
 
         tStart = high_resolution_clock::now();
-        evaluateCpuMeshQuality(mesh, minQual, qualMean);
+        evaluateMeshQualityCpp(mesh, minQual, qualMean);
         tEnd = high_resolution_clock::now();
 
         cppTime += (tEnd - tStart);
@@ -423,14 +388,19 @@ void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
         }
     }
 
-    high_resolution_clock::duration glslTime;
+
+    getLog().postMessage(new Message('I', false,
+       "Benchmarking GLSL implementation",
+       "AbstractEvaluator"));
+
+    high_resolution_clock::duration glslTime(0);
     for(size_t i=0, m=0; i < cycleCount; ++i)
     {
         minQual = 0;
         qualMean = 0;
 
         tStart = high_resolution_clock::now();
-        evaluateGpuMeshQuality(mesh, minQual, qualMean);
+        evaluateMeshQualityGlsl(mesh, minQual, qualMean);
         tEnd = high_resolution_clock::now();
 
         glslTime += (tEnd - tStart);
@@ -454,7 +424,8 @@ void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
     double glslRatio = glslNano / minNano;
 
     getLog().postMessage(new Message('I', false,
-       "Shape measure time ratio : C++:GLSL = " +
+       "Shape measure time ratio (ms) : \tC++:GLSL \t= " +
+        to_string(cppNano / 1000000.0) + ":" + to_string(glslNano / 1000000.0) + " \t= " +
         to_string(cppRatio) + ":" + to_string(glslRatio),
        "AbstractEvaluator"));
 }

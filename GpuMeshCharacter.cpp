@@ -298,7 +298,8 @@ void GpuMeshCharacter::generateMesh(
 {
     _mesh->clear();
 
-    printStep("Mesh Generation: mesher=" + mesherName +
+    printStep("Mesh Generation "\
+              ": mesher=" + mesherName +
               ", model=" + modelName +
               ", vertex count=" + to_string(vertexCount));
 
@@ -320,7 +321,8 @@ void GpuMeshCharacter::smoothMesh(
         double moveFactor,
         double gainThreshold)
 {
-    printStep("Mesh Smoothing: smoother=" + smootherName +
+    printStep("Mesh Smoothing "\
+              ": smoother=" + smootherName +
               ", quality measure=" + evaluatorName +
               ", implementation=" + implementationName);
 
@@ -343,17 +345,39 @@ void GpuMeshCharacter::smoothMesh(
     }
 }
 
-void GpuMeshCharacter::benchmarkSmoother(const std::string& smootherName, uint cycleCount)
+void GpuMeshCharacter::benchmarkSmoother(
+        const std::string& smootherName,
+        const string& evaluatorName,
+        size_t minIterationCount,
+        double moveFactor,
+        double gainThreshold)
 {
+    printStep("Smoothing benchmark "\
+              ": smoother=" + smootherName +
+              ", quality measure=" + evaluatorName);
+
     std::shared_ptr<AbstractSmoother> smoother;
     if(_availableSmoothers.select(smootherName, smoother))
     {
-        smoother->benchmark(*_mesh, cycleCount);
+        std::shared_ptr<AbstractEvaluator> evaluator;
+        if(_availableEvaluators.select(evaluatorName, evaluator))
+        {
+            smoother->benchmark(
+                *_mesh,
+                *evaluator,
+                minIterationCount,
+                moveFactor,
+                gainThreshold);
+        }
     }
 }
 
 void GpuMeshCharacter::benchmarkEvaluator(const std::string& evaluatorName, uint cycleCount)
 {
+    printStep("Shape measure evaluation benchmark "\
+              ": quality measure=" + evaluatorName +
+              ", cycle count=" + to_string(cycleCount));
+
     std::shared_ptr<AbstractEvaluator> evaluator;
     if(_availableEvaluators.select(evaluatorName, evaluator))
     {

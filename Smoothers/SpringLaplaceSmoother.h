@@ -11,7 +11,7 @@ public:
     SpringLaplaceSmoother();
     virtual ~SpringLaplaceSmoother();
 
-    virtual void smoothCpuMesh(
+    virtual void smoothMeshCpp(
             Mesh& mesh,
             AbstractEvaluator& evaluator) override;
 };

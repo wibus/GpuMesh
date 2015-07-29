@@ -18,7 +18,7 @@ SpringLaplaceSmoother::~SpringLaplaceSmoother()
 
 }
 
-void SpringLaplaceSmoother::smoothCpuMesh(
+void SpringLaplaceSmoother::smoothMeshCpp(
         Mesh& mesh,
         AbstractEvaluator& evaluator)
 {

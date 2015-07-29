@@ -18,7 +18,7 @@ QualityLaplaceSmoother::~QualityLaplaceSmoother()
 
 }
 
-void QualityLaplaceSmoother::smoothCpuMesh(
+void QualityLaplaceSmoother::smoothMeshCpp(
         Mesh& mesh,
         AbstractEvaluator& evaluator)
 {

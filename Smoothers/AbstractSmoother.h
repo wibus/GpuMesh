@@ -27,16 +27,23 @@ public:
             double moveFactor,
             double gainThreshold);
 
-    virtual void smoothCpuMesh(
+    virtual void smoothMeshCpp(
             Mesh& mesh,
             AbstractEvaluator& evaluator) = 0;
 
-    virtual void smoothGpuMesh(
+    virtual void smoothMeshGlsl(
             Mesh& mesh,
             AbstractEvaluator& evaluator);
 
 
-    virtual void benchmark(const Mesh& mesh, uint cycleCount) const;
+    // Mesh is garanteed to be reset to initial state after benchmarks
+    virtual void benchmark(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator,
+            int minIteration,
+            double moveFactor,
+            double gainThreshold);
+
 
 protected:
     virtual void initializeProgram(Mesh& mesh, AbstractEvaluator& evaluator);

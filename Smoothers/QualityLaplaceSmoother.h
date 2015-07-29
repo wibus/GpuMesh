@@ -11,7 +11,7 @@ public:
     QualityLaplaceSmoother();
     virtual ~QualityLaplaceSmoother();
 
-    virtual void smoothCpuMesh(
+    virtual void smoothMeshCpp(
             Mesh& mesh,
             AbstractEvaluator& evaluator) override;
 };

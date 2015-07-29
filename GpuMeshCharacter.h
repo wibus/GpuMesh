@@ -59,7 +59,12 @@ public:
             double moveFactor,
             double gainThreshold);
 
-    virtual void benchmarkSmoother(const std::string& smootherName, uint cycleCount);
+    virtual void benchmarkSmoother(
+            const std::string& smootherName,
+            const std::string& evaluatorName,
+            size_t minIterationCount,
+            double moveFactor,
+            double gainThreshold);
 
     virtual void benchmarkEvaluator(const std::string& evaluatorName, uint cycleCount);
 
