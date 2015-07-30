@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <sstream>
+#include <iomanip>
 
 #include <CellarWorkbench/Misc/Log.h>
 
@@ -40,7 +41,6 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
 AbstractEvaluator::~AbstractEvaluator()
 {
     glDeleteBuffers(1, &_qualSsbo);
-    glDeleteBuffers(1, &_meanSsbo);
 }
 
 double AbstractEvaluator::tetQuality(const Mesh& mesh, const MeshTet& tet) const
@@ -193,22 +193,15 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
 
 
     std::vector<GLuint> qualBuff(1 + workgroupCount, 0);
-    qualBuff[0] = MAX_QUALITY_VALUE;
-    GLuint meanBuff = 0;
-
+    qualBuff[0] = GLuint(MAX_INTEGER_VALUE);
     size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_STATIC_DRAW);
-    size_t meanSize = sizeof(GLuint);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _meanSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, meanSize, &meanBuff, GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     mesh.bindShaderStorageBuffers();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
                      mesh.firstFreeBufferBinding(), _qualSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
-                     mesh.firstFreeBufferBinding()+1, _meanSsbo);
 
 
     // Simulataneous and specialized series gives about the same performance
@@ -244,34 +237,22 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
         }
     }
 
-    _statsReduceProgram.pushProgram();
-    _statsReduceProgram.setUnsigned("GroupCount", ceil(workgroupCount / (double)WORKGROUP_SIZE));
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    glDispatchCompute(1, 1, 1);
-    _statsReduceProgram.popProgram();
-
     // Fetch workgroup's statistics from GPU
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, meanSize, qualBuff.data());
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _meanSsbo);
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, meanSize, &meanBuff);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, qualSize, qualBuff.data());
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
     // Get minimum quality
-    minQuality = qualBuff[0] / MAX_QUALITY_VALUE;
-    const double MEAN_COEFF = WORKGROUP_SIZE / MAX_QUALITY_VALUE;
-    qualityMean = MEAN_COEFF * meanBuff / (tetCount + priCount + hexCount);
+    minQuality = qualBuff[0] / MAX_INTEGER_VALUE;
 
-/*
     // Combine workgroup means
     size_t i = 0;
     qualityMean = 0.0;
     while(i <= workgroupCount)
         qualityMean += qualBuff[++i];
     qualityMean /= MAX_QUALITY_VALUE * (tetCount + priCount + hexCount);
-*/
 }
 
 void AbstractEvaluator::initializeProgram(const Mesh& mesh)
@@ -302,7 +283,6 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
         ":/shaders/compute/Measuring/SimultaneousEvaluation.glsl"});
     _simultaneousProgram.link();
     _simultaneousProgram.pushProgram();
-    _simultaneousProgram.setFloat("MaxQuality", MAX_QUALITY_VALUE);
     _simultaneousProgram.popProgram();
     mesh.uploadGeometry(_simultaneousProgram);
 
@@ -315,7 +295,6 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
         ":/shaders/compute/Measuring/TetrahedraEvaluation.glsl"});
     _tetProgram.link();
     _tetProgram.pushProgram();
-    _tetProgram.setFloat("MaxQuality", MAX_QUALITY_VALUE);
     _tetProgram.popProgram();
     mesh.uploadGeometry(_tetProgram);
 
@@ -326,7 +305,6 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
         ":/shaders/compute/Measuring/PrismsEvaluation.glsl"});
     _priProgram.link();
     _priProgram.pushProgram();
-    _priProgram.setFloat("MaxQuality", MAX_QUALITY_VALUE);
     _priProgram.popProgram();
     mesh.uploadGeometry(_priProgram);
 
@@ -337,30 +315,26 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
         ":/shaders/compute/Measuring/HexahedraEvaluation.glsl"});
     _hexProgram.link();
     _hexProgram.pushProgram();
-    _hexProgram.setFloat("MaxQuality", MAX_QUALITY_VALUE);
     _hexProgram.popProgram();
     mesh.uploadGeometry(_hexProgram);
 
-    _statsReduceProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Measuring/StatisticsReduction.glsl"});
-    _statsReduceProgram.link();
 
     // Shader storage quality blocks
     glGenBuffers(1, &_qualSsbo);
-    glGenBuffers(1, &_meanSsbo);
 
 
     _initialized = true;
 }
 
-void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
+void AbstractEvaluator::benchmark(
+        const Mesh& mesh,
+        uint cppCycleCount,
+        uint glslCycleCount)
 {
     initializeProgram(mesh);
 
     double minQual, qualMean;
     const uint MARK_COUNT = 50;
-    size_t markSize = cycleCount / glm::min(MARK_COUNT, cycleCount);
 
     using std::chrono::high_resolution_clock;
     high_resolution_clock::time_point tStart;
@@ -372,7 +346,8 @@ void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
        "AbstractEvaluator"));
 
     high_resolution_clock::duration cppTime(0);
-    for(size_t i=0, m=0; i < 1; ++i)
+    size_t cppMarkSize = cppCycleCount / glm::min(MARK_COUNT, cppCycleCount);
+    for(size_t i=0, m=0; i < cppCycleCount; ++i)
     {
         minQual = 0;
         qualMean = 0;
@@ -385,12 +360,12 @@ void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
 
         if(i == m)
         {
-            float progress = 50.0f * i / (float) cycleCount;
+            int progress = 50.0f * i / (float) cppCycleCount;
             getLog().postMessage(new Message('I', false,
-               "Benchmark progress : " + to_string(progress) + "%" +
+               "Benchmark progress : " + to_string(progress) + "%\t" +
                "(min=" + to_string(minQual) + ", mean=" + to_string(qualMean) + ")",
                "AbstractEvaluator"));
-            m += markSize;
+            m += cppMarkSize;
         }
     }
 
@@ -400,7 +375,8 @@ void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
        "AbstractEvaluator"));
 
     high_resolution_clock::duration glslTime(0);
-    for(size_t i=0, m=0; i < cycleCount; ++i)
+    size_t glslMarkSize = glslCycleCount / glm::min(MARK_COUNT, glslCycleCount);
+    for(size_t i=0, m=0; i < glslCycleCount; ++i)
     {
         minQual = 0;
         qualMean = 0;
@@ -413,27 +389,28 @@ void AbstractEvaluator::benchmark(const Mesh& mesh, uint cycleCount)
 
         if(i == m)
         {
-            float progress = 50.0f + 50.0f * i / (float) cycleCount;
+            int progress = 50.0f + 50.0f * i / (float) glslCycleCount;
             getLog().postMessage(new Message('I', false,
-               "Benchmark progress : " + to_string(progress) + "%"  +
+               "Benchmark progress : " + to_string(progress) + "%\t"  +
                "(min=" + to_string(minQual) + ", mean=" + to_string(qualMean) + ")",
                "AbstractEvaluator"));
-            m += markSize;
+            m += glslMarkSize;
         }
     }
 
-    auto cppNano = cppTime.count();
-    auto glslNano = glslTime.count();
+    auto cppNano = cppTime.count() / cppCycleCount;
+    auto glslNano = glslTime.count() / glslCycleCount;
     double minNano = glm::min(cppNano, glslNano);
 
     double cppRatio = cppNano / minNano;
     double glslRatio = glslNano / minNano;
 
-    getLog().postMessage(new Message('I', false,
-       "Shape measure time ratio (ms) : \tC++:GLSL \t= " +
-        to_string(cppNano / 1000000.0) + ":" + to_string(glslNano / 1000000.0) + " \t= " +
-        to_string(cppRatio) + ":" + to_string(glslRatio),
-       "AbstractEvaluator"));
+    stringstream ss;
+    ss << "Shape measure time ratio (us) :\t"
+       << "C++:GLSL = " << fixed << setprecision(2)
+       << (cppNano / 1000.0) << ":" << (glslNano / 1000.0)
+       << " = " << cppRatio << ":" << glslRatio;
+    getLog().postMessage(new Message('I', false, ss.str(), "AbstractEvaluator"));
 }
 
 string AbstractEvaluator::shapeMeasureShader() const

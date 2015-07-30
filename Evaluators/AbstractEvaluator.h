@@ -33,7 +33,10 @@ public:
             double& minQuality,
             double& qualityMean);
 
-    virtual void benchmark(const Mesh& mesh, uint cycleCount);
+    virtual void benchmark(
+            const Mesh& mesh,
+            uint cppCycleCount,
+            uint glslCycleCount);
 
     virtual std::string shapeMeasureShader() const;
 
@@ -49,9 +52,7 @@ protected:
     cellar::GlProgram _tetProgram;
     cellar::GlProgram _priProgram;
     cellar::GlProgram _hexProgram;
-    cellar::GlProgram _statsReduceProgram;
     GLuint _qualSsbo;
-    GLuint _meanSsbo;
 
     static const size_t WORKGROUP_SIZE;
     static const size_t POLYHEDRON_TYPE_COUNT;

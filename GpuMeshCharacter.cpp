@@ -65,7 +65,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
     });
 
-    _availableEvaluators.setDefault("Volume Edge");
+    _availableEvaluators.setDefault("Mean Ratio");
     _availableEvaluators.setContent({
         {string("Insphere Edge"), shared_ptr<AbstractEvaluator>(new InsphereEdgeEvaluator())},
         {string("Mean Ratio"),    shared_ptr<AbstractEvaluator>(new MeanRatioEvaluator())},
@@ -372,16 +372,19 @@ void GpuMeshCharacter::benchmarkSmoother(
     }
 }
 
-void GpuMeshCharacter::benchmarkEvaluator(const std::string& evaluatorName, uint cycleCount)
+void GpuMeshCharacter::benchmarkEvaluator(
+        const std::string& evaluatorName,
+        uint cppCycleCount,
+        uint glslCycleCount)
 {
     printStep("Shape measure evaluation benchmark "\
               ": quality measure=" + evaluatorName +
-              ", cycle count=" + to_string(cycleCount));
+              ", cycle count=" + to_string(cppCycleCount));
 
     std::shared_ptr<AbstractEvaluator> evaluator;
     if(_availableEvaluators.select(evaluatorName, evaluator))
     {
-        evaluator->benchmark(*_mesh, cycleCount);
+        evaluator->benchmark(*_mesh, cppCycleCount, glslCycleCount);
     }
 }
 

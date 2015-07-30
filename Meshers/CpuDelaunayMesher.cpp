@@ -769,10 +769,14 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
                    meshTet[2] < _externalVertCount || meshTet[3] < _externalVertCount)
                 {
                     // It's a bounding tetrahedron
-                    if(meshTet[0] >= 0) topos[meshTet[0]].isFixed = true;
-                    if(meshTet[1] >= 0) topos[meshTet[1]].isFixed = true;
-                    if(meshTet[2] >= 0) topos[meshTet[2]].isFixed = true;
-                    if(meshTet[3] >= 0) topos[meshTet[3]].isFixed = true;
+                    if(meshTet[0] >= _externalVertCount)
+                        topos[meshTet[0] - _externalVertCount].isFixed = true;
+                    if(meshTet[1] >= _externalVertCount)
+                        topos[meshTet[1] - _externalVertCount].isFixed = true;
+                    if(meshTet[2] >= _externalVertCount)
+                        topos[meshTet[2] - _externalVertCount].isFixed = true;
+                    if(meshTet[3] >= _externalVertCount)
+                        topos[meshTet[3] - _externalVertCount].isFixed = true;
                 }
                 else
                 {

@@ -18,6 +18,9 @@ layout(shared, binding = FIRST_FREE_BUFFER_BINDING + 1) buffer Mean
 
 void main()
 {
+    // Looks like this algorithm needs more than 1M elements
+    // to beat CPU serial summation.
+
     uint uid = gl_GlobalInvocationID.x;
 
     uint groupBeg = GroupCount * uid;

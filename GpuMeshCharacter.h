@@ -66,7 +66,10 @@ public:
             double moveFactor,
             double gainThreshold);
 
-    virtual void benchmarkEvaluator(const std::string& evaluatorName, uint cycleCount);
+    virtual void benchmarkEvaluator(
+            const std::string& evaluatorName,
+            uint cppCycleCount,
+            uint glslCycleCount);
 
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);

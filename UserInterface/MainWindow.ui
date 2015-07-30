@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="geometryTab">
        <attribute name="title">
@@ -214,7 +214,7 @@
               <double>0.000001000000000</double>
              </property>
              <property name="value">
-              <double>0.000001000000000</double>
+              <double>0.000100000000000</double>
              </property>
             </widget>
            </item>
@@ -234,15 +234,15 @@
            <string>Benchmarking</string>
           </property>
           <layout class="QFormLayout" name="formLayout_4">
-           <item row="3" column="0">
-            <widget class="QLabel" name="benchmarkCycleCountLabel">
+           <item row="4" column="0">
+            <widget class="QLabel" name="benchmarkGlslCycleCountLabel">
              <property name="text">
-              <string>Shape cycle count</string>
+              <string>GLSL cycle count</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QSpinBox" name="benchmarkCycleCountSpin">
+           <item row="4" column="1">
+            <widget class="QSpinBox" name="benchmarkGlslCycleCountSpin">
              <property name="minimum">
               <number>1</number>
              </property>
@@ -250,7 +250,7 @@
               <number>500</number>
              </property>
              <property name="singleStep">
-              <number>10</number>
+              <number>1</number>
              </property>
              <property name="value">
               <number>20</number>
@@ -268,6 +268,26 @@
             <widget class="QPushButton" name="benchmarkShapeMeasureButton">
              <property name="text">
               <string>Shape measure</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="benchmarkCppCycleCountLabel">
+             <property name="text">
+              <string>C++ cycle count</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="benchmarkCppCycleCountSpin">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>500</number>
+             </property>
+             <property name="value">
+              <number>2</number>
              </property>
             </widget>
            </item>

@@ -2,6 +2,9 @@
 float cornerQuality(in mat3 Fk)
 {
     float Fk_det = determinant(Fk);
+    if(Fk_det < 0.0)
+        return 0.0;
+
     float Fk_frobenius2 =
         dot(Fk[0], Fk[0]) +
         dot(Fk[1], Fk[1]) +
