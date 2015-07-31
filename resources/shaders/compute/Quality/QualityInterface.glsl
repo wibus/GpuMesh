@@ -1,6 +1,6 @@
-float tetQuality(in vec3 vp[4]);
-float priQuality(in vec3 vp[6]);
-float hexQuality(in vec3 vp[8]);
+float tetQuality(in vec3 vp[TET_VERTEX_COUNT]);
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT]);
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT]);
 
 
 float tetQuality(in Tet tet)

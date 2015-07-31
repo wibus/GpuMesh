@@ -4,11 +4,145 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 uniform float MoveCoeff;
 
 
-float tetQuality(Tet tet);
-float priQuality(Pri pri);
-float hexQuality(Hex hex);
+float tetQuality(in vec3 vp[TET_VERTEX_COUNT]);
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT]);
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT]);
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
+
+const uint PROPOSITION_COUNT = 4;
+
+
+void integrateQuality(inout float total, float shape)
+{
+    total *= shape;
+}
+
+void testTetPropositions(
+        uint vertId,
+        Tet elem,
+        in vec3 propositions[PROPOSITION_COUNT],
+        inout float propQualities[PROPOSITION_COUNT])
+{
+    // Extract element's vertices
+    vec3 vp[TET_VERTEX_COUNT] = vec3[](
+        verts[elem.v[0]].p,
+        verts[elem.v[1]].p,
+        verts[elem.v[2]].p,
+        verts[elem.v[3]].p
+    );
+
+    // Find Vertex position in element
+    uint elemVertId = 0;
+    if(vertId == elem.v[1])
+        elemVertId = 1;
+    else if(vertId == elem.v[2])
+        elemVertId = 2;
+    else if(vertId == elem.v[3])
+        elemVertId = 3;
+
+    for(uint p=0; p < PROPOSITION_COUNT; ++p)
+    {
+        if(propQualities[p] > 0.0)
+        {
+            vp[elemVertId] = propositions[p];
+
+            integrateQuality(
+                propQualities[p],
+                tetQuality(vp));
+        }
+    }
+}
+
+void testPriPropositions(
+        uint vertId,
+        Pri elem,
+        in vec3 propositions[PROPOSITION_COUNT],
+        inout float propQualities[PROPOSITION_COUNT])
+{
+    // Extract element's vertices
+    vec3 vp[PRI_VERTEX_COUNT] = vec3[](
+        verts[elem.v[0]].p,
+        verts[elem.v[1]].p,
+        verts[elem.v[2]].p,
+        verts[elem.v[3]].p,
+        verts[elem.v[4]].p,
+        verts[elem.v[5]].p
+    );
+
+    // Find Vertex position in element
+    uint elemVertId = 0;
+    if(vertId == elem.v[1])
+        elemVertId = 1;
+    else if(vertId == elem.v[2])
+        elemVertId = 2;
+    else if(vertId == elem.v[3])
+        elemVertId = 3;
+    else if(vertId == elem.v[4])
+        elemVertId = 4;
+    else if(vertId == elem.v[5])
+        elemVertId = 5;
+
+    for(uint p=0; p < PROPOSITION_COUNT; ++p)
+    {
+        if(propQualities[p] > 0.0)
+        {
+            vp[elemVertId] = propositions[p];
+
+            integrateQuality(
+                propQualities[p],
+                priQuality(vp));
+        }
+    }
+}
+
+void testHexPropositions(
+        uint vertId,
+        Hex elem,
+        in vec3 propositions[PROPOSITION_COUNT],
+        inout float propQualities[PROPOSITION_COUNT])
+{
+    // Extract element's vertices
+    vec3 vp[HEX_VERTEX_COUNT] = vec3[](
+        verts[elem.v[0]].p,
+        verts[elem.v[1]].p,
+        verts[elem.v[2]].p,
+        verts[elem.v[3]].p,
+        verts[elem.v[4]].p,
+        verts[elem.v[5]].p,
+        verts[elem.v[6]].p,
+        verts[elem.v[7]].p
+    );
+
+    // Find vertex position in element
+    uint elemVertId = 0;
+    if(vertId == elem.v[1])
+        elemVertId = 1;
+    else if(vertId == elem.v[2])
+        elemVertId = 2;
+    else if(vertId == elem.v[3])
+        elemVertId = 3;
+    else if(vertId == elem.v[4])
+        elemVertId = 4;
+    else if(vertId == elem.v[5])
+        elemVertId = 5;
+    else if(vertId == elem.v[6])
+        elemVertId = 6;
+    else if(vertId == elem.v[7])
+        elemVertId = 7;
+
+    for(uint p=0; p < PROPOSITION_COUNT; ++p)
+    {
+        if(propQualities[p] > 0.0)
+        {
+            vp[elemVertId] = propositions[p];
+
+            integrateQuality(
+                propQualities[p],
+                hexQuality(vp));
+        }
+    }
+}
 
 void main()
 {
@@ -18,8 +152,11 @@ void main()
         return;
 
     Topo topo = topos[uid];
+    if(topo.type == TOPO_FIXED)
+        return;
+
     uint neigElemCount = topo.neigElemCount;
-    if(topo.type == TOPO_FIXED || neigElemCount == 0)
+    if(neigElemCount == 0)
         return;
 
 
@@ -58,7 +195,6 @@ void main()
 
 
     // Define propositions for new vertex's position
-    const uint PROPOSITION_COUNT = 4;
     vec3 propositions[PROPOSITION_COUNT] = vec3[](
         pos,
         patchCenter - centerDist * MoveCoeff,
@@ -70,50 +206,52 @@ void main()
         for(uint p=1; p < PROPOSITION_COUNT; ++p)
             propositions[p] = snapToBoundary(topo.type, propositions[p]);
 
+    float patchQualities[PROPOSITION_COUNT] = float[](1.0, 1.0, 1.0, 1.0);
 
 
-    // Choose best position based on quality geometric mean
-    uint bestProposition = 0;
-    float bestQualityMean = 0.0;
-    for(uint p=0; p < PROPOSITION_COUNT; ++p)
+    // Compute proposition's patch quality
+    for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
     {
-        float qualityGeometricMean = 1.0;
-        for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
+        NeigElem neigElem = neigElems[n];
+        switch(neigElem.type)
         {
-            // Quality evaluation functions will use this updated position
-            // to compute element shape measures.
-            verts[uid].p = vec4(propositions[p], 0.0);
+        case TET_ELEMENT_TYPE:
+            testTetPropositions(
+                uid,
+                tets[neigElem.id],
+                propositions,
+                patchQualities);
+            break;
 
-            NeigElem neigElem = neigElems[n];
-            switch(neigElem.type)
-            {
-            case TET_ELEMENT_TYPE:
-                qualityGeometricMean *= tetQuality(tets[neigElem.id]);
-                break;
+        case PRI_ELEMENT_TYPE:
+            testPriPropositions(
+                uid,
+                pris[neigElem.id],
+                propositions,
+                patchQualities);
+            break;
 
-            case PRI_ELEMENT_TYPE:
-                qualityGeometricMean *= priQuality(pris[neigElem.id]);
-                break;
-
-            case HEX_ELEMENT_TYPE:
-                qualityGeometricMean *= hexQuality(hexs[neigElem.id]);
-                break;
-            }
-
-            if(qualityGeometricMean <= 0.0)
-            {
-                qualityGeometricMean = 0.0;
-                break;
-            }
-        }
-
-        if(qualityGeometricMean > bestQualityMean)
-        {
-            bestQualityMean = qualityGeometricMean;
-            bestProposition = p;
+        case HEX_ELEMENT_TYPE:
+            testHexPropositions(
+                uid,
+                hexs[neigElem.id],
+                propositions,
+                patchQualities);
+            break;
         }
     }
 
+    // Find best proposition based on patch quality
+    uint bestProposition = 0;
+    float bestQualityResult = patchQualities[0];
+    for(uint p=1; p < PROPOSITION_COUNT; ++p)
+    {
+        if(bestQualityResult < patchQualities[p])
+        {
+            bestProposition = p;
+            bestQualityResult = patchQualities[p];
+        }
+    }
 
     // Update vertex's position
     verts[uid].p = vec4(propositions[bestProposition], 0.0);
