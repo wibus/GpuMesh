@@ -19,7 +19,7 @@ const size_t AbstractEvaluator::MAX_GROUP_PARTICIPANTS =
         AbstractEvaluator::POLYHEDRON_TYPE_COUNT;
 
 const double AbstractEvaluator::VALIDITY_EPSILON = 1e-6;
-const double AbstractEvaluator::MAX_INTEGER_VALUE = 4294967296.0;
+const double AbstractEvaluator::MAX_INTEGER_VALUE = 2147483647.0;
 const double AbstractEvaluator::MIN_QUALITY_PRECISION_DENOM = 4096.0;
 
 const double AbstractEvaluator::MAX_QUALITY_VALUE =
@@ -192,8 +192,8 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
 
 
-    std::vector<GLuint> qualBuff(1 + workgroupCount, 0);
-    qualBuff[0] = GLuint(MAX_INTEGER_VALUE);
+    std::vector<GLint> qualBuff(1 + workgroupCount, 0);
+    qualBuff[0] = GLint(MAX_INTEGER_VALUE);
     size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_STATIC_DRAW);

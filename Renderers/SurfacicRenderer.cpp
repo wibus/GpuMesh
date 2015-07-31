@@ -303,7 +303,7 @@ void SurfacicRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = evaluator.tetQuality(mesh, tet);
+        double quality = glm::max(evaluator.tetQuality(mesh, tet), 0.0);
 
         for(int f=0; f < MeshTet::TRI_COUNT; ++f)
         {
@@ -342,7 +342,7 @@ void SurfacicRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = evaluator.priQuality(mesh, pri);
+        double quality = glm::max(evaluator.priQuality(mesh, pri), 0.0);
 
         for(int f=0; f < MeshPri::TRI_COUNT; ++f)
         {
@@ -385,7 +385,7 @@ void SurfacicRenderer::compileFacesAttributes(
             continue;
 
 
-        double quality = evaluator.hexQuality(mesh, hex);
+        double quality = glm::max(evaluator.hexQuality(mesh, hex), 0.0);
 
         for(int f=0; f < MeshHex::TRI_COUNT; ++f)
         {

@@ -2,15 +2,15 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 layout(shared, binding = FIRST_FREE_BUFFER_BINDING) buffer Quals
 {
-    uint qualMin;
-    uint means[];
+    int qualMin;
+    int means[];
 };
 
 float tetQuality(Tet tet);
 float priQuality(Pri pri);
 float hexQuality(Hex hex);
 
-const uint UINT_MAX = 4294967295;
+const int UINT_MAX = 2147483647;
 const float MEAN_MAX = UINT_MAX / (gl_WorkGroupSize.x * 3);
 
 
@@ -23,7 +23,7 @@ void main()
     if(uid < hexs.length())
     {
         float q = hexQuality(hexs[uid]);
-        atomicMin(qualMin, uint(q * UINT_MAX));
-        atomicAdd(means[gid], uint(q * MEAN_MAX));
+        atomicMin(qualMin, int(q * UINT_MAX));
+        atomicAdd(means[gid], int(q * MEAN_MAX));
     }
 }

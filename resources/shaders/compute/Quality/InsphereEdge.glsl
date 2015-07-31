@@ -13,7 +13,7 @@ float tetQuality(in vec3 vp[4])
     Volume -= v*v*pow(w*w+u*u-V*V, 2.0);
     Volume -= w*w*pow(u*u+v*v-W*W, 2.0);
     Volume += (v*v+w*w-U*U)*(w*w+u*u-V*V)*(u*u+v*v-W*W);
-    Volume = sqrt(max(Volume, 0.0));
+    Volume = sign(Volume) * sqrt(abs(Volume));
     Volume /= 12.0;
 
     float s1 = (U + V + W) / 2.0;

@@ -28,7 +28,7 @@ double InsphereEdgeEvaluator::tetQuality(const dvec3 vp[]) const
     Volume -= v*v*pow(w*w+u*u-V*V, 2.0);
     Volume -= w*w*pow(u*u+v*v-W*W, 2.0);
     Volume += (v*v+w*w-U*U)*(w*w+u*u-V*V)*(u*u+v*v-W*W);
-    Volume = sqrt(max(Volume, 0.0));
+    Volume = sign(Volume) * sqrt(abs(Volume));
     Volume /= 12.0;
 
     double s1 = (U + V + W) * 0.5;
@@ -44,7 +44,7 @@ double InsphereEdgeEvaluator::tetQuality(const dvec3 vp[]) const
     double R = (Volume*3)/(L1+L2+L3+L4);
 
     double maxLen = max(max(max(u, v), w),
-                             max(max(U, V), W));
+                        max(max(U, V), W));
 
     return (4.89897948557) * R / maxLen;
 }

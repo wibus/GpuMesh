@@ -18,15 +18,13 @@ MeanRatioEvaluator::~MeanRatioEvaluator()
 double MeanRatioEvaluator::cornerQuality(const dmat3& Fk) const
 {
     double Fk_det = determinant(Fk);
-    if(Fk_det < 0.0)
-        return 0.0;
 
     double Fk_frobenius2 =
         dot(Fk[0], Fk[0]) +
         dot(Fk[1], Fk[1]) +
         dot(Fk[2], Fk[2]);
 
-    return 3.0 * pow(Fk_det, 2.0/3.0) / Fk_frobenius2;
+    return sign(Fk_det) * 3.0 * pow(abs(Fk_det), 2.0/3.0) / Fk_frobenius2;
 }
 
 double MeanRatioEvaluator::tetQuality(const dvec3 vp[]) const

@@ -6,13 +6,13 @@ uniform uint GroupCount;
 
 layout(shared, binding = FIRST_FREE_BUFFER_BINDING) buffer Quals
 {
-    uint qualMin;
-    uint means[];
+    int qualMin;
+    int means[];
 };
 
 layout(shared, binding = FIRST_FREE_BUFFER_BINDING + 1) buffer Mean
 {
-    uint mean;
+    int mean;
 };
 
 
@@ -33,5 +33,5 @@ void main()
     }
     meanSum /= gl_WorkGroupSize.x;
 
-    atomicAdd(mean, uint(meanSum));
+    atomicAdd(mean, int(meanSum));
 }

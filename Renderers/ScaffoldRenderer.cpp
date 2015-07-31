@@ -237,7 +237,7 @@ void ScaffoldRenderer::compileVerts(
     for(int i=0; i < tetCount; ++i)
     {
         const MeshTet& tet = mesh.tetra[i];
-        GLubyte qual = 255 * evaluator.tetQuality(mesh, tet);
+        GLubyte qual = 255 * glm::max(evaluator.tetQuality(mesh, tet), 0.0);
         if(qual < quals[tet.v[0]]) quals[tet.v[0]] = qual;
         if(qual < quals[tet.v[1]]) quals[tet.v[1]] = qual;
         if(qual < quals[tet.v[2]]) quals[tet.v[2]] = qual;
@@ -249,7 +249,7 @@ void ScaffoldRenderer::compileVerts(
     for(int i=0; i < priCount; ++i)
     {
         const MeshPri& pri = mesh.prism[i];
-        GLubyte qual = 255 * evaluator.priQuality(mesh, pri);
+        GLubyte qual = 255 * glm::max(evaluator.priQuality(mesh, pri), 0.0);
         if(qual < quals[pri.v[0]]) quals[pri.v[0]] = qual;
         if(qual < quals[pri.v[1]]) quals[pri.v[1]] = qual;
         if(qual < quals[pri.v[2]]) quals[pri.v[2]] = qual;
@@ -263,7 +263,7 @@ void ScaffoldRenderer::compileVerts(
     for(int i=0; i < hexCount; ++i)
     {
         const MeshHex& hex = mesh.hexa[i];
-        GLubyte qual = 255 * evaluator.hexQuality(mesh, hex);
+        GLubyte qual = 255 * glm::max(evaluator.hexQuality(mesh, hex), 0.0);
         if(qual < quals[hex.v[0]]) quals[hex.v[0]] = qual;
         if(qual < quals[hex.v[1]]) quals[hex.v[1]] = qual;
         if(qual < quals[hex.v[2]]) quals[hex.v[2]] = qual;
