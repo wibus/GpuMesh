@@ -6,17 +6,17 @@ float length2(in vec3 v)
 float tetQuality(in vec3 vp[4])
 {
     float volume =  determinant(mat3(
-        vp[TET_TETS[0].v[0]] - vp[TET_TETS[0].v[3]],
-        vp[TET_TETS[0].v[1]] - vp[TET_TETS[0].v[3]],
-        vp[TET_TETS[0].v[2]] - vp[TET_TETS[0].v[3]]));
+        vp[0] - vp[3],
+        vp[1] - vp[3],
+        vp[2] - vp[3]));
 
     float edge2Sum = 0.0;
-    edge2Sum += length2(vp[TET_EDGES[0].v[0]] - vp[TET_EDGES[0].v[1]]);
-    edge2Sum += length2(vp[TET_EDGES[1].v[0]] - vp[TET_EDGES[1].v[1]]);
-    edge2Sum += length2(vp[TET_EDGES[2].v[0]] - vp[TET_EDGES[2].v[1]]);
-    edge2Sum += length2(vp[TET_EDGES[3].v[0]] - vp[TET_EDGES[3].v[1]]);
-    edge2Sum += length2(vp[TET_EDGES[4].v[0]] - vp[TET_EDGES[4].v[1]]);
-    edge2Sum += length2(vp[TET_EDGES[5].v[0]] - vp[TET_EDGES[5].v[1]]);
+    edge2Sum += length2(vp[0] - vp[1]);
+    edge2Sum += length2(vp[0] - vp[2]);
+    edge2Sum += length2(vp[0] - vp[3]);
+    edge2Sum += length2(vp[1] - vp[2]);
+    edge2Sum += length2(vp[2] - vp[3]);
+    edge2Sum += length2(vp[3] - vp[1]);
     float edgeSum = sqrt(edge2Sum);
 
     return min(volume / (edgeSum*edgeSum*edgeSum)
@@ -27,28 +27,28 @@ float priQuality(in vec3 vp[6])
 {
     float volume = 0.0;
     volume += determinant(mat3(
-        vp[PRI_TETS[0].v[0]] - vp[PRI_TETS[0].v[3]],
-        vp[PRI_TETS[0].v[1]] - vp[PRI_TETS[0].v[3]],
-        vp[PRI_TETS[0].v[2]] - vp[PRI_TETS[0].v[3]]));
+        vp[4] - vp[2],
+        vp[0] - vp[2],
+        vp[1] - vp[2]));
     volume += determinant(mat3(
-        vp[PRI_TETS[1].v[0]] - vp[PRI_TETS[1].v[3]],
-        vp[PRI_TETS[1].v[1]] - vp[PRI_TETS[1].v[3]],
-        vp[PRI_TETS[1].v[2]] - vp[PRI_TETS[1].v[3]]));
+        vp[5] - vp[2],
+        vp[1] - vp[2],
+        vp[3] - vp[2]));
     volume += determinant(mat3(
-        vp[PRI_TETS[2].v[0]] - vp[PRI_TETS[2].v[3]],
-        vp[PRI_TETS[2].v[1]] - vp[PRI_TETS[2].v[3]],
-        vp[PRI_TETS[2].v[2]] - vp[PRI_TETS[2].v[3]]));
+        vp[4] - vp[2],
+        vp[1] - vp[2],
+        vp[5] - vp[2]));
 
     float edge2Sum = 0.0;
-    edge2Sum += length2(vp[PRI_EDGES[0].v[0]] - vp[PRI_EDGES[0].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[1].v[0]] - vp[PRI_EDGES[1].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[2].v[0]] - vp[PRI_EDGES[2].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[3].v[0]] - vp[PRI_EDGES[3].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[4].v[0]] - vp[PRI_EDGES[4].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[5].v[0]] - vp[PRI_EDGES[5].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[6].v[0]] - vp[PRI_EDGES[6].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[7].v[0]] - vp[PRI_EDGES[7].v[1]]);
-    edge2Sum += length2(vp[PRI_EDGES[8].v[0]] - vp[PRI_EDGES[8].v[1]]);
+    edge2Sum += length2(vp[0] - vp[1]);
+    edge2Sum += length2(vp[0] - vp[2]);
+    edge2Sum += length2(vp[1] - vp[3]);
+    edge2Sum += length2(vp[2] - vp[3]);
+    edge2Sum += length2(vp[0] - vp[4]);
+    edge2Sum += length2(vp[1] - vp[5]);
+    edge2Sum += length2(vp[2] - vp[4]);
+    edge2Sum += length2(vp[3] - vp[5]);
+    edge2Sum += length2(vp[4] - vp[5]);
     float edgeSum = sqrt(edge2Sum);
 
     return min(volume / (edgeSum*edgeSum*edgeSum)
@@ -59,39 +59,39 @@ float hexQuality(in vec3 vp[8])
 {
     float volume = 0.0;
     volume += determinant(mat3(
-        vp[HEX_TETS[0].v[0]] - vp[HEX_TETS[0].v[3]],
-        vp[HEX_TETS[0].v[1]] - vp[HEX_TETS[0].v[3]],
-        vp[HEX_TETS[0].v[2]] - vp[HEX_TETS[0].v[3]]));
+        vp[0] - vp[2],
+        vp[1] - vp[2],
+        vp[4] - vp[2]));
     volume += determinant(mat3(
-        vp[HEX_TETS[1].v[0]] - vp[HEX_TETS[1].v[3]],
-        vp[HEX_TETS[1].v[1]] - vp[HEX_TETS[1].v[3]],
-        vp[HEX_TETS[1].v[2]] - vp[HEX_TETS[1].v[3]]));
+        vp[3] - vp[1],
+        vp[2] - vp[1],
+        vp[7] - vp[1]));
     volume += determinant(mat3(
-        vp[HEX_TETS[2].v[0]] - vp[HEX_TETS[2].v[3]],
-        vp[HEX_TETS[2].v[1]] - vp[HEX_TETS[2].v[3]],
-        vp[HEX_TETS[2].v[2]] - vp[HEX_TETS[2].v[3]]));
+        vp[5] - vp[4],
+        vp[1] - vp[4],
+        vp[7] - vp[4]));
     volume += determinant(mat3(
-        vp[HEX_TETS[3].v[0]] - vp[HEX_TETS[3].v[3]],
-        vp[HEX_TETS[3].v[1]] - vp[HEX_TETS[3].v[3]],
-        vp[HEX_TETS[3].v[2]] - vp[HEX_TETS[3].v[3]]));
+        vp[6] - vp[7],
+        vp[2] - vp[7],
+        vp[4] - vp[7]));
     volume += determinant(mat3(
-        vp[HEX_TETS[4].v[0]] - vp[HEX_TETS[4].v[3]],
-        vp[HEX_TETS[4].v[1]] - vp[HEX_TETS[4].v[3]],
-        vp[HEX_TETS[4].v[2]] - vp[HEX_TETS[4].v[3]]));
+        vp[1] - vp[2],
+        vp[7] - vp[2],
+        vp[4] - vp[2]));
 
     float edge2Sum = 0.0;
-    edge2Sum += length2(vp[HEX_EDGES[0].v[0]] - vp[HEX_EDGES[0].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[1].v[0]] - vp[HEX_EDGES[1].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[2].v[0]] - vp[HEX_EDGES[2].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[3].v[0]] - vp[HEX_EDGES[3].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[4].v[0]] - vp[HEX_EDGES[4].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[5].v[0]] - vp[HEX_EDGES[5].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[6].v[0]] - vp[HEX_EDGES[6].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[7].v[0]] - vp[HEX_EDGES[7].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[8].v[0]] - vp[HEX_EDGES[8].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[9].v[0]] - vp[HEX_EDGES[9].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[10].v[0]] - vp[HEX_EDGES[10].v[1]]);
-    edge2Sum += length2(vp[HEX_EDGES[11].v[0]] - vp[HEX_EDGES[11].v[1]]);
+    edge2Sum += length2(vp[0] - vp[1]);
+    edge2Sum += length2(vp[0] - vp[2]);
+    edge2Sum += length2(vp[1] - vp[3]);
+    edge2Sum += length2(vp[2] - vp[3]);
+    edge2Sum += length2(vp[0] - vp[4]);
+    edge2Sum += length2(vp[1] - vp[5]);
+    edge2Sum += length2(vp[2] - vp[6]);
+    edge2Sum += length2(vp[3] - vp[7]);
+    edge2Sum += length2(vp[4] - vp[5]);
+    edge2Sum += length2(vp[4] - vp[6]);
+    edge2Sum += length2(vp[5] - vp[7]);
+    edge2Sum += length2(vp[6] - vp[7]);
     float edgeSum = sqrt(edge2Sum);
 
     return min(volume / (edgeSum*edgeSum*edgeSum)

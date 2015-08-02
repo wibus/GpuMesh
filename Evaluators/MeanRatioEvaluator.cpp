@@ -1,7 +1,5 @@
 #include "MeanRatioEvaluator.h"
 
-#include <iostream>
-
 using namespace glm;
 
 
