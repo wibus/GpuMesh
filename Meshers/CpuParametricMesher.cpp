@@ -117,7 +117,7 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
     totalStackCount = 2 * straightPipeStackCount + arcPipeStackCount;
 
 
-    genStraightPipe(mesh,
+    insertStraightPipe(mesh,
                     glm::dvec3(-1.0, -0.5,  0),
                     glm::dvec3( 0.5, -0.5,  0),
                     glm::dvec3( 0,    0,    1),
@@ -128,7 +128,7 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
                     true,
                     false);
 
-    genArcPipe(mesh,
+    insertArcPipe(mesh,
                glm::dvec3( 0.5,  0,    0),
                glm::dvec3( 0,    0,    1),
                glm::dvec3( 0,   -1.0,  0),
@@ -142,7 +142,7 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
                false,
                false);
 
-    genStraightPipe(mesh,
+    insertStraightPipe(mesh,
                     glm::dvec3( 0.5,  0.5,  0),
                     glm::dvec3(-1.0,  0.5,  0),
                     glm::dvec3( 0,    0,    1),
@@ -154,9 +154,12 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
                     true);
 
     meshPipe(mesh, totalStackCount, sliceCount, layerCount);
+
+    mesh.setmodelBoundariesShaderName(
+        ":/shaders/compute/Boundary/ElbowPipe.glsl");
 }
 
-void CpuParametricMesher::genStraightPipe(
+void CpuParametricMesher::insertStraightPipe(
         Mesh& mesh,
         const glm::dvec3& begin,
         const glm::dvec3& end,
@@ -200,7 +203,7 @@ void CpuParametricMesher::genStraightPipe(
     }
 }
 
-void CpuParametricMesher::genArcPipe(
+void CpuParametricMesher::insertArcPipe(
         Mesh& mesh,
         const glm::dvec3& arcCenter,
         const glm::dvec3& rotationAxis,
@@ -265,8 +268,8 @@ void CpuParametricMesher::insertStackVertices(
         int layerCount,
         bool isBoundary)
 {
-    MeshTopo extTopo(isBoundary ? *_pipeExtEdge : *_pipeSurface);
-    MeshTopo intTopo(isBoundary ? *_pipeExtFace : MeshTopo::NO_BOUNDARY);
+    MeshTopo extTopo(isBoundary ? _pipeExtEdge.get() : _pipeSurface.get());
+    MeshTopo intTopo(isBoundary ? _pipeExtFace.get() : &MeshTopo::NO_BOUNDARY);
 
     mesh.vert.push_back(center);
     mesh.topo.push_back(intTopo);

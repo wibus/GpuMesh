@@ -123,7 +123,7 @@ const MeshBound MeshTopo::NO_BOUNDARY = MeshBound(0);
 MeshTopo::MeshTopo() :
     isFixed(false),
     isBoundary(false),
-    snapToBoundary(NO_BOUNDARY)
+    snapToBoundary(&NO_BOUNDARY)
 {
 }
 
@@ -131,20 +131,19 @@ MeshTopo::MeshTopo(
         bool isFixed) :
     isFixed(isFixed),
     isBoundary(false),
-    snapToBoundary(NO_BOUNDARY)
+    snapToBoundary(&NO_BOUNDARY)
 {
 }
 
-MeshTopo::MeshTopo(
-        const MeshBound& boundaryCallback) :
+MeshTopo::MeshTopo(const MeshBound* boundaryCallback) :
     isFixed(false),
-    isBoundary(&boundaryCallback != &NO_BOUNDARY),
+    isBoundary(boundaryCallback != &NO_BOUNDARY),
     snapToBoundary(boundaryCallback)
 {
 }
 
-
-Mesh::Mesh()
+Mesh::Mesh() :
+    _modelBoundsShaderName(":/shaders/compute/Boundary/None.glsl")
 {
 
 }
@@ -266,6 +265,16 @@ void Mesh::bindShaderStorageBuffers() const
 size_t Mesh::firstFreeBufferBinding() const
 {
     return 0;
+}
+
+std::string Mesh::modelBoundsShaderName() const
+{
+    return _modelBoundsShaderName;
+}
+
+void Mesh::setmodelBoundariesShaderName(const std::string& name)
+{
+    _modelBoundsShaderName = name;
 }
 
 void Mesh::addEdge(int firstVert, int secondVert)

@@ -89,7 +89,7 @@ void GpuMesh::updateGpuTopoly()
         int neigVertCount = meshTopo.neighborVerts.size();
         int neigElemCount = meshTopo.neighborElems.size();
         int type = meshTopo.isFixed ? -1 :
-                meshTopo.snapToBoundary.id();
+                meshTopo.snapToBoundary->id();
 
         topoBuff[i] = GpuTopo(type, neigVertBase, neigVertCount,
                                     neigElemBase, neigElemCount);

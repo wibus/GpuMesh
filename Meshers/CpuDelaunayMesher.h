@@ -1,6 +1,8 @@
 #ifndef GPUMESH_CPUDELAUNAYMESHER
 #define GPUMESH_CPUDELAUNAYMESHER
 
+#include <memory>
+
 #include "AbstractMesher.h"
 
 #include "DataStructures/Tetrahedron.h"
@@ -36,7 +38,6 @@ public:
 
 protected:
     virtual void genBox(Mesh& mesh, size_t vertexCount);
-    virtual void genCap(Mesh& mesh, size_t vertexCount);
     virtual void genSphere(Mesh& mesh, size_t vertexCount);
 
     virtual void insertBoundingMesh();
@@ -57,6 +58,12 @@ protected:
     void makeTetrahedronPositive(Tetrahedron* tet);
 
 private:
+    // Boundaries
+    std::unique_ptr<MeshBound> _boxXFaceBoundary;
+    std::unique_ptr<MeshBound> _boxYFaceBoundary;
+    std::unique_ptr<MeshBound> _boxZFaceBoundary;
+    std::unique_ptr<MeshBound> _sphereBoundary;
+
     // Main data structures
     std::vector<Vertex> vert;
     std::vector<Tetrahedron*> tetra;

@@ -63,6 +63,7 @@ protected:
 
     bool _initialized;
     std::string _smoothShader;
+    std::string _modelBoundsShader;
     std::string _shapeMeasureShader;
     cellar::GlProgram _smoothingProgram;
 

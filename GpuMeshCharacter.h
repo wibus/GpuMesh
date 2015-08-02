@@ -16,12 +16,14 @@ class AbstractMesher;
 class AbstractEvaluator;
 class AbstractSmoother;
 class AbstractRenderer;
+enum class ECutType;
 
 enum class ECameraMan
 {
     Sphere,
     Free
 };
+
 
 class GpuMeshCharacter : public scaena::Character
 {
@@ -45,6 +47,7 @@ public:
     virtual OptionMapDetails availableRenderers() const;
     virtual OptionMapDetails availableShadings() const;
     virtual OptionMapDetails availableCameraMen() const;
+    virtual OptionMapDetails availableCutTypes() const;
 
     virtual void generateMesh(
             const std::string& mesherName,
@@ -74,8 +77,8 @@ public:
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
     virtual void displayQuality(const std::string& evaluatorName);
-    virtual void useVirtualCutPlane(bool use);
     virtual void useCameraMan(const std::string& cameraManName);
+    virtual void useCutType(const std::string& cutTypeName);
 
 protected:
     virtual void printStep(const std::string& stepDescription);
@@ -95,6 +98,7 @@ protected:
     float _camAltitude;
     float _camDistance;
     ECameraMan _cameraMan;
+    ECutType _cutType;
 
     float _lightAzimuth;
     float _lightAltitude;
@@ -121,6 +125,7 @@ private:
     OptionMap<std::shared_ptr<AbstractSmoother>> _availableSmoothers;
     OptionMap<std::shared_ptr<AbstractRenderer>> _availableRenderers;
     OptionMap<ECameraMan> _availableCameraMen;
+    OptionMap<ECutType> _availableCutTypes;
 };
 
 #endif //GpuMesh_CHARACTER

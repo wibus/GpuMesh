@@ -95,7 +95,7 @@ void ScaffoldRenderer::updateCamera(const glm::mat4& view,
 }
 
 void ScaffoldRenderer::updateLight(const glm::mat4&,
-                                     const glm::vec3& pos)
+                                   const glm::vec3& pos)
 {
     _scaffoldJointProgram.pushProgram();
     _scaffoldJointProgram.setVec3f("LightDirection", pos);
@@ -108,16 +108,30 @@ void ScaffoldRenderer::updateLight(const glm::mat4&,
 
 void ScaffoldRenderer::updateCutPlane(const glm::dvec4& cutEq)
 {
-    _cutPlane = cutEq;
-
-    if(_isPhysicalCut)
+    if(_cutType == ECutType::PhysicalPlane)
     {
+        _buffNeedUpdate = true;
+    }
+
+    _cutPlaneEq = cutEq;
+    _virtualCutPlane = glm::vec4(0.0);
+    _physicalCutPlane = glm::vec4(0.0);
+
+    if(_cutType == ECutType::VirtualPlane)
+    {
+        _virtualCutPlane = cutEq;
+    }
+    else if(_cutType == ECutType::PhysicalPlane)
+    {
+        _physicalCutPlane = cutEq;
         _buffNeedUpdate = true;
     }
 }
 
 void ScaffoldRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
+    AbstractRenderer::handleKeyPress(event);
+
     if(event.getAscii() == 'X')
     {
         _lightMode = (_lightMode + 1) % 3;
@@ -130,21 +144,16 @@ void ScaffoldRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
         _scaffoldTubeProgram.setInt("LightMode", _lightMode);
         _scaffoldTubeProgram.popProgram();
 
+        string shadingDescr = "Invalide shading mode";
         if(_lightMode == 0)
-            cout << "Using Wireframe light mode" << endl;
+            shadingDescr = "Using Wireframe light mode";
         else if(_lightMode == 1)
-            cout << "Using Diffuse light mode" << endl;
+            shadingDescr = "Using Diffuse light mode";
         else if(_lightMode == 1)
-            cout << "Using Phong light mode" << endl;
+            shadingDescr = "Using Phong light mode";
 
-    }
-    else if(event.getAscii() == 'C')
-    {
-        // This call actually toggles virtual cut plane
-        useVirtualCutPlane(_isPhysicalCut);
-
-        const char* rep = (_isPhysicalCut ? "true" : "false") ;
-        cout << "Physical cut : " << rep << endl;
+        getLog().postMessage(new Message('I', false,
+            shadingDescr, "ScaffoldRenderer"));
     }
 }
 
@@ -277,15 +286,8 @@ void ScaffoldRenderer::compileVerts(
 
 void ScaffoldRenderer::compileEdges(const Mesh& mesh, std::vector<GLuint>& edges)
 {
-    glm::dvec3 cutNormal(_cutPlane);
-    double cutDistance = _cutPlane.w;
-    if(!_isPhysicalCut)
-    {
-        cutNormal.x = 0;
-        cutNormal.y = 0;
-        cutNormal.z = 0;
-        cutDistance = 0;
-    }
+    glm::dvec3 cutNormal(_physicalCutPlane);
+    double cutDistance = _physicalCutPlane.w;
 
     set<pair<GLuint, GLuint>> edgeSet;
 
@@ -408,7 +410,7 @@ void ScaffoldRenderer::render()
     {
         glBindVertexArray(_vao);
         _wireframeProgram.pushProgram();
-        _wireframeProgram.setVec4f("CutPlaneEq", _cutPlane);
+        _wireframeProgram.setVec4f("CutPlaneEq", _virtualCutPlane);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
         glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -422,7 +424,7 @@ void ScaffoldRenderer::render()
         glBindVertexArray(_vao);
         _scaffoldJointProgram.pushProgram();
         _scaffoldJointProgram.setInt("LightMode", _lightMode);
-        _scaffoldJointProgram.setVec4f("CutPlaneEq", _cutPlane);
+        _scaffoldJointProgram.setVec4f("CutPlaneEq", _virtualCutPlane);
         glDrawArrays(GL_POINTS, 0, _vertElemCount);
         _scaffoldJointProgram.popProgram();
 
@@ -431,7 +433,7 @@ void ScaffoldRenderer::render()
 
         _scaffoldTubeProgram.pushProgram();
         _scaffoldTubeProgram.setInt("LightMode", _lightMode);
-        _scaffoldTubeProgram.setVec4f("CutPlaneEq", _cutPlane);
+        _scaffoldTubeProgram.setVec4f("CutPlaneEq", _virtualCutPlane);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
         glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

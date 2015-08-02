@@ -57,7 +57,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableEvaluators("Available Evaluators"),
     _availableSmoothers("Available Smoothers"),
     _availableRenderers("Available Renderers"),
-    _availableCameraMen("Available Camera Men")
+    _availableCameraMen("Available Camera Men"),
+    _availableCutTypes("Available Cut Types")
 {
     _availableMeshers.setDefault("Parametric");
     _availableMeshers.setContent({
@@ -89,6 +90,14 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableCameraMen.setContent({
         {string("Sphere"), ECameraMan::Sphere},
         {string("Free"),   ECameraMan::Free},
+    });
+
+    _availableCutTypes.setDefault("None");
+    _availableCutTypes.setContent({
+        {string("None"),              ECutType::None},
+        {string("Virtual Plane"),     ECutType::VirtualPlane},
+        {string("Physical Plane"),    ECutType::PhysicalPlane},
+        {string("Inverted Elements"), ECutType::InvertedElements},
     });
 }
 
@@ -291,6 +300,11 @@ OptionMapDetails GpuMeshCharacter::availableCameraMen() const
     return _availableCameraMen.details();
 }
 
+OptionMapDetails GpuMeshCharacter::availableCutTypes() const
+{
+    return _availableCutTypes.details();
+}
+
 void GpuMeshCharacter::generateMesh(
         const std::string& mesherName,
         const std::string& modelName,
@@ -410,15 +424,24 @@ void GpuMeshCharacter::displayQuality(const std::string& evaluatorName)
     }
 }
 
-void GpuMeshCharacter::useVirtualCutPlane(bool use)
-{
-    _renderer->useVirtualCutPlane(use);
-}
-
 void GpuMeshCharacter::useCameraMan(const string& cameraManName)
 {
     _availableCameraMen.select(cameraManName, _cameraMan);
-    refreshCamera();
+
+    if(_isEntered)
+    {
+        refreshCamera();
+    }
+}
+
+void GpuMeshCharacter::useCutType(const std::string& cutTypeName)
+{
+    _availableCutTypes.select(cutTypeName, _cutType);
+
+    if(_isEntered)
+    {
+        _renderer->useCutType(_cutType);
+    }
 }
 
 void GpuMeshCharacter::printStep(const std::string& stepDescription)
@@ -447,7 +470,10 @@ void GpuMeshCharacter::setupInstalledRenderer()
         // Setup shadow matrix
         moveLight(_lightAzimuth, _lightAltitude, _lightDistance);
 
-        // Setup cut plane
+        // Set cut type
+        _renderer->useCutType(_cutType);
+
+        // Setup cut plane position
         moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
 
         // Setup viewport

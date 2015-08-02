@@ -144,17 +144,17 @@ struct MeshNeigElem
 
 struct MeshTopo
 {
-    bool isFixed;
     std::vector<MeshNeigVert> neighborVerts;
     std::vector<MeshNeigElem> neighborElems;
 
+    bool isFixed;
     bool isBoundary;
-    const MeshBound& snapToBoundary;
+    const MeshBound* snapToBoundary;
     static const MeshBound NO_BOUNDARY;
 
     MeshTopo();
     MeshTopo(bool isFixed);
-    MeshTopo(const MeshBound& snapToBoundary);
+    MeshTopo(const MeshBound* snapToBoundary);
 };
 
 
@@ -169,6 +169,14 @@ enum class EMeshBuffer
     TOPO,
     NEIG_VERT,
     NEIG_ELEM,
+};
+
+enum class ECutType
+{
+    None,
+    VirtualPlane,
+    PhysicalPlane,
+    InvertedElements
 };
 
 
@@ -194,6 +202,8 @@ public:
     virtual void bindShaderStorageBuffers() const;
     virtual size_t firstFreeBufferBinding() const;
 
+    virtual std::string modelBoundsShaderName() const;
+    virtual void setmodelBoundariesShaderName(const std::string& name);
 
     std::vector<MeshVert> vert;
     std::vector<MeshTet>  tetra;
@@ -205,6 +215,8 @@ public:
 protected:
     virtual void addEdge(int firstVert,
                          int secondVert);
+
+    std::string _modelBoundsShaderName;
 };
 
 

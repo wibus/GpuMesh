@@ -1,5 +1,7 @@
 #include "RenderingTab.h"
 
+#include <QRadioButton>
+
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
 
@@ -35,15 +37,10 @@ RenderingTab::RenderingTab(Ui::MainWindow* ui,
 
     // Defining camera man
     deployCameraMen();
-    connect(_ui->cameraManMenu,
-            static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &RenderingTab::useCameraMan);
 
 
-    // Define virtual cut plane usage
-    _character->useVirtualCutPlane(_ui->virtualCutPlaneCheck->isChecked());
-    connect(_ui->virtualCutPlaneCheck, &QCheckBox::stateChanged,
-            this, &RenderingTab::useVirtualCutPlane);
+    // Define cut type
+    deployCutTypes();
 }
 
 RenderingTab::~RenderingTab()
@@ -94,10 +91,42 @@ void RenderingTab::deployCameraMen()
 {
     OptionMapDetails cameraMen = _character->availableCameraMen();
 
-    _ui->cameraManMenu->clear();
-    for(const auto& name : cameraMen.options)
-        _ui->cameraManMenu->addItem(QString(name.c_str()));
-    _ui->cameraManMenu->setCurrentText(cameraMen.defaultOption.c_str());
+    if(_ui->cameraGroup->layout())
+        QWidget().setLayout(_ui->cameraGroup->layout());
+
+    QVBoxLayout* layout = new QVBoxLayout();
+    for(const string& cam : cameraMen.options)
+    {
+        QRadioButton* button = new QRadioButton(cam.c_str());
+        connect(button, &QRadioButton::toggled,
+                [=](bool checked){ if(checked) useCameraMan(cam);});
+        layout->addWidget(button);
+
+        if(cam == cameraMen.defaultOption)
+            button->setChecked(true);
+    }
+    _ui->cameraGroup->setLayout(layout);
+}
+
+void RenderingTab::deployCutTypes()
+{
+    OptionMapDetails cutTypes = _character->availableCutTypes();
+
+    if(_ui->cutGroup->layout())
+        QWidget().setLayout(_ui->cutGroup->layout());
+
+    QVBoxLayout* layout = new QVBoxLayout();
+    for(const string& cut : cutTypes.options)
+    {
+        QRadioButton* button = new QRadioButton(cut.c_str());
+        connect(button, &QRadioButton::toggled,
+                [=](bool checked){ if(checked) useCutType(cut);});
+        layout->addWidget(button);
+
+        if(cut == cutTypes.defaultOption)
+            button->setChecked(true);
+    }
+    _ui->cutGroup->setLayout(layout);
 }
 
 void RenderingTab::renderTypeChanged(const QString& text)
@@ -105,8 +134,6 @@ void RenderingTab::renderTypeChanged(const QString& text)
     _character->useRenderer(text.toStdString());
 
     deployShadings();
-    _character->useVirtualCutPlane(
-        _ui->virtualCutPlaneCheck->isChecked());
 }
 
 void RenderingTab::shadingChanged(const QString& text)
@@ -122,12 +149,12 @@ void RenderingTab::shapeMeasureChanged(const QString& text)
     _character->displayQuality(text.toStdString());
 }
 
-void RenderingTab::useCameraMan(const QString& text)
+void RenderingTab::useCameraMan(const string& cameraName)
 {
-    _character->useCameraMan(text.toStdString());
+    _character->useCameraMan(cameraName);
 }
 
-void RenderingTab::useVirtualCutPlane(bool checked)
+void RenderingTab::useCutType(const string& cutName)
 {
-    _character->useVirtualCutPlane(checked);
+    _character->useCutType(cutName);
 }

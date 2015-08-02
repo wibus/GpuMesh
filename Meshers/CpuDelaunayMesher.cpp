@@ -50,13 +50,74 @@ const glm::ivec3 DIR[DIR_COUNT] = {
 };
 
 
-CpuDelaunayMesher::CpuDelaunayMesher()
+class BoxXBoudary : public MeshBound
+{
+public:
+    BoxXBoudary() :
+        MeshBound(1)
+    {
+    }
+
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
+    {
+        return glm::dvec3(pos.x / glm::abs(pos.x), pos.y, pos.z);
+    }
+};
+
+class BoxYBoudary : public MeshBound
+{
+public:
+    BoxYBoudary() :
+        MeshBound(2)
+    {
+    }
+
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
+    {
+        return glm::dvec3(pos.x, pos.y / glm::abs(pos.y), pos.z);
+    }
+};
+
+class BoxZBoudary : public MeshBound
+{
+public:
+    BoxZBoudary() :
+        MeshBound(3)
+    {
+    }
+
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
+    {
+        return glm::dvec3(pos.x, pos.y, pos.z / glm::abs(pos.z));
+    }
+};
+
+
+class SphereBoudary : public MeshBound
+{
+public:
+    SphereBoudary() :
+        MeshBound(1)
+    {
+    }
+
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
+    {
+        return glm::normalize(pos);
+    }
+};
+
+
+CpuDelaunayMesher::CpuDelaunayMesher() :
+    _boxXFaceBoundary(new BoxXBoudary()),
+    _boxYFaceBoundary(new BoxYBoudary()),
+    _boxZFaceBoundary(new BoxZBoudary()),
+    _sphereBoundary(new SphereBoudary())
 {
     using namespace std::placeholders;
     _modelFuncs.setDefault("Sphere");
     _modelFuncs.setContent({
         {string("Box"),    ModelFunc(bind(&CpuDelaunayMesher::genBox,    this, _1, _2))},
-        {string("Cap"),    ModelFunc(bind(&CpuDelaunayMesher::genCap,    this, _1, _2))},
         {string("Sphere"), ModelFunc(bind(&CpuDelaunayMesher::genSphere, this, _1, _2))},
     });
 }
@@ -68,75 +129,83 @@ CpuDelaunayMesher::~CpuDelaunayMesher()
 void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
 {
     std::vector<glm::dvec3> vertices;
-    glm::dvec3 cMin(-1);
-    glm::dvec3 cMax( 1);
+    double sideLength = 1.0;
+    double padding = 1.0 - 1.0/glm::pow(vertexCount, 1/3.0);
+    glm::dvec3 cBoundMin(-sideLength);
+    glm::dvec3 cBoundMax(sideLength);
+    glm::dvec3 cInnerMin = cBoundMin * padding;
+    glm::dvec3 cInnerMax = cBoundMax * padding;
 
     vertices.resize(vertexCount);
-    int surfCount = glm::sqrt(vertexCount) * 10;
-    int padding = glm::pow(vertexCount, 1/3.0);
-    for(int iv=0; iv < surfCount; ++iv)
+    int surfVertCount = glm::sqrt(vertexCount) * 10;
+    for(int iv=0; iv < surfVertCount; ++iv)
     {
-        glm::dvec3 val = glm::linearRand(cMin, cMax);
+        glm::dvec3 val = glm::linearRand(cBoundMin, cBoundMax);
         val[iv%3] = glm::mix(-1.0, 1.0, (double)(iv%2));
         vertices[iv] = val;
     }
 
-    for(int iv=surfCount; iv<vertexCount; ++iv)
-        vertices[iv] = glm::linearRand(cMin, cMax) * (1.0 - 1.0 / padding);
+    for(int iv=surfVertCount; iv<vertexCount; ++iv)
+        vertices[iv] = glm::linearRand(cInnerMin, cInnerMax);
 
 
     insertVertices(mesh, vertices);
-}
 
-void CpuDelaunayMesher::genCap(Mesh& mesh, size_t vertexCount)
-{
-    std::vector<glm::dvec3> vertices;
+    const MeshBound* boxBound[] = {
+        _boxXFaceBoundary.get(),
+        _boxYFaceBoundary.get(),
+        _boxZFaceBoundary.get()
+    };
 
-    int stackCount = glm::pow(vertexCount/2.3, 1/3.0);
-    glm::dvec3 minPerturb(-0.1 / stackCount);
-    glm::dvec3 maxPerturb(0.1 / stackCount);
-    for(int s=0; s <= stackCount; ++s)
+    for(size_t v=0; v < surfVertCount; ++v)
     {
-        double sProg = s / (double) stackCount;
-        double height = sProg;
-        vertices.push_back(glm::dvec3(0, 0, height));
-
-        for(int r=1; r <= s; ++r)
-        {
-            double rProg = r / (double) s;
-            double ringRadius = r / (double) stackCount;
-            double ringHeight = height * (1.0 - rProg*rProg);
-            double ringVertCount = stackCount * glm::sqrt(1.0 + r);
-            for(int v=0; v < ringVertCount; ++v)
-            {
-                double vProg = v / (double) ringVertCount;
-                double vAngle = glm::pi<double>() * vProg * 2;
-                vertices.push_back(glm::dvec3(
-                    glm::cos(vAngle) * ringRadius,
-                    glm::sin(vAngle) * ringRadius * 0.75,
-                    ringHeight)
-                                   +
-                    glm::linearRand(minPerturb, maxPerturb)
-                     * (1.1 - rProg) * (1.1 - sProg));
-            }
-        }
+        MeshTopo& topo = mesh.topo[v];
+        topo.isFixed = false;
+        topo.isBoundary = true;
+        topo.snapToBoundary = boxBound[v%3];
+    }
+    for(int v=surfVertCount; v < vertexCount; ++v)
+    {
+        MeshTopo& topo = mesh.topo[v];
+        topo.isFixed = false;
     }
 
-
-    insertVertices(mesh, vertices);
+    mesh.setmodelBoundariesShaderName(
+        ":/shaders/compute/Boundary/Box.glsl");
 }
 
 void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
 {
     std::vector<glm::dvec3> vertices;
     double sphereRadius = 1.0;
+    double padding = 1.0 - 1.0/glm::pow(vertexCount, 1/3.0);
+
+    size_t surfVertCount = glm::sqrt(vertexCount) * 10;
 
     vertices.resize(vertexCount);
-    for(int iv=0; iv < vertexCount; ++iv)
-        vertices[iv] = glm::ballRand(sphereRadius * 1.41);
+    for(int v=0; v < surfVertCount; ++v)
+        vertices[v] = glm::sphericalRand(sphereRadius);
+    for(int v=surfVertCount; v < vertexCount; ++v)
+        vertices[v] = glm::ballRand(sphereRadius * padding);
 
 
     insertVertices(mesh, vertices);
+
+    for(size_t v=0; v < surfVertCount; ++v)
+    {
+        MeshTopo& topo = mesh.topo[v];
+        topo.isFixed = false;
+        topo.isBoundary = true;
+        topo.snapToBoundary = _sphereBoundary.get();
+    }
+    for(int v=surfVertCount; v < vertexCount; ++v)
+    {
+        MeshTopo& topo = mesh.topo[v];
+        topo.isFixed = false;
+    }
+
+    mesh.setmodelBoundariesShaderName(
+        ":/shaders/compute/Boundary/Sphere.glsl");
 }
 
 void CpuDelaunayMesher::insertBoundingMesh()

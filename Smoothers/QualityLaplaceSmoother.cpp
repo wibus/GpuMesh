@@ -226,7 +226,7 @@ void QualityLaplaceSmoother::smoothMeshCpp(
 
             if(topo.isBoundary)
                 for(uint p=1; p < PROPOSITION_COUNT; ++p)
-                    propositions[p] = topo.snapToBoundary(propositions[p]);
+                    propositions[p] = (*topo.snapToBoundary)(propositions[p]);
 
             double patchQualities[PROPOSITION_COUNT] = {1.0, 1.0, 1.0, 1.0};
 

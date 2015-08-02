@@ -147,6 +147,9 @@ SET(GpuMesh_FRAGMENT_SHADERS
 
 # Compute shaders
 SET(GpuMesh_BOUNDARY_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Boundary/None.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Boundary/Box.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Boundary/Sphere.glsl
     ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
 
 SET(GpuMesh_MEASURING_SHADERS

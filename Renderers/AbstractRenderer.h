@@ -28,7 +28,7 @@ public:
 
     virtual OptionMapDetails availableShadings() const;
     virtual void useShading(const std::string& shadingName);
-    virtual void useVirtualCutPlane(bool use);
+    virtual void useCutType(const ECutType& cutType);
 
 
     virtual void updateCamera(const glm::mat4& view,
@@ -37,7 +37,7 @@ public:
                              const glm::vec3& pos) = 0;
     virtual void updateCutPlane(const glm::dvec4& cutEq) = 0;
 
-    virtual void handleKeyPress(const scaena::KeyboardEvent& event) = 0;
+    virtual void handleKeyPress(const scaena::KeyboardEvent& event);
     virtual void handleInputs(const scaena::SynchronousKeyboard& keyboard,
                               const scaena::SynchronousMouse& mouse) = 0;
 
@@ -53,8 +53,10 @@ protected:
     virtual void render() = 0;
 
     bool _buffNeedUpdate;
-    bool _isPhysicalCut;
-    glm::dvec4 _cutPlane;
+    glm::dvec4 _cutPlaneEq;
+    glm::dvec4 _physicalCutPlane;
+    glm::dvec4 _virtualCutPlane;
+    ECutType _cutType;
 
     // Shadings
     typedef std::function<void(void)> ShadingFunc;

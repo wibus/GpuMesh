@@ -16,7 +16,7 @@ public:
 protected:
     virtual void genElbowPipe(Mesh& mesh, size_t vertexCount);
 
-    virtual void genStraightPipe(
+    virtual void insertStraightPipe(
             Mesh& mesh,
             const glm::dvec3& begin,
             const glm::dvec3& end,
@@ -28,7 +28,7 @@ protected:
             bool first,
             bool last);
 
-    virtual void genArcPipe(
+    virtual void insertArcPipe(
             Mesh& mesh,
             const glm::dvec3& center,
             const glm::dvec3& rotationAxis,
@@ -60,6 +60,7 @@ protected:
             int sliceCount,
             int layerCount);
 
+    // Boundaries
     std::unique_ptr<MeshBound> _pipeSurface;
     std::unique_ptr<MeshBound> _pipeExtFace;
     std::unique_ptr<MeshBound> _pipeExtEdge;

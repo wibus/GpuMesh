@@ -91,13 +91,16 @@ void AbstractSmoother::smoothMeshGlsl(
 
 void AbstractSmoother::initializeProgram(Mesh& mesh, AbstractEvaluator& evaluator)
 {
-    if(_initialized && _shapeMeasureShader == evaluator.shapeMeasureShader())
+    if(_initialized &&
+       _modelBoundsShader == mesh.modelBoundsShaderName() &&
+       _shapeMeasureShader == evaluator.shapeMeasureShader())
         return;
 
 
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractSmoother"));
 
+    _modelBoundsShader = mesh.modelBoundsShaderName();
     _shapeMeasureShader = evaluator.shapeMeasureShader();
 
     _smoothingProgram.clearShaders();
@@ -110,10 +113,9 @@ void AbstractSmoother::initializeProgram(Mesh& mesh, AbstractEvaluator& evaluato
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         _shapeMeasureShader.c_str()});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Boundary/ElbowPipe.glsl"});
-    _smoothingProgram.link();\
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER,
+        _modelBoundsShader);
+    _smoothingProgram.link();
 
     mesh.uploadGeometry(_smoothingProgram);
 

@@ -162,17 +162,32 @@ void SurfacicRenderer::updateLight(const glm::mat4& view,
 
 void SurfacicRenderer::updateCutPlane(const glm::dvec4& cutEq)
 {
-    _cutPlane = cutEq;
-    _updateShadow = true;
-
-    if(_isPhysicalCut)
+    if(_cutType == ECutType::PhysicalPlane)
     {
         _buffNeedUpdate = true;
     }
+
+    _cutPlaneEq = cutEq;
+    _virtualCutPlane = glm::vec4(0.0);
+    _physicalCutPlane = glm::vec4(0.0);
+
+    if(_cutType == ECutType::VirtualPlane)
+    {
+        _virtualCutPlane = cutEq;
+    }
+    else if(_cutType == ECutType::PhysicalPlane)
+    {
+        _physicalCutPlane = cutEq;
+        _buffNeedUpdate = true;
+    }
+
+    _updateShadow = true;
 }
 
 void SurfacicRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
+    AbstractRenderer::handleKeyPress(event);
+
     if(event.getAscii() == 'X')
     {
         if(_lightingEnabled)
@@ -181,15 +196,8 @@ void SurfacicRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
             useSpecularShading();
 
         const char* rep = (_lightingEnabled ? "true" : "false");
-        cout << "Lighting enabled : " << rep << endl;
-    }
-    else if(event.getAscii() == 'C')
-    {
-        // This call actually toggles virtual cut plane
-        useVirtualCutPlane(_isPhysicalCut);
-
-        const char* rep = (_isPhysicalCut ? "true" : "false") ;
-        cout << "Physical cut : " << rep << endl;
+        getLog().postMessage(new Message('I', false,
+            string("Lighting enabled : ") + rep, "ScaffoldRenderer"));
     }
 }
 
@@ -272,16 +280,8 @@ void SurfacicRenderer::compileFacesAttributes(
         std::vector<unsigned char>& triEdges,
         std::vector<unsigned char>& qualities) const
 {
-    glm::dvec3 cutNormal(_cutPlane);
-    double cutDistance = _cutPlane.w;
-    if(!_isPhysicalCut)
-    {
-        cutNormal.x = 0;
-        cutNormal.y = 0;
-        cutNormal.z = 0;
-        cutDistance = 0;
-    }
-
+    glm::dvec3 cutNormal(_physicalCutPlane);
+    double cutDistance = _physicalCutPlane.w;
 
     // Tetrahedrons
     int tetCount = mesh.tetra.size();
@@ -770,7 +770,7 @@ void SurfacicRenderer::render()
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
             _shadowShader.pushProgram();
-            _shadowShader.setVec4f("CutPlaneEq", _cutPlane);
+            _shadowShader.setVec4f("CutPlaneEq", _virtualCutPlane);
             glDisableVertexAttribArray(1);
             glDisableVertexAttribArray(2);
             glDisableVertexAttribArray(3);
@@ -789,12 +789,12 @@ void SurfacicRenderer::render()
         }
 
         _litShader.pushProgram();
-        _litShader.setVec4f("CutPlaneEq", _cutPlane);
+        _litShader.setVec4f("CutPlaneEq", _virtualCutPlane);
     }
     else
     {
         _unlitShader.pushProgram();
-        _unlitShader.setVec4f("CutPlaneEq", _cutPlane);
+        _unlitShader.setVec4f("CutPlaneEq", _virtualCutPlane);
     }
 
 
