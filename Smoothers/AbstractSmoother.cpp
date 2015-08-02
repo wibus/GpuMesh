@@ -17,10 +17,10 @@ AbstractSmoother::AbstractSmoother(const string& smoothShader) :
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("C++");
+    _implementationFuncs.setDefault("Serial");
     _implementationFuncs.setContent({
-        {string("C++"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshCpp, this, _1, _2))},
-        {string("GLSL"), ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl, this, _1, _2))},
+        {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
+        {string("GLSL"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl, this, _1, _2))},
     });
 }
 
@@ -146,7 +146,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evalua
         }
         else
         {
-            evaluator.evaluateMeshQualityCpp(
+            evaluator.evaluateMeshQualitySerial(
                 mesh, qualMin, qualMean);
         }
 
@@ -220,7 +220,7 @@ void AbstractSmoother::benchmark(
             SmoothBenchmarkStats stats;
             stats.impl = impl;
             stats.time = (tEnd - tStart).count();
-            evaluator.evaluateMeshQualityCpp(
+            evaluator.evaluateMeshQualitySerial(
                 mesh, stats.minQuality, stats.qualityMean);
             stats.qualityMeanGain = (stats.qualityMean - initialQualityMean) /
                                         initialQualityMean;

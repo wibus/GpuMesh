@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="geometryTab">
        <attribute name="title">
@@ -272,14 +272,14 @@
             </widget>
            </item>
            <item row="3" column="0">
-            <widget class="QLabel" name="benchmarkCppCycleCountLabel">
+            <widget class="QLabel" name="benchmarkSerialCycleCountLabel">
              <property name="text">
-              <string>C++ cycle count</string>
+              <string>Serial cycle count</string>
              </property>
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QSpinBox" name="benchmarkCppCycleCountSpin">
+            <widget class="QSpinBox" name="benchmarkSerialCycleCountSpin">
              <property name="minimum">
               <number>1</number>
              </property>

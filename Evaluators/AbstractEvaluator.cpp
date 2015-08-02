@@ -141,7 +141,7 @@ bool AbstractEvaluator::assessMeasureValidy()
     }
 }
 
-void AbstractEvaluator::evaluateMeshQualityCpp(
+void AbstractEvaluator::evaluateMeshQualitySerial(
         const Mesh& mesh,
         double& minQuality,
         double& qualityMean)
@@ -328,7 +328,7 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
 
 void AbstractEvaluator::benchmark(
         const Mesh& mesh,
-        uint cppCycleCount,
+        uint serialCycleCount,
         uint glslCycleCount)
 {
     initializeProgram(mesh);
@@ -342,36 +342,36 @@ void AbstractEvaluator::benchmark(
 
 
     getLog().postMessage(new Message('I', false,
-       "Benchmarking C++ implementation",
+       "Benchmarking 'Serial' implementation",
        "AbstractEvaluator"));
 
-    high_resolution_clock::duration cppTime(0);
-    size_t cppMarkSize = cppCycleCount / glm::min(MARK_COUNT, cppCycleCount);
-    for(size_t i=0, m=0; i < cppCycleCount; ++i)
+    high_resolution_clock::duration serialTime(0);
+    size_t serialMarkSize = serialCycleCount / glm::min(MARK_COUNT, serialCycleCount);
+    for(size_t i=0, m=0; i < serialCycleCount; ++i)
     {
         minQual = 0;
         qualMean = 0;
 
         tStart = high_resolution_clock::now();
-        evaluateMeshQualityCpp(mesh, minQual, qualMean);
+        evaluateMeshQualitySerial(mesh, minQual, qualMean);
         tEnd = high_resolution_clock::now();
 
-        cppTime += (tEnd - tStart);
+        serialTime += (tEnd - tStart);
 
         if(i == m)
         {
-            int progress = 50.0f * i / (float) cppCycleCount;
+            int progress = 50.0f * i / (float) serialCycleCount;
             getLog().postMessage(new Message('I', false,
                "Benchmark progress : " + to_string(progress) + "%\t" +
                "(min=" + to_string(minQual) + ", mean=" + to_string(qualMean) + ")",
                "AbstractEvaluator"));
-            m += cppMarkSize;
+            m += serialMarkSize;
         }
     }
 
 
     getLog().postMessage(new Message('I', false,
-       "Benchmarking GLSL implementation",
+       "Benchmarking 'GLSL' implementation",
        "AbstractEvaluator"));
 
     high_resolution_clock::duration glslTime(0);
@@ -398,18 +398,18 @@ void AbstractEvaluator::benchmark(
         }
     }
 
-    auto cppNano = cppTime.count() / cppCycleCount;
+    auto serialNano = serialTime.count() / serialCycleCount;
     auto glslNano = glslTime.count() / glslCycleCount;
-    double minNano = glm::min(cppNano, glslNano);
+    double minNano = glm::min(serialNano, glslNano);
 
-    double cppRatio = cppNano / minNano;
+    double serialRatio = serialNano / minNano;
     double glslRatio = glslNano / minNano;
 
     stringstream ss;
     ss << "Shape measure time ratio (us) :\t"
-       << "C++:GLSL = " << fixed << setprecision(2)
-       << (cppNano / 1000.0) << ":" << (glslNano / 1000.0)
-       << " = " << cppRatio << ":" << glslRatio;
+       << "Serial:GLSL = " << fixed << setprecision(2)
+       << (serialNano / 1000.0) << ":" << (glslNano / 1000.0)
+       << " = " << serialRatio << ":" << glslRatio;
     getLog().postMessage(new Message('I', false, ss.str(), "AbstractEvaluator"));
 }
 

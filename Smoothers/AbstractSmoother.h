@@ -27,7 +27,7 @@ public:
             double moveFactor,
             double gainThreshold);
 
-    virtual void smoothMeshCpp(
+    virtual void smoothMeshSerial(
             Mesh& mesh,
             AbstractEvaluator& evaluator) = 0;
 

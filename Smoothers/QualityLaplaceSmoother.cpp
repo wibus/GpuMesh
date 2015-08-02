@@ -157,7 +157,7 @@ void testHexPropositions(
     }
 }
 
-void QualityLaplaceSmoother::smoothMeshCpp(
+void QualityLaplaceSmoother::smoothMeshSerial(
         Mesh& mesh,
         AbstractEvaluator& evaluator)
 {

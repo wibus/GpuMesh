@@ -388,17 +388,17 @@ void GpuMeshCharacter::benchmarkSmoother(
 
 void GpuMeshCharacter::benchmarkEvaluator(
         const std::string& evaluatorName,
-        uint cppCycleCount,
+        uint serialCycleCount,
         uint glslCycleCount)
 {
     printStep("Shape measure evaluation benchmark "\
               ": quality measure=" + evaluatorName +
-              ", cycle count=" + to_string(cppCycleCount));
+              ", cycle count=" + to_string(serialCycleCount));
 
     std::shared_ptr<AbstractEvaluator> evaluator;
     if(_availableEvaluators.select(evaluatorName, evaluator))
     {
-        evaluator->benchmark(*_mesh, cppCycleCount, glslCycleCount);
+        evaluator->benchmark(*_mesh, serialCycleCount, glslCycleCount);
     }
 }
 

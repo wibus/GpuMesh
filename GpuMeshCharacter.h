@@ -71,7 +71,7 @@ public:
 
     virtual void benchmarkEvaluator(
             const std::string& evaluatorName,
-            uint cppCycleCount,
+            uint serialCycleCount,
             uint glslCycleCount);
 
     virtual void useRenderer(const std::string& rendererName);

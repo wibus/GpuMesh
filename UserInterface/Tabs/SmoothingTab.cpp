@@ -68,7 +68,7 @@ void SmoothingTab::benchmarkShapeMeasure()
 {
     _character->benchmarkEvaluator(
         _ui->smoothShapeMeasureMenu->currentText().toStdString(),
-        _ui->benchmarkCppCycleCountSpin->value(),
+        _ui->benchmarkSerialCycleCountSpin->value(),
         _ui->benchmarkGlslCycleCountSpin->value());
 }
 

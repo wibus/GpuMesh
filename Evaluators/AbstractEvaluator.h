@@ -23,7 +23,7 @@ public:
 
     virtual bool assessMeasureValidy();
 
-    virtual void evaluateMeshQualityCpp(
+    virtual void evaluateMeshQualitySerial(
             const Mesh& mesh,
             double& minQuality,
             double& qualityMean);
@@ -35,7 +35,7 @@ public:
 
     virtual void benchmark(
             const Mesh& mesh,
-            uint cppCycleCount,
+            uint serialCycleCount,
             uint glslCycleCount);
 
     virtual std::string shapeMeasureShader() const;
