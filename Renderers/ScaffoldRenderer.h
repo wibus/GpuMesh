@@ -31,14 +31,12 @@ protected:
     virtual void updateGeometry(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator) override;
-    virtual void compileVerts(
+    virtual void compileBuffers(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
             std::vector<float>& verts,
-            std::vector<GLubyte>& quals);
-    virtual void compileEdges(
-            const Mesh& mesh,
-            std::vector<GLuint>& edges);
+            std::vector<GLubyte>& quals,
+            std::vector<GLuint>& edges) const;
 
     virtual void clearResources() override;
     virtual void resetResources() override;

@@ -1,7 +1,5 @@
 #include "ScaffoldRenderer.h"
 
-#include <iostream>
-
 #include <GLM/gtc/matrix_transform.hpp>
 
 #include <CellarWorkbench/Misc/Log.h>
@@ -108,11 +106,6 @@ void ScaffoldRenderer::updateLight(const glm::mat4&,
 
 void ScaffoldRenderer::updateCutPlane(const glm::dvec4& cutEq)
 {
-    if(_cutType == ECutType::PhysicalPlane)
-    {
-        _buffNeedUpdate = true;
-    }
-
     _cutPlaneEq = cutEq;
     _virtualCutPlane = glm::vec4(0.0);
     _physicalCutPlane = glm::vec4(0.0);
@@ -184,8 +177,10 @@ void ScaffoldRenderer::updateGeometry(
     // Fetch new vertex attributes
     vector<float> verts;
     vector<GLubyte>  quals;
-    compileVerts(mesh, evaluator, verts, quals);
+    vector<GLuint> edges;
+    compileBuffers(mesh, evaluator, verts, quals, edges);
     _vertElemCount = mesh.vert.size();
+    _indxElemCount = edges.size();
 
 
     // Send new vertex attributes
@@ -203,13 +198,6 @@ void ScaffoldRenderer::updateGeometry(
     quals.clear();
     quals.shrink_to_fit();
 
-
-    // Fetch new element indices
-    vector<GLuint> edges;
-    compileEdges(mesh, edges);
-    _indxElemCount = edges.size();
-
-
     // Send new element indices
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
     GLuint edgeSize = edges.size() * sizeof(decltype(edges.front()));
@@ -221,11 +209,12 @@ void ScaffoldRenderer::updateGeometry(
     _buffNeedUpdate = false;
 }
 
-void ScaffoldRenderer::compileVerts(
+void ScaffoldRenderer::compileBuffers(
         const Mesh& mesh,
         const AbstractEvaluator& evaluator,
         std::vector<float>& verts,
-        std::vector<GLubyte>& quals)
+        std::vector<GLubyte>& quals,
+        std::vector<GLuint>& edges) const
 {
     size_t vertCount = mesh.vert.size();
 
@@ -239,18 +228,18 @@ void ScaffoldRenderer::compileVerts(
     }
 
 
-    quals.resize(vertCount, 255);
+    vector<double> qualMins(vertCount, 1.0);
 
     // Tetrahedrons
     int tetCount = mesh.tetra.size();
     for(int i=0; i < tetCount; ++i)
     {
         const MeshTet& tet = mesh.tetra[i];
-        GLubyte qual = 255 * glm::max(evaluator.tetQuality(mesh, tet), 0.0);
-        if(qual < quals[tet.v[0]]) quals[tet.v[0]] = qual;
-        if(qual < quals[tet.v[1]]) quals[tet.v[1]] = qual;
-        if(qual < quals[tet.v[2]]) quals[tet.v[2]] = qual;
-        if(qual < quals[tet.v[3]]) quals[tet.v[3]] = qual;
+        double qual = evaluator.tetQuality(mesh, tet);
+        if(qual < qualMins[tet.v[0]]) qualMins[tet.v[0]] = qual;
+        if(qual < qualMins[tet.v[1]]) qualMins[tet.v[1]] = qual;
+        if(qual < qualMins[tet.v[2]]) qualMins[tet.v[2]] = qual;
+        if(qual < qualMins[tet.v[3]]) qualMins[tet.v[3]] = qual;
     }
 
     // Prisms
@@ -258,13 +247,13 @@ void ScaffoldRenderer::compileVerts(
     for(int i=0; i < priCount; ++i)
     {
         const MeshPri& pri = mesh.prism[i];
-        GLubyte qual = 255 * glm::max(evaluator.priQuality(mesh, pri), 0.0);
-        if(qual < quals[pri.v[0]]) quals[pri.v[0]] = qual;
-        if(qual < quals[pri.v[1]]) quals[pri.v[1]] = qual;
-        if(qual < quals[pri.v[2]]) quals[pri.v[2]] = qual;
-        if(qual < quals[pri.v[3]]) quals[pri.v[3]] = qual;
-        if(qual < quals[pri.v[4]]) quals[pri.v[4]] = qual;
-        if(qual < quals[pri.v[5]]) quals[pri.v[5]] = qual;
+        double qual = evaluator.priQuality(mesh, pri);
+        if(qual < qualMins[pri.v[0]]) qualMins[pri.v[0]] = qual;
+        if(qual < qualMins[pri.v[1]]) qualMins[pri.v[1]] = qual;
+        if(qual < qualMins[pri.v[2]]) qualMins[pri.v[2]] = qual;
+        if(qual < qualMins[pri.v[3]]) qualMins[pri.v[3]] = qual;
+        if(qual < qualMins[pri.v[4]]) qualMins[pri.v[4]] = qual;
+        if(qual < qualMins[pri.v[5]]) qualMins[pri.v[5]] = qual;
     }
 
     // Hexahedrons
@@ -272,30 +261,27 @@ void ScaffoldRenderer::compileVerts(
     for(int i=0; i < hexCount; ++i)
     {
         const MeshHex& hex = mesh.hexa[i];
-        GLubyte qual = 255 * glm::max(evaluator.hexQuality(mesh, hex), 0.0);
-        if(qual < quals[hex.v[0]]) quals[hex.v[0]] = qual;
-        if(qual < quals[hex.v[1]]) quals[hex.v[1]] = qual;
-        if(qual < quals[hex.v[2]]) quals[hex.v[2]] = qual;
-        if(qual < quals[hex.v[3]]) quals[hex.v[3]] = qual;
-        if(qual < quals[hex.v[4]]) quals[hex.v[4]] = qual;
-        if(qual < quals[hex.v[5]]) quals[hex.v[5]] = qual;
-        if(qual < quals[hex.v[6]]) quals[hex.v[6]] = qual;
-        if(qual < quals[hex.v[7]]) quals[hex.v[7]] = qual;
+        double qual = evaluator.hexQuality(mesh, hex);
+        if(qual < qualMins[hex.v[0]]) qualMins[hex.v[0]] = qual;
+        if(qual < qualMins[hex.v[1]]) qualMins[hex.v[1]] = qual;
+        if(qual < qualMins[hex.v[2]]) qualMins[hex.v[2]] = qual;
+        if(qual < qualMins[hex.v[3]]) qualMins[hex.v[3]] = qual;
+        if(qual < qualMins[hex.v[4]]) qualMins[hex.v[4]] = qual;
+        if(qual < qualMins[hex.v[5]]) qualMins[hex.v[5]] = qual;
+        if(qual < qualMins[hex.v[6]]) qualMins[hex.v[6]] = qual;
+        if(qual < qualMins[hex.v[7]]) qualMins[hex.v[7]] = qual;
     }
-}
 
-void ScaffoldRenderer::compileEdges(const Mesh& mesh, std::vector<GLuint>& edges)
-{
+
+    // Build Element Index
     glm::dvec3 cutNormal(_physicalCutPlane);
     double cutDistance = _physicalCutPlane.w;
 
     set<pair<GLuint, GLuint>> edgeSet;
-
-    size_t vertCount = mesh.vertCount();
-    for(int i=0; i < vertCount; ++i)
+    for(size_t i=0; i < vertCount; ++i)
     {
         size_t neigVertCount = mesh.topo[i].neighborVerts.size();
-        for(int n=0; n < neigVertCount; ++n)
+        for(size_t n=0; n < neigVertCount; ++n)
         {
             int neig = mesh.topo[i].neighborVerts[n];
             if(i < neig)
@@ -311,8 +297,25 @@ void ScaffoldRenderer::compileEdges(const Mesh& mesh, std::vector<GLuint>& edges
            glm::dot(mesh.vert[e.second].p, cutNormal) > cutDistance)
             continue;
 
+        if(_cutType == ECutType::InvertedElements &&
+           (qualMins[e.first] > 0.0 || qualMins[e.second] > 0.0))
+            continue;
+
         edges.push_back(e.first);
         edges.push_back(e.second);
+    }
+
+
+    quals.resize(vertCount);
+    if(_cutType == ECutType::InvertedElements)
+    {
+        for(size_t v=0; v < vertCount; ++v)
+            quals[v] = 255 * glm::clamp(-qualMins[v], 0.0, 1.0);
+    }
+    else
+    {
+        for(size_t v=0; v < vertCount; ++v)
+            quals[v] = 255 * glm::max(qualMins[v], 0.0);
     }
 }
 

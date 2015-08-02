@@ -1,7 +1,5 @@
 #include "SurfacicRenderer.h"
 
-#include <iostream>
-
 #include <GLM/gtc/matrix_transform.hpp>
 
 #include <CellarWorkbench/Image/Image.h>
@@ -162,11 +160,6 @@ void SurfacicRenderer::updateLight(const glm::mat4& view,
 
 void SurfacicRenderer::updateCutPlane(const glm::dvec4& cutEq)
 {
-    if(_cutType == ECutType::PhysicalPlane)
-    {
-        _buffNeedUpdate = true;
-    }
-
     _cutPlaneEq = cutEq;
     _virtualCutPlane = glm::vec4(0.0);
     _physicalCutPlane = glm::vec4(0.0);
@@ -296,14 +289,27 @@ void SurfacicRenderer::compileFacesAttributes(
             glm::dvec3(mesh.vert[tet[3]])
         };
 
-        if(glm::dot(verts[0], cutNormal) > cutDistance ||
-           glm::dot(verts[1], cutNormal) > cutDistance ||
-           glm::dot(verts[2], cutNormal) > cutDistance ||
-           glm::dot(verts[3], cutNormal) > cutDistance)
-            continue;
+        if(_cutType == ECutType::PhysicalPlane)
+        {
+            if(glm::dot(verts[0], cutNormal) > cutDistance ||
+               glm::dot(verts[1], cutNormal) > cutDistance ||
+               glm::dot(verts[2], cutNormal) > cutDistance ||
+               glm::dot(verts[3], cutNormal) > cutDistance)
+                continue;
+        }
 
 
-        double quality = glm::max(evaluator.tetQuality(mesh, tet), 0.0);
+        double quality = evaluator.tetQuality(verts);
+        if(_cutType == ECutType::InvertedElements)
+        {
+            if(quality >= 0.0)
+                continue;
+            quality = glm::min(-quality, 1.0);
+        }
+        else
+        {
+            quality = glm::max(quality, 0.0);
+        }
 
         for(int f=0; f < MeshTet::TRI_COUNT; ++f)
         {
@@ -333,16 +339,29 @@ void SurfacicRenderer::compileFacesAttributes(
             glm::dvec3(mesh.vert[pri[5]])
         };
 
-        if(glm::dot(verts[0], cutNormal) > cutDistance ||
-           glm::dot(verts[1], cutNormal) > cutDistance ||
-           glm::dot(verts[2], cutNormal) > cutDistance ||
-           glm::dot(verts[3], cutNormal) > cutDistance ||
-           glm::dot(verts[4], cutNormal) > cutDistance ||
-           glm::dot(verts[5], cutNormal) > cutDistance)
-            continue;
+        if(_cutType == ECutType::PhysicalPlane)
+        {
+            if(glm::dot(verts[0], cutNormal) > cutDistance ||
+               glm::dot(verts[1], cutNormal) > cutDistance ||
+               glm::dot(verts[2], cutNormal) > cutDistance ||
+               glm::dot(verts[3], cutNormal) > cutDistance ||
+               glm::dot(verts[4], cutNormal) > cutDistance ||
+               glm::dot(verts[5], cutNormal) > cutDistance)
+                continue;
+        }
 
 
-        double quality = glm::max(evaluator.priQuality(mesh, pri), 0.0);
+        double quality = evaluator.priQuality(verts);
+        if(_cutType == ECutType::InvertedElements)
+        {
+            if(quality >= 0.0)
+                continue;
+            quality = glm::min(-quality, 1.0);
+        }
+        else
+        {
+            quality = glm::max(quality, 0.0);
+        }
 
         for(int f=0; f < MeshPri::TRI_COUNT; ++f)
         {
@@ -374,18 +393,31 @@ void SurfacicRenderer::compileFacesAttributes(
             glm::dvec3(mesh.vert[hex[7]])
         };
 
-        if(glm::dot(verts[0], cutNormal) > cutDistance ||
-           glm::dot(verts[1], cutNormal) > cutDistance ||
-           glm::dot(verts[2], cutNormal) > cutDistance ||
-           glm::dot(verts[3], cutNormal) > cutDistance ||
-           glm::dot(verts[4], cutNormal) > cutDistance ||
-           glm::dot(verts[5], cutNormal) > cutDistance ||
-           glm::dot(verts[6], cutNormal) > cutDistance ||
-           glm::dot(verts[7], cutNormal) > cutDistance)
-            continue;
+        if(_cutType == ECutType::PhysicalPlane)
+        {
+            if(glm::dot(verts[0], cutNormal) > cutDistance ||
+               glm::dot(verts[1], cutNormal) > cutDistance ||
+               glm::dot(verts[2], cutNormal) > cutDistance ||
+               glm::dot(verts[3], cutNormal) > cutDistance ||
+               glm::dot(verts[4], cutNormal) > cutDistance ||
+               glm::dot(verts[5], cutNormal) > cutDistance ||
+               glm::dot(verts[6], cutNormal) > cutDistance ||
+               glm::dot(verts[7], cutNormal) > cutDistance)
+                continue;
+        }
 
 
-        double quality = glm::max(evaluator.hexQuality(mesh, hex), 0.0);
+        double quality = evaluator.hexQuality(verts);
+        if(_cutType == ECutType::InvertedElements)
+        {
+            if(quality >= 0.0)
+                continue;
+            quality = glm::min(-quality, 1.0);
+        }
+        else
+        {
+            quality = glm::max(quality, 0.0);
+        }
 
         for(int f=0; f < MeshHex::TRI_COUNT; ++f)
         {
@@ -758,6 +790,10 @@ void SurfacicRenderer::render()
     glBindVertexArray(_meshVao);
 
 
+    // If we are rendring inverted elements, switch triangle windings
+    if(_cutType == ECutType::InvertedElements)
+        glFrontFace(GL_CW);
+
     // Render shadow map
     if(_lightingEnabled)
     {
@@ -803,6 +839,11 @@ void SurfacicRenderer::render()
     glBindVertexArray(_meshVao);
     glDrawArrays(GL_TRIANGLES, 0, _buffElemCount);
     GlProgram::popProgram();
+
+
+    // If we were rendring inverted elements, revert windings to default order
+    if(_cutType == ECutType::InvertedElements)
+        glFrontFace(GL_CCW);
 
 
     if(_lightingEnabled)
