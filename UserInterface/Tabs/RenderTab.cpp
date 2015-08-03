@@ -1,4 +1,4 @@
-#include "RenderingTab.h"
+#include "RenderTab.h"
 
 #include <QRadioButton>
 
@@ -8,8 +8,8 @@
 using namespace std;
 
 
-RenderingTab::RenderingTab(Ui::MainWindow* ui,
-                           const std::shared_ptr<GpuMeshCharacter>& character) :
+RenderTab::RenderTab(Ui::MainWindow* ui,
+                     const std::shared_ptr<GpuMeshCharacter>& character) :
     _ui(ui),
     _character(character)
 {
@@ -17,22 +17,14 @@ RenderingTab::RenderingTab(Ui::MainWindow* ui,
     deployRenderTypes();
     connect(_ui->renderingTypeMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &RenderingTab::renderTypeChanged);
+            this, &RenderTab::renderTypeChanged);
 
 
     // Defining shadings
     deployShadings();
     connect(_ui->shadingMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &RenderingTab::shadingChanged);
-    _ui->shadingMenu->setCurrentText("Wireframe");
-
-
-    // Defining visual quality measures
-    deployShapeMeasures();
-    connect(_ui->visualShapeMeasureMenu,
-            static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &RenderingTab::shapeMeasureChanged);
+            this, &RenderTab::shadingChanged);
 
 
     // Defining camera man
@@ -43,12 +35,12 @@ RenderingTab::RenderingTab(Ui::MainWindow* ui,
     deployCutTypes();
 }
 
-RenderingTab::~RenderingTab()
+RenderTab::~RenderTab()
 {
 
 }
 
-void RenderingTab::deployRenderTypes()
+void RenderTab::deployRenderTypes()
 {
     OptionMapDetails renderers = _character->availableRenderers();
 
@@ -61,7 +53,7 @@ void RenderingTab::deployRenderTypes()
     _character->useRenderer(renderers.defaultOption);
 }
 
-void RenderingTab::deployShadings()
+void RenderTab::deployShadings()
 {
     OptionMapDetails shadings = _character->availableShadings();
 
@@ -74,20 +66,7 @@ void RenderingTab::deployShadings()
     _character->useShading(shadings.defaultOption);
 }
 
-void RenderingTab::deployShapeMeasures()
-{
-    OptionMapDetails evaluators = _character->availableEvaluators();
-
-    _ui->visualShapeMeasureMenu->clear();
-    for(const auto& name : evaluators.options)
-        _ui->visualShapeMeasureMenu->addItem(QString(name.c_str()));
-    _ui->visualShapeMeasureMenu->setCurrentText(evaluators.defaultOption.c_str());
-
-    // Quality must be set here, or no shape measure will be installed
-    _character->displayQuality(evaluators.defaultOption);
-}
-
-void RenderingTab::deployCameraMen()
+void RenderTab::deployCameraMen()
 {
     OptionMapDetails cameraMen = _character->availableCameraMen();
 
@@ -108,7 +87,7 @@ void RenderingTab::deployCameraMen()
     _ui->cameraGroup->setLayout(layout);
 }
 
-void RenderingTab::deployCutTypes()
+void RenderTab::deployCutTypes()
 {
     OptionMapDetails cutTypes = _character->availableCutTypes();
 
@@ -129,14 +108,14 @@ void RenderingTab::deployCutTypes()
     _ui->cutGroup->setLayout(layout);
 }
 
-void RenderingTab::renderTypeChanged(const QString& text)
+void RenderTab::renderTypeChanged(const QString& text)
 {
     _character->useRenderer(text.toStdString());
 
     deployShadings();
 }
 
-void RenderingTab::shadingChanged(const QString& text)
+void RenderTab::shadingChanged(const QString& text)
 {
     if(text.length() != 0)
     {
@@ -144,17 +123,12 @@ void RenderingTab::shadingChanged(const QString& text)
     }
 }
 
-void RenderingTab::shapeMeasureChanged(const QString& text)
-{
-    _character->displayQuality(text.toStdString());
-}
-
-void RenderingTab::useCameraMan(const string& cameraName)
+void RenderTab::useCameraMan(const string& cameraName)
 {
     _character->useCameraMan(cameraName);
 }
 
-void RenderingTab::useCutType(const string& cutName)
+void RenderTab::useCutType(const string& cutName)
 {
     _character->useCutType(cutName);
 }

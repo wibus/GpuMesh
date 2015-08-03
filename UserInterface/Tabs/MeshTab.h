@@ -1,5 +1,5 @@
-#ifndef GPUMESH_GEOMETRYTAB
-#define GPUMESH_GEOMETRYTAB
+#ifndef GPUMESH_MESHTAB
+#define GPUMESH_MESHTAB
 
 #include <memory>
 
@@ -13,13 +13,13 @@ namespace Ui
 }
 
 
-class GeometryTab : public QObject
+class MeshTab : public QObject
 {
     Q_OBJECT
 
 public:
-    GeometryTab(Ui::MainWindow* ui, const std::shared_ptr<GpuMeshCharacter>& character);
-    virtual ~GeometryTab();
+    MeshTab(Ui::MainWindow* ui, const std::shared_ptr<GpuMeshCharacter>& character);
+    virtual ~MeshTab();
 
 protected slots:
     virtual void techniqueChanged(const QString&);
@@ -34,4 +34,4 @@ private:
     std::shared_ptr<GpuMeshCharacter> _character;
 };
 
-#endif // GPUMESH_GEOMETRYTAB
+#endif // GPUMESH_MESHTAB

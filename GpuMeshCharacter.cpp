@@ -238,7 +238,7 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
 void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
 {
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
-    _renderer->display(*_mesh, *_visualEvaluator);
+    _renderer->display(*_mesh, *_evaluator);
 }
 
 void GpuMeshCharacter::exitStage()
@@ -271,12 +271,21 @@ OptionMapDetails GpuMeshCharacter::availableEvaluators() const
     return _availableEvaluators.details();
 }
 
+OptionMapDetails GpuMeshCharacter::availableEvaluatorImplementations(const string& evaluatorName) const
+{
+    std::shared_ptr<AbstractEvaluator> evaluator;
+    if(_availableEvaluators.select(evaluatorName, evaluator))
+        return evaluator->availableImplementations();
+    else
+        return OptionMapDetails();
+}
+
 OptionMapDetails GpuMeshCharacter::availableSmoothers() const
 {
     return _availableSmoothers.details();
 }
 
-OptionMapDetails GpuMeshCharacter::availableImplementations(const string& smootherName) const
+OptionMapDetails GpuMeshCharacter::availableSmootherImplementations(const string& smootherName) const
 {
     std::shared_ptr<AbstractSmoother> smoother;
     if(_availableSmoothers.select(smootherName, smoother))
@@ -324,6 +333,31 @@ void GpuMeshCharacter::generateMesh(
 
         _mesh->compileTopoly();
         _renderer->notifyMeshUpdate();
+    }
+}
+
+void GpuMeshCharacter::evaluateMesh(
+            const std::string& evaluatorName,
+            const std::string& implementationName)
+{
+    printStep("Shape measure "\
+              ": evalutor=" + evaluatorName +
+              ", implementation=" + implementationName);
+
+    std::shared_ptr<AbstractEvaluator> evaluator;
+    if(_availableEvaluators.select(evaluatorName, evaluator))
+    {
+        double minQuality, qualityMean;
+        evaluator->evaluateMesh(
+            *_mesh,
+            minQuality,
+            qualityMean,
+            implementationName);
+
+        getLog().postMessage(new Message('I', false,
+            "Results "\
+            ": min=" + to_string(minQuality) +
+            ", mean=" + to_string(qualityMean), "GpuMeshCharacter"));
     }
 }
 
@@ -388,17 +422,24 @@ void GpuMeshCharacter::benchmarkSmoother(
 
 void GpuMeshCharacter::benchmarkEvaluator(
         const std::string& evaluatorName,
-        uint serialCycleCount,
-        uint glslCycleCount)
+        const map<string, int>& cycleCounts)
 {
     printStep("Shape measure evaluation benchmark "\
-              ": quality measure=" + evaluatorName +
-              ", cycle count=" + to_string(serialCycleCount));
+              ": quality measure=" + evaluatorName);
 
     std::shared_ptr<AbstractEvaluator> evaluator;
     if(_availableEvaluators.select(evaluatorName, evaluator))
     {
-        evaluator->benchmark(*_mesh, serialCycleCount, glslCycleCount);
+        evaluator->benchmark(*_mesh, cycleCounts);
+    }
+}
+
+void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)
+{
+    if(_availableEvaluators.select(evaluatorName, _evaluator))
+    {
+        if(_renderer.get() != nullptr)
+            _renderer->notifyMeshUpdate();
     }
 }
 
@@ -412,16 +453,6 @@ void GpuMeshCharacter::useRenderer(const std::string& rendererName)
 void GpuMeshCharacter::useShading(const std::string& shadingName)
 {
     _renderer->useShading(shadingName);
-}
-
-void GpuMeshCharacter::displayQuality(const std::string& evaluatorName)
-{
-    std::shared_ptr<AbstractEvaluator> evaluator;
-    if(_availableEvaluators.select(evaluatorName, evaluator))
-    {
-        _visualEvaluator = evaluator;
-        _renderer->notifyMeshUpdate();
-    }
 }
 
 void GpuMeshCharacter::useCameraMan(const string& cameraManName)

@@ -42,8 +42,9 @@ public:
     virtual OptionMapDetails availableMeshers() const;
     virtual OptionMapDetails availableMeshModels(const std::string& mesherName) const;
     virtual OptionMapDetails availableEvaluators() const;
+    virtual OptionMapDetails availableEvaluatorImplementations(const std::string& evaluatorName) const;
     virtual OptionMapDetails availableSmoothers() const;
-    virtual OptionMapDetails availableImplementations(const std::string& smootherName) const;
+    virtual OptionMapDetails availableSmootherImplementations(const std::string& smootherName) const;
     virtual OptionMapDetails availableRenderers() const;
     virtual OptionMapDetails availableShadings() const;
     virtual OptionMapDetails availableCameraMen() const;
@@ -53,6 +54,10 @@ public:
             const std::string& mesherName,
             const std::string& modelName,
             size_t vertexCount);
+
+    virtual void evaluateMesh(
+            const std::string& evaluatorName,
+            const std::string& implementationName);
 
     virtual void smoothMesh(
             const std::string& smootherName,
@@ -71,12 +76,11 @@ public:
 
     virtual void benchmarkEvaluator(
             const std::string& evaluatorName,
-            uint serialCycleCount,
-            uint glslCycleCount);
+            const std::map<std::string, int>& cycleCounts);
 
+    virtual void useEvaluator(const std::string& evaluatorName);
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
-    virtual void displayQuality(const std::string& evaluatorName);
     virtual void useCameraMan(const std::string& cameraManName);
     virtual void useCutType(const std::string& cutTypeName);
 
@@ -111,7 +115,7 @@ protected:
 private:
     std::unique_ptr<Mesh> _mesh;
     std::shared_ptr<AbstractRenderer> _renderer;
-    std::shared_ptr<AbstractEvaluator> _visualEvaluator;
+    std::shared_ptr<AbstractEvaluator> _evaluator;
     std::shared_ptr<cellar::CameraManFree> _cameraManFree;
 
     static const glm::vec3 nullVec;

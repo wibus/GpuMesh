@@ -1,4 +1,4 @@
-#include "GeometryTab.h"
+#include "MeshTab.h"
 
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
@@ -6,41 +6,41 @@
 using namespace std;
 
 
-GeometryTab::GeometryTab(Ui::MainWindow* ui,
-                         const std::shared_ptr<GpuMeshCharacter>& character) :
+MeshTab::MeshTab(Ui::MainWindow* ui,
+                 const std::shared_ptr<GpuMeshCharacter>& character) :
     _ui(ui),
     _character(character)
 {
     deployTechniques();
     connect(_ui->geometryTechniqueMenu, &QComboBox::currentTextChanged,
-            this, &GeometryTab::techniqueChanged);
+            this, &MeshTab::techniqueChanged);
 
     deployModels();
 
     connect(_ui->generateMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
-            this, &GeometryTab::generateMesh);
+            this, &MeshTab::generateMesh);
 }
 
-GeometryTab::~GeometryTab()
+MeshTab::~MeshTab()
 {
 
 }
 
-void GeometryTab::techniqueChanged(const QString&)
+void MeshTab::techniqueChanged(const QString&)
 {
     deployModels();
 }
 
-void GeometryTab::generateMesh()
+void MeshTab::generateMesh()
 {
     _character->generateMesh(
         _ui->geometryTechniqueMenu->currentText().toStdString(),
         _ui->geometryModelMenu->currentText().toStdString(),
-        _ui->vertexCountSpin->value());
+        _ui->meshVertexCountSpin->value());
 }
 
-void GeometryTab::deployTechniques()
+void MeshTab::deployTechniques()
 {
     OptionMapDetails techniques = _character->availableMeshers();
 
@@ -50,7 +50,7 @@ void GeometryTab::deployTechniques()
     _ui->geometryTechniqueMenu->setCurrentText(techniques.defaultOption.c_str());
 }
 
-void GeometryTab::deployModels()
+void MeshTab::deployModels()
 {
     OptionMapDetails models = _character->availableMeshModels(
         _ui->geometryTechniqueMenu->currentText().toStdString());

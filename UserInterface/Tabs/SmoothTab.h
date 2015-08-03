@@ -1,5 +1,5 @@
-#ifndef GPUMESH_SMOOTHINGTAB
-#define GPUMESH_SMOOTHINGTAB
+#ifndef GPUMESH_SMOOTHTAB
+#define GPUMESH_SMOOTHTAB
 
 #include <memory>
 
@@ -13,25 +13,23 @@ namespace Ui
 }
 
 
-class SmoothingTab : public QObject
+class SmoothTab : public QObject
 {
     Q_OBJECT
 
 public:
-    SmoothingTab(Ui::MainWindow* ui, const std::shared_ptr<GpuMeshCharacter>& character);
-    virtual ~SmoothingTab();
+    SmoothTab(Ui::MainWindow* ui, const std::shared_ptr<GpuMeshCharacter>& character);
+    virtual ~SmoothTab();
 
 
 protected slots:
     virtual void techniqueChanged(const QString&);
     virtual void smoothMesh();
 
-    virtual void benchmarkTechnique();
-    virtual void benchmarkShapeMeasure();
+    virtual void benchmarkImplementations();
 
 protected:
     virtual void deployTechniques();
-    virtual void deployShapeMeasures();
     virtual void deployImplementations();
 
 
@@ -40,4 +38,4 @@ private:
     std::shared_ptr<GpuMeshCharacter> _character;
 };
 
-#endif // GPUMESH_SMOOTHINGTAB
+#endif // GPUMESH_SMOOTHTAB

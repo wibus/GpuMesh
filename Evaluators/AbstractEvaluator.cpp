@@ -30,17 +30,30 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
     _initialized(false),
     _computeSimultaneously(true),
     _shapeMeasuresShader(shapeMeasuresShader),
-    _qualSsbo(0)
+    _qualSsbo(0),
+    _implementationFuncs("Shape Measure Implementations")
 {
     static_assert(AbstractEvaluator::MAX_QUALITY_VALUE >=
                   AbstractEvaluator::MIN_QUALITY_PRECISION_DENOM,
                   "Shape measure on GPU may not be suffciently precise \
                    given this workgroup size.");
+
+    using namespace std::placeholders;
+    _implementationFuncs.setDefault("Serial");
+    _implementationFuncs.setContent({
+      {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3))},
+      {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl, this, _1, _2, _3))},
+    });
 }
 
 AbstractEvaluator::~AbstractEvaluator()
 {
     glDeleteBuffers(1, &_qualSsbo);
+}
+
+OptionMapDetails AbstractEvaluator::availableImplementations() const
+{
+    return _implementationFuncs.details();
 }
 
 double AbstractEvaluator::tetQuality(const Mesh& mesh, const MeshTet& tet) const
@@ -138,6 +151,24 @@ bool AbstractEvaluator::assessMeasureValidy()
         assert(glm::abs(regularPri - 1.0) < VALIDITY_EPSILON);
         assert(glm::abs(regularHex - 1.0) < VALIDITY_EPSILON);
         return false;
+    }
+}
+
+void AbstractEvaluator::evaluateMesh(
+        const Mesh& mesh,
+        double& minQuality,
+        double& qualityMean,
+        const std::string& implementationName)
+{
+    ImplementationFunc implementationFunc;
+    if(_implementationFuncs.select(implementationName, implementationFunc))
+    {
+        implementationFunc(mesh, minQuality, qualityMean);
+    }
+    else
+    {
+        minQuality = nan("");
+        qualityMean = nan("");
     }
 }
 
@@ -326,91 +357,124 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     _initialized = true;
 }
 
+
+struct EvalBenchmarkStats
+{
+    string impl;
+    int cycleCount;
+    chrono::high_resolution_clock::rep totalTime;
+    chrono::high_resolution_clock::rep averageTime;
+};
+
 void AbstractEvaluator::benchmark(
         const Mesh& mesh,
-        uint serialCycleCount,
-        uint glslCycleCount)
+        const map<string, int>& cycleCounts)
 {
     initializeProgram(mesh);
 
-    double minQual, qualMean;
-    const uint MARK_COUNT = 50;
-
+    int markCount = 100 / cycleCounts.size();
     using std::chrono::high_resolution_clock;
     high_resolution_clock::time_point tStart;
     high_resolution_clock::time_point tEnd;
 
 
-    getLog().postMessage(new Message('I', false,
-       "Benchmarking 'Serial' implementation",
-       "AbstractEvaluator"));
-
-    high_resolution_clock::duration serialTime(0);
-    size_t serialMarkSize = serialCycleCount / glm::min(MARK_COUNT, serialCycleCount);
-    for(size_t i=0, m=0; i < serialCycleCount; ++i)
+    int measuredImplementations = -1;
+    std::vector<EvalBenchmarkStats> statsVec;
+    for(auto& impl : _implementationFuncs.details().options)
     {
-        minQual = 0;
-        qualMean = 0;
+        ++measuredImplementations;
 
-        tStart = high_resolution_clock::now();
-        evaluateMeshQualitySerial(mesh, minQual, qualMean);
-        tEnd = high_resolution_clock::now();
-
-        serialTime += (tEnd - tStart);
-
-        if(i == m)
+        int cycleCount;
+        auto cycleIt = cycleCounts.find(impl);
+        if(cycleIt != cycleCounts.end())
         {
-            int progress = 50.0f * i / (float) serialCycleCount;
-            getLog().postMessage(new Message('I', false,
-               "Benchmark progress : " + to_string(progress) + "%\t" +
-               "(min=" + to_string(minQual) + ", mean=" + to_string(qualMean) + ")",
+            cycleCount = cycleIt->second;
+
+            if(cycleCount == 0)
+                continue;
+        }
+        else
+        {
+            getLog().postMessage(new Message('W', false,
+               "No cycle count defined for " + impl +
+               ". Skipping this implementation...",
                "AbstractEvaluator"));
-            m += serialMarkSize;
+            continue;
+        }
+
+        getLog().postMessage(new Message('I', false,
+           "Benchmarking "+ impl +" implementation (running "
+            + to_string(cycleCount) + " cycles)",
+           "AbstractEvaluator"));
+
+
+        ImplementationFunc implementationFunc;
+        if(_implementationFuncs.select(impl, implementationFunc))
+        {
+            high_resolution_clock::duration totalTime(0);
+            size_t markSize = cycleCount / glm::min(markCount, cycleCount);
+            for(size_t i=0, m=0; i < cycleCount; ++i)
+            {
+                double minQual, qualMean;
+
+                tStart = high_resolution_clock::now();
+                implementationFunc(mesh, minQual, qualMean);
+                tEnd = high_resolution_clock::now();
+
+                totalTime += (tEnd - tStart);
+
+                if(i == m)
+                {
+                    float progressSize = 100.0f / cycleCounts.size();
+                    float progressBase = measuredImplementations * 100.0f /
+                        cycleCounts.size();
+                    int progress = progressBase +
+                        progressSize * (i / (float) cycleCount);
+
+                    getLog().postMessage(new Message('I', false,
+                       "Benchmark progress : " + to_string(progress) + "%\t" +
+                       "(min=" + to_string(minQual) + ", mean=" + to_string(qualMean) + ")",
+                       "AbstractEvaluator"));
+                    m += markSize;
+                }
+            }
+
+            EvalBenchmarkStats stats;
+            stats.impl = impl;
+            stats.cycleCount = cycleCount;
+            stats.totalTime = totalTime.count();
+            stats.averageTime = totalTime.count() / cycleCount;
+            statsVec.push_back(stats);
         }
     }
 
 
-    getLog().postMessage(new Message('I', false,
-       "Benchmarking 'GLSL' implementation",
-       "AbstractEvaluator"));
-
-    high_resolution_clock::duration glslTime(0);
-    size_t glslMarkSize = glslCycleCount / glm::min(MARK_COUNT, glslCycleCount);
-    for(size_t i=0, m=0; i < glslCycleCount; ++i)
+    // Get minimums for ratio computations
+    double minTime = statsVec[0].averageTime;
+    for(size_t i = 1; i < statsVec.size(); ++i)
     {
-        minQual = 0;
-        qualMean = 0;
-
-        tStart = high_resolution_clock::now();
-        evaluateMeshQualityGlsl(mesh, minQual, qualMean);
-        tEnd = high_resolution_clock::now();
-
-        glslTime += (tEnd - tStart);
-
-        if(i == m)
-        {
-            int progress = 50.0f + 50.0f * i / (float) glslCycleCount;
-            getLog().postMessage(new Message('I', false,
-               "Benchmark progress : " + to_string(progress) + "%\t"  +
-               "(min=" + to_string(minQual) + ", mean=" + to_string(qualMean) + ")",
-               "AbstractEvaluator"));
-            m += glslMarkSize;
-        }
+        minTime = glm::min(minTime, double(statsVec[i].averageTime));
     }
 
-    auto serialNano = serialTime.count() / serialCycleCount;
-    auto glslNano = glslTime.count() / glslCycleCount;
-    double minNano = glm::min(serialNano, glslNano);
 
-    double serialRatio = serialNano / minNano;
-    double glslRatio = glslNano / minNano;
+    // Build ratio strings
+    stringstream nameStream;
+    stringstream timeStream;
+    stringstream normTimeStream;
+    for(size_t i = 0; i < statsVec.size(); ++i)
+    {
+        nameStream << statsVec[i].impl << ":";
+        timeStream << int(statsVec[i].averageTime / 1000.0) << ":";
+        normTimeStream << fixed << setprecision(3) <<
+                          statsVec[i].averageTime / minTime << ":";
+    }
 
-    stringstream ss;
-    ss << "Shape measure time ratio (us) :\t"
-       << "Serial:GLSL = " << fixed << setprecision(2)
-       << (serialNano / 1000.0) << ":" << (glslNano / 1000.0)
-       << " = " << serialRatio << ":" << glslRatio;
-    getLog().postMessage(new Message('I', false, ss.str(), "AbstractEvaluator"));
+    getLog().postMessage(new Message('I', false,
+        "Shape measure time ratio (us) :\t "
+         + nameStream.str() + "\t = "
+         + timeStream.str() + "\t = "
+         + normTimeStream.str(),
+        "AbstractEvaluator"));
 }
 
 string AbstractEvaluator::shapeMeasureShader() const

@@ -12,9 +12,10 @@ namespace Ui
     class MainWindow;
 }
 
-class GeometryTab;
-class SmoothingTab;
-class RenderingTab;
+class MeshTab;
+class EvaluateTab;
+class SmoothTab;
+class RenderTab;
 class GpuMeshCharacter;
 
 
@@ -31,9 +32,10 @@ private:
     Ui::MainWindow *_ui;
     std::shared_ptr<scaena::Play> _play;
     std::shared_ptr<scaena::QGlWidgetView> _view;
-    std::shared_ptr<GeometryTab> _geometryTab;
-    std::shared_ptr<SmoothingTab> _smoothingTab;
-    std::shared_ptr<RenderingTab> _renderingTab;
+    std::shared_ptr<MeshTab> _meshTab;
+    std::shared_ptr<EvaluateTab> _evaluateTab;
+    std::shared_ptr<SmoothTab> _smoothTab;
+    std::shared_ptr<RenderTab> _renderTab;
 };
 
 #endif // GPUMESH_MAINWINDOW_H

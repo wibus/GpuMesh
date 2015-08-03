@@ -29,9 +29,9 @@
       <property name="currentIndex">
        <number>2</number>
       </property>
-      <widget class="QWidget" name="geometryTab">
+      <widget class="QWidget" name="meshTab">
        <attribute name="title">
-        <string>Geometry</string>
+        <string>Mesh</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -67,14 +67,14 @@
             <widget class="QComboBox" name="geometryModelMenu"/>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="vertexCountLabel">
+            <widget class="QLabel" name="meshVertexCountLabel">
              <property name="text">
               <string>Vertices</string>
              </property>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QSpinBox" name="vertexCountSpin">
+            <widget class="QSpinBox" name="meshVertexCountSpin">
              <property name="minimum">
               <number>1000</number>
              </property>
@@ -114,9 +114,100 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="smoothingTab">
+      <widget class="QWidget" name="evaluateTab">
        <attribute name="title">
-        <string>Smoothing</string>
+        <string>Evaluate</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QGroupBox" name="shapeMeasureGroup">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Shape Measure</string>
+          </property>
+          <layout class="QFormLayout" name="formLayout_4">
+           <item row="0" column="0">
+            <widget class="QLabel" name="shapeMeasureTypeLabel">
+             <property name="text">
+              <string>Type</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="shapeMeasureTypeMenu"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="shapeMeasureImplLabel">
+             <property name="text">
+              <string>Implementation</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="shapeMeasureImplMenu"/>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QPushButton" name="evaluateMesh">
+             <property name="text">
+              <string>Evaluate Mesh</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="evaluateBenchmarkGroup">
+          <property name="title">
+           <string>Benchmarking</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QLabel" name="evaluateImplCycleCountsLabel">
+             <property name="text">
+              <string>Implementation Cycle Counts:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="evaluateImplCycleCountsLayout" native="true"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="evaluateBenchmarkImplButton">
+             <property name="text">
+              <string>Benchmark Implementations</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="evaluateSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="smoothTab">
+       <attribute name="title">
+        <string>Smooth</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
@@ -142,48 +233,38 @@
             <widget class="QComboBox" name="smoothingTechniqueMenu"/>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="smoothShapeMeasureLabel">
-             <property name="text">
-              <string>Shape measure</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="smoothShapeMeasureMenu"/>
-           </item>
-           <item row="2" column="0">
             <widget class="QLabel" name="smoothingImplementationLabel">
              <property name="text">
               <string>Implementation</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
+           <item row="1" column="1">
             <widget class="QComboBox" name="smoothingImplementationMenu"/>
            </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="minIterationLabel">
+           <item row="2" column="0">
+            <widget class="QLabel" name="smoothMinIterationLabel">
              <property name="text">
               <string>Min iteration</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QSpinBox" name="minIterationSpin">
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="smoothMinIterationSpin">
              <property name="maximum">
               <number>100</number>
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="moveFactorLabel">
+           <item row="3" column="0">
+            <widget class="QLabel" name="smoothMoveFactorLabel">
              <property name="text">
               <string>Move factor</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
-            <widget class="QDoubleSpinBox" name="moveFactorSpin">
+           <item row="3" column="1">
+            <widget class="QDoubleSpinBox" name="smoothMoveFactorSpin">
              <property name="maximum">
               <double>2.000000000000000</double>
              </property>
@@ -195,15 +276,15 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="gainThresholdLabel">
+           <item row="4" column="0">
+            <widget class="QLabel" name="smoothGainThresholdLabel">
              <property name="text">
               <string>Gain threshold</string>
              </property>
             </widget>
            </item>
-           <item row="5" column="1">
-            <widget class="QDoubleSpinBox" name="gainThresholdSpin">
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="smoothGainThresholdSpin">
              <property name="decimals">
               <number>6</number>
              </property>
@@ -218,7 +299,7 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="0" colspan="2">
+           <item row="6" column="0" colspan="2">
             <widget class="QPushButton" name="smoothMeshButton">
              <property name="text">
               <string>Smooth Mesh</string>
@@ -229,65 +310,15 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="benchmarkingGroup">
+         <widget class="QGroupBox" name="smoothBenchmarkGroup">
           <property name="title">
            <string>Benchmarking</string>
           </property>
-          <layout class="QFormLayout" name="formLayout_4">
-           <item row="4" column="0">
-            <widget class="QLabel" name="benchmarkGlslCycleCountLabel">
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QPushButton" name="smoothBenchmarkImplButton">
              <property name="text">
-              <string>GLSL cycle count</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QSpinBox" name="benchmarkGlslCycleCountSpin">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>500</number>
-             </property>
-             <property name="singleStep">
-              <number>1</number>
-             </property>
-             <property name="value">
-              <number>20</number>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QPushButton" name="benchmarkTechniqueButton">
-             <property name="text">
-              <string>Technique</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="QPushButton" name="benchmarkShapeMeasureButton">
-             <property name="text">
-              <string>Shape measure</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="benchmarkSerialCycleCountLabel">
-             <property name="text">
-              <string>Serial cycle count</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QSpinBox" name="benchmarkSerialCycleCountSpin">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>500</number>
-             </property>
-             <property name="value">
-              <number>2</number>
+              <string>Benchmark Implementations</string>
              </property>
             </widget>
            </item>
@@ -309,9 +340,9 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="renderingTab">
+      <widget class="QWidget" name="renderTab">
        <attribute name="title">
-        <string>Rendering</string>
+        <string>Render</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -339,16 +370,6 @@
            </item>
            <item row="1" column="1">
             <widget class="QComboBox" name="shadingMenu"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="visualShapeMeasureLabel">
-             <property name="text">
-              <string>Shape measure</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="visualShapeMeasureMenu"/>
            </item>
           </layout>
          </widget>

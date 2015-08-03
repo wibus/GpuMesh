@@ -4,9 +4,10 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-#include "Tabs/GeometryTab.h"
-#include "Tabs/SmoothingTab.h"
-#include "Tabs/RenderingTab.h"
+#include "Tabs/MeshTab.h"
+#include "Tabs/EvaluateTab.h"
+#include "Tabs/SmoothTab.h"
+#include "Tabs/RenderTab.h"
 
 using namespace scaena;
 
@@ -22,9 +23,10 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
 
     _play->addView(_view);
 
-    _geometryTab.reset(new GeometryTab(_ui, character));
-    _smoothingTab.reset(new SmoothingTab(_ui, character));
-    _renderingTab.reset(new RenderingTab(_ui, character));
+    _meshTab.reset(new MeshTab(_ui, character));
+    _evaluateTab.reset(new EvaluateTab(_ui, character));
+    _smoothTab.reset(new SmoothTab(_ui, character));
+    _renderTab.reset(new RenderTab(_ui, character));
 
     resize(1200, 720);
     QPoint center = QApplication::desktop()->availableGeometry(this).center();

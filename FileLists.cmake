@@ -34,9 +34,10 @@ SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.h)
 
 SET(GpuMesh_UITABS_HEADERS
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/GeometryTab.h
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/SmoothingTab.h
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderingTab.h)
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.h
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/EvaluateTab.h
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/SmoothTab.h
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderTab.h)
 
 SET(GpuMesh_USERINTERFACE_HEADERS
     ${GpuMesh_UITABS_HEADERS}
@@ -85,9 +86,10 @@ SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.cpp)
 
 SET(GpuMesh_UITABS_SOURCES
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/GeometryTab.cpp
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/SmoothingTab.cpp
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderingTab.cpp)
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/EvaluateTab.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/SmoothTab.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderTab.cpp)
 
 SET(GpuMesh_USERINTERFACE_SOURCES
     ${GpuMesh_UITABS_SOURCES}
