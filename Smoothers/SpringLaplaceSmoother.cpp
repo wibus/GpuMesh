@@ -1,7 +1,5 @@
 #include "SpringLaplaceSmoother.h"
 
-#include <iostream>
-
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;

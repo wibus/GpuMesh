@@ -6,6 +6,7 @@ uniform float MoveCoeff;
 
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
+
 void main()
 {
     uint uid = gl_GlobalInvocationID.x;

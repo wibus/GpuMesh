@@ -1,5 +1,7 @@
 #include "SmoothTab.h"
 
+#include <QCheckBox>
+
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
 
@@ -53,6 +55,7 @@ void SmoothTab::benchmarkImplementations()
     _character->benchmarkSmoother(
         _ui->smoothingTechniqueMenu->currentText().toStdString(),
         _ui->shapeMeasureTypeMenu->currentText().toStdString(),
+        _activeImpls,
         _ui->smoothMinIterationSpin->value(),
         _ui->smoothMoveFactorSpin->value(),
         _ui->smoothGainThresholdSpin->value());
@@ -73,8 +76,37 @@ void SmoothTab::deployImplementations()
     OptionMapDetails implementations = _character->availableSmootherImplementations(
         _ui->smoothingTechniqueMenu->currentText().toStdString());
 
+
+    // Fill implementation combo box
     _ui->smoothingImplementationMenu->clear();
     for(const auto& name : implementations.options)
         _ui->smoothingImplementationMenu->addItem(QString(name.c_str()));
     _ui->smoothingImplementationMenu->setCurrentText(implementations.defaultOption.c_str());
+
+
+    // Define active implementations for benchmarking
+    if(_ui->smoothActiveImplLayout->layout())
+        QWidget().setLayout(_ui->smoothActiveImplLayout->layout());
+
+    map<string, bool> newActiveImpls;
+    QFormLayout* layout = new QFormLayout();
+    for(const auto& name : implementations.options)
+    {
+        QCheckBox* check = new QCheckBox();
+
+        int isActive = true;
+        auto lastStateIt = _activeImpls.find(name);
+        if(lastStateIt != _activeImpls.end())
+            isActive = lastStateIt->second;
+
+        check->setChecked(isActive);
+        newActiveImpls.insert(make_pair(name, isActive));
+
+        connect(check, &QCheckBox::stateChanged,
+                [=](int state) { _activeImpls[name] = state; });
+
+        layout->addRow(QString(name.c_str()), check);
+    }
+    _ui->smoothActiveImplLayout->setLayout(layout);
+    _activeImpls = newActiveImpls;
 }

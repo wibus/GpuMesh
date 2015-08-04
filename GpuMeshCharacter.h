@@ -70,6 +70,7 @@ public:
     virtual void benchmarkSmoother(
             const std::string& smootherName,
             const std::string& evaluatorName,
+            const std::map<std::string, bool>& activeImpls,
             size_t minIterationCount,
             double moveFactor,
             double gainThreshold);

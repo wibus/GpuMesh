@@ -44,6 +44,7 @@ public:
     virtual void benchmark(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const std::map<std::string, bool>& activeImpls,
             int minIteration,
             double moveFactor,
             double gainThreshold);

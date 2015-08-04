@@ -237,6 +237,7 @@ struct SmoothBenchmarkStats
 void AbstractSmoother::benchmark(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const map<string, bool>& activeImpls,
         int minIteration,
         double moveFactor,
         double gainThreshold)
@@ -262,6 +263,23 @@ void AbstractSmoother::benchmark(
     std::vector<SmoothBenchmarkStats> statsVec;
     for(auto& impl : _implementationFuncs.details().options)
     {
+        auto activeIt = activeImpls.find(impl);
+        if(activeIt != activeImpls.end())
+        {
+            bool isActive = activeIt->second;
+
+            if(!isActive)
+                continue;
+        }
+        else
+        {
+            getLog().postMessage(new Message('W', false,
+               "No active state defined for " + impl +
+               ". Skipping this implementation...",
+               "AbstractSmoother"));
+            continue;
+        }
+
         getLog().postMessage(new Message('I', false,
            "Benchmarking "+ impl +" implementation",
            "AbstractSmoother"));

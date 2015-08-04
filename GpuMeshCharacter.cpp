@@ -28,6 +28,7 @@
 #include "Renderers/SurfacicRenderer.h"
 #include "Smoothers/SpringLaplaceSmoother.h"
 #include "Smoothers/QualityLaplaceSmoother.h"
+#include "Smoothers/LocalOptimisationSmoother.h"
 
 using namespace std;
 using namespace cellar;
@@ -76,8 +77,9 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableSmoothers.setDefault("Spring Laplace");
     _availableSmoothers.setContent({
-        {string("Quality Laplace"), shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
-        {string("Spring Laplace"), shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
+        {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
+        {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
+        {string("Local Optimisation"), shared_ptr<AbstractSmoother>(new LocalOptimisationSmoother())},
     });
 
     _availableRenderers.setDefault("Scaffold");
@@ -396,6 +398,7 @@ void GpuMeshCharacter::smoothMesh(
 void GpuMeshCharacter::benchmarkSmoother(
         const std::string& smootherName,
         const string& evaluatorName,
+        const map<string, bool>& activeImpls,
         size_t minIterationCount,
         double moveFactor,
         double gainThreshold)
@@ -413,6 +416,7 @@ void GpuMeshCharacter::benchmarkSmoother(
             smoother->benchmark(
                 *_mesh,
                 *evaluator,
+                activeImpls,
                 minIterationCount,
                 moveFactor,
                 gainThreshold);

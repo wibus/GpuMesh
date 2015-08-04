@@ -70,7 +70,7 @@ void EvaluateTab::deployImplementations()
         _ui->shapeMeasureTypeMenu->currentText().toStdString());
 
 
-    // Fill implementations combo box
+    // Fill implementation combo box
     _ui->shapeMeasureImplMenu->clear();
     for(const auto& name : implementations.options)
         _ui->shapeMeasureImplMenu->addItem(QString(name.c_str()));

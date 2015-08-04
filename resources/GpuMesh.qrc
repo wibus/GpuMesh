@@ -39,5 +39,6 @@
         <file>shaders/compute/Boundary/Sphere.glsl</file>
         <file>shaders/compute/Boundary/None.glsl</file>
         <file>shaders/compute/Boundary/Box.glsl</file>
+        <file>shaders/compute/Smoothing/LocalOptimisation.glsl</file>
     </qresource>
 </RCC>

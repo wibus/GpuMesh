@@ -36,6 +36,7 @@ protected:
 private:
     Ui::MainWindow* _ui;
     std::shared_ptr<GpuMeshCharacter> _character;
+    std::map<std::string, bool> _activeImpls;
 };
 
 #endif // GPUMESH_SMOOTHTAB
