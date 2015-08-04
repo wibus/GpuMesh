@@ -1,7 +1,6 @@
 #include "AbstractEvaluator.h"
 
 #include <future>
-#include <thread>
 #include <chrono>
 #include <sstream>
 #include <iomanip>
@@ -535,12 +534,16 @@ void AbstractEvaluator::benchmark(
         normTimeStream << fixed << setprecision(3) <<
                           statsVec[i].averageTime / minTime << ":";
     }
+    string nameString = nameStream.str(); nameString.back() = ' ';
+    string timeString = timeStream.str(); timeString.back() = ' ';
+    string normTimeString = normTimeStream.str(); normTimeString.back() = ' ';
+
 
     getLog().postMessage(new Message('I', false,
         "Shape measure time ratio (us) :\t "
-         + nameStream.str() + "\t = "
-         + timeStream.str() + "\t = "
-         + normTimeStream.str(),
+         + nameString + "\t = "
+         + timeString + "\t = "
+         + normTimeString,
         "AbstractEvaluator"));
 }
 

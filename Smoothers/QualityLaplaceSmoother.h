@@ -11,9 +11,13 @@ public:
     QualityLaplaceSmoother();
     virtual ~QualityLaplaceSmoother();
 
-    virtual void smoothMeshSerial(
+protected:
+    virtual void smoothVertices(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) override;
+            AbstractEvaluator& evaluator,
+            size_t first,
+            size_t last,
+            bool synchronize) override;
 };
 
 #endif // GPUMESH_QUALITYLAPLACESMOOTHER

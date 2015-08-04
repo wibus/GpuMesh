@@ -29,7 +29,11 @@ public:
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) = 0;
+            AbstractEvaluator& evaluator);
+
+    virtual void smoothMeshThread(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator);
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
@@ -46,10 +50,18 @@ public:
 
 
 protected:
+    virtual void smoothVertices(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator,
+            size_t first,
+            size_t last,
+            bool synchronize) = 0;
+
     virtual void initializeProgram(Mesh& mesh, AbstractEvaluator& evaluator);
-    bool evaluateCpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator);
-    bool evaluateGpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator);
-    bool evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, bool gpu);
+    bool evaluateMeshQualitySerial(Mesh& mesh, AbstractEvaluator& evaluator);
+    bool evaluateMeshQualityThread(Mesh& mesh, AbstractEvaluator& evaluator);
+    bool evaluateMeshQualityGlsl(Mesh& mesh, AbstractEvaluator& evaluator);
+    bool evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, int impl);
 
 
     int _minIteration;

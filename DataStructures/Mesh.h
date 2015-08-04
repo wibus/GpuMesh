@@ -1,6 +1,7 @@
 #ifndef GPUMESH_MESH
 #define GPUMESH_MESH
 
+#include <mutex>
 #include <vector>
 #include <functional>
 
@@ -211,6 +212,7 @@ public:
     std::vector<MeshHex>  hexa;
     std::vector<MeshTopo> topo;
 
+    std::mutex vertMutex;
 
 protected:
     virtual void addEdge(int firstVert,

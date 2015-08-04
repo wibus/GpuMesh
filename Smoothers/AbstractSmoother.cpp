@@ -1,5 +1,6 @@
 #include "AbstractSmoother.h"
 
+#include <thread>
 #include <chrono>
 #include <iomanip>
 
@@ -20,6 +21,7 @@ AbstractSmoother::AbstractSmoother(const string& smoothShader) :
     _implementationFuncs.setDefault("Serial");
     _implementationFuncs.setContent({
         {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
+        {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},
         {string("GLSL"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl, this, _1, _2))},
     });
 }
@@ -59,6 +61,50 @@ void AbstractSmoother::smoothMesh(
     }
 }
 
+void AbstractSmoother::smoothMeshSerial(
+        Mesh& mesh,
+        AbstractEvaluator& evaluator)
+{
+    _smoothPassId = 0;
+    size_t vertCount = mesh.vert.size();
+    while(evaluateMeshQualitySerial(mesh, evaluator))
+    {
+        smoothVertices(mesh, evaluator, 0, vertCount, false);
+    }
+
+    mesh.updateGpuVertices();
+}
+
+void AbstractSmoother::smoothMeshThread(
+        Mesh& mesh,
+        AbstractEvaluator& evaluator)
+{
+    // TODO : Use a thread pool
+
+    _smoothPassId = 0;
+    size_t vertCount = mesh.vert.size();
+    while(evaluateMeshQualityThread(mesh, evaluator))
+    {
+        vector<thread> workers;
+        uint coreCountHint = thread::hardware_concurrency();
+        for(uint t=0; t < coreCountHint; ++t)
+        {
+            workers.push_back(thread([&, t]() {
+                size_t first = (vertCount * t) / coreCountHint;
+                size_t last = (vertCount * (t+1)) / coreCountHint;
+                smoothVertices(mesh, evaluator, first, last, true);
+            }));
+        }
+
+        for(uint t=0; t < coreCountHint; ++t)
+        {
+            workers[t].join();
+        }
+    }
+
+    mesh.updateGpuVertices();
+}
+
 void AbstractSmoother::smoothMeshGlsl(
         Mesh& mesh,
         AbstractEvaluator& evaluator)
@@ -77,7 +123,7 @@ void AbstractSmoother::smoothMeshGlsl(
     _smoothingProgram.setFloat("MoveCoeff", _moveFactor);
     mesh.bindShaderStorageBuffers();
     int vertCount = mesh.vertCount();
-    while(evaluateGpuMeshQuality(mesh, evaluator))
+    while(evaluateMeshQualityGlsl(mesh, evaluator))
     {
         glDispatchCompute(ceil(vertCount / 256.0), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -123,31 +169,42 @@ void AbstractSmoother::initializeProgram(Mesh& mesh, AbstractEvaluator& evaluato
     _initialized = true;
 }
 
-bool AbstractSmoother::evaluateCpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
+bool AbstractSmoother::evaluateMeshQualitySerial(Mesh& mesh, AbstractEvaluator& evaluator)
 {
-    return evaluateMeshQuality(mesh, evaluator, false);
+    return evaluateMeshQuality(mesh, evaluator, 0);
 }
 
-bool AbstractSmoother::evaluateGpuMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator)
+bool AbstractSmoother::evaluateMeshQualityThread(Mesh& mesh, AbstractEvaluator& evaluator)
 {
-    return evaluateMeshQuality(mesh, evaluator, true);
+    return evaluateMeshQuality(mesh, evaluator, 1);
 }
 
-bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, bool gpu)
+bool AbstractSmoother::evaluateMeshQualityGlsl(Mesh& mesh, AbstractEvaluator& evaluator)
+{
+    return evaluateMeshQuality(mesh, evaluator, 2);
+}
+
+bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, int impl)
 {
     bool continueSmoothing = true;
     if(_smoothPassId >= _minIteration)
     {
         double qualMean, qualMin;
-        if(gpu)
+
+        switch(impl)
         {
-            evaluator.evaluateMeshQualityGlsl(
-                mesh, qualMin, qualMean);
-        }
-        else
-        {
+        case 0 :
             evaluator.evaluateMeshQualitySerial(
                 mesh, qualMin, qualMean);
+            break;
+        case 1 :
+            evaluator.evaluateMeshQualityThread(
+                mesh, qualMin, qualMean);
+            break;
+        case 2 :
+            evaluator.evaluateMeshQualityGlsl(
+                mesh, qualMin, qualMean);
+            break;
         }
 
         getLog().postMessage(new Message('I', true,
@@ -253,25 +310,30 @@ void AbstractSmoother::benchmark(
         nameStream << statsVec[i].impl << ":";
         timeStream << fixed << setprecision(2) << statsVec[i].time / 1000000.0 << ":";
         normTimeStream << fixed << setprecision(2)  << statsVec[i].time / minTime << ":";
-        gainStream << fixed << setprecision(4)  << statsVec[i].qualityMeanGain << ":";
-        normGainStream << fixed << setprecision(4)  << statsVec[i].qualityMeanGain / minGain  << ":";
+        gainStream << fixed << setprecision(6)  << statsVec[i].qualityMeanGain << ":";
+        normGainStream << fixed << setprecision(6)  << statsVec[i].qualityMeanGain / minGain  << ":";
     }
+    string nameString = nameStream.str(); nameString.back() = ' ';
+    string timeString = timeStream.str(); timeString.back() = ' ';
+    string normTimeString = normTimeStream.str(); normTimeString.back() = ' ';
+    string gainString = gainStream.str(); gainString.back() = ' ';
+    string normGainString = normGainStream.str(); normGainString.back() = ' ';
 
 
     // Time ratio //
     getLog().postMessage(new Message('I', false,
        "Smoothing time ratio (ms) :\t "
-        + nameStream.str() + "\t = "
-        + timeStream.str() + "\t = "
-        + normTimeStream.str(),
+        + nameString + "\t = "
+        + timeString + "\t = "
+        + normTimeString,
        "AbstractSmoother"));
 
 
     // Quality ratio //
     getLog().postMessage(new Message('I', false,
        "Smoothing quality gain ratio :\t "
-        + nameStream.str() + "\t = "
-        + gainStream.str() + "\t = "
-        + normGainStream.str(),
+        + nameString + "\t = "
+        + gainString + "\t = "
+        + normGainString,
        "AbstractSmoother"));
 }
