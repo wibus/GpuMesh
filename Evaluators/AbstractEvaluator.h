@@ -37,6 +37,11 @@ public:
             double& minQuality,
             double& qualityMean);
 
+    virtual void evaluateMeshQualityThread(
+            const Mesh& mesh,
+            double& minQuality,
+            double& qualityMean);
+
     virtual void evaluateMeshQualityGlsl(
             const Mesh& mesh,
             double& minQuality,

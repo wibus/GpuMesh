@@ -1,5 +1,7 @@
 #include "AbstractEvaluator.h"
 
+#include <future>
+#include <thread>
 #include <chrono>
 #include <sstream>
 #include <iomanip>
@@ -42,6 +44,7 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
     _implementationFuncs.setDefault("Serial");
     _implementationFuncs.setContent({
       {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3))},
+      {string("Thread"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3))},
       {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl, this, _1, _2, _3))},
     });
 }
@@ -180,8 +183,8 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
     int tetCount = mesh.tetra.size();
     int priCount = mesh.prism.size();
     int hexCount = mesh.hexa.size();
-
     int elemCount = tetCount + priCount + hexCount;
+
     std::vector<double> qualities(elemCount);
     int idx = 0;
 
@@ -200,12 +203,75 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
     for(int i=0; i < elemCount; ++i)
     {
         double qual = qualities[i];
-
-        if(qual < minQuality)
-            minQuality = qual;
-
-        qualityMean = (qualityMean * i + qual) / (i + 1);
+        minQuality = glm::min(qual, minQuality);
+        qualityMean += qual;
     }
+    qualityMean /= elemCount;
+}
+
+void AbstractEvaluator::evaluateMeshQualityThread(
+            const Mesh& mesh,
+            double& minQuality,
+            double& qualityMean)
+{
+    int tetCount = mesh.tetra.size();
+    int priCount = mesh.prism.size();
+    int hexCount = mesh.hexa.size();
+    int elemCount = tetCount + priCount + hexCount;
+
+    vector<future<pair<double, double>>> futures;
+    uint coreCountHint = thread::hardware_concurrency();
+    for(uint t=0; t < coreCountHint; ++t)
+    {
+        futures.push_back(async(launch::async, [&, t](){
+
+            int tetBeg = (tetCount * t) / coreCountHint;
+            int tetEnd = (tetCount * (t+1)) / coreCountHint;
+            int tetBatchSize = tetEnd - tetBeg;
+            int priBeg = (priCount * t) / coreCountHint;
+            int priEnd = (priCount * (t+1)) / coreCountHint;
+            int priBatchSize = priEnd - priBeg;
+            int hexBeg = (hexCount * t) / coreCountHint;
+            int hexEnd = (hexCount * (t+1)) / coreCountHint;
+            int hexBatchSize = hexEnd - hexBeg;
+            int totalBatchSize = tetBatchSize + priBatchSize + hexBatchSize;
+
+            std::vector<double> qualities(totalBatchSize);
+            int idx = 0;
+
+            for(int i=tetBeg; i < tetEnd; ++i, ++idx)
+                qualities[idx] = tetQuality(mesh, mesh.tetra[i]);
+
+            for(int i=priBeg; i < priEnd; ++i, ++idx)
+                qualities[idx] = priQuality(mesh, mesh.prism[i]);
+
+            for(int i=hexBeg; i < hexEnd; ++i, ++idx)
+                qualities[idx] = hexQuality(mesh, mesh.hexa[i]);
+
+            double futureMinQuality = 1.0;
+            double futureQualityMean = 0.0;
+            for(int i=0; i < totalBatchSize; ++i)
+            {
+                double qual = qualities[i];
+                futureMinQuality = glm::min(qual, futureMinQuality);
+                futureQualityMean += qual;
+            }
+
+            return make_pair(futureMinQuality, futureQualityMean);
+        }));
+    }
+
+
+    // Combine workers' results
+    minQuality = 1.0;
+    qualityMean = 0.0;
+    for(uint i=0; i < coreCountHint; ++i)
+    {
+        pair<double, double> stats = futures[i].get();
+        minQuality = glm::min(stats.first, minQuality);
+        qualityMean += stats.second;
+    }
+    qualityMean /= elemCount;
 }
 
 void AbstractEvaluator::evaluateMeshQualityGlsl(
@@ -278,12 +344,13 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // Get minimum quality
     minQuality = qualBuff[0] / MAX_INTEGER_VALUE;
 
-    // Combine workgroup means
+    // Combine workgroups' mean
     size_t i = 0;
     qualityMean = 0.0;
     while(i <= workgroupCount)
         qualityMean += qualBuff[++i];
-    qualityMean /= MAX_QUALITY_VALUE * (tetCount + priCount + hexCount);
+    qualityMean /= MAX_QUALITY_VALUE *
+        (tetCount + priCount + hexCount);
 }
 
 void AbstractEvaluator::initializeProgram(const Mesh& mesh)

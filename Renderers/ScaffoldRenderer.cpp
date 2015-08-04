@@ -176,7 +176,7 @@ void ScaffoldRenderer::updateGeometry(
 
     // Fetch new vertex attributes
     vector<float> verts;
-    vector<GLubyte>  quals;
+    vector<GLubyte> quals;
     vector<GLuint> edges;
     compileBuffers(mesh, evaluator, verts, quals, edges);
     _vertElemCount = mesh.vert.size();

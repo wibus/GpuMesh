@@ -156,10 +156,15 @@ Mesh::~Mesh()
 void Mesh::clear()
 {
     vert.clear();
+    vert.shrink_to_fit();
     tetra.clear();
+    tetra.shrink_to_fit();
     prism.clear();
+    prism.shrink_to_fit();
     hexa.clear();
+    hexa.shrink_to_fit();
     topo.clear();
+    topo.shrink_to_fit();
 }
 
 void Mesh::compileTopoly()
@@ -167,8 +172,12 @@ void Mesh::compileTopoly()
     getLog().postMessage(new Message('I', false,
         "Compiling mesh topology", "Mesh"));
 
-    int vertCount = vert.size();
+    vert.shrink_to_fit();
+    tetra.shrink_to_fit();
+    prism.shrink_to_fit();
+    hexa.shrink_to_fit();
 
+    int vertCount = vert.size();
     topo.resize(vertCount);
     topo.shrink_to_fit();
 

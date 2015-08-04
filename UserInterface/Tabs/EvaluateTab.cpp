@@ -92,7 +92,7 @@ void EvaluateTab::deployImplementations()
         if(lastCountIt != _cycleCounts.end())
             cycleCount = lastCountIt->second;
 
-        spin->setMinimum(1);
+        spin->setMinimum(0);
         spin->setMaximum(100);
         spin->setValue(cycleCount);
         newCycleCounts.insert(make_pair(name, cycleCount));
