@@ -45,12 +45,12 @@ void QualityLaplaceSmoother::smoothVertices(
             continue;
 
         // Compute patch center
-        glm::dvec3 patchCenter = OptimizationHelper::findPatchCenter(
-            v, verts,
-            tets, pris, hexs,
-            neighborElems);
-
         glm::dvec3& pos = verts[v].p;
+        glm::dvec3 patchCenter =
+                OptimizationHelper::findPatchCenter(
+                    v, verts,
+                    neighborElems,
+                    tets, pris, hexs);
         glm::dvec3 centerDist = patchCenter - pos;
 
 
@@ -70,46 +70,14 @@ void QualityLaplaceSmoother::smoothVertices(
 
 
         // Compute proposition's patch quality
-        uint neigElemCount = neighborElems.size();
-        for(uint n=0; n < neigElemCount; ++n)
-        {
-            const MeshNeigElem& neigElem = topo.neighborElems[n];
-            switch(neigElem.type)
-            {
-            case MeshTet::ELEMENT_TYPE:
-                OptimizationHelper::testTetPropositions(
-                    v,
-                    mesh,
-                    tets[neigElem.id],
+        OptimizationHelper::computePropositionPatchQualities(
+                    mesh, v, topo,
+                    neighborElems,
+                    tets, pris, hexs,
                     evaluator,
                     propositions,
                     patchQualities,
                     PROPOSITION_COUNT);
-                break;
-
-            case MeshPri::ELEMENT_TYPE:
-                OptimizationHelper::testPriPropositions(
-                    v,
-                    mesh,
-                    pris[neigElem.id],
-                    evaluator,
-                    propositions,
-                    patchQualities,
-                    PROPOSITION_COUNT);
-                break;
-
-            case MeshHex::ELEMENT_TYPE:
-                OptimizationHelper::testHexPropositions(
-                    v,
-                    mesh,
-                    hexs[neigElem.id],
-                    evaluator,
-                    propositions,
-                    patchQualities,
-                    PROPOSITION_COUNT);
-                break;
-            }
-        }
 
         // Find best proposition based on patch quality
         uint bestProposition = 0;

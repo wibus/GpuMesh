@@ -6,7 +6,7 @@ float hexQuality(in vec3 vp[HEX_VERTEX_COUNT]);
 const uint MAX_PROPOSITION_COUNT = 4;
 
 
-vec3 findPatchCenter(in uint v)
+vec3 findPatchCenter(in uint v, in Topo topo)
 {
     uint totalVertCount = 0;
     vec3 patchCenter = vec3(0.0);
@@ -36,7 +36,7 @@ vec3 findPatchCenter(in uint v)
         }
     }
 
-    vec3 pos = vec3(verts[uid].p);
+    vec3 pos = vec3(verts[v].p);
     patchCenter = (patchCenter - pos * float(neigElemCount))
                     / float(totalVertCount);
 

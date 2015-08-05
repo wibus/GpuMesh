@@ -14,17 +14,17 @@ std::string OptimizationHelper::shaderName()
 glm::dvec3 OptimizationHelper::findPatchCenter(
         size_t v,
         const vector<MeshVert>& verts,
+        const vector<MeshNeigElem>& neigElems,
         const vector<MeshTet>& tets,
         const vector<MeshPri>& pris,
-        const vector<MeshHex>& hexs,
-        const vector<MeshNeigElem>& neighborElems)
+        const vector<MeshHex>& hexs)
 {
     uint totalVertCount = 0;
     glm::dvec3 patchCenter(0.0);
-    uint neigElemCount = neighborElems.size();
+    uint neigElemCount = neigElems.size();
     for(uint n=0; n < neigElemCount; ++n)
     {
-        const MeshNeigElem& neigElem = neighborElems[n];
+        const MeshNeigElem& neigElem = neigElems[n];
         switch(neigElem.type)
         {
         case MeshTet::ELEMENT_TYPE:
@@ -54,6 +54,21 @@ glm::dvec3 OptimizationHelper::findPatchCenter(
     return patchCenter;
 }
 
+double OptimizationHelper::findLocalElementSize(
+            size_t v,
+            const std::vector<MeshVert>& verts,
+            const std::vector<MeshNeigVert>& neigVerts)
+{
+    double totalSize = 0.0;
+    const glm::dvec3& pos = verts[v].p;
+    size_t neigVertCount = neigVerts.size();
+    for(size_t n=0; n < neigVertCount; ++n)
+    {
+        totalSize += glm::length(pos - verts[neigVerts[n].v].p);
+    }
+
+    return totalSize / neigVertCount;
+}
 
 inline void OptimizationHelper::integrateQuality(
         double& total,
@@ -63,9 +78,9 @@ inline void OptimizationHelper::integrateQuality(
 }
 
 void OptimizationHelper::testTetPropositions(
-        uint vertId,
         Mesh& mesh,
-        MeshTet& elem,
+        uint vertId,
+        const MeshTet& elem,
         AbstractEvaluator& evaluator,
         glm::dvec3 propositions[],
         double propQualities[],
@@ -102,9 +117,9 @@ void OptimizationHelper::testTetPropositions(
 }
 
 void OptimizationHelper::testPriPropositions(
-        uint vertId,
         Mesh& mesh,
-        MeshPri& elem,
+        uint vertId,
+        const MeshPri& elem,
         AbstractEvaluator& evaluator,
         glm::dvec3 propositions[],
         double propQualities[],
@@ -147,9 +162,9 @@ void OptimizationHelper::testPriPropositions(
 }
 
 void OptimizationHelper::testHexPropositions(
-        uint vertId,
         Mesh& mesh,
-        MeshHex& elem,
+        uint vertId,
+        const MeshHex& elem,
         AbstractEvaluator& evaluator,
         glm::dvec3 propositions[],
         double propQualities[],
@@ -193,6 +208,61 @@ void OptimizationHelper::testHexPropositions(
             integrateQuality(
                 propQualities[p],
                 evaluator.hexQuality(vp));
+        }
+    }
+}
+
+void OptimizationHelper::computePropositionPatchQualities(
+            Mesh& mesh,
+            uint vertId,
+            const MeshTopo& topo,
+            const std::vector<MeshNeigElem>& neighborElems,
+            const std::vector<MeshTet>& tets,
+            const std::vector<MeshPri>& pris,
+            const std::vector<MeshHex>& hexs,
+            AbstractEvaluator& evaluator,
+            glm::dvec3 propositions[],
+            double patchQualities[],
+            uint propositionCount)
+{
+    uint neigElemCount = neighborElems.size();
+    for(uint n=0; n < neigElemCount; ++n)
+    {
+        const MeshNeigElem& neigElem = topo.neighborElems[n];
+        switch(neigElem.type)
+        {
+        case MeshTet::ELEMENT_TYPE:
+            OptimizationHelper::testTetPropositions(
+                mesh,
+                vertId,
+                tets[neigElem.id],
+                evaluator,
+                propositions,
+                patchQualities,
+                propositionCount);
+            break;
+
+        case MeshPri::ELEMENT_TYPE:
+            OptimizationHelper::testPriPropositions(
+                mesh,
+                vertId,
+                pris[neigElem.id],
+                evaluator,
+                propositions,
+                patchQualities,
+                propositionCount);
+            break;
+
+        case MeshHex::ELEMENT_TYPE:
+            OptimizationHelper::testHexPropositions(
+                mesh,
+                vertId,
+                hexs[neigElem.id],
+                evaluator,
+                propositions,
+                patchQualities,
+                propositionCount);
+            break;
         }
     }
 }
