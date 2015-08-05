@@ -14,7 +14,7 @@ class AbstractEvaluator;
 class AbstractSmoother
 {
 public:
-    AbstractSmoother(const std::string& smoothShader);
+    AbstractSmoother(const std::vector<std::string>& smoothShaders);
     virtual ~AbstractSmoother();
 
     virtual OptionMapDetails availableImplementations() const;
@@ -75,9 +75,9 @@ protected:
 
 
     bool _initialized;
-    std::string _smoothShader;
     std::string _modelBoundsShader;
     std::string _shapeMeasureShader;
+    std::vector<std::string> _smoothShaders;
     cellar::GlProgram _smoothingProgram;
 
     typedef std::function<void(Mesh&, AbstractEvaluator&)> ImplementationFunc;

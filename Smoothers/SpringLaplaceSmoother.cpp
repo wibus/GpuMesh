@@ -6,7 +6,7 @@ using namespace std;
 
 
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
-    AbstractSmoother(":/shaders/compute/Smoothing/SpringLaplace.glsl")
+    AbstractSmoother({":/shaders/compute/Smoothing/SpringLaplace.glsl"})
 {
 
 }

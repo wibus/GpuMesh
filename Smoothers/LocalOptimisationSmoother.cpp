@@ -1,12 +1,14 @@
 #include "LocalOptimisationSmoother.h"
 
+#include "OptimizationHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
 
 
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
-    AbstractSmoother(":/shaders/compute/Smoothing/LocalOptimisation.glsl")
+    AbstractSmoother({OptimizationHelper::shaderName(),
+                      ":/shaders/compute/Smoothing/LocalOptimisation.glsl"})
 {
 
 }

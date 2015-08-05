@@ -12,9 +12,9 @@ using namespace std;
 using namespace cellar;
 
 
-AbstractSmoother::AbstractSmoother(const string& smoothShader) :
+AbstractSmoother::AbstractSmoother(const std::vector<string>& smoothShaders) :
     _initialized(false),
-    _smoothShader(smoothShader),
+    _smoothShaders(smoothShaders),
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
@@ -150,17 +150,20 @@ void AbstractSmoother::initializeProgram(Mesh& mesh, AbstractEvaluator& evaluato
     _shapeMeasureShader = evaluator.shapeMeasureShader();
 
     _smoothingProgram.clearShaders();
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        _smoothShader.c_str()});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Quality/QualityInterface.glsl"});
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER,
+        _modelBoundsShader);
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         _shapeMeasureShader.c_str()});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER,
-        _modelBoundsShader);
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Quality/QualityInterface.glsl"});
+    for(const string& shader : _smoothShaders)
+    {
+        _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+            mesh.meshGeometryShaderName(),
+            shader.c_str()});
+    }
     _smoothingProgram.link();
 
     mesh.uploadGeometry(_smoothingProgram);
