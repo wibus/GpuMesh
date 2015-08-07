@@ -9,7 +9,7 @@ vec3 snapToBoundary(int boundaryID, vec3 pos);
 const uint PROPOSITION_COUNT = 4;
 const uint MAX_PROPOSITION_COUNT = 4;
 
-vec3 findPatchCenter(in uint v);
+vec3 findPatchCenter(in uint v, in Topo topo);
 
 void testTetPropositions(
         uint vertId,
@@ -49,7 +49,7 @@ void main()
 
     // Compute patch center
     vec3 pos = vec3(verts[uid].p);
-    vec3 patchCenter = findPatchCenter(uid);
+    vec3 patchCenter = findPatchCenter(uid, topo);
     vec3 centerDist = patchCenter - pos;
 
 

@@ -284,6 +284,7 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     size_t tetCount = mesh.tetra.size();
     size_t priCount = mesh.prism.size();
     size_t hexCount = mesh.hexa.size();
+    size_t elemCount = tetCount + priCount + hexCount;
     size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
     size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
 
@@ -334,22 +335,26 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     }
 
     // Fetch workgroup's statistics from GPU
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    // We are using glMapBuffer since glGetBufferData seems to update the output
+    // concurently while were are computing mesh quality mean. glMemoryBarrier
+    // looks like having no effect on this (tried with GL_ALL_BARRIER_BITS
+    // before and after the call to glGetBufferSubData).
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, qualSize, qualBuff.data());
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
+    GLint* data = (GLint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 
     // Get minimum quality
-    minQuality = qualBuff[0] / MAX_INTEGER_VALUE;
+    minQuality = data[0] / MAX_INTEGER_VALUE;
 
     // Combine workgroups' mean
     size_t i = 0;
     qualityMean = 0.0;
     while(i <= workgroupCount)
-        qualityMean += qualBuff[++i];
-    qualityMean /= MAX_QUALITY_VALUE *
-        (tetCount + priCount + hexCount);
+        qualityMean += data[++i];
+    qualityMean /= MAX_QUALITY_VALUE * elemCount;
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void AbstractEvaluator::initializeProgram(const Mesh& mesh)

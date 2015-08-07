@@ -114,7 +114,7 @@ void AbstractSmoother::smoothMeshGlsl(
     // There's no need to upload vertices again, but absurdly
     // this makes subsequent passes much more faster...
     // I guess it's because the driver put buffer back on GPU.
-    // It looks like glGetBufferSubData take it out of the GPU.
+    // It looks like glGetBufferSubData takes it out of the GPU.
     mesh.updateGpuVertices();
 
 
