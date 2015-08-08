@@ -13,18 +13,18 @@ std::string OptimizationHelper::shaderName()
 
 glm::dvec3 OptimizationHelper::findPatchCenter(
         size_t v,
+        const MeshTopo& topo,
         const vector<MeshVert>& verts,
         const vector<MeshTet>& tets,
         const vector<MeshPri>& pris,
-        const vector<MeshHex>& hexs,
-        const vector<MeshNeigElem>& neighborElems)
+        const vector<MeshHex>& hexs)
 {
     uint totalVertCount = 0;
     glm::dvec3 patchCenter(0.0);
-    uint neigElemCount = neighborElems.size();
+    uint neigElemCount = topo.neighborElems.size();
     for(uint n=0; n < neigElemCount; ++n)
     {
-        const MeshNeigElem& neigElem = neighborElems[n];
+        const MeshNeigElem& neigElem = topo.neighborElems[n];
         switch(neigElem.type)
         {
         case MeshTet::ELEMENT_TYPE:
@@ -55,144 +55,15 @@ glm::dvec3 OptimizationHelper::findPatchCenter(
 }
 
 
-inline void OptimizationHelper::integrateQuality(
-        double& total,
-        double shape)
+void OptimizationHelper::accumulatePatchQuality(
+        double elemQ,
+        double& patchQ)
 {
-    total *= shape;
+    patchQ *= elemQ;
 }
 
-void OptimizationHelper::testTetPropositions(
-        uint vertId,
-        Mesh& mesh,
-        MeshTet& elem,
-        AbstractEvaluator& evaluator,
-        glm::dvec3 propositions[],
-        double propQualities[],
-        uint propositionCount)
+void OptimizationHelper::finalizePatchQuality(
+        double& patchQ)
 {
-    // Extract element's vertices
-    glm::dvec3 vp[MeshTet::VERTEX_COUNT] = {
-        mesh.vert[elem[0]],
-        mesh.vert[elem[1]],
-        mesh.vert[elem[2]],
-        mesh.vert[elem[3]],
-    };
 
-    // Find Vertex position in element
-    uint elemVertId = 0;
-    if(vertId == elem[1])
-        elemVertId = 1;
-    else if(vertId == elem[2])
-        elemVertId = 2;
-    else if(vertId == elem[3])
-        elemVertId = 3;
-
-    for(uint p=0; p < propositionCount; ++p)
-    {
-        if(propQualities[p] > 0.0)
-        {
-            vp[elemVertId] = propositions[p];
-
-            integrateQuality(
-                propQualities[p],
-                evaluator.tetQuality(vp));
-        }
-    }
-}
-
-void OptimizationHelper::testPriPropositions(
-        uint vertId,
-        Mesh& mesh,
-        MeshPri& elem,
-        AbstractEvaluator& evaluator,
-        glm::dvec3 propositions[],
-        double propQualities[],
-        uint propositionCount)
-{
-    // Extract element's vertices
-    glm::dvec3 vp[MeshPri::VERTEX_COUNT] = {
-        mesh.vert[elem[0]],
-        mesh.vert[elem[1]],
-        mesh.vert[elem[2]],
-        mesh.vert[elem[3]],
-        mesh.vert[elem[4]],
-        mesh.vert[elem[5]],
-    };
-
-    // Find Vertex position in element
-    uint elemVertId = 0;
-    if(vertId == elem[1])
-        elemVertId = 1;
-    else if(vertId == elem[2])
-        elemVertId = 2;
-    else if(vertId == elem[3])
-        elemVertId = 3;
-    else if(vertId == elem[4])
-        elemVertId = 4;
-    else if(vertId == elem[5])
-        elemVertId = 5;
-
-    for(uint p=0; p < propositionCount; ++p)
-    {
-        if(propQualities[p] > 0.0)
-        {
-            vp[elemVertId] = propositions[p];
-
-            integrateQuality(
-                propQualities[p],
-                evaluator.priQuality(vp));
-        }
-    }
-}
-
-void OptimizationHelper::testHexPropositions(
-        uint vertId,
-        Mesh& mesh,
-        MeshHex& elem,
-        AbstractEvaluator& evaluator,
-        glm::dvec3 propositions[],
-        double propQualities[],
-        uint propositionCount)
-{
-    // Extract element's vertices
-    glm::dvec3 vp[MeshHex::VERTEX_COUNT] = {
-        mesh.vert[elem[0]],
-        mesh.vert[elem[1]],
-        mesh.vert[elem[2]],
-        mesh.vert[elem[3]],
-        mesh.vert[elem[4]],
-        mesh.vert[elem[5]],
-        mesh.vert[elem[6]],
-        mesh.vert[elem[7]],
-    };
-
-    // Find vertex position in element
-    uint elemVertId = 0;
-    if(vertId == elem[1])
-        elemVertId = 1;
-    else if(vertId == elem[2])
-        elemVertId = 2;
-    else if(vertId == elem[3])
-        elemVertId = 3;
-    else if(vertId == elem[4])
-        elemVertId = 4;
-    else if(vertId == elem[5])
-        elemVertId = 5;
-    else if(vertId == elem[6])
-        elemVertId = 6;
-    else if(vertId == elem[7])
-        elemVertId = 7;
-
-    for(uint p=0; p < propositionCount; ++p)
-    {
-        if(propQualities[p] > 0.0)
-        {
-            vp[elemVertId] = propositions[p];
-
-            integrateQuality(
-                propQualities[p],
-                evaluator.hexQuality(vp));
-        }
-    }
 }

@@ -11,45 +11,47 @@ void main()
 {
     uint uid = gl_GlobalInvocationID.x;
 
-    if(uid < verts.length())
+    if(uid >= verts.length())
+        return;
+
+    Topo topo = topos[uid];
+    if(topo.type == TOPO_FIXED)
+        return;
+
+    uint neigElemCount = topo.neigElemCount;
+    if(neigElemCount == 0)
+        return;
+
+
+    // Read
+    vec3 pos = vec3(verts[uid].p);
+
+
+    float weightSum = 0.0;
+    vec3 patchCenter = vec3(0.0);
+
+    uint n = topo.neigVertBase;
+    uint neigVertCount = topo.neigVertCount;
+    for(uint i=0; i<neigVertCount; ++i, ++n)
     {
+        vec3 npos = vec3(verts[neigVerts[n].v].p);
 
-        // Read
-        vec3 pos = vec3(verts[uid].p);
+        vec3 dist = npos - pos;
+        float weight = dot(dist, dist) + 0.0001;
 
-
-        // Modification
-        Topo topo = topos[uid];
-        uint neigVertCount = topo.neigVertCount;
-        if(topo.type == TOPO_FIXED || neigVertCount == 0)
-            return;
-
-
-        float weightSum = 0.0;
-        vec3 patchCenter = vec3(0.0);
-
-        uint n = topo.neigVertBase;
-        for(uint i=0; i<neigVertCount; ++i, ++n)
-        {
-            vec3 npos = vec3(verts[neigVerts[n].v].p);
-
-            vec3 dist = npos - pos;
-            float weight = dot(dist, dist) + 0.0001;
-
-            patchCenter += npos * weight;
-            weightSum += weight;
-        }
-
-        patchCenter /= weightSum;
-        pos += MoveCoeff * (patchCenter - pos);
-
-        if(topo.type > 0)
-        {
-            pos = snapToBoundary(topo.type, pos);
-        }
-
-
-        // Write
-        verts[uid].p = vec4(pos, 0.0);
+        patchCenter += npos * weight;
+        weightSum += weight;
     }
+
+    patchCenter /= weightSum;
+    pos += MoveCoeff * (patchCenter - pos);
+
+    if(topo.type > 0)
+    {
+        pos = snapToBoundary(topo.type, pos);
+    }
+
+
+    // Write
+    verts[uid].p = vec4(pos, 0.0);
 }

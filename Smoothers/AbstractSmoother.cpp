@@ -18,7 +18,7 @@ AbstractSmoother::AbstractSmoother(const std::vector<string>& smoothShaders) :
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("Serial");
+    _implementationFuncs.setDefault("GLSL");
     _implementationFuncs.setContent({
         {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
         {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},
@@ -125,6 +125,7 @@ void AbstractSmoother::smoothMeshGlsl(
     int vertCount = mesh.vertCount();
     while(evaluateMeshQualityGlsl(mesh, evaluator))
     {
+        const int vertCount = mesh.vertCount();
         glDispatchCompute(ceil(vertCount / 256.0), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }

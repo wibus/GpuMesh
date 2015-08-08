@@ -11,7 +11,7 @@ struct MeshVert;
 struct MeshTet;
 struct MeshPri;
 struct MeshHex;
-struct MeshNeigElem;
+struct MeshTopo;
 
 class AbstractEvaluator;
 
@@ -26,41 +26,15 @@ public:
 
     static glm::dvec3 findPatchCenter(
             size_t v,
+            const MeshTopo& topo,
             const std::vector<MeshVert>& verts,
             const std::vector<MeshTet>& tets,
             const std::vector<MeshPri>& pris,
-            const std::vector<MeshHex>& hexs,
-            const std::vector<MeshNeigElem>& neighborElems);
+            const std::vector<MeshHex>& hexs);
 
 
-    static void integrateQuality(double& total, double shape);
-
-    static void testTetPropositions(
-            uint vertId,
-            Mesh& mesh,
-            MeshTet& elem,
-            AbstractEvaluator& evaluator,
-            glm::dvec3 propositions[],
-            double propQualities[],
-            uint propositionCount);
-
-    static void testPriPropositions(
-            uint vertId,
-            Mesh& mesh,
-            MeshPri& elem,
-            AbstractEvaluator& evaluator,
-            glm::dvec3 propositions[],
-            double propQualities[],
-            uint propositionCount);
-
-    static void testHexPropositions(
-            uint vertId,
-            Mesh& mesh,
-            MeshHex& elem,
-            AbstractEvaluator& evaluator,
-            glm::dvec3 propositions[],
-            double propQualities[],
-            uint propositionCount);
+    static void accumulatePatchQuality(double elemQ, double& patchQ);
+    static void finalizePatchQuality(double& patchQ);
 };
 
 #endif // GPUMESH_OPTIMIZATIONHELPER

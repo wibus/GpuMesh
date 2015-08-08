@@ -21,7 +21,6 @@ QualityLaplaceSmoother::~QualityLaplaceSmoother()
 const uint PROPOSITION_COUNT = 4;
 
 
-
 void QualityLaplaceSmoother::smoothVertices(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
@@ -40,15 +39,16 @@ void QualityLaplaceSmoother::smoothVertices(
         if(topo.isFixed)
             continue;
 
-        const vector<MeshNeigElem>& neighborElems = topo.neighborElems;
-        if(neighborElems.empty())
+        size_t neigElemCount = topo.neighborElems.size();
+        if(neigElemCount == 0)
             continue;
 
+
         // Compute patch center
-        glm::dvec3 patchCenter = OptimizationHelper::findPatchCenter(
-            v, verts,
-            tets, pris, hexs,
-            neighborElems);
+        glm::dvec3 patchCenter =
+                OptimizationHelper::findPatchCenter(
+                    v, topo, verts,
+                    tets, pris, hexs);
 
         glm::dvec3& pos = verts[v].p;
         glm::dvec3 centerDist = patchCenter - pos;
@@ -66,62 +66,56 @@ void QualityLaplaceSmoother::smoothVertices(
             for(uint p=1; p < PROPOSITION_COUNT; ++p)
                 propositions[p] = (*topo.snapToBoundary)(propositions[p]);
 
-        double patchQualities[PROPOSITION_COUNT] = {1.0, 1.0, 1.0, 1.0};
-
-
-        // Compute proposition's patch quality
-        uint neigElemCount = neighborElems.size();
-        for(uint n=0; n < neigElemCount; ++n)
-        {
-            const MeshNeigElem& neigElem = topo.neighborElems[n];
-            switch(neigElem.type)
-            {
-            case MeshTet::ELEMENT_TYPE:
-                OptimizationHelper::testTetPropositions(
-                    v,
-                    mesh,
-                    tets[neigElem.id],
-                    evaluator,
-                    propositions,
-                    patchQualities,
-                    PROPOSITION_COUNT);
-                break;
-
-            case MeshPri::ELEMENT_TYPE:
-                OptimizationHelper::testPriPropositions(
-                    v,
-                    mesh,
-                    pris[neigElem.id],
-                    evaluator,
-                    propositions,
-                    patchQualities,
-                    PROPOSITION_COUNT);
-                break;
-
-            case MeshHex::ELEMENT_TYPE:
-                OptimizationHelper::testHexPropositions(
-                    v,
-                    mesh,
-                    hexs[neigElem.id],
-                    evaluator,
-                    propositions,
-                    patchQualities,
-                    PROPOSITION_COUNT);
-                break;
-            }
-        }
-
-        // Find best proposition based on patch quality
+        // Choose best position based on quality geometric mean
         uint bestProposition = 0;
-        double bestQualityResult = patchQualities[0];
-        for(uint p=1; p < PROPOSITION_COUNT; ++p)
+        double bestQualityMean = 0.0;
+        for(uint p=0; p < PROPOSITION_COUNT; ++p)
         {
-            if(bestQualityResult < patchQualities[p])
+            // Since 'pos' is a reference on vertex's position
+            // modifing its value here should be seen by the evaluator
+            pos = propositions[p];
+
+            double patchQuality = 1.0;
+            for(size_t n=0; n < neigElemCount; ++n)
             {
+
+                const MeshNeigElem& neigElem = topo.neighborElems[n];
+                switch(neigElem.type)
+                {
+                case MeshTet::ELEMENT_TYPE:
+                    OptimizationHelper::accumulatePatchQuality(
+                        evaluator.tetQuality(mesh, tets[neigElem.id]),
+                        patchQuality);
+                    break;
+
+                case MeshPri::ELEMENT_TYPE:
+                    OptimizationHelper::accumulatePatchQuality(
+                        evaluator.priQuality(mesh, pris[neigElem.id]),
+                        patchQuality);
+                    break;
+
+                case MeshHex::ELEMENT_TYPE:
+                    OptimizationHelper::accumulatePatchQuality(
+                        evaluator.hexQuality(mesh, hexs[neigElem.id]),
+                        patchQuality);
+                    break;
+                }
+
+                if(patchQuality <= 0.0)
+                {
+                    break;
+                }
+            }
+
+            OptimizationHelper::finalizePatchQuality(patchQuality);
+
+            if(patchQuality > bestQualityMean)
+            {
+                bestQualityMean = patchQuality;
                 bestProposition = p;
-                bestQualityResult = patchQualities[p];
             }
         }
+
 
         // Update vertex's position
         pos = propositions[bestProposition];

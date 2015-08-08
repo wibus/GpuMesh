@@ -75,7 +75,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
     });
 
-    _availableSmoothers.setDefault("Spring Laplace");
+    _availableSmoothers.setDefault("Quality Laplace");
     _availableSmoothers.setContent({
         {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},

@@ -13,6 +13,12 @@ SmoothTab::SmoothTab(Ui::MainWindow* ui,
     _ui(ui),
     _character(character)
 {
+    _activeImpls = {
+      {"Serial", false},
+      {"Thread", true},
+      {"GLSL", true}
+    };
+
     deployTechniques();
     connect(_ui->smoothingTechniqueMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
