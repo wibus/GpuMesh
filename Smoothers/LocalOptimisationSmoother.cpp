@@ -7,8 +7,7 @@ using namespace std;
 
 
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
-    AbstractSmoother({OptimizationHelper::shaderName(),
-                      ":/shaders/compute/Smoothing/LocalOptimisation.glsl"})
+    AbstractSmoother({":/shaders/compute/Smoothing/LocalOptimisation.glsl"})
 {
 
 }

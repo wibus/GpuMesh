@@ -4,7 +4,11 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 uniform float MoveCoeff;
 
 
+// Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
+
+// Optimization helper functions
+vec3 findPatchCenter(in uint v, in Topo topo);
 
 
 void main()
@@ -23,28 +27,10 @@ void main()
         return;
 
 
-    // Read
+    vec3 patchCenter = findPatchCenter(uid, topo);
+
     vec3 pos = vec3(verts[uid].p);
-
-
-    float weightSum = 0.0;
-    vec3 patchCenter = vec3(0.0);
-
-    uint n = topo.neigVertBase;
-    uint neigVertCount = topo.neigVertCount;
-    for(uint i=0; i<neigVertCount; ++i, ++n)
-    {
-        vec3 npos = vec3(verts[neigVerts[n].v].p);
-
-        vec3 dist = npos - pos;
-        float weight = dot(dist, dist) + 0.0001;
-
-        patchCenter += npos * weight;
-        weightSum += weight;
-    }
-
-    patchCenter /= weightSum;
-    pos += MoveCoeff * (patchCenter - pos);
+    pos = mix(pos, patchCenter, MoveCoeff);
 
     if(topo.type > 0)
     {

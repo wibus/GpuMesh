@@ -7,8 +7,7 @@ using namespace std;
 
 
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
-    AbstractSmoother({OptimizationHelper::shaderName(),
-                      ":/shaders/compute/Smoothing/QualityLaplace.glsl"})
+    AbstractSmoother({":/shaders/compute/Smoothing/QualityLaplace.glsl"})
 {
 
 }
