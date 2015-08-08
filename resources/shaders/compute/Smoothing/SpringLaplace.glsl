@@ -8,7 +8,7 @@ uniform float MoveCoeff;
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Optimization helper functions
-vec3 findPatchCenter(in uint v, in Topo topo);
+vec3 computePatchCenter(in uint v, in Topo topo);
 
 
 void main()
@@ -27,7 +27,7 @@ void main()
         return;
 
 
-    vec3 patchCenter = findPatchCenter(uid, topo);
+    vec3 patchCenter = computePatchCenter(uid, topo);
 
     vec3 pos = vec3(verts[uid].p);
     pos = mix(pos, patchCenter, MoveCoeff);

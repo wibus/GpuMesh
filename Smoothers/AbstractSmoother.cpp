@@ -257,7 +257,7 @@ void AbstractSmoother::benchmark(
 
     double initialMinQuality = 0.0;
     double initialQualityMean = 0.0;
-    evaluator.evaluateMeshQualityGlsl(
+    evaluator.evaluateMeshQualityThread(
         mesh, initialMinQuality, initialQualityMean);
 
     // We must make a copy of the vertices in order to
@@ -303,7 +303,7 @@ void AbstractSmoother::benchmark(
             SmoothBenchmarkStats stats;
             stats.impl = impl;
             stats.time = (tEnd - tStart).count();
-            evaluator.evaluateMeshQualitySerial(
+            evaluator.evaluateMeshQualityThread(
                 mesh, stats.minQuality, stats.qualityMean);
             stats.qualityMeanGain = (stats.qualityMean - initialQualityMean) /
                                         initialQualityMean;

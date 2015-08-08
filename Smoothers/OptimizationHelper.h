@@ -7,10 +7,6 @@
 #include <GLM/glm.hpp>
 
 class Mesh;
-struct MeshVert;
-struct MeshTet;
-struct MeshPri;
-struct MeshHex;
 struct MeshTopo;
 
 class AbstractEvaluator;
@@ -24,13 +20,15 @@ private:
 public:
     static std::string shaderName();
 
-    static glm::dvec3 findPatchCenter(
-            size_t v,
+    static glm::dvec3 computePatchCenter(
+            const Mesh& mesh,
+            size_t vertId,
+            const MeshTopo& topo);
+
+    static double computePatchQuality(
+            const Mesh& mesh,
             const MeshTopo& topo,
-            const std::vector<MeshVert>& verts,
-            const std::vector<MeshTet>& tets,
-            const std::vector<MeshPri>& pris,
-            const std::vector<MeshHex>& hexs);
+            const AbstractEvaluator& evaluator);
 
 
     static void accumulatePatchQuality(double elemQ, double& patchQ);

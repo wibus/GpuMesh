@@ -24,11 +24,6 @@ void SpringLaplaceSmoother::smoothVertices(
         size_t last,
         bool synchronize)
 {
-    std::vector<MeshVert>& verts = mesh.vert;
-    std::vector<MeshTet>& tets = mesh.tetra;
-    std::vector<MeshPri>& pris = mesh.prism;
-    std::vector<MeshHex>& hexs = mesh.hexa;
-
     for(int v = first; v < last; ++v)
     {
         const MeshTopo& topo = mesh.topo[v];
@@ -40,9 +35,8 @@ void SpringLaplaceSmoother::smoothVertices(
             continue;
 
         glm::dvec3 patchCenter =
-            OptimizationHelper::findPatchCenter(
-                v, topo, verts,
-                tets, pris, hexs);
+            OptimizationHelper::computePatchCenter(
+                mesh, v, topo);
 
         glm::dvec3& pos = mesh.vert[v].p;
         pos = glm::mix(pos, patchCenter, _moveFactor);

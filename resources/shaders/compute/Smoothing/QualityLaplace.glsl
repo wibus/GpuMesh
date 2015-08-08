@@ -13,9 +13,8 @@ float hexQuality(Hex hex);
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Optimization helper functions
-vec3 findPatchCenter(in uint v, in Topo topo);
-void accumulatePatchQuality(in float elemQ, inout float patchQ);
-void finalizePatchQuality(inout float patchQ);
+vec3 computePatchCenter(in uint v, in Topo topo);
+float computePatchQuality(in Topo topo);
 
 
 const uint PROPOSITION_COUNT = 4;
@@ -37,7 +36,7 @@ void main()
         return;
 
     // Compute patch center
-    vec3 patchCenter = findPatchCenter(uid, topo);
+    vec3 patchCenter = computePatchCenter(uid, topo);
     vec3 pos = vec3(verts[uid].p);
     vec3 centerDist = patchCenter - pos;
 
@@ -65,39 +64,7 @@ void main()
         // to compute element shape measures.
         verts[uid].p = vec4(propositions[p], 0.0);
 
-
-        float patchQuality = 1.0;
-        for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
-        {
-            NeigElem neigElem = neigElems[n];
-            switch(neigElem.type)
-            {
-            case TET_ELEMENT_TYPE:
-                accumulatePatchQuality(
-                    tetQuality(tets[neigElem.id]),
-                    patchQuality);
-                break;
-
-            case PRI_ELEMENT_TYPE:
-                accumulatePatchQuality(
-                    priQuality(pris[neigElem.id]),
-                    patchQuality);
-                break;
-
-            case HEX_ELEMENT_TYPE:
-                accumulatePatchQuality(
-                    hexQuality(hexs[neigElem.id]),
-                    patchQuality);
-                break;
-            }
-
-            if(patchQuality <= 0.0)
-            {
-                break;
-            }
-        }
-
-        finalizePatchQuality(patchQuality);
+        float patchQuality = computePatchQuality(topo);
 
         if(patchQuality > bestQualityMean)
         {

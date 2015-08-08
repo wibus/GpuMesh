@@ -11,14 +11,15 @@ std::string OptimizationHelper::shaderName()
     return ":/shaders/compute/Smoothing/OptimizationHelper.glsl";
 }
 
-glm::dvec3 OptimizationHelper::findPatchCenter(
-        size_t v,
-        const MeshTopo& topo,
-        const vector<MeshVert>& verts,
-        const vector<MeshTet>& tets,
-        const vector<MeshPri>& pris,
-        const vector<MeshHex>& hexs)
+glm::dvec3 OptimizationHelper::computePatchCenter(const Mesh& mesh,
+        size_t vertId,
+        const MeshTopo& topo)
 {
+    const std::vector<MeshVert>& verts = mesh.vert;
+    const std::vector<MeshTet>& tets = mesh.tetra;
+    const std::vector<MeshPri>& pris = mesh.prism;
+    const std::vector<MeshHex>& hexs = mesh.hexa;
+
     uint totalVertCount = 0;
     glm::dvec3 patchCenter(0.0);
     uint neigElemCount = topo.neighborElems.size();
@@ -47,13 +48,61 @@ glm::dvec3 OptimizationHelper::findPatchCenter(
         }
     }
 
-    const glm::dvec3& pos = verts[v].p;
+    const glm::dvec3& pos = verts[vertId].p;
     patchCenter = (patchCenter - pos * double(neigElemCount))
                     / double(totalVertCount);
 
     return patchCenter;
 }
 
+double OptimizationHelper::computePatchQuality(
+            const Mesh& mesh,
+            const MeshTopo& topo,
+            const AbstractEvaluator& evaluator)
+{
+    const std::vector<MeshTet>& tets = mesh.tetra;
+    const std::vector<MeshPri>& pris = mesh.prism;
+    const std::vector<MeshHex>& hexs = mesh.hexa;
+
+    size_t neigElemCount = topo.neighborElems.size();
+
+    double patchQuality = 1.0;
+    for(size_t n=0; n < neigElemCount; ++n)
+    {
+        const MeshNeigElem& neigElem = topo.neighborElems[n];
+
+        switch(neigElem.type)
+        {
+        case MeshTet::ELEMENT_TYPE:
+            OptimizationHelper::accumulatePatchQuality(
+                evaluator.tetQuality(mesh, tets[neigElem.id]),
+                patchQuality);
+            break;
+
+        case MeshPri::ELEMENT_TYPE:
+            OptimizationHelper::accumulatePatchQuality(
+                evaluator.priQuality(mesh, pris[neigElem.id]),
+                patchQuality);
+            break;
+
+        case MeshHex::ELEMENT_TYPE:
+            OptimizationHelper::accumulatePatchQuality(
+                evaluator.hexQuality(mesh, hexs[neigElem.id]),
+                patchQuality);
+            break;
+        }
+
+        if(patchQuality <= 0.0)
+        {
+            break;
+        }
+    }
+
+    OptimizationHelper::finalizePatchQuality(
+            patchQuality);
+
+    return patchQuality;
+}
 
 void OptimizationHelper::accumulatePatchQuality(
         double elemQ,

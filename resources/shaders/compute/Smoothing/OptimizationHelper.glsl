@@ -5,7 +5,7 @@ float hexQuality(in Hex hex);
 const uint MAX_PROPOSITION_COUNT = 4;
 
 
-vec3 findPatchCenter(in uint v, in Topo topo)
+vec3 computePatchCenter(in uint v, in Topo topo)
 {
     uint totalVertCount = 0;
     vec3 patchCenter = vec3(0.0);
@@ -49,4 +49,44 @@ void accumulatePatchQuality(in float elemQ, inout float patchQ)
 
 void finalizePatchQuality(inout float patchQ)
 {
+    // no-op
+}
+
+float computePatchQuality(in Topo topo)
+{
+    float patchQuality = 1.0;
+    uint neigElemCount = topo.neigElemCount;
+    for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
+    {
+        NeigElem neigElem = neigElems[n];
+        switch(neigElem.type)
+        {
+        case TET_ELEMENT_TYPE:
+            accumulatePatchQuality(
+                tetQuality(tets[neigElem.id]),
+                patchQuality);
+            break;
+
+        case PRI_ELEMENT_TYPE:
+            accumulatePatchQuality(
+                priQuality(pris[neigElem.id]),
+                patchQuality);
+            break;
+
+        case HEX_ELEMENT_TYPE:
+            accumulatePatchQuality(
+                hexQuality(hexs[neigElem.id]),
+                patchQuality);
+            break;
+        }
+
+        if(patchQuality <= 0.0)
+        {
+            break;
+        }
+    }
+
+    finalizePatchQuality(patchQuality);
+
+    return patchQuality;
 }
