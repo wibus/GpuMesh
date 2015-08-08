@@ -55,6 +55,19 @@ glm::dvec3 OptimizationHelper::computePatchCenter(const Mesh& mesh,
     return patchCenter;
 }
 
+inline void OptimizationHelper::accumulatePatchQuality(
+        double elemQ,
+        double& patchQ)
+{
+    patchQ *= elemQ;
+}
+
+inline void OptimizationHelper::finalizePatchQuality(
+        double& patchQ)
+{
+    // no-op
+}
+
 double OptimizationHelper::computePatchQuality(
             const Mesh& mesh,
             const MeshTopo& topo,
@@ -74,19 +87,19 @@ double OptimizationHelper::computePatchQuality(
         switch(neigElem.type)
         {
         case MeshTet::ELEMENT_TYPE:
-            OptimizationHelper::accumulatePatchQuality(
+            accumulatePatchQuality(
                 evaluator.tetQuality(mesh, tets[neigElem.id]),
                 patchQuality);
             break;
 
         case MeshPri::ELEMENT_TYPE:
-            OptimizationHelper::accumulatePatchQuality(
+            accumulatePatchQuality(
                 evaluator.priQuality(mesh, pris[neigElem.id]),
                 patchQuality);
             break;
 
         case MeshHex::ELEMENT_TYPE:
-            OptimizationHelper::accumulatePatchQuality(
+            accumulatePatchQuality(
                 evaluator.hexQuality(mesh, hexs[neigElem.id]),
                 patchQuality);
             break;
@@ -98,21 +111,7 @@ double OptimizationHelper::computePatchQuality(
         }
     }
 
-    OptimizationHelper::finalizePatchQuality(
-            patchQuality);
+    finalizePatchQuality(patchQuality);
 
     return patchQuality;
-}
-
-void OptimizationHelper::accumulatePatchQuality(
-        double elemQ,
-        double& patchQ)
-{
-    patchQ *= elemQ;
-}
-
-void OptimizationHelper::finalizePatchQuality(
-        double& patchQ)
-{
-
 }

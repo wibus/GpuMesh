@@ -25,14 +25,12 @@ public:
             size_t vertId,
             const MeshTopo& topo);
 
+    static void accumulatePatchQuality(double elemQ, double& patchQ);
+    static void finalizePatchQuality(double& patchQ);
     static double computePatchQuality(
             const Mesh& mesh,
             const MeshTopo& topo,
             const AbstractEvaluator& evaluator);
-
-
-    static void accumulatePatchQuality(double elemQ, double& patchQ);
-    static void finalizePatchQuality(double& patchQ);
 };
 
 #endif // GPUMESH_OPTIMIZATIONHELPER
