@@ -24,9 +24,9 @@ void SpringLaplaceSmoother::smoothVertices(
         size_t last,
         bool synchronize)
 {
-    for(int v = first; v < last; ++v)
+    for(int vId = first; vId < last; ++vId)
     {
-        const MeshTopo& topo = mesh.topo[v];
+        const MeshTopo& topo = mesh.topo[vId];
         if(topo.isFixed)
             continue;
 
@@ -36,9 +36,9 @@ void SpringLaplaceSmoother::smoothVertices(
 
         glm::dvec3 patchCenter =
             OptimizationHelper::computePatchCenter(
-                mesh, v, topo);
+                mesh, vId);
 
-        glm::dvec3& pos = mesh.vert[v].p;
+        glm::dvec3& pos = mesh.vert[vId].p;
         pos = glm::mix(pos, patchCenter, _moveFactor);
 
         if(topo.isBoundary)

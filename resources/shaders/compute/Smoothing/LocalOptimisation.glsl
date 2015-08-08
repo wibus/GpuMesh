@@ -9,9 +9,9 @@ vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 void main()
 {
-    uint uid = gl_GlobalInvocationID.x;
+    uint vId = gl_GlobalInvocationID.x;
 
-    if(uid < verts.length())
+    if(vId < verts.length())
     {
 
     }

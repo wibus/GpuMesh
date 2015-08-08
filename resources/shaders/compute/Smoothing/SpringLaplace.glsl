@@ -8,17 +8,17 @@ uniform float MoveCoeff;
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Optimization helper functions
-vec3 computePatchCenter(in uint v, in Topo topo);
+vec3 computePatchCenter(in uint vId);
 
 
 void main()
 {
-    uint uid = gl_GlobalInvocationID.x;
+    uint vId = gl_GlobalInvocationID.x;
 
-    if(uid >= verts.length())
+    if(vId >= verts.length())
         return;
 
-    Topo topo = topos[uid];
+    Topo topo = topos[vId];
     if(topo.type == TOPO_FIXED)
         return;
 
@@ -27,9 +27,9 @@ void main()
         return;
 
 
-    vec3 patchCenter = computePatchCenter(uid, topo);
+    vec3 patchCenter = computePatchCenter(vId);
 
-    vec3 pos = vec3(verts[uid].p);
+    vec3 pos = vec3(verts[vId].p);
     pos = mix(pos, patchCenter, MoveCoeff);
 
     if(topo.type > 0)
@@ -39,5 +39,5 @@ void main()
 
 
     // Write
-    verts[uid].p = vec4(pos, 0.0);
+    verts[vId].p = vec4(pos, 0.0);
 }

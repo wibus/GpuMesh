@@ -21,9 +21,9 @@ void main()
     // Looks like this algorithm needs more than 1M elements
     // to beat CPU serial summation.
 
-    uint uid = gl_GlobalInvocationID.x;
+    uint vId = gl_GlobalInvocationID.x;
 
-    uint groupBeg = GroupCount * uid;
+    uint groupBeg = GroupCount * vId;
     uint groupEnd = min(groupBeg + GroupCount, means.length());
 
     float meanSum = 0.0;

@@ -123,10 +123,9 @@ void AbstractSmoother::smoothMeshGlsl(
     _smoothingProgram.pushProgram();
     _smoothingProgram.setFloat("MoveCoeff", _moveFactor);
     mesh.bindShaderStorageBuffers();
-    int vertCount = mesh.vertCount();
+    const int vertCount = mesh.vertCount();
     while(evaluateMeshQualityGlsl(mesh, evaluator))
     {
-        const int vertCount = mesh.vertCount();
         glDispatchCompute(ceil(vertCount / 256.0), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }

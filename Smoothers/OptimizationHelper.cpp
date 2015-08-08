@@ -11,14 +11,36 @@ std::string OptimizationHelper::shaderName()
     return ":/shaders/compute/Smoothing/OptimizationHelper.glsl";
 }
 
-glm::dvec3 OptimizationHelper::computePatchCenter(const Mesh& mesh,
-        size_t vertId,
-        const MeshTopo& topo)
+double OptimizationHelper::computeLocalElementSize(
+        const Mesh& mesh,
+        size_t vId)
+{
+    const std::vector<MeshVert>& verts = mesh.vert;
+
+    const glm::dvec3& pos = verts[vId].p;
+    const MeshTopo& topo = mesh.topo[vId];
+    const vector<MeshNeigVert>& neigVerts = topo.neighborVerts;
+
+    double totalSize = 0.0;
+    size_t neigVertCount = neigVerts.size();
+    for(size_t n=0; n < neigVertCount; ++n)
+    {
+        totalSize += glm::length(pos - verts[neigVerts[n].v].p);
+    }
+
+    return totalSize / neigVertCount;
+}
+
+glm::dvec3 OptimizationHelper::computePatchCenter(
+        const Mesh& mesh,
+        size_t vId)
 {
     const std::vector<MeshVert>& verts = mesh.vert;
     const std::vector<MeshTet>& tets = mesh.tetra;
     const std::vector<MeshPri>& pris = mesh.prism;
     const std::vector<MeshHex>& hexs = mesh.hexa;
+
+    const MeshTopo& topo = mesh.topo[vId];
 
     uint totalVertCount = 0;
     glm::dvec3 patchCenter(0.0);
@@ -48,7 +70,7 @@ glm::dvec3 OptimizationHelper::computePatchCenter(const Mesh& mesh,
         }
     }
 
-    const glm::dvec3& pos = verts[vertId].p;
+    const glm::dvec3& pos = verts[vId].p;
     patchCenter = (patchCenter - pos * double(neigElemCount))
                     / double(totalVertCount);
 
@@ -70,12 +92,14 @@ inline void OptimizationHelper::finalizePatchQuality(
 
 double OptimizationHelper::computePatchQuality(
             const Mesh& mesh,
-            const MeshTopo& topo,
-            const AbstractEvaluator& evaluator)
+            const AbstractEvaluator& evaluator,
+            size_t vId)
 {
     const std::vector<MeshTet>& tets = mesh.tetra;
     const std::vector<MeshPri>& pris = mesh.prism;
     const std::vector<MeshHex>& hexs = mesh.hexa;
+
+    const MeshTopo& topo = mesh.topo[vId];
 
     size_t neigElemCount = topo.neighborElems.size();
 

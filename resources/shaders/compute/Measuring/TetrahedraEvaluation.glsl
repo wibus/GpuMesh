@@ -16,13 +16,13 @@ const float MEAN_MAX = MIN_MAX / (gl_WorkGroupSize.x * 3);
 
 void main()
 {
-    uint uid = gl_GlobalInvocationID.x;
+    uint vId = gl_GlobalInvocationID.x;
     uint gid = gl_WorkGroupID.x;
 
 
-    if(uid < tets.length())
+    if(vId < tets.length())
     {
-        float q = tetQuality(tets[uid]);
+        float q = tetQuality(tets[vId]);
         atomicMin(qualMin, int(q * MIN_MAX));
         atomicAdd(means[gid], int(q * MEAN_MAX + 0.5));
     }

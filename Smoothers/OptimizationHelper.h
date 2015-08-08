@@ -20,17 +20,20 @@ private:
 public:
     static std::string shaderName();
 
+    static double computeLocalElementSize(
+            const Mesh& mesh,
+            size_t vId);
+
     static glm::dvec3 computePatchCenter(
             const Mesh& mesh,
-            size_t vertId,
-            const MeshTopo& topo);
+            size_t vId);
 
     static void accumulatePatchQuality(double elemQ, double& patchQ);
     static void finalizePatchQuality(double& patchQ);
     static double computePatchQuality(
             const Mesh& mesh,
-            const MeshTopo& topo,
-            const AbstractEvaluator& evaluator);
+            const AbstractEvaluator& evaluator,
+            size_t vId);
 };
 
 #endif // GPUMESH_OPTIMIZATIONHELPER

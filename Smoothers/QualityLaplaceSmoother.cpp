@@ -29,9 +29,9 @@ void QualityLaplaceSmoother::smoothVertices(
 {
     std::vector<MeshVert>& verts = mesh.vert;
 
-    for(uint v = first; v < last; ++v)
+    for(uint vId = first; vId < last; ++vId)
     {
-        const MeshTopo& topo = mesh.topo[v];
+        const MeshTopo& topo = mesh.topo[vId];
         if(topo.isFixed)
             continue;
 
@@ -43,9 +43,9 @@ void QualityLaplaceSmoother::smoothVertices(
         // Compute patch center
         glm::dvec3 patchCenter =
                 OptimizationHelper::computePatchCenter(
-                    mesh, v, topo);
+                    mesh, vId);
 
-        glm::dvec3& pos = verts[v].p;
+        glm::dvec3& pos = verts[vId].p;
         glm::dvec3 centerDist = patchCenter - pos;
 
 
@@ -73,7 +73,7 @@ void QualityLaplaceSmoother::smoothVertices(
             // Compute patch quality
             double patchQuality =
                     OptimizationHelper::computePatchQuality(
-                        mesh, topo, evaluator);
+                        mesh, evaluator, vId);
 
             if(patchQuality > bestQualityMean)
             {

@@ -13,8 +13,8 @@ float hexQuality(Hex hex);
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Optimization helper functions
-vec3 computePatchCenter(in uint v, in Topo topo);
-float computePatchQuality(in Topo topo);
+vec3 computePatchCenter(in uint vId);
+float computePatchQuality(in uint vId);
 
 
 const uint PROPOSITION_COUNT = 4;
@@ -22,12 +22,12 @@ const uint PROPOSITION_COUNT = 4;
 
 void main()
 {
-    uint uid = gl_GlobalInvocationID.x;
+    uint vId = gl_GlobalInvocationID.x;
 
-    if(uid >= verts.length())
+    if(vId >= verts.length())
         return;
 
-    Topo topo = topos[uid];
+    Topo topo = topos[vId];
     if(topo.type == TOPO_FIXED)
         return;
 
@@ -36,8 +36,8 @@ void main()
         return;
 
     // Compute patch center
-    vec3 patchCenter = computePatchCenter(uid, topo);
-    vec3 pos = vec3(verts[uid].p);
+    vec3 patchCenter = computePatchCenter(vId);
+    vec3 pos = vec3(verts[vId].p);
     vec3 centerDist = patchCenter - pos;
 
 
@@ -62,9 +62,9 @@ void main()
     {
         // Quality evaluation functions will use this updated position
         // to compute element shape measures.
-        verts[uid].p = vec4(propositions[p], 0.0);
+        verts[vId].p = vec4(propositions[p], 0.0);
 
-        float patchQuality = computePatchQuality(topo);
+        float patchQuality = computePatchQuality(vId);
 
         if(patchQuality > bestQualityMean)
         {
@@ -75,5 +75,5 @@ void main()
 
 
     // Update vertex's position
-    verts[uid].p = vec4(propositions[bestProposition], 0.0);
+    verts[vId].p = vec4(propositions[bestProposition], 0.0);
 }

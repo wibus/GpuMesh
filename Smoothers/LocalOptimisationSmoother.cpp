@@ -24,7 +24,7 @@ void LocalOptimisationSmoother::smoothVertices(
         size_t last,
         bool synchronize)
 {
-    for(int v = first; v < last; ++v)
+    for(int vId = first; vId < last; ++vId)
     {
 
     }
