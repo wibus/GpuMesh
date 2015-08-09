@@ -24,6 +24,7 @@ public:
 
 protected slots:
     virtual void techniqueChanged(const QString&);
+    virtual void ImplementationChanged(const QString&);
     virtual void smoothMesh();
 
     virtual void benchmarkImplementations();
@@ -37,6 +38,7 @@ private:
     Ui::MainWindow* _ui;
     std::shared_ptr<GpuMeshCharacter> _character;
     std::map<std::string, bool> _activeImpls;
+    std::string _lastImpl;
 };
 
 #endif // GPUMESH_SMOOTHTAB

@@ -17,6 +17,9 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             this, &EvaluateTab::shapeMeasureTypeChanged);
 
     deployImplementations();
+    connect(_ui->shapeMeasureImplMenu,
+            static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
+            this, &EvaluateTab::ImplementationChanged);
 
     connect(_ui->evaluateMesh,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
@@ -36,6 +39,11 @@ void EvaluateTab::shapeMeasureTypeChanged(const QString& type)
 {
     deployImplementations();
     _character->useEvaluator(type.toStdString());
+}
+
+void EvaluateTab::ImplementationChanged(const QString& implName)
+{
+    _lastImpl = implName.toStdString();
 }
 
 void EvaluateTab::evaluateMesh()
@@ -71,10 +79,27 @@ void EvaluateTab::deployImplementations()
 
 
     // Fill implementation combo box
+    bool lastImplFound = false;
+    string lastImplCopy = _lastImpl;
     _ui->shapeMeasureImplMenu->clear();
     for(const auto& name : implementations.options)
+    {
         _ui->shapeMeasureImplMenu->addItem(QString(name.c_str()));
-    _ui->shapeMeasureImplMenu->setCurrentText(implementations.defaultOption.c_str());
+
+        if(name == _lastImpl)
+            lastImplFound = true;
+    }
+
+    if(lastImplFound)
+    {
+        _ui->shapeMeasureImplMenu->setCurrentText(
+                    lastImplCopy.c_str());
+    }
+    else
+    {
+        _ui->shapeMeasureImplMenu->setCurrentText(
+                    implementations.defaultOption.c_str());
+    }
 
 
     // Define cycle counts for each implementations

@@ -25,6 +25,9 @@ SmoothTab::SmoothTab(Ui::MainWindow* ui,
             this, &SmoothTab::techniqueChanged);
 
     deployImplementations();
+    connect(_ui->smoothingImplementationMenu,
+            static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
+            this, &SmoothTab::ImplementationChanged);
 
     connect(_ui->smoothMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
@@ -43,6 +46,11 @@ SmoothTab::~SmoothTab()
 void SmoothTab::techniqueChanged(const QString&)
 {
     deployImplementations();
+}
+
+void SmoothTab::ImplementationChanged(const QString& implName)
+{
+    _lastImpl = implName.toStdString();
 }
 
 void SmoothTab::smoothMesh()
@@ -84,10 +92,27 @@ void SmoothTab::deployImplementations()
 
 
     // Fill implementation combo box
+    bool lastImplFound = false;
+    string lastImplCopy = _lastImpl;
     _ui->smoothingImplementationMenu->clear();
     for(const auto& name : implementations.options)
+    {
         _ui->smoothingImplementationMenu->addItem(QString(name.c_str()));
-    _ui->smoothingImplementationMenu->setCurrentText(implementations.defaultOption.c_str());
+
+        if(name == _lastImpl)
+            lastImplFound = true;
+    }
+
+    if(lastImplFound)
+    {
+        _ui->smoothingImplementationMenu->setCurrentText(
+                    lastImplCopy.c_str());
+    }
+    else
+    {
+        _ui->smoothingImplementationMenu->setCurrentText(
+                    implementations.defaultOption.c_str());
+    }
 
 
     // Define active implementations for benchmarking

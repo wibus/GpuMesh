@@ -22,20 +22,21 @@ public:
     virtual ~EvaluateTab();
 
 protected slots:
-    void shapeMeasureTypeChanged(const QString& type);
-    void evaluateMesh();
+    virtual void shapeMeasureTypeChanged(const QString& type);
+    virtual void ImplementationChanged(const QString&);
+    virtual void evaluateMesh();
 
-    void benchmarkImplementations();
+    virtual void benchmarkImplementations();
 
 protected:
-
-    void deployShapeMeasures();
-    void deployImplementations();
+    virtual void deployShapeMeasures();
+    virtual void deployImplementations();
 
 private:
     Ui::MainWindow* _ui;
     std::shared_ptr<GpuMeshCharacter> _character;
     std::map<std::string, int> _cycleCounts;
+    std::string _lastImpl;
 };
 
 #endif // GPUMESH_EVALUATETAB
