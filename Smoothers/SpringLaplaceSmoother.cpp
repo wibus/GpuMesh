@@ -1,7 +1,7 @@
 #include "SpringLaplaceSmoother.h"
 
+#include "SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
-#include "OptimizationHelper.h"
 
 using namespace std;
 
@@ -24,24 +24,25 @@ void SpringLaplaceSmoother::smoothVertices(
         size_t last,
         bool synchronize)
 {
+    std::vector<MeshVert>& verts = mesh.vert;
+    const vector<MeshTopo>& topos = mesh.topo;
+
     for(int vId = first; vId < last; ++vId)
     {
-        const MeshTopo& topo = mesh.topo[vId];
-        if(topo.isFixed)
-            continue;
-
-        size_t neigElemCount = topo.neighborElems.size();
-        if(neigElemCount == 0)
+        if(!SmoothingHelper::isSmoothable(mesh, vId))
             continue;
 
         glm::dvec3 patchCenter =
-            OptimizationHelper::computePatchCenter(
+            SmoothingHelper::computePatchCenter(
                 mesh, vId);
 
-        glm::dvec3& pos = mesh.vert[vId].p;
+        glm::dvec3& pos = verts[vId].p;
         pos = glm::mix(pos, patchCenter, _moveFactor);
 
+        const MeshTopo& topo = topos[vId];
         if(topo.isBoundary)
+        {
             pos = (*topo.snapToBoundary)(pos);
+        }
     }
 }

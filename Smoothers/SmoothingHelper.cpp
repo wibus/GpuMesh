@@ -1,4 +1,4 @@
-#include "OptimizationHelper.h"
+#include "SmoothingHelper.h"
 
 #include "DataStructures/Mesh.h"
 #include "Evaluators/AbstractEvaluator.h"
@@ -6,12 +6,27 @@
 using namespace std;
 
 
-std::string OptimizationHelper::shaderName()
+std::string SmoothingHelper::shaderName()
 {
-    return ":/shaders/compute/Smoothing/OptimizationHelper.glsl";
+    return ":/shaders/compute/Smoothing/SmoothingHelper.glsl";
 }
 
-double OptimizationHelper::computeLocalElementSize(
+bool SmoothingHelper::isSmoothable(
+            const Mesh& mesh,
+            size_t vId)
+{
+    const MeshTopo& topo = mesh.topo[vId];
+    if(topo.isFixed)
+        return false;
+
+    size_t neigElemCount = topo.neighborElems.size();
+    if(neigElemCount == 0)
+        return false;
+
+    return true;
+}
+
+double SmoothingHelper::computeLocalElementSize(
         const Mesh& mesh,
         size_t vId)
 {
@@ -31,7 +46,7 @@ double OptimizationHelper::computeLocalElementSize(
     return totalSize / neigVertCount;
 }
 
-glm::dvec3 OptimizationHelper::computePatchCenter(
+glm::dvec3 SmoothingHelper::computePatchCenter(
         const Mesh& mesh,
         size_t vId)
 {
@@ -77,20 +92,20 @@ glm::dvec3 OptimizationHelper::computePatchCenter(
     return patchCenter;
 }
 
-inline void OptimizationHelper::accumulatePatchQuality(
+inline void SmoothingHelper::accumulatePatchQuality(
         double elemQ,
         double& patchQ)
 {
     patchQ *= elemQ;
 }
 
-inline void OptimizationHelper::finalizePatchQuality(
+inline void SmoothingHelper::finalizePatchQuality(
         double& patchQ)
 {
     // no-op
 }
 
-double OptimizationHelper::computePatchQuality(
+double SmoothingHelper::computePatchQuality(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
             size_t vId)

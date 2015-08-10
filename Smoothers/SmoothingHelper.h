@@ -12,13 +12,17 @@ struct MeshTopo;
 class AbstractEvaluator;
 
 
-class OptimizationHelper
+class SmoothingHelper
 {
 private:
-    OptimizationHelper();
+    SmoothingHelper();
 
 public:
     static std::string shaderName();
+
+    static bool isSmoothable(
+            const Mesh& mesh,
+            size_t vId);
 
     static double computeLocalElementSize(
             const Mesh& mesh,

@@ -1,6 +1,6 @@
 #include "QualityLaplaceSmoother.h"
 
-#include "OptimizationHelper.h"
+#include "SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
@@ -28,23 +28,16 @@ void QualityLaplaceSmoother::smoothVertices(
         bool synchronize)
 {
     std::vector<MeshVert>& verts = mesh.vert;
+    const vector<MeshTopo>& topos = mesh.topo;
 
     for(uint vId = first; vId < last; ++vId)
     {
-        const MeshTopo& topo = mesh.topo[vId];
-        if(topo.isFixed)
-            continue;
-
-        size_t neigElemCount = topo.neighborElems.size();
-        if(neigElemCount == 0)
+        if(!SmoothingHelper::isSmoothable(mesh, vId))
             continue;
 
 
         // Compute patch center
-        glm::dvec3 patchCenter =
-                OptimizationHelper::computePatchCenter(
-                    mesh, vId);
-
+        glm::dvec3 patchCenter = SmoothingHelper::computePatchCenter(mesh, vId);
         glm::dvec3& pos = verts[vId].p;
         glm::dvec3 centerDist = patchCenter - pos;
 
@@ -57,9 +50,13 @@ void QualityLaplaceSmoother::smoothVertices(
             patchCenter + centerDist * _moveFactor,
         };
 
+        const MeshTopo& topo = topos[vId];
         if(topo.isBoundary)
+        {
             for(uint p=1; p < PROPOSITION_COUNT; ++p)
                 propositions[p] = (*topo.snapToBoundary)(propositions[p]);
+        }
+
 
         // Choose best position based on quality geometric mean
         uint bestProposition = 0;
@@ -72,8 +69,8 @@ void QualityLaplaceSmoother::smoothVertices(
 
             // Compute patch quality
             double patchQuality =
-                    OptimizationHelper::computePatchQuality(
-                        mesh, evaluator, vId);
+                SmoothingHelper::computePatchQuality(
+                    mesh, evaluator, vId);
 
             if(patchQuality > bestQualityMean)
             {

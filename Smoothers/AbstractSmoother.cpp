@@ -6,8 +6,8 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
-#include "OptimizationHelper.h"
 
 using namespace std;
 using namespace cellar;
@@ -161,7 +161,7 @@ void AbstractSmoother::initializeProgram(Mesh& mesh, AbstractEvaluator& evaluato
         ":/shaders/compute/Quality/QualityInterface.glsl"});
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        OptimizationHelper::shaderName().c_str()});
+        SmoothingHelper::shaderName().c_str()});
     for(const string& shader : _smoothShaders)
     {
         _smoothingProgram.addShader(GL_COMPUTE_SHADER, {

@@ -4,15 +4,11 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 uniform float MoveCoeff;
 
 
-// Shape measures
-float tetQuality(Tet tet);
-float priQuality(Pri pri);
-float hexQuality(Hex hex);
-
 // Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Optimization helper functions
+bool isSmoothable(uint vId);
 vec3 computePatchCenter(in uint vId);
 float computePatchQuality(in uint vId);
 
@@ -24,16 +20,9 @@ void main()
 {
     uint vId = gl_GlobalInvocationID.x;
 
-    if(vId >= verts.length())
+    if(!isSmoothable(vId))
         return;
 
-    Topo topo = topos[vId];
-    if(topo.type == TOPO_FIXED)
-        return;
-
-    uint neigElemCount = topo.neigElemCount;
-    if(neigElemCount == 0)
-        return;
 
     // Compute patch center
     vec3 patchCenter = computePatchCenter(vId);
@@ -49,9 +38,13 @@ void main()
         patchCenter + centerDist * MoveCoeff
     );
 
+    Topo topo = topos[vId];
     if(topo.type > 0)
+    {
         for(uint p=1; p < PROPOSITION_COUNT; ++p)
-            propositions[p] = snapToBoundary(topo.type, propositions[p]);
+            propositions[p] = snapToBoundary(
+                topo.type, propositions[p]);
+    }
 
 
 

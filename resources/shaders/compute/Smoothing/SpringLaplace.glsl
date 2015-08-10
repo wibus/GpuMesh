@@ -8,6 +8,7 @@ uniform float MoveCoeff;
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Optimization helper functions
+bool isSmoothable(uint vId);
 vec3 computePatchCenter(in uint vId);
 
 
@@ -15,15 +16,7 @@ void main()
 {
     uint vId = gl_GlobalInvocationID.x;
 
-    if(vId >= verts.length())
-        return;
-
-    Topo topo = topos[vId];
-    if(topo.type == TOPO_FIXED)
-        return;
-
-    uint neigElemCount = topo.neigElemCount;
-    if(neigElemCount == 0)
+    if(!isSmoothable(vId))
         return;
 
 
@@ -32,6 +25,8 @@ void main()
     vec3 pos = vec3(verts[vId].p);
     pos = mix(pos, patchCenter, MoveCoeff);
 
+
+    Topo topo = topos[vId];
     if(topo.type > 0)
     {
         pos = snapToBoundary(topo.type, pos);

@@ -1,6 +1,6 @@
 #include "LocalOptimisationSmoother.h"
 
-#include "OptimizationHelper.h"
+#include "SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
@@ -25,21 +25,18 @@ void LocalOptimisationSmoother::smoothVertices(
         bool synchronize)
 {
     std::vector<MeshVert>& verts = mesh.vert;
+    const vector<MeshTopo>& topos = mesh.topo;
+
 
     for(int vId = first; vId < last; ++vId)
     {
-        const MeshTopo& topo = mesh.topo[vId];
-        if(topo.isFixed)
-            continue;
-
-        size_t neigElemCount = topo.neighborElems.size();
-        if(neigElemCount == 0)
+        if(!SmoothingHelper::isSmoothable(mesh, vId))
             continue;
 
 
         // Compute local element size
         double localSize =
-                OptimizationHelper::computeLocalElementSize(
+                SmoothingHelper::computeLocalElementSize(
                     mesh, vId);
 
         // Initialize node shift distance
@@ -63,6 +60,7 @@ void LocalOptimisationSmoother::smoothVertices(
                 pos + glm::dvec3( 0.0,   0.0,   nodeShift),
             };
 
+            const MeshTopo& topo = topos[vId];
             if(topo.isBoundary)
                 for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
                     gradSamples[p] = (*topo.snapToBoundary)(gradSamples[p]);
@@ -79,7 +77,7 @@ void LocalOptimisationSmoother::smoothVertices(
 
                 // Compute patch quality
                 sampleQualities[p] =
-                        OptimizationHelper::computePatchQuality(
+                        SmoothingHelper::computePatchQuality(
                             mesh, evaluator, vId);
             }
             pos = originalPos;
@@ -130,7 +128,7 @@ void LocalOptimisationSmoother::smoothVertices(
 
                 // Compute patch quality
                 double patchQuality =
-                        OptimizationHelper::computePatchQuality(
+                        SmoothingHelper::computePatchQuality(
                             mesh, evaluator, vId);
 
                 if(patchQuality > bestQualityMean)

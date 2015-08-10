@@ -2,8 +2,21 @@ float tetQuality(in Tet tet);
 float priQuality(in Pri pri);
 float hexQuality(in Hex hex);
 
-const uint MAX_PROPOSITION_COUNT = 4;
 
+bool isSmoothable(uint vId)
+{
+    if(vId >= verts.length())
+        return false;
+
+    Topo topo = topos[vId];
+    if(topo.type == TOPO_FIXED)
+        return false;
+
+    if(topo.neigElemCount == 0)
+        return false;
+
+    return true;
+}
 
 vec3 computePatchCenter(in uint vId)
 {

@@ -29,8 +29,8 @@ SET(GpuMesh_RENDERERS_HEADERS
     ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.h)
 
 SET(GpuMesh_SMOOTHERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.h
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/OptimizationHelper.h
     ${GpuMesh_SRC_DIR}/Smoothers/SpringLaplaceSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/LocalOptimisationSmoother.h)
@@ -83,8 +83,8 @@ SET(GpuMesh_RENDERERS_SOURCES
     ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.cpp)
 
 SET(GpuMesh_SMOOTHERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/OptimizationHelper.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/SpringLaplaceSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/LocalOptimisationSmoother.cpp)
@@ -173,10 +173,10 @@ SET(GpuMesh_QUALITY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Quality/VolumeEdge.glsl)
 
 SET(GpuMesh_SMOOTHING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/SmoothingHelper.glsl
     ${GpuMesh_SHADER_DIR}/compute/Smoothing/SpringLaplace.glsl
     ${GpuMesh_SHADER_DIR}/compute/Smoothing/QualityLaplace.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/LocalOptimisation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/OptimizationHelper.glsl)
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/LocalOptimisation.glsl)
 
 
 SET(GpuMesh_COMPUTE_SHADERS
