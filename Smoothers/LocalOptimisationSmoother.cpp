@@ -62,18 +62,17 @@ void LocalOptimisationSmoother::smoothVertices(
 
             const MeshTopo& topo = topos[vId];
             if(topo.isBoundary)
+            {
                 for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
                     gradSamples[p] = (*topo.snapToBoundary)(gradSamples[p]);
+            }
 
             glm::dvec3 originalPos = pos;
             for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
             {
                 // Since 'pos' is a reference on vertex's position
                 // modifing its value here should be seen by the evaluator
-                if(topo.isBoundary)
-                    pos = (*topo.snapToBoundary)(gradSamples[p]);
-                else
-                    pos = gradSamples[p];
+                pos = gradSamples[p];
 
                 // Compute patch quality
                 sampleQualities[p] =
@@ -115,8 +114,10 @@ void LocalOptimisationSmoother::smoothVertices(
             };
 
             if(topo.isBoundary)
+            {
                 for(uint p=0; p < PROPOSITION_COUNT; ++p)
                     propositions[p] = (*topo.snapToBoundary)(propositions[p]);
+            }
 
             uint bestProposition = 0;
             double bestQualityMean = 0.0;

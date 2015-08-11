@@ -116,6 +116,7 @@ void ScaffoldRenderer::updateCutPlane(const glm::dvec4& cutEq)
     }
     else if(_cutType == ECutType::PhysicalPlane)
     {
+        _virtualCutPlane = cutEq;
         _physicalCutPlane = cutEq;
         _buffNeedUpdate = true;
     }

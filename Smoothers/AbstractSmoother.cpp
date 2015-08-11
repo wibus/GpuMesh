@@ -3,6 +3,8 @@
 #include <thread>
 #include <chrono>
 #include <iomanip>
+#include <fstream>
+#include <iostream>
 
 #include <CellarWorkbench/Misc/Log.h>
 
@@ -12,6 +14,7 @@
 using namespace std;
 using namespace cellar;
 
+const size_t AbstractSmoother::WORKGROUP_SIZE = 256;
 
 AbstractSmoother::AbstractSmoother(const std::vector<string>& smoothShaders) :
     _initialized(false),
@@ -126,7 +129,7 @@ void AbstractSmoother::smoothMeshGlsl(
     const int vertCount = mesh.vertCount();
     while(evaluateMeshQualityGlsl(mesh, evaluator))
     {
-        glDispatchCompute(ceil(vertCount / 256.0), 1, 1);
+        glDispatchCompute(glm::ceil(vertCount / double(WORKGROUP_SIZE)), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
     _smoothingProgram.popProgram();

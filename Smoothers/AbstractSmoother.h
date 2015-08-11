@@ -80,6 +80,8 @@ protected:
     std::vector<std::string> _smoothShaders;
     cellar::GlProgram _smoothingProgram;
 
+    static const size_t WORKGROUP_SIZE;
+
     typedef std::function<void(Mesh&, AbstractEvaluator&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;
 };

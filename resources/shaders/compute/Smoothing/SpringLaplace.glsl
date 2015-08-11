@@ -14,7 +14,11 @@ vec3 computePatchCenter(in uint vId);
 
 void main()
 {
+    //* Workgroup clusters dispatching scheme
     uint vId = gl_GlobalInvocationID.x;
+    /*/// Scattered workgroup dispatching sceme
+    uint vId = gl_LocalInvocationID.x * gl_NumWorkGroups.x + gl_WorkGroupID.x;
+    //*/
 
     if(!isSmoothable(vId))
         return;
