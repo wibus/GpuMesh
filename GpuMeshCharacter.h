@@ -10,6 +10,7 @@
 #include <Scaena/Play/Character.h>
 
 #include "DataStructures/OptionMap.h"
+#include "DataStructures/OptimizationPlot.h"
 
 class Mesh;
 class AbstractMesher;
@@ -67,7 +68,7 @@ public:
             double moveFactor,
             double gainThreshold);
 
-    virtual void benchmarkSmoother(
+    virtual OptimizationPlot benchmarkSmoother(
             const std::string& smootherName,
             const std::string& evaluatorName,
             const std::map<std::string, bool>& activeImpls,

@@ -395,7 +395,7 @@ void GpuMeshCharacter::smoothMesh(
     }
 }
 
-void GpuMeshCharacter::benchmarkSmoother(
+OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
         const std::string& smootherName,
         const string& evaluatorName,
         const map<string, bool>& activeImpls,
@@ -413,7 +413,7 @@ void GpuMeshCharacter::benchmarkSmoother(
         std::shared_ptr<AbstractEvaluator> evaluator;
         if(_availableEvaluators.select(evaluatorName, evaluator))
         {
-            smoother->benchmark(
+            return smoother->benchmark(
                 *_mesh,
                 *evaluator,
                 activeImpls,
@@ -422,6 +422,8 @@ void GpuMeshCharacter::benchmarkSmoother(
                 gainThreshold);
         }
     }
+
+    return OptimizationPlot("Could not launch benchmarks");
 }
 
 void GpuMeshCharacter::benchmarkEvaluator(

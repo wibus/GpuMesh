@@ -7,6 +7,7 @@
 
 #include "DataStructures/Mesh.h"
 #include "DataStructures/OptionMap.h"
+#include "DataStructures/OptimizationPlot.h"
 
 class AbstractEvaluator;
 
@@ -41,7 +42,7 @@ public:
 
 
     // Mesh is garanteed to be reset to initial state after benchmarks
-    virtual void benchmark(
+    virtual OptimizationPlot benchmark(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
             const std::map<std::string, bool>& activeImpls,
@@ -73,6 +74,8 @@ protected:
     double _lastQualityMean;
     double _lastMinQuality;
 
+    std::chrono::high_resolution_clock::time_point _implBeginTimeStamp;
+    OptimizationPassVect _currentPassVect;
 
     bool _initialized;
     std::string _modelBoundsShader;

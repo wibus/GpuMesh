@@ -4,8 +4,11 @@
 #include <memory>
 
 #include <QWidget>
+class QGraphicsView;
+class QGraphicsScene;
 
 class GpuMeshCharacter;
+class OptimizationPlot;
 
 namespace Ui
 {
@@ -32,13 +35,16 @@ protected slots:
 protected:
     virtual void deployTechniques();
     virtual void deployImplementations();
-
+    virtual void displayOptimizationPlot(const OptimizationPlot& plot);
 
 private:
     Ui::MainWindow* _ui;
     std::shared_ptr<GpuMeshCharacter> _character;
     std::map<std::string, bool> _activeImpls;
     std::string _lastImpl;
+
+    QGraphicsView* _currentView;
+    QGraphicsScene* _currentScene;
 };
 
 #endif // GPUMESH_SMOOTHTAB

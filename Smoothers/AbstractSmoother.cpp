@@ -196,40 +196,49 @@ bool AbstractSmoother::evaluateMeshQualityGlsl(Mesh& mesh, AbstractEvaluator& ev
 
 bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, int impl)
 {
-    bool continueSmoothing = true;
-    if(_smoothPassId >= _minIteration)
+    double qualMean, qualMin;
+    switch(impl)
     {
-        double qualMean, qualMin;
-
-        switch(impl)
-        {
-        case 0 :
-            evaluator.evaluateMeshQualitySerial(
-                mesh, qualMin, qualMean);
-            break;
-        case 1 :
-            evaluator.evaluateMeshQualityThread(
-                mesh, qualMin, qualMean);
-            break;
-        case 2 :
-            evaluator.evaluateMeshQualityGlsl(
-                mesh, qualMin, qualMean);
-            break;
-        }
-
-        getLog().postMessage(new Message('I', true,
-            "Smooth pass " + to_string(_smoothPassId) + ": " +
-            "min=" + to_string(qualMin) + "\t mean=" + to_string(qualMean), "AbstractSmoother"));
-
-
-        if(_smoothPassId > _minIteration)
-        {
-            continueSmoothing = (qualMean - _lastQualityMean) > _gainThreshold;
-        }
-
-        _lastQualityMean = qualMean;
-        _lastMinQuality = qualMin;
+    case 0 :
+        evaluator.evaluateMeshQualitySerial(
+            mesh, qualMin, qualMean);
+        break;
+    case 1 :
+        evaluator.evaluateMeshQualityThread(
+            mesh, qualMin, qualMean);
+        break;
+    case 2 :
+        evaluator.evaluateMeshQualityGlsl(
+            mesh, qualMin, qualMean);
+        break;
     }
+
+    getLog().postMessage(new Message('I', true,
+        "Smooth pass " + to_string(_smoothPassId) + ": " +
+        "min=" + to_string(qualMin) + "\t mean=" + to_string(qualMean), "AbstractSmoother"));
+
+
+    bool continueSmoothing = true;
+    if(_smoothPassId > _minIteration)
+    {
+        continueSmoothing = (qualMean - _lastQualityMean) > _gainThreshold;
+    }
+
+    auto statsNow = chrono::high_resolution_clock::now();
+    if(_smoothPassId == 0)
+    {
+        _implBeginTimeStamp = statsNow;
+        _currentPassVect.clear();
+    }
+    OptimizationPass stats;
+    stats.timeStamp = (statsNow - _implBeginTimeStamp).count() / 1.0e9;
+    stats.minQuality = qualMin;
+    stats.qualityMean = qualMean;
+    _currentPassVect.push_back(stats);
+
+
+    _lastQualityMean = qualMean;
+    _lastMinQuality = qualMin;
 
     ++_smoothPassId;
     return continueSmoothing;
@@ -244,7 +253,7 @@ struct SmoothBenchmarkStats
     chrono::high_resolution_clock::rep time;
 };
 
-void AbstractSmoother::benchmark(
+OptimizationPlot AbstractSmoother::benchmark(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
         const map<string, bool>& activeImpls,
@@ -269,6 +278,8 @@ void AbstractSmoother::benchmark(
     using std::chrono::high_resolution_clock;
     high_resolution_clock::time_point tStart;
     high_resolution_clock::time_point tEnd;
+
+    OptimizationPlot plotModel("Smoothing implementation benchmarks");
 
     std::vector<SmoothBenchmarkStats> statsVec;
     for(auto& impl : _implementationFuncs.details().options)
@@ -300,6 +311,8 @@ void AbstractSmoother::benchmark(
             tStart = high_resolution_clock::now();
             implementationFunc(mesh, evaluator);
             tEnd = high_resolution_clock::now();
+
+            plotModel.addCurve(impl, _currentPassVect);
 
 
             SmoothBenchmarkStats stats;
@@ -364,4 +377,6 @@ void AbstractSmoother::benchmark(
         + gainString + "\t = "
         + normGainString,
        "AbstractSmoother"));
+
+    return plotModel;
 }

@@ -1,6 +1,12 @@
 #include "SmoothTab.h"
 
 #include <QCheckBox>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QGraphicsTextItem>
+#include <QWheelEvent>
+#include <QTextDocument>
+#include <QFont>
 
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
@@ -11,7 +17,9 @@ using namespace std;
 SmoothTab::SmoothTab(Ui::MainWindow* ui,
                      const std::shared_ptr<GpuMeshCharacter>& character) :
     _ui(ui),
-    _character(character)
+    _character(character),
+    _currentView(nullptr),
+    _currentScene(nullptr)
 {
     _activeImpls = {
       {"Serial", false},
@@ -66,13 +74,15 @@ void SmoothTab::smoothMesh()
 
 void SmoothTab::benchmarkImplementations()
 {
-    _character->benchmarkSmoother(
-        _ui->smoothingTechniqueMenu->currentText().toStdString(),
-        _ui->shapeMeasureTypeMenu->currentText().toStdString(),
-        _activeImpls,
-        _ui->smoothMinIterationSpin->value(),
-        _ui->smoothMoveFactorSpin->value(),
-        _ui->smoothGainThresholdSpin->value());
+    displayOptimizationPlot(
+        _character->benchmarkSmoother(
+            _ui->smoothingTechniqueMenu->currentText().toStdString(),
+            _ui->shapeMeasureTypeMenu->currentText().toStdString(),
+            _activeImpls,
+            _ui->smoothMinIterationSpin->value(),
+            _ui->smoothMoveFactorSpin->value(),
+            _ui->smoothGainThresholdSpin->value())
+   );
 }
 
 void SmoothTab::deployTechniques()
@@ -140,4 +150,119 @@ void SmoothTab::deployImplementations()
     }
     _ui->smoothActiveImplLayout->setLayout(layout);
     _activeImpls = newActiveImpls;
+}
+
+class OptimizationPlotView : public QGraphicsView
+{
+public:
+    OptimizationPlotView() : QGraphicsView() {}
+
+protected:
+    virtual void wheelEvent(QWheelEvent* e)
+    {
+        double factor = glm::clamp(1.0 - e->delta() / (8.0 * 360.0), 0.5, 1.5);
+        scale(factor, factor);
+
+        if(transform().m11() < 1.0)
+        {
+            resetTransform();
+        }
+    }
+};
+
+void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
+{
+    delete _currentView;
+    delete _currentScene;
+
+    _currentView = new OptimizationPlotView();
+    _currentScene = new QGraphicsScene();
+
+    double sceneWidth = 800;
+    double sceneHeight = 600;
+
+    double maxX = 0.0;
+    for(const auto& keyVal : plot.curves())
+    {
+        for(const auto& pass : keyVal.second)
+        {
+            maxX = glm::max(maxX, pass.timeStamp);
+        }
+    }
+
+    double legendLeft = sceneWidth - 200;
+    double legendTop = sceneHeight - 20.0 * (plot.curves().size() + 2);
+    double labelHeight = 10.0;
+    for(const auto& keyVal : plot.curves())
+    {
+        const string& label = keyVal.first;
+        const OptimizationPassVect& samples = keyVal.second;
+
+        QPen pen(QColor(
+            ((uchar) label[0]) % 3 * 75,
+            ((uchar) label[1]) % 3 * 75,
+            ((uchar) label[2]) % 3 * 75));
+
+        // Asymptotes
+        double totalTime = samples.back().timeStamp;
+        double xAsymptote = sceneWidth * (totalTime / maxX);
+        _currentScene->addLine(xAsymptote, 0, xAsymptote, sceneHeight, QPen(Qt::lightGray));
+        double yAsymptote = sceneHeight * (1.0 - samples.back().qualityMean);
+        _currentScene->addLine(0, yAsymptote, sceneWidth, yAsymptote, QPen(Qt::lightGray));
+
+        // Algo total times
+        QGraphicsTextItem* timeText = _currentScene->addText(QString::number(totalTime) + "s");
+        timeText->adjustSize();
+        timeText->setPos(xAsymptote - timeText->textWidth()/2.0, sceneHeight);
+        timeText->setDefaultTextColor(pen.color());
+
+        // Legend
+        double gainValue = samples.back().qualityMean - samples.front().qualityMean;
+        QString gainText = " (" + ((gainValue < 0.0 ? "-" : "+") + QString::number(gainValue)) + ")";
+        QGraphicsTextItem* text = _currentScene->addText(label.c_str() + gainText);
+        text->setPos(legendLeft + 10.0, legendTop + labelHeight);
+        text->setDefaultTextColor(pen.color());
+        labelHeight += 20.0;
+    }
+    _currentScene->addRect(
+        legendLeft, legendTop,
+        180.0, 20.0 * (plot.curves().size()+1.3));
+
+    for(const auto& keyVal : plot.curves())
+    {
+        const string& label = keyVal.first;
+        const OptimizationPassVect& samples = keyVal.second;
+
+        QPen pen(QColor(
+            ((uchar) label[0]) % 3 * 75,
+            ((uchar) label[1]) % 3 * 75,
+            ((uchar) label[2]) % 3 * 75));
+
+        for(size_t i=1; i < samples.size(); ++i)
+        {
+            const OptimizationPass& prevPass = samples[i-1];
+            const OptimizationPass& currPass = samples[i];
+            _currentScene->addLine(
+                sceneWidth * prevPass.timeStamp / maxX,
+                sceneHeight * (1.0 - prevPass.qualityMean),
+                sceneWidth * currPass.timeStamp / maxX,
+                sceneHeight * (1.0 - currPass.qualityMean),
+                pen);
+        }
+    }
+    _currentScene->addRect(0, 0, sceneWidth, sceneHeight);
+
+
+    QGraphicsTextItem* titleText = _currentScene->addText(plot.title().c_str());
+    titleText->setPos((sceneWidth - titleText->document()->size().width())/2.0, -30.0);
+
+    _currentView->setScene(_currentScene);
+    _currentView->setDragMode(QGraphicsView::ScrollHandDrag);
+    _currentView->setRenderHints(
+        QPainter::Antialiasing |
+        QPainter::SmoothPixmapTransform);
+    _currentView->resize(
+        sceneWidth + 50.0,
+        sceneHeight + 60.0);
+    _currentView->show();
 }

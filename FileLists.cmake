@@ -5,6 +5,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.h
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptionMap.h
+    ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.h
     ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedron.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.h
@@ -61,6 +62,7 @@ SET(GpuMesh_HEADERS
 SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp)
