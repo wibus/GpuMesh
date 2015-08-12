@@ -72,20 +72,24 @@ vec3 computePatchCenter(in uint vId)
 }
 
 
-void accumulatePatchQuality(in float elemQ, inout float patchQ)
+void accumulatePatchQuality(
+        inout float patchQuality,
+        inout float patchWeight,
+        in float elemQuality)
 {
-    patchQ *= elemQ;
+    patchQuality = min(patchQuality * elemQuality, elemQuality);
 }
 
-void finalizePatchQuality(inout float patchQ)
+float finalizePatchQuality(in float patchQuality, in float patchWeight)
 {
-    // no-op
+    return patchQuality;
 }
 
 float computePatchQuality(in uint vId)
 {
     Topo topo = topos[vId];
 
+    float patchWeight = 0.0;
     float patchQuality = 1.0;
     uint neigElemCount = topo.neigElemCount;
     for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
@@ -95,30 +99,23 @@ float computePatchQuality(in uint vId)
         {
         case TET_ELEMENT_TYPE:
             accumulatePatchQuality(
-                tetQuality(tets[neigElem.id]),
-                patchQuality);
+                patchQuality, patchWeight,
+                tetQuality(tets[neigElem.id]));
             break;
 
         case PRI_ELEMENT_TYPE:
             accumulatePatchQuality(
-                priQuality(pris[neigElem.id]),
-                patchQuality);
+                patchQuality, patchWeight,
+                priQuality(pris[neigElem.id]));
             break;
 
         case HEX_ELEMENT_TYPE:
             accumulatePatchQuality(
-                hexQuality(hexs[neigElem.id]),
-                patchQuality);
-            break;
-        }
-
-        if(patchQuality <= 0.0)
-        {
+                patchQuality, patchWeight,
+                hexQuality(hexs[neigElem.id]));
             break;
         }
     }
 
-    finalizePatchQuality(patchQuality);
-
-    return patchQuality;
+    return finalizePatchQuality(patchQuality, patchWeight);
 }

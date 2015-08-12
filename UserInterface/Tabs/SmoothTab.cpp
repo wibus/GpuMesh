@@ -184,6 +184,7 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
     double maxT = 0.0;
     double minQ = 1.0;
     double maxQ = 0.0;
+    double begQ = 0.0;
     map<string, QPen> pens;
     for(const auto& keyVal : plot.curves())
     {
@@ -203,6 +204,8 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
             minQ = glm::min(minQ, pass.qualityMean);
             maxQ = glm::max(maxQ, pass.qualityMean);
         }
+
+        begQ = keyVal.second.front().qualityMean;
     }
     double marginQ = (maxQ - minQ) * 0.05;
     double bottomQ = minQ - marginQ;
@@ -215,10 +218,10 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
     minTimeText->setPos(-minTimeTextLen/2.0, sceneHeight);
 
     // Algo final quality mean
-    QGraphicsTextItem* minQualityText = _currentScene->addText(QString::number(minQ));
-    double minQualityTextWidth = minQualityText->document()->size().width();
-    double minQualityTextHeight = minQualityText->document()->size().height();
-    minQualityText->setPos(-minQualityTextWidth, sceneHeight * (1.0-marginQ*scaleQ) - minQualityTextHeight/2.0);
+    QGraphicsTextItem* begQualityText = _currentScene->addText(QString::number(minQ));
+    double begQualityTextWidth = begQualityText->document()->size().width();
+    double begQualityTextHeight = begQualityText->document()->size().height();
+    begQualityText->setPos(-begQualityTextWidth, sceneHeight * (topQ-begQ)*scaleQ - begQualityTextHeight/2.0);
 
 
     double labelHeight = 10.0;

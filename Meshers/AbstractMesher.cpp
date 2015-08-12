@@ -41,11 +41,5 @@ void AbstractMesher::generateMesh(
         getLog().postMessage(new Message('I', false,
             "Total meshing time: " + to_string(dt.count() / 1000.0) + "ms",
             "AbstractMesher"));
-
-        getLog().postMessage(new Message('I', false,
-            "Elements / Vertices = " + to_string(mesh.elemCount()) +
-                               " / " + to_string(mesh.vertCount()) + " = " +
-            to_string(mesh.elemCount()  / (double) mesh.vertCount()),
-            "AbstractMesher"));
     }
 }

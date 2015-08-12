@@ -32,8 +32,13 @@ public:
             const Mesh& mesh,
             size_t vId);
 
-    static void accumulatePatchQuality(double elemQ, double& patchQ);
-    static void finalizePatchQuality(double& patchQ);
+    static void accumulatePatchQuality(
+            double& patchQuality,
+            double& patchWeight,
+            double elemQuality);
+    static double finalizePatchQuality(
+            double patchQuality,
+            double patchWeight);
     static double computePatchQuality(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,

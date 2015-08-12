@@ -93,16 +93,18 @@ glm::dvec3 SmoothingHelper::computePatchCenter(
 }
 
 inline void SmoothingHelper::accumulatePatchQuality(
-        double elemQ,
-        double& patchQ)
+        double& patchQuality,
+        double& patchWeight,
+        double elemQuality)
 {
-    patchQ *= elemQ;
+    patchQuality = glm::min(patchQuality * elemQuality, elemQuality);
 }
 
-inline void SmoothingHelper::finalizePatchQuality(
-        double& patchQ)
+inline double SmoothingHelper::finalizePatchQuality(
+        double patchQuality,
+        double patchWeight)
 {
-    // no-op
+    return patchQuality;
 }
 
 double SmoothingHelper::computePatchQuality(
@@ -118,6 +120,7 @@ double SmoothingHelper::computePatchQuality(
 
     size_t neigElemCount = topo.neighborElems.size();
 
+    double patchWeight = 0.0;
     double patchQuality = 1.0;
     for(size_t n=0; n < neigElemCount; ++n)
     {
@@ -127,30 +130,23 @@ double SmoothingHelper::computePatchQuality(
         {
         case MeshTet::ELEMENT_TYPE:
             accumulatePatchQuality(
-                evaluator.tetQuality(mesh, tets[neigElem.id]),
-                patchQuality);
+                patchQuality, patchWeight,
+                evaluator.tetQuality(mesh, tets[neigElem.id]));
             break;
 
         case MeshPri::ELEMENT_TYPE:
             accumulatePatchQuality(
-                evaluator.priQuality(mesh, pris[neigElem.id]),
-                patchQuality);
+                patchQuality, patchWeight,
+                evaluator.priQuality(mesh, pris[neigElem.id]));
             break;
 
         case MeshHex::ELEMENT_TYPE:
             accumulatePatchQuality(
-                evaluator.hexQuality(mesh, hexs[neigElem.id]),
-                patchQuality);
-            break;
-        }
-
-        if(patchQuality <= 0.0)
-        {
+                patchQuality, patchWeight,
+                evaluator.hexQuality(mesh, hexs[neigElem.id]));
             break;
         }
     }
 
-    finalizePatchQuality(patchQuality);
-
-    return patchQuality;
+    return finalizePatchQuality(patchQuality, patchWeight);
 }

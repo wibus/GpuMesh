@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <cstdint>
 
 #include <CellarWorkbench/Misc/Log.h>
 
@@ -170,7 +171,7 @@ void Mesh::clear()
 void Mesh::compileTopoly()
 {
     getLog().postMessage(new Message('I', false,
-        "Compiling mesh topology", "Mesh"));
+        "Compiling mesh topology...", "Mesh"));
 
     vert.shrink_to_fit();
     tetra.shrink_to_fit();
@@ -229,11 +230,44 @@ void Mesh::compileTopoly()
         }
     }
 
+
+    size_t neigVertCount = 0;
+    size_t neigElemCount = 0;
     for(int i=0; i < vertCount; ++i)
     {
         topo[i].neighborVerts.shrink_to_fit();
         topo[i].neighborElems.shrink_to_fit();
+        neigVertCount += topo[i].neighborVerts.size();
+        neigElemCount += topo[i].neighborElems.size();
     }
+
+    getLog().postMessage(new Message('I', false,
+        "Vertice count: " + to_string(vertCount), "Mesh"));
+    getLog().postMessage(new Message('I', false,
+        "Element count: " + to_string(elemCount()), "Mesh"));
+
+    double elemVertRatio = elemCount()  / (double) vertCount;
+    getLog().postMessage(new Message('I', false,
+        "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
+
+    double neigVertMean = neigVertCount / (double) vertCount;
+    getLog().postMessage(new Message('I', false,
+        "Neighbor verts / Vertices: " + to_string(neigVertMean), "Mesh"));
+
+    double neigElemMean = neigElemCount / (double) vertCount;
+    getLog().postMessage(new Message('I', false,
+        "Neighbor elems / Vertices: " + to_string(neigElemMean), "Mesh"));
+
+    int64_t meshMemorySize =
+            int64_t(vert.size() * sizeof(decltype(vert.front()))) +
+            int64_t(tetra.size() * sizeof(decltype(tetra.front()))) +
+            int64_t(prism.size() * sizeof(decltype(prism.front()))) +
+            int64_t(hexa.size() * sizeof(decltype(hexa.front()))) +
+            int64_t(topo.size() * sizeof(decltype(topo.front()))) +
+            int64_t(neigVertCount * sizeof(MeshNeigVert)) +
+            int64_t(neigElemCount * sizeof(MeshNeigElem));
+    getLog().postMessage(new Message('I', false,
+        "Approx mesh size in memory: " + to_string(meshMemorySize) + " Bytes", "Mesh"));
 }
 
 void Mesh::updateGpuTopoly()
