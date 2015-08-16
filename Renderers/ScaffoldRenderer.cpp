@@ -23,7 +23,7 @@ ScaffoldRenderer::ScaffoldRenderer() :
     _jointRadius(0.002f),
     _jointTubeMinRatio(1.5f)
 {
-    _shadingFuncs.setDefault("Wireframe");
+    _shadingFuncs.setDefault("Diffuse");
     _shadingFuncs.setContent({
         {string("Wireframe"), function<void()>(bind(&ScaffoldRenderer::useWireframeShading, this))},
         {string("Diffuse"),   function<void()>(bind(&ScaffoldRenderer::useDiffuseShading,   this))},

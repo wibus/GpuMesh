@@ -87,9 +87,11 @@ CpuParametricMesher::CpuParametricMesher() :
     _pipeExtEdge(new PipeExtEdgeBoundary())
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Elbow Pipe");
+    _modelFuncs.setDefault("Bottle");
     _modelFuncs.setContent({
-        {string("Elbow Pipe"), ModelFunc(bind(&CpuParametricMesher::genElbowPipe, this, _1, _2))},
+        {string("Pipe"),   ModelFunc(bind(&CpuParametricMesher::genPipe,   this, _1, _2))},
+        {string("Bottle"), ModelFunc(bind(&CpuParametricMesher::genBottle, this, _1, _2))},
+        {string("Squish"), ModelFunc(bind(&CpuParametricMesher::genSquish, this, _1, _2))},
     });
 }
 
@@ -98,7 +100,7 @@ CpuParametricMesher::~CpuParametricMesher()
 
 }
 
-void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
+void CpuParametricMesher::genPipe(Mesh& mesh, size_t vertexCount)
 {
     // Give proportianl dimensions
     int layerCount = 6;
@@ -117,7 +119,7 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
     totalStackCount = 2 * straightPipeStackCount + arcPipeStackCount;
 
 
-    insertStraightPipe(mesh,
+    insertStraightRingPipe(mesh,
                     glm::dvec3(-1.0, -0.5,  0),
                     glm::dvec3( 0.5, -0.5,  0),
                     glm::dvec3( 0,    0,    1),
@@ -128,7 +130,7 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
                     true,
                     false);
 
-    insertArcPipe(mesh,
+    insertArcRingPipe(mesh,
                glm::dvec3( 0.5,  0,    0),
                glm::dvec3( 0,    0,    1),
                glm::dvec3( 0,   -1.0,  0),
@@ -142,7 +144,7 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
                false,
                false);
 
-    insertStraightPipe(mesh,
+    insertStraightRingPipe(mesh,
                     glm::dvec3( 0.5,  0.5,  0),
                     glm::dvec3(-1.0,  0.5,  0),
                     glm::dvec3( 0,    0,    1),
@@ -159,7 +161,335 @@ void CpuParametricMesher::genElbowPipe(Mesh& mesh, size_t vertexCount)
         ":/shaders/compute/Boundary/ElbowPipe.glsl");
 }
 
-void CpuParametricMesher::insertStraightPipe(
+void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
+{
+    // Physic dimensions
+    double bodyRadius = 0.15;
+    double bodyThickness = 0.05;
+    double bodyHeight = 0.7;
+
+    double heelRadius = bodyRadius;
+    double heelThickness = 0.05;
+
+    double neckRadius = 0.05;
+    double neckThickness = 0.01;
+    double neckLength = 0.25;
+
+    double bottleBottomZ = -bodyHeight - bodyRadius + heelThickness;
+
+
+    // Discrete dimensions
+    int wallThickN = 5;
+
+    int polySideN = 6;
+    int heelRingN = 20;
+
+    int bodySilceN = wallThickN * (bodyHeight / heelThickness);
+    int bodyDivN = polySideN * heelRingN;
+
+    int shoulderSliceN = 2 * wallThickN * (bodyRadius / heelThickness);
+
+    int neckSilceN = 60;
+    int neckDivN = polySideN * heelRingN;
+
+
+    // Bottle heel
+    glm::dmat3 heelRot = glm::dmat3(
+        glm::rotate(
+            glm::dmat4(),
+            glm::pi<double>() * 2.0 / polySideN,
+            glm::dvec3(0.0, 0.0, 1.0)));
+
+    size_t heelBaseIdx = mesh.vert.size();
+    for(int s=0; s <= wallThickN; ++s)
+    {
+        double heelZ = (s * heelThickness / wallThickN) + bottleBottomZ;
+
+        // Center vertex
+        glm::dvec3 ringCenter(0.0, 0.0, heelZ);
+        mesh.vert.push_back(ringCenter);
+
+        for(int r=1; r <= heelRingN; ++r)
+        {
+            double heelR = (r * heelRadius / heelRingN);
+            glm::dvec3 heelArm(heelR, 0.0, 0.0);
+            glm::dvec3 nextArm = heelRot * heelArm;
+
+            for(int d=0; d < polySideN; ++d)
+            {
+                // First side vertex
+                mesh.vert.push_back(heelArm + ringCenter);
+
+                glm::dvec3 heelStep = (nextArm - heelArm) / double(r);
+                for(int v=1; v < r; ++v)
+                {
+                    // additionnal side vertices
+                    mesh.vert.push_back(
+                        glm::normalize(heelArm + heelStep*double(v)) * heelR
+                                + ringCenter);
+                }
+
+                heelArm = nextArm;
+                nextArm = heelRot * nextArm;
+            }
+        }
+    }
+
+    size_t lastSliceBaseIdx = heelBaseIdx;
+    size_t currSliceBaseIdx = lastSliceBaseIdx;
+    size_t sliceVertexCount = 1 + polySideN*(heelRingN)*(heelRingN+1) / 2;
+    for(int s=1; s <= wallThickN; ++s)
+    {
+        currSliceBaseIdx += sliceVertexCount;
+
+        size_t lastRingBaseIdx = 0;
+        size_t currRingBaseIdx = 1;
+        for(int r=1; r <= heelRingN; ++r)
+        {
+            size_t lastRingVertCount = (r-1)*polySideN;
+            size_t currRingVertCount = r*polySideN;
+            currRingBaseIdx += lastRingVertCount;
+
+            for(int d=0; d < polySideN; ++d)
+            {
+                size_t lastRingSideBaseIdx = d*(r-1);
+                size_t currRingSideBaseIdx = d*r;
+                size_t currRingSideNextIdx =
+                        (currRingSideBaseIdx + 1)%currRingVertCount;
+
+                mesh.prism.push_back(MeshPri(
+                    lastSliceBaseIdx + currRingBaseIdx + currRingSideBaseIdx,
+                    currSliceBaseIdx + currRingBaseIdx + currRingSideBaseIdx,
+                    lastSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx,
+                    currSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx,
+                    lastSliceBaseIdx + lastRingBaseIdx + lastRingSideBaseIdx,
+                    currSliceBaseIdx + lastRingBaseIdx + lastRingSideBaseIdx));
+
+                size_t currRingSideStepIdx = currRingSideNextIdx;
+                size_t lastRingSideStepIdx = lastRingSideBaseIdx;
+                for(int v=1; v < r; ++v)
+                {
+                    currRingSideNextIdx = (currRingSideStepIdx + 1)%currRingVertCount;
+                    size_t lastRingSideNextIdx = (lastRingSideStepIdx + 1)%lastRingVertCount;
+
+                    mesh.prism.push_back(MeshPri(
+                        lastSliceBaseIdx + lastRingBaseIdx + lastRingSideStepIdx,
+                        currSliceBaseIdx + lastRingBaseIdx + lastRingSideStepIdx,
+                        lastSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
+                        currSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
+                        lastSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx,
+                        currSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx));
+
+                    mesh.prism.push_back(MeshPri(
+                        lastSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx,
+                        currSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx,
+                        lastSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
+                        currSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
+                        lastSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx,
+                        currSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx));
+
+                    ++currRingSideStepIdx;
+                    ++lastRingSideStepIdx;
+                }
+
+            }
+
+            lastRingBaseIdx = currRingBaseIdx;
+        }
+
+        lastSliceBaseIdx = currSliceBaseIdx;
+    }
+
+
+    // Bottle body
+    glm::dmat3 bodyRot = glm::dmat3(
+        glm::rotate(
+            glm::dmat4(),
+            glm::pi<double>() * 2.0 / bodyDivN,
+            glm::dvec3(0.0, 0.0, 1.0)));
+
+    size_t bodyBaseIdx = mesh.vert.size();
+    for(int s=0; s <= bodySilceN; ++s)
+    {
+        double bodyZ = (s * bodyHeight / bodySilceN) + bottleBottomZ;
+        glm::dvec3 ringCenter(0.0, 0.0, bodyZ);
+
+        for(int r=1; r <= wallThickN; ++r)
+        {
+            double rProg = r / double(wallThickN);
+            double bodyR = bodyRadius + bodyThickness * rProg;
+            glm::dvec3 bodyArm(bodyR, 0.0, 0.0);
+
+            for(int d=0; d < bodyDivN; ++ d)
+            {
+                mesh.vert.push_back(bodyArm + ringCenter);
+                bodyArm = bodyRot * bodyArm;
+            }
+        }
+    }
+
+
+    // Bottle shoulder
+    glm::dvec3 shoulder(1.0, 0.0, 0.0);
+    glm::dvec3 shoulderCenter(0.0, 0.0, bottleBottomZ + bodyHeight);
+    for(int s=1; s <= shoulderSliceN; ++s)
+    {
+        double angle = glm::pi<double>() * s * 0.5 / (shoulderSliceN*1.15);
+        double shoulderScale = glm::cos(angle);
+        glm::dmat3 shoulderRot = glm::dmat3(
+            glm::rotate(
+                glm::dmat4(),
+                glm::pi<double>() * 0.60 / shoulderSliceN * shoulderScale,
+                glm::dvec3(0.0, -1.0, 0.0)));
+
+        shoulder = shoulderRot * shoulder;
+
+        for(int r=1; r <= wallThickN; ++r)
+        {
+            double thick = 1.0 - 2.0 * angle / glm::pi<double>();
+            double alpha = 0.5 + thick * (r-wallThickN/2.0) / double(wallThickN);
+            double bodyR = bodyRadius + bodyThickness * alpha;
+            glm::dvec3 bodyArm = shoulder * bodyR;
+
+            for(int d=0; d < bodyDivN; ++ d)
+            {
+                mesh.vert.push_back(bodyArm + shoulderCenter);
+                bodyArm = bodyRot * bodyArm;
+            }
+        }
+    }
+
+    size_t lastStackBaseIdx = bodyBaseIdx;
+    size_t currStackBaseIdx = lastStackBaseIdx;
+    size_t stackVertexCount = bodyDivN * wallThickN;
+    for(int s=1; s <= bodySilceN + shoulderSliceN; ++s)
+    {
+        currStackBaseIdx += stackVertexCount;
+
+        if(s <= wallThickN)
+        {
+            size_t lastSliceBaseIdx = (s-1)*sliceVertexCount + (1+polySideN*(heelRingN-1)*(heelRingN)/2);
+            size_t currSliceBaseIdx = lastSliceBaseIdx + sliceVertexCount;
+
+            // Prism-Hexahedra connection
+            for(int d=0; d < bodyDivN; ++d)
+            {
+                int nextD = (d+1)%bodyDivN;
+                mesh.hexa.push_back(MeshHex(
+                    currSliceBaseIdx + d,
+                    lastSliceBaseIdx + d,
+                    currSliceBaseIdx + nextD,
+                    lastSliceBaseIdx + nextD,
+                    currStackBaseIdx + d,
+                    lastStackBaseIdx + d,
+                    currStackBaseIdx + nextD,
+                    lastStackBaseIdx + nextD));
+            }
+        }
+
+        for(int r=1; r < wallThickN; ++r)
+        {
+            size_t lastRingIdx = (r-1) * bodyDivN;
+            size_t currRingIdx = r * bodyDivN;
+
+            for(int d=0; d < bodyDivN; ++d)
+            {
+                int nextD = (d+1)%bodyDivN;
+                mesh.hexa.push_back(MeshHex(
+                    currStackBaseIdx + lastRingIdx + d,
+                    lastStackBaseIdx + lastRingIdx + d,
+                    currStackBaseIdx + lastRingIdx + nextD,
+                    lastStackBaseIdx + lastRingIdx + nextD,
+                    currStackBaseIdx + currRingIdx + d,
+                    lastStackBaseIdx + currRingIdx + d,
+                    currStackBaseIdx + currRingIdx + nextD,
+                    lastStackBaseIdx + currRingIdx + nextD));
+            }
+        }
+
+        lastStackBaseIdx = currStackBaseIdx;
+    }
+
+
+    // Bottle neck
+    glm::dmat3 neckRot = glm::dmat3(
+        glm::rotate(
+            glm::dmat4(),
+            glm::pi<double>() * 2.0 / neckDivN,
+            glm::dvec3(0.0, 0.0, 1.0)));
+
+    size_t neckBaseIdx = mesh.vert.size();
+    for(int s=1; s <= neckSilceN; ++s)
+    {
+        double neckZ = (s * neckLength / neckSilceN)
+            + bottleBottomZ + bodyHeight + bodyRadius + bodyThickness/2.0;
+        glm::dvec3 ringCenter(0.0, 0.0, neckZ);
+
+        for(int r=0; r <= wallThickN; ++r)
+        {
+            double neckR = neckRadius - (1.0 - double(r)/wallThickN) * neckThickness;
+            glm::dvec3 neckArm(neckR, 0.0, 0.0);
+
+            for(int d=0; d < neckDivN; ++ d)
+            {
+                mesh.vert.push_back(neckArm + ringCenter);
+                neckArm = neckRot * neckArm;
+            }
+        }
+    }
+}
+
+void CpuParametricMesher::genSquish(Mesh& mesh, size_t vertexCount)
+{
+    double squishRadius = 0.3;
+    double squishHeight = 0.6;
+
+    const int pow1_3 =  glm::pow((double)vertexCount, 1.0/3.0);
+    const int pow1_3_pair = ((pow1_3 + 1) / 2) * 2;
+    const int X_COUNT = pow1_3_pair;
+    const int Y_COUNT = pow1_3_pair;
+    const int Z_COUNT = pow1_3_pair;
+    for(int z=-Z_COUNT/2; z <= Z_COUNT/2; ++z)
+    {
+        for(int y=-Y_COUNT/2; y <= Y_COUNT/2; ++y)
+        {
+            for(int x=-X_COUNT/2; x <= X_COUNT/2; ++x)
+            {
+                glm::dvec2 arm;
+                double radius = glm::max(glm::abs(x), glm::abs(y)) * (2.0 * squishRadius / Y_COUNT);
+                if(radius != 0.0) arm = glm::normalize(glm::dvec2(x, y)) * radius;
+
+                mesh.vert.push_back(glm::dvec3(
+                    arm, z * squishHeight / Z_COUNT));
+            }
+        }
+    }
+
+    const int X_WIDTH = 1;
+    const int Y_WIDTH = X_COUNT + 1;
+    const int Z_WIDTH = (Y_COUNT+1) * Y_WIDTH;
+    for(int z=0; z < Z_COUNT; ++z)
+    {
+        for(int y=0; y< Y_COUNT; ++y)
+        {
+            for(int x=0; x< X_COUNT; ++x)
+            {
+                MeshHex hex(
+                    (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH);
+                mesh.hexa.push_back(hex);
+            }
+        }
+    }
+}
+
+void CpuParametricMesher::insertStraightRingPipe(
         Mesh& mesh,
         const glm::dvec3& begin,
         const glm::dvec3& end,
@@ -190,7 +520,7 @@ void CpuParametricMesher::insertStraightPipe(
     for(int k= (first ? 0 : 1) ; k<=stackCount; ++k, center += dFront)
     {
         bool isBoundary = (k == 0) || (last && k == stackCount);
-        insertStackVertices(
+        insertRingStackVertices(
                     mesh,
                     center,
                     armBase,
@@ -203,7 +533,7 @@ void CpuParametricMesher::insertStraightPipe(
     }
 }
 
-void CpuParametricMesher::insertArcPipe(
+void CpuParametricMesher::insertArcRingPipe(
         Mesh& mesh,
         const glm::dvec3& arcCenter,
         const glm::dvec3& rotationAxis,
@@ -244,7 +574,7 @@ void CpuParametricMesher::insertArcPipe(
 
         bool isBoundary = (k == 0) || (last && k == stackCount);
 
-        insertStackVertices(
+        insertRingStackVertices(
                     mesh,
                     center,
                     up,
@@ -257,7 +587,7 @@ void CpuParametricMesher::insertArcPipe(
     }
 }
 
-void CpuParametricMesher::insertStackVertices(
+void CpuParametricMesher::insertRingStackVertices(
         Mesh& mesh,
         const glm::dvec3& center,
         const glm::dvec4& upBase,

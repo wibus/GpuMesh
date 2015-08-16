@@ -14,9 +14,11 @@ public:
 
 
 protected:
-    virtual void genElbowPipe(Mesh& mesh, size_t vertexCount);
+    virtual void genPipe(Mesh& mesh, size_t vertexCount);
+    virtual void genBottle(Mesh& mesh, size_t vertexCount);
+    virtual void genSquish(Mesh& mesh, size_t vertexCount);
 
-    virtual void insertStraightPipe(
+    virtual void insertStraightRingPipe(
             Mesh& mesh,
             const glm::dvec3& begin,
             const glm::dvec3& end,
@@ -28,7 +30,7 @@ protected:
             bool first,
             bool last);
 
-    virtual void insertArcPipe(
+    virtual void insertArcRingPipe(
             Mesh& mesh,
             const glm::dvec3& center,
             const glm::dvec3& rotationAxis,
@@ -43,7 +45,7 @@ protected:
             bool first,
             bool last);
 
-    virtual void insertStackVertices(
+    virtual void insertRingStackVertices(
             Mesh& mesh,
             const glm::dvec3& center,
             const glm::dvec4& upBase,
