@@ -15,7 +15,7 @@ bool SmoothingHelper::isSmoothable(
             const Mesh& mesh,
             size_t vId)
 {
-    const MeshTopo& topo = mesh.topo[vId];
+    const MeshTopo& topo = mesh.topos[vId];
     if(topo.isFixed)
         return false;
 
@@ -30,10 +30,10 @@ double SmoothingHelper::computeLocalElementSize(
         const Mesh& mesh,
         size_t vId)
 {
-    const std::vector<MeshVert>& verts = mesh.vert;
+    const std::vector<MeshVert>& verts = mesh.verts;
 
     const glm::dvec3& pos = verts[vId].p;
-    const MeshTopo& topo = mesh.topo[vId];
+    const MeshTopo& topo = mesh.topos[vId];
     const vector<MeshNeigVert>& neigVerts = topo.neighborVerts;
 
     double totalSize = 0.0;
@@ -50,12 +50,12 @@ glm::dvec3 SmoothingHelper::computePatchCenter(
         const Mesh& mesh,
         size_t vId)
 {
-    const std::vector<MeshVert>& verts = mesh.vert;
-    const std::vector<MeshTet>& tets = mesh.tetra;
-    const std::vector<MeshPri>& pris = mesh.prism;
-    const std::vector<MeshHex>& hexs = mesh.hexa;
+    const std::vector<MeshVert>& verts = mesh.verts;
+    const std::vector<MeshTet>& tets = mesh.tets;
+    const std::vector<MeshPri>& pris = mesh.pris;
+    const std::vector<MeshHex>& hexs = mesh.hexs;
 
-    const MeshTopo& topo = mesh.topo[vId];
+    const MeshTopo& topo = mesh.topos[vId];
 
     uint totalVertCount = 0;
     glm::dvec3 patchCenter(0.0);
@@ -112,11 +112,11 @@ double SmoothingHelper::computePatchQuality(
             const AbstractEvaluator& evaluator,
             size_t vId)
 {
-    const std::vector<MeshTet>& tets = mesh.tetra;
-    const std::vector<MeshPri>& pris = mesh.prism;
-    const std::vector<MeshHex>& hexs = mesh.hexa;
+    const std::vector<MeshTet>& tets = mesh.tets;
+    const std::vector<MeshPri>& pris = mesh.pris;
+    const std::vector<MeshHex>& hexs = mesh.hexs;
 
-    const MeshTopo& topo = mesh.topo[vId];
+    const MeshTopo& topo = mesh.topos[vId];
 
     size_t neigElemCount = topo.neighborElems.size();
 

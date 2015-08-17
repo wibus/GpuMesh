@@ -156,16 +156,16 @@ Mesh::~Mesh()
 
 void Mesh::clear()
 {
-    vert.clear();
-    vert.shrink_to_fit();
-    tetra.clear();
-    tetra.shrink_to_fit();
-    prism.clear();
-    prism.shrink_to_fit();
-    hexa.clear();
-    hexa.shrink_to_fit();
-    topo.clear();
-    topo.shrink_to_fit();
+    verts.clear();
+    verts.shrink_to_fit();
+    tets.clear();
+    tets.shrink_to_fit();
+    pris.clear();
+    pris.shrink_to_fit();
+    hexs.clear();
+    hexs.shrink_to_fit();
+    topos.clear();
+    topos.shrink_to_fit();
 }
 
 void Mesh::compileTopoly()
@@ -173,60 +173,60 @@ void Mesh::compileTopoly()
     getLog().postMessage(new Message('I', false,
         "Compiling mesh topology...", "Mesh"));
 
-    vert.shrink_to_fit();
-    tetra.shrink_to_fit();
-    prism.shrink_to_fit();
-    hexa.shrink_to_fit();
+    verts.shrink_to_fit();
+    tets.shrink_to_fit();
+    pris.shrink_to_fit();
+    hexs.shrink_to_fit();
 
-    int vertCount = vert.size();
-    topo.resize(vertCount);
-    topo.shrink_to_fit();
+    int vertCount = verts.size();
+    topos.resize(vertCount);
+    topos.shrink_to_fit();
 
-    int tetCount = tetra.size();
+    int tetCount = tets.size();
     for(int i=0; i < tetCount; ++i)
     {
         for(int v=0; v < MeshTet::VERTEX_COUNT; ++v)
         {
-            topo[tetra[i].v[v]].neighborElems.push_back(
+            topos[tets[i].v[v]].neighborElems.push_back(
                 MeshNeigElem(MeshTet::ELEMENT_TYPE, i));
         }
 
         for(int e=0; e < MeshTet::EDGE_COUNT; ++e)
         {
-            addEdge(tetra[i].v[MeshTet::edges[e][0]],
-                    tetra[i].v[MeshTet::edges[e][1]]);
+            addEdge(tets[i].v[MeshTet::edges[e][0]],
+                    tets[i].v[MeshTet::edges[e][1]]);
         }
     }
 
-    int prismCount = prism.size();
+    int prismCount = pris.size();
     for(int i=0; i < prismCount; ++i)
     {
         for(int v=0; v < MeshPri::VERTEX_COUNT; ++v)
         {
-            topo[prism[i].v[v]].neighborElems.push_back(
+            topos[pris[i].v[v]].neighborElems.push_back(
                 MeshNeigElem(MeshPri::ELEMENT_TYPE, i));
         }
 
         for(int e=0; e < MeshPri::EDGE_COUNT; ++e)
         {
-            addEdge(prism[i].v[MeshPri::edges[e][0]],
-                    prism[i].v[MeshPri::edges[e][1]]);
+            addEdge(pris[i].v[MeshPri::edges[e][0]],
+                    pris[i].v[MeshPri::edges[e][1]]);
         }
     }
 
-    int hexCount = hexa.size();
+    int hexCount = hexs.size();
     for(int i=0; i < hexCount; ++i)
     {
         for(int v=0; v < MeshHex::VERTEX_COUNT; ++v)
         {
-            topo[hexa[i].v[v]].neighborElems.push_back(
+            topos[hexs[i].v[v]].neighborElems.push_back(
                 MeshNeigElem(MeshHex::ELEMENT_TYPE, i));
         }
 
         for(int e=0; e < MeshHex::EDGE_COUNT; ++e)
         {
-            addEdge(hexa[i].v[MeshHex::edges[e][0]],
-                    hexa[i].v[MeshHex::edges[e][1]]);
+            addEdge(hexs[i].v[MeshHex::edges[e][0]],
+                    hexs[i].v[MeshHex::edges[e][1]]);
         }
     }
 
@@ -235,10 +235,10 @@ void Mesh::compileTopoly()
     size_t neigElemCount = 0;
     for(int i=0; i < vertCount; ++i)
     {
-        topo[i].neighborVerts.shrink_to_fit();
-        topo[i].neighborElems.shrink_to_fit();
-        neigVertCount += topo[i].neighborVerts.size();
-        neigElemCount += topo[i].neighborElems.size();
+        topos[i].neighborVerts.shrink_to_fit();
+        topos[i].neighborElems.shrink_to_fit();
+        neigVertCount += topos[i].neighborVerts.size();
+        neigElemCount += topos[i].neighborElems.size();
     }
 
     getLog().postMessage(new Message('I', false,
@@ -259,11 +259,11 @@ void Mesh::compileTopoly()
         "Neighbor elems / Vertices: " + to_string(neigElemMean), "Mesh"));
 
     int64_t meshMemorySize =
-            int64_t(vert.size() * sizeof(decltype(vert.front()))) +
-            int64_t(tetra.size() * sizeof(decltype(tetra.front()))) +
-            int64_t(prism.size() * sizeof(decltype(prism.front()))) +
-            int64_t(hexa.size() * sizeof(decltype(hexa.front()))) +
-            int64_t(topo.size() * sizeof(decltype(topo.front()))) +
+            int64_t(verts.size() * sizeof(decltype(verts.front()))) +
+            int64_t(tets.size() * sizeof(decltype(tets.front()))) +
+            int64_t(pris.size() * sizeof(decltype(pris.front()))) +
+            int64_t(hexs.size() * sizeof(decltype(hexs.front()))) +
+            int64_t(topos.size() * sizeof(decltype(topos.front()))) +
             int64_t(neigVertCount * sizeof(MeshNeigVert)) +
             int64_t(neigElemCount * sizeof(MeshNeigElem));
     getLog().postMessage(new Message('I', false,
@@ -322,7 +322,7 @@ void Mesh::setmodelBoundariesShaderName(const std::string& name)
 
 void Mesh::addEdge(int firstVert, int secondVert)
 {
-    vector<MeshNeigVert>& neighbors = topo[firstVert].neighborVerts;
+    vector<MeshNeigVert>& neighbors = topos[firstVert].neighborVerts;
     int neighborCount = neighbors.size();
     for(int n=0; n < neighborCount; ++n)
     {
@@ -331,6 +331,6 @@ void Mesh::addEdge(int firstVert, int secondVert)
     }
 
     // This really is a new edge
-    topo[firstVert].neighborVerts.push_back(secondVert);
-    topo[secondVert].neighborVerts.push_back(firstVert);
+    topos[firstVert].neighborVerts.push_back(secondVert);
+    topos[secondVert].neighborVerts.push_back(firstVert);
 }

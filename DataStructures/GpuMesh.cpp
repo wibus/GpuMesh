@@ -85,7 +85,7 @@ void GpuMesh::updateGpuTopoly()
     int neigElemBase = 0;
     for(int i=0; i < nbVert; ++i)
     {
-        const MeshTopo& meshTopo = topo[i];
+        const MeshTopo& meshTopo = topos[i];
         int neigVertCount = meshTopo.neighborVerts.size();
         int neigElemCount = meshTopo.neighborElems.size();
         int type = meshTopo.isFixed ? -1 :
@@ -124,10 +124,10 @@ void GpuMesh::updateGpuTopoly()
 
 
     // Send individual elements
-    size_t tetCount = tetra.size();
+    size_t tetCount = tets.size();
     std::vector<GpuTet> tetBuff(tetCount);
     for(int i=0; i < tetCount; ++i)
-        tetBuff[i] = tetra[i];
+        tetBuff[i] = tets[i];
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
     size_t tetSize = sizeof(decltype(tetBuff.front())) * tetBuff.size();
@@ -136,10 +136,10 @@ void GpuMesh::updateGpuTopoly()
     tetBuff.shrink_to_fit();
 
 
-    size_t priCount = prism.size();
+    size_t priCount = pris.size();
     std::vector<GpuPri> priBuff(priCount);
     for(int i=0; i < priCount; ++i)
-        priBuff[i] = prism[i];
+        priBuff[i] = pris[i];
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _priSsbo);
     size_t priSize = sizeof(decltype(priBuff.front())) * priBuff.size();
@@ -148,10 +148,10 @@ void GpuMesh::updateGpuTopoly()
     priBuff.shrink_to_fit();
 
 
-    size_t hexCount = hexa.size();
+    size_t hexCount = hexs.size();
     std::vector<GpuHex> hexBuff(hexCount);
     for(int i=0; i < hexCount; ++i)
-        hexBuff[i] = hexa[i];
+        hexBuff[i] = hexs[i];
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _hexSsbo);
     size_t hexSize = sizeof(decltype(hexBuff.front())) * hexBuff.size();
@@ -169,7 +169,7 @@ void GpuMesh::updateGpuVertices()
     size_t size = sizeof(decltype(buff.front())) * nbVert;
 
     for(int i=0; i < nbVert; ++i)
-        buff[i] = GpuVert(vert[i]);
+        buff[i] = GpuVert(verts[i]);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, buff.data(), GL_STATIC_DRAW);
@@ -187,7 +187,7 @@ void GpuMesh::updateCpuVertices()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     for(int i=0; i < nbVert; ++i)
-        vert[i] = buff[i];
+        verts[i] = buff[i];
 }
 
 unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const

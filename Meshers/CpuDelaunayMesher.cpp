@@ -159,14 +159,14 @@ void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
 
     for(size_t v=0; v < surfVertCount; ++v)
     {
-        MeshTopo& topo = mesh.topo[v];
+        MeshTopo& topo = mesh.topos[v];
         topo.isFixed = false;
         topo.isBoundary = true;
         topo.snapToBoundary = boxBound[v%3];
     }
     for(int v=surfVertCount; v < vertexCount; ++v)
     {
-        MeshTopo& topo = mesh.topo[v];
+        MeshTopo& topo = mesh.topos[v];
         topo.isFixed = false;
     }
 
@@ -193,14 +193,14 @@ void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
 
     for(size_t v=0; v < surfVertCount; ++v)
     {
-        MeshTopo& topo = mesh.topo[v];
+        MeshTopo& topo = mesh.topos[v];
         topo.isFixed = false;
         topo.isBoundary = true;
         topo.snapToBoundary = _sphereBoundary.get();
     }
     for(int v=surfVertCount; v < vertexCount; ++v)
     {
-        MeshTopo& topo = mesh.topo[v];
+        MeshTopo& topo = mesh.topos[v];
         topo.isFixed = false;
     }
 
@@ -811,9 +811,9 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
     int meshVertCount = delaunayVertCount - _externalVertCount;
 
     // Shorthands
-    decltype(mesh.vert)& verts = mesh.vert;
-    decltype(mesh.tetra)& tets = mesh.tetra;
-    decltype(mesh.topo)& topos = mesh.topo;
+    decltype(mesh.verts)& verts = mesh.verts;
+    decltype(mesh.tets)& tets = mesh.tets;
+    decltype(mesh.topos)& topos = mesh.topos;
 
     tets.clear();
     verts.resize(meshVertCount);

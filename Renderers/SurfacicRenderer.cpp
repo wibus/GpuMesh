@@ -278,16 +278,16 @@ void SurfacicRenderer::compileFacesAttributes(
     double cutDistance = _physicalCutPlane.w;
 
     // Tetrahedrons
-    int tetCount = mesh.tetra.size();
+    int tetCount = mesh.tets.size();
     for(int i=0; i < tetCount; ++i)
     {
-        const MeshTet& tet = mesh.tetra[i];
+        const MeshTet& tet = mesh.tets[i];
 
         glm::dvec3 verts[] = {
-            glm::dvec3(mesh.vert[tet[0]]),
-            glm::dvec3(mesh.vert[tet[1]]),
-            glm::dvec3(mesh.vert[tet[2]]),
-            glm::dvec3(mesh.vert[tet[3]])
+            glm::dvec3(mesh.verts[tet[0]]),
+            glm::dvec3(mesh.verts[tet[1]]),
+            glm::dvec3(mesh.verts[tet[2]]),
+            glm::dvec3(mesh.verts[tet[3]])
         };
 
         if(_cutType == ECutType::PhysicalPlane)
@@ -326,18 +326,18 @@ void SurfacicRenderer::compileFacesAttributes(
 
 
     // Prisms
-    int priCount = mesh.prism.size();
+    int priCount = mesh.pris.size();
     for(int i=0; i < priCount; ++i)
     {
-        const MeshPri& pri = mesh.prism[i];
+        const MeshPri& pri = mesh.pris[i];
 
         glm::dvec3 verts[] = {
-            glm::dvec3(mesh.vert[pri[0]]),
-            glm::dvec3(mesh.vert[pri[1]]),
-            glm::dvec3(mesh.vert[pri[2]]),
-            glm::dvec3(mesh.vert[pri[3]]),
-            glm::dvec3(mesh.vert[pri[4]]),
-            glm::dvec3(mesh.vert[pri[5]])
+            glm::dvec3(mesh.verts[pri[0]]),
+            glm::dvec3(mesh.verts[pri[1]]),
+            glm::dvec3(mesh.verts[pri[2]]),
+            glm::dvec3(mesh.verts[pri[3]]),
+            glm::dvec3(mesh.verts[pri[4]]),
+            glm::dvec3(mesh.verts[pri[5]])
         };
 
         if(_cutType == ECutType::PhysicalPlane)
@@ -378,20 +378,20 @@ void SurfacicRenderer::compileFacesAttributes(
 
 
     // Hexahedrons
-    int hexCount = mesh.hexa.size();
+    int hexCount = mesh.hexs.size();
     for(int i=0; i < hexCount; ++i)
     {
-        const MeshHex& hex = mesh.hexa[i];
+        const MeshHex& hex = mesh.hexs[i];
 
         glm::dvec3 verts[] = {
-            glm::dvec3(mesh.vert[hex[0]]),
-            glm::dvec3(mesh.vert[hex[1]]),
-            glm::dvec3(mesh.vert[hex[2]]),
-            glm::dvec3(mesh.vert[hex[3]]),
-            glm::dvec3(mesh.vert[hex[4]]),
-            glm::dvec3(mesh.vert[hex[5]]),
-            glm::dvec3(mesh.vert[hex[6]]),
-            glm::dvec3(mesh.vert[hex[7]])
+            glm::dvec3(mesh.verts[hex[0]]),
+            glm::dvec3(mesh.verts[hex[1]]),
+            glm::dvec3(mesh.verts[hex[2]]),
+            glm::dvec3(mesh.verts[hex[3]]),
+            glm::dvec3(mesh.verts[hex[4]]),
+            glm::dvec3(mesh.verts[hex[5]]),
+            glm::dvec3(mesh.verts[hex[6]]),
+            glm::dvec3(mesh.verts[hex[7]])
         };
 
         if(_cutType == ECutType::PhysicalPlane)

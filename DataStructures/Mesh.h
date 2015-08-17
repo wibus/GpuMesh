@@ -206,11 +206,11 @@ public:
     virtual std::string modelBoundsShaderName() const;
     virtual void setmodelBoundariesShaderName(const std::string& name);
 
-    std::vector<MeshVert> vert;
-    std::vector<MeshTet>  tetra;
-    std::vector<MeshPri>  prism;
-    std::vector<MeshHex>  hexa;
-    std::vector<MeshTopo> topo;
+    std::vector<MeshVert> verts;
+    std::vector<MeshTet>  tets;
+    std::vector<MeshPri>  pris;
+    std::vector<MeshHex>  hexs;
+    std::vector<MeshTopo> topos;
 
     std::mutex vertMutex;
 
@@ -227,12 +227,12 @@ protected:
 // IMPLEMENTATION //
 inline unsigned int Mesh::vertCount() const
 {
-    return vert.size();
+    return verts.size();
 }
 
 inline unsigned int Mesh::elemCount() const
 {
-    return tetra.size() + prism.size() + hexa.size();
+    return tets.size() + pris.size() + hexs.size();
 }
 
 #endif // GPUMESH_MESH

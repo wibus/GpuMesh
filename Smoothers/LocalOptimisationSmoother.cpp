@@ -24,8 +24,8 @@ void LocalOptimisationSmoother::smoothVertices(
         size_t last,
         bool synchronize)
 {
-    std::vector<MeshVert>& verts = mesh.vert;
-    const vector<MeshTopo>& topos = mesh.topo;
+    std::vector<MeshVert>& verts = mesh.verts;
+    const vector<MeshTopo>& topos = mesh.topos;
 
 
     for(int vId = first; vId < last; ++vId)

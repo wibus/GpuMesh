@@ -180,7 +180,7 @@ void ScaffoldRenderer::updateGeometry(
     vector<GLubyte> quals;
     vector<GLuint> edges;
     compileBuffers(mesh, evaluator, verts, quals, edges);
-    _vertElemCount = mesh.vert.size();
+    _vertElemCount = mesh.verts.size();
     _indxElemCount = edges.size();
 
 
@@ -217,12 +217,12 @@ void ScaffoldRenderer::compileBuffers(
         std::vector<GLubyte>& quals,
         std::vector<GLuint>& edges) const
 {
-    size_t vertCount = mesh.vert.size();
+    size_t vertCount = mesh.verts.size();
 
     verts.resize(vertCount * 3);
     for(int i=0, idx=-1; i < vertCount; ++i)
     {
-        const glm::dvec3& v = mesh.vert[i];
+        const glm::dvec3& v = mesh.verts[i];
         verts[++idx] = v.x;
         verts[++idx] = v.y;
         verts[++idx] = v.z;
@@ -232,10 +232,10 @@ void ScaffoldRenderer::compileBuffers(
     vector<double> qualMins(vertCount, 1.0);
 
     // Tetrahedrons
-    int tetCount = mesh.tetra.size();
+    int tetCount = mesh.tets.size();
     for(int i=0; i < tetCount; ++i)
     {
-        const MeshTet& tet = mesh.tetra[i];
+        const MeshTet& tet = mesh.tets[i];
         double qual = evaluator.tetQuality(mesh, tet);
         if(qual < qualMins[tet.v[0]]) qualMins[tet.v[0]] = qual;
         if(qual < qualMins[tet.v[1]]) qualMins[tet.v[1]] = qual;
@@ -244,10 +244,10 @@ void ScaffoldRenderer::compileBuffers(
     }
 
     // Prisms
-    int priCount = mesh.prism.size();
+    int priCount = mesh.pris.size();
     for(int i=0; i < priCount; ++i)
     {
-        const MeshPri& pri = mesh.prism[i];
+        const MeshPri& pri = mesh.pris[i];
         double qual = evaluator.priQuality(mesh, pri);
         if(qual < qualMins[pri.v[0]]) qualMins[pri.v[0]] = qual;
         if(qual < qualMins[pri.v[1]]) qualMins[pri.v[1]] = qual;
@@ -258,10 +258,10 @@ void ScaffoldRenderer::compileBuffers(
     }
 
     // Hexahedrons
-    int hexCount = mesh.hexa.size();
+    int hexCount = mesh.hexs.size();
     for(int i=0; i < hexCount; ++i)
     {
-        const MeshHex& hex = mesh.hexa[i];
+        const MeshHex& hex = mesh.hexs[i];
         double qual = evaluator.hexQuality(mesh, hex);
         if(qual < qualMins[hex.v[0]]) qualMins[hex.v[0]] = qual;
         if(qual < qualMins[hex.v[1]]) qualMins[hex.v[1]] = qual;
@@ -281,10 +281,10 @@ void ScaffoldRenderer::compileBuffers(
     set<pair<GLuint, GLuint>> edgeSet;
     for(size_t i=0; i < vertCount; ++i)
     {
-        size_t neigVertCount = mesh.topo[i].neighborVerts.size();
+        size_t neigVertCount = mesh.topos[i].neighborVerts.size();
         for(size_t n=0; n < neigVertCount; ++n)
         {
-            int neig = mesh.topo[i].neighborVerts[n];
+            int neig = mesh.topos[i].neighborVerts[n];
             if(i < neig)
                 edgeSet.insert(pair<GLuint, GLuint>(i, neig));
             else
@@ -294,8 +294,8 @@ void ScaffoldRenderer::compileBuffers(
 
     for(const pair<int, int>& e : edgeSet)
     {
-        if(glm::dot(mesh.vert[e.first].p, cutNormal) > cutDistance ||
-           glm::dot(mesh.vert[e.second].p, cutNormal) > cutDistance)
+        if(glm::dot(mesh.verts[e.first].p, cutNormal) > cutDistance ||
+           glm::dot(mesh.verts[e.second].p, cutNormal) > cutDistance)
             continue;
 
         if(_cutType == ECutType::InvertedElements &&

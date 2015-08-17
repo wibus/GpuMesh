@@ -51,7 +51,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAltitude(-glm::pi<float>() * 2.0 / 4.0),
     _lightDistance(1.0),
     _cutAzimuth(0),
-    _cutAltitude(-glm::pi<float>() / 2.0),
+    _cutAltitude(0),
     _cutDistance(0),
     _mesh(new GpuMesh()),
     _availableMeshers("Available Meshers"),

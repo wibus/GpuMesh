@@ -60,69 +60,69 @@ OptionMapDetails AbstractEvaluator::availableImplementations() const
 
 double AbstractEvaluator::tetQuality(const Mesh& mesh, const MeshTet& tet) const
 {
-    const glm::dvec3 verts[] = {
-        mesh.vert[tet.v[0]],
-        mesh.vert[tet.v[1]],
-        mesh.vert[tet.v[2]],
-        mesh.vert[tet.v[3]],
+    const glm::dvec3 vp[] = {
+        mesh.verts[tet.v[0]],
+        mesh.verts[tet.v[1]],
+        mesh.verts[tet.v[2]],
+        mesh.verts[tet.v[3]],
     };
 
-    return tetQuality(verts);
+    return tetQuality(vp);
 }
 
 double AbstractEvaluator::priQuality(const Mesh& mesh, const MeshPri& pri) const
 {
-    const glm::dvec3 verts[] = {
-        mesh.vert[pri.v[0]],
-        mesh.vert[pri.v[1]],
-        mesh.vert[pri.v[2]],
-        mesh.vert[pri.v[3]],
-        mesh.vert[pri.v[4]],
-        mesh.vert[pri.v[5]]
+    const glm::dvec3 vp[] = {
+        mesh.verts[pri.v[0]],
+        mesh.verts[pri.v[1]],
+        mesh.verts[pri.v[2]],
+        mesh.verts[pri.v[3]],
+        mesh.verts[pri.v[4]],
+        mesh.verts[pri.v[5]]
     };
 
-    return priQuality(verts);
+    return priQuality(vp);
 }
 
 double AbstractEvaluator::hexQuality(const Mesh& mesh, const MeshHex& hex) const
 {
-    const glm::dvec3 verts[] = {
-        mesh.vert[hex.v[0]],
-        mesh.vert[hex.v[1]],
-        mesh.vert[hex.v[2]],
-        mesh.vert[hex.v[3]],
-        mesh.vert[hex.v[4]],
-        mesh.vert[hex.v[5]],
-        mesh.vert[hex.v[6]],
-        mesh.vert[hex.v[7]]
+    const glm::dvec3 vp[] = {
+        mesh.verts[hex.v[0]],
+        mesh.verts[hex.v[1]],
+        mesh.verts[hex.v[2]],
+        mesh.verts[hex.v[3]],
+        mesh.verts[hex.v[4]],
+        mesh.verts[hex.v[5]],
+        mesh.verts[hex.v[6]],
+        mesh.verts[hex.v[7]]
     };
 
-    return hexQuality(verts);
+    return hexQuality(vp);
 }
 
 bool AbstractEvaluator::assessMeasureValidy()
 {
     Mesh mesh;
-    mesh.vert.push_back(glm::dvec3(0, 0, 0));
-    mesh.vert.push_back(glm::dvec3(1, 0, 0));
-    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
-    mesh.vert.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
+    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
 
-    mesh.vert.push_back(glm::dvec3(0, 0, 0));
-    mesh.vert.push_back(glm::dvec3(1, 0, 0));
-    mesh.vert.push_back(glm::dvec3(0, 1, 0));
-    mesh.vert.push_back(glm::dvec3(1, 1, 0));
-    mesh.vert.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
-    mesh.vert.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(0, 1, 0));
+    mesh.verts.push_back(glm::dvec3(1, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
+    mesh.verts.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
 
-    mesh.vert.push_back(glm::dvec3(0, 0, 0));
-    mesh.vert.push_back(glm::dvec3(1, 0, 0));
-    mesh.vert.push_back(glm::dvec3(0, 1, 0));
-    mesh.vert.push_back(glm::dvec3(1, 1, 0));
-    mesh.vert.push_back(glm::dvec3(0, 0, 1));
-    mesh.vert.push_back(glm::dvec3(1, 0, 1));
-    mesh.vert.push_back(glm::dvec3(0, 1, 1));
-    mesh.vert.push_back(glm::dvec3(1, 1, 1));
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(0, 1, 0));
+    mesh.verts.push_back(glm::dvec3(1, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0, 0, 1));
+    mesh.verts.push_back(glm::dvec3(1, 0, 1));
+    mesh.verts.push_back(glm::dvec3(0, 1, 1));
+    mesh.verts.push_back(glm::dvec3(1, 1, 1));
 
     const MeshTet tet = MeshTet(0, 1, 2, 3);
     const MeshPri pri = MeshPri(4, 5, 6, 7, 8, 9);
@@ -179,22 +179,22 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
         double& minQuality,
         double& qualityMean)
 {
-    int tetCount = mesh.tetra.size();
-    int priCount = mesh.prism.size();
-    int hexCount = mesh.hexa.size();
+    int tetCount = mesh.tets.size();
+    int priCount = mesh.pris.size();
+    int hexCount = mesh.hexs.size();
     int elemCount = tetCount + priCount + hexCount;
 
     std::vector<double> qualities(elemCount);
     int idx = 0;
 
     for(int i=0; i < tetCount; ++i, ++idx)
-        qualities[idx] = tetQuality(mesh, mesh.tetra[i]);
+        qualities[idx] = tetQuality(mesh, mesh.tets[i]);
 
     for(int i=0; i < priCount; ++i, ++idx)
-        qualities[idx] = priQuality(mesh, mesh.prism[i]);
+        qualities[idx] = priQuality(mesh, mesh.pris[i]);
 
     for(int i=0; i < hexCount; ++i, ++idx)
-        qualities[idx] = hexQuality(mesh, mesh.hexa[i]);
+        qualities[idx] = hexQuality(mesh, mesh.hexs[i]);
 
 
     minQuality = 1.0;
@@ -213,9 +213,9 @@ void AbstractEvaluator::evaluateMeshQualityThread(
             double& minQuality,
             double& qualityMean)
 {
-    int tetCount = mesh.tetra.size();
-    int priCount = mesh.prism.size();
-    int hexCount = mesh.hexa.size();
+    int tetCount = mesh.tets.size();
+    int priCount = mesh.pris.size();
+    int hexCount = mesh.hexs.size();
     int elemCount = tetCount + priCount + hexCount;
 
     vector<future<pair<double, double>>> futures;
@@ -239,13 +239,13 @@ void AbstractEvaluator::evaluateMeshQualityThread(
             int idx = 0;
 
             for(int i=tetBeg; i < tetEnd; ++i, ++idx)
-                qualities[idx] = tetQuality(mesh, mesh.tetra[i]);
+                qualities[idx] = tetQuality(mesh, mesh.tets[i]);
 
             for(int i=priBeg; i < priEnd; ++i, ++idx)
-                qualities[idx] = priQuality(mesh, mesh.prism[i]);
+                qualities[idx] = priQuality(mesh, mesh.pris[i]);
 
             for(int i=hexBeg; i < hexEnd; ++i, ++idx)
-                qualities[idx] = hexQuality(mesh, mesh.hexa[i]);
+                qualities[idx] = hexQuality(mesh, mesh.hexs[i]);
 
             double futureMinQuality = 1.0;
             double futureQualityMean = 0.0;
@@ -281,9 +281,9 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     initializeProgram(mesh);
 
 
-    size_t tetCount = mesh.tetra.size();
-    size_t priCount = mesh.prism.size();
-    size_t hexCount = mesh.hexa.size();
+    size_t tetCount = mesh.tets.size();
+    size_t priCount = mesh.pris.size();
+    size_t hexCount = mesh.hexs.size();
     size_t elemCount = tetCount + priCount + hexCount;
     size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
     size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);

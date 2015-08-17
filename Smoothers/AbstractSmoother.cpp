@@ -70,7 +70,7 @@ void AbstractSmoother::smoothMeshSerial(
         AbstractEvaluator& evaluator)
 {
     _smoothPassId = 0;
-    size_t vertCount = mesh.vert.size();
+    size_t vertCount = mesh.verts.size();
     while(evaluateMeshQualitySerial(mesh, evaluator))
     {
         smoothVertices(mesh, evaluator, 0, vertCount, false);
@@ -86,7 +86,7 @@ void AbstractSmoother::smoothMeshThread(
     // TODO : Use a thread pool
 
     _smoothPassId = 0;
-    size_t vertCount = mesh.vert.size();
+    size_t vertCount = mesh.verts.size();
     while(evaluateMeshQualityThread(mesh, evaluator))
     {
         vector<thread> workers;
@@ -273,7 +273,7 @@ OptimizationPlot AbstractSmoother::benchmark(
 
     // We must make a copy of the vertices in order to
     // restore mesh's vertices after benchmarks.
-    auto verticesBackup = mesh.vert;
+    auto verticesBackup = mesh.verts;
 
     using std::chrono::high_resolution_clock;
     high_resolution_clock::time_point tStart;
@@ -326,7 +326,7 @@ OptimizationPlot AbstractSmoother::benchmark(
             statsVec.push_back(stats);
 
             // Restore mesh vertices' initial position
-            mesh.vert = verticesBackup;
+            mesh.verts = verticesBackup;
             mesh.updateGpuVertices();
         }
     }
