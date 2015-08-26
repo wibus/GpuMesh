@@ -22,8 +22,10 @@ QualityGradientPainter::~QualityGradientPainter()
 
 std::string QualityGradientPainter::generate(int width, int height, int minHeight)
 {
-    Image lutImage(width, height);
+    const string IMAGE_NAME = "QualityGradient";
 
+#if NDEBUG
+    Image lutImage(width, height);
 
     GlProgram lutProg;
     lutProg.addShader(GL_COMPUTE_SHADER,
@@ -52,8 +54,8 @@ std::string QualityGradientPainter::generate(int width, int height, int minHeigh
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glDeleteBuffers(1, &lutBuff);
 
-    const string IMAGE_NAME = "QualityGradient";
     getImageBank().addImage(IMAGE_NAME, lutImage);
+#endif // if Release
 
     return IMAGE_NAME;
 }

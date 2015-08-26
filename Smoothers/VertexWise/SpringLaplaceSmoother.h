@@ -2,10 +2,10 @@
 #define GPUMESH_SPRINGLAPLACESMOOTHER
 
 
-#include "AbstractSmoother.h"
+#include "AbstractVertexWiseSmoother.h"
 
 
-class SpringLaplaceSmoother : public AbstractSmoother
+class SpringLaplaceSmoother : public AbstractVertexWiseSmoother
 {
 public:
     SpringLaplaceSmoother();

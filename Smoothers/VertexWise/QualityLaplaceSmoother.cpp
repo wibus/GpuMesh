@@ -1,13 +1,13 @@
 #include "QualityLaplaceSmoother.h"
 
-#include "SmoothingHelper.h"
+#include "../SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
 
 
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
-    AbstractSmoother({":/shaders/compute/Smoothing/QualityLaplace.glsl"})
+    AbstractVertexWiseSmoother({":/shaders/compute/Smoothing/QualityLaplace.glsl"})
 {
 
 }

@@ -2,10 +2,10 @@
 #define GPUMESH_QUALITYLAPLACESMOOTHER
 
 
-#include "AbstractSmoother.h"
+#include "AbstractVertexWiseSmoother.h"
 
 
-class QualityLaplaceSmoother : public AbstractSmoother
+class QualityLaplaceSmoother : public AbstractVertexWiseSmoother
 {
 public:
     QualityLaplaceSmoother();

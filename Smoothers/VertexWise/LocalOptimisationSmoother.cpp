@@ -1,13 +1,13 @@
 #include "LocalOptimisationSmoother.h"
 
-#include "SmoothingHelper.h"
+#include "../SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
 
 
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
-    AbstractSmoother({":/shaders/compute/Smoothing/LocalOptimisation.glsl"})
+    AbstractVertexWiseSmoother({":/shaders/compute/Smoothing/LocalOptimisation.glsl"})
 {
 
 }

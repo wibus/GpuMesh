@@ -1,13 +1,13 @@
 #include "SpringLaplaceSmoother.h"
 
-#include "SmoothingHelper.h"
+#include "../SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
 
 
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
-    AbstractSmoother({":/shaders/compute/Smoothing/SpringLaplace.glsl"})
+    AbstractVertexWiseSmoother({":/shaders/compute/Smoothing/SpringLaplace.glsl"})
 {
 
 }

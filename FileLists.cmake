@@ -30,13 +30,21 @@ SET(GpuMesh_RENDERERS_HEADERS
     ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.h
     ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.h)
 
+SET(GpuMesh_VERTEXWISE_HEADERS
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/AbstractVertexWiseSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpringLaplaceSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/QualityLaplaceSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/LocalOptimisationSmoother.h)
+
+SET(GpuMesh_ELEMENTWISE_HEADERS
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/AbstractElementWiseSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/GetmeSmoother.h)
+
 SET(GpuMesh_SMOOTHERS_HEADERS
+    ${GpuMesh_VERTEXWISE_HEADERS}
+    ${GpuMesh_ELEMENTWISE_HEADERS}
     ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.h
-    ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/SpringLaplaceSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/LocalOptimisationSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/GetmeSmoother.h)
+    ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h)
 
 SET(GpuMesh_UITABS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.h
@@ -87,13 +95,21 @@ SET(GpuMesh_RENDERERS_SOURCES
     ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.cpp
     ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.cpp)
 
+SET(GpuMesh_VERTEXWISE_SOURCES
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/AbstractVertexWiseSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpringLaplaceSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/QualityLaplaceSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/LocalOptimisationSmoother.cpp)
+
+SET(GpuMesh_ELEMENTWISE_SOURCES
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/AbstractElementWiseSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/GetmeSmoother.cpp)
+
 SET(GpuMesh_SMOOTHERS_SOURCES
+    ${GpuMesh_VERTEXWISE_SOURCES}
+    ${GpuMesh_ELEMENTWISE_SOURCES}
     ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/SpringLaplaceSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/QualityLaplaceSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/LocalOptimisationSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/GetmeSmoother.cpp)
+    ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp)
 
 SET(GpuMesh_UITABS_SOURCES
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.cpp

@@ -15,7 +15,7 @@ class AbstractEvaluator;
 class AbstractSmoother
 {
 public:
-    AbstractSmoother(const std::vector<std::string>& smoothShaders);
+    AbstractSmoother();
     virtual ~AbstractSmoother();
 
     virtual OptionMapDetails availableImplementations() const;
@@ -30,15 +30,15 @@ public:
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
-            AbstractEvaluator& evaluator);
+            AbstractEvaluator& evaluator) = 0;
 
     virtual void smoothMeshThread(
             Mesh& mesh,
-            AbstractEvaluator& evaluator);
+            AbstractEvaluator& evaluator) = 0;
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
-            AbstractEvaluator& evaluator);
+            AbstractEvaluator& evaluator) = 0;
 
 
     // Mesh is garanteed to be reset to initial state after benchmarks
@@ -52,14 +52,10 @@ public:
 
 
 protected:
-    virtual void smoothVertices(
+    virtual void initializeProgram(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            size_t first,
-            size_t last,
-            bool synchronize) = 0;
+            AbstractEvaluator& evaluator) = 0;
 
-    virtual void initializeProgram(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateMeshQualitySerial(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateMeshQualityThread(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateMeshQualityGlsl(Mesh& mesh, AbstractEvaluator& evaluator);
@@ -76,14 +72,6 @@ protected:
 
     std::chrono::high_resolution_clock::time_point _implBeginTimeStamp;
     OptimizationPassVect _currentPassVect;
-
-    bool _initialized;
-    std::string _modelBoundsShader;
-    std::string _shapeMeasureShader;
-    std::vector<std::string> _smoothShaders;
-    cellar::GlProgram _smoothingProgram;
-
-    static const size_t WORKGROUP_SIZE;
 
     typedef std::function<void(Mesh&, AbstractEvaluator&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;

@@ -27,10 +27,10 @@
 #include "Renderers/ScaffoldRenderer.h"
 #include "Renderers/SurfacicRenderer.h"
 #include "Renderers/QualityGradientPainter.h"
-#include "Smoothers/SpringLaplaceSmoother.h"
-#include "Smoothers/QualityLaplaceSmoother.h"
-#include "Smoothers/LocalOptimisationSmoother.h"
-#include "Smoothers/GetmeSmoother.h"
+#include "Smoothers/VertexWise/SpringLaplaceSmoother.h"
+#include "Smoothers/VertexWise/QualityLaplaceSmoother.h"
+#include "Smoothers/VertexWise/LocalOptimisationSmoother.h"
+#include "Smoothers/ElementWise/GetmeSmoother.h"
 
 using namespace std;
 using namespace cellar;

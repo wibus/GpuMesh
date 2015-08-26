@@ -2,10 +2,10 @@
 #define GPUMESH_LOCALOPTIMISATIONSMOOTHER
 
 
-#include "AbstractSmoother.h"
+#include "AbstractVertexWiseSmoother.h"
 
 
-class LocalOptimisationSmoother : public AbstractSmoother
+class LocalOptimisationSmoother : public AbstractVertexWiseSmoother
 {
 public:
     LocalOptimisationSmoother();
