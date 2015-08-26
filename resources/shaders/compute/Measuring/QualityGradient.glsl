@@ -1,9 +1,11 @@
+#version 440
+
 layout (local_size_x = 1, local_size_y = 256, local_size_z = 1) in;
 
 
 uniform float MinHeight; // [0.0, 1.0]
 
-layout(shared, binding = FIRST_FREE_BUFFER_BINDING) buffer Color
+layout(shared, binding = 0) buffer Color
 {
     vec4 colors[];
 };

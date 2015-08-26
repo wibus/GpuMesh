@@ -1,14 +1,10 @@
 #include "GpuMeshCharacter.h"
 
-#include <thread>
-#include <chrono>
 #include <sstream>
 #include <iostream>
 
 #include <GLM/gtx/transform.hpp>
 
-#include <CellarWorkbench/Image/Image.h>
-#include <CellarWorkbench/Image/ImageBank.h>
 #include <CellarWorkbench/Misc/StringUtils.h>
 #include <CellarWorkbench/Misc/Log.h>
 
@@ -30,6 +26,7 @@
 #include "Meshers/CpuParametricMesher.h"
 #include "Renderers/ScaffoldRenderer.h"
 #include "Renderers/SurfacicRenderer.h"
+#include "Renderers/QualityGradientPainter.h"
 #include "Smoothers/SpringLaplaceSmoother.h"
 #include "Smoothers/QualityLaplaceSmoother.h"
 #include "Smoothers/LocalOptimisationSmoother.h"
@@ -122,28 +119,28 @@ void GpuMeshCharacter::enterStage()
     _ups->setHeight(16);
 
     _qualityTitle = play().propTeam2D()->createTextHud();
-    _qualityTitle->setHandlePosition(glm::dvec2(-160, 340));
+    _qualityTitle->setHandlePosition(glm::dvec2(-160, 300));
     _qualityTitle->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
     _qualityTitle->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _qualityTitle->setHeight(20);
     _qualityTitle->setText("Element Quality");
 
     _qualityMax = play().propTeam2D()->createTextHud();
-    _qualityMax->setHandlePosition(glm::dvec2(-125, 308));
+    _qualityMax->setHandlePosition(glm::dvec2(-130, 269));
     _qualityMax->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
     _qualityMax->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _qualityMax->setHeight(16);
     _qualityMax->setText("Max -");
 
     _qualityMin = play().propTeam2D()->createTextHud();
-    _qualityMin->setHandlePosition(glm::dvec2(-125, 92));
+    _qualityMin->setHandlePosition(glm::dvec2(-130, 51));
     _qualityMin->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
     _qualityMin->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _qualityMin->setHeight(16);
     _qualityMin->setText("Min -");
 
     _qualityNeg = play().propTeam2D()->createTextHud();
-    _qualityNeg->setHandlePosition(glm::dvec2(-125, 70));
+    _qualityNeg->setHandlePosition(glm::dvec2(-130, 30));
     _qualityNeg->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
     _qualityNeg->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _qualityNeg->setHeight(16);
@@ -152,47 +149,17 @@ void GpuMeshCharacter::enterStage()
     int LUT_WIDTH = 40;
     int LUT_HEIGHT = 256;
     _qualityLut = play().propTeam2D()->createImageHud();
-    _qualityLut->setHandlePosition(glm::dvec2(-80, 60));
+    _qualityLut->setHandlePosition(glm::dvec2(-90, 20));
     _qualityLut->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
     _qualityLut->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _qualityLut->setSize(glm::dvec2(LUT_WIDTH, LUT_HEIGHT));
 
-    cellar::Image lutImage(LUT_WIDTH, LUT_HEIGHT);
-
-    GLuint lutBuff;
-    glGenBuffers(1, &lutBuff);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lutBuff);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, lutImage.dataSize() * sizeof(GLfloat), nullptr, GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    GlProgram lutProg;
-    lutProg.addShader(GL_COMPUTE_SHADER, {
-        _mesh->meshGeometryShaderName(),
-        ":/shaders/compute/Measuring/QualityGradient.glsl"});
-    lutProg.addShader(GL_COMPUTE_SHADER,
-        ":/shaders/generic/QualityLut.glsl");
-    lutProg.link();
-    lutProg.pushProgram();
-    lutProg.setFloat("MinHeight", 0.15);
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
-        _mesh->firstFreeBufferBinding(), lutBuff);
-    glDispatchCompute(LUT_WIDTH, 1, 1);
-    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-    lutProg.popProgram();
-
-    std::this_thread::sleep_for(chrono::seconds(1));
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lutBuff);
-    GLfloat* data = (GLfloat*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    for(int i=0; i < lutImage.dataSize(); ++i)
-        lutImage.pixels()[i] = uchar(data[i] * 255.0);
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    glDeleteBuffers(1, &lutBuff);
-
-    getImageBank().addImage("QualityGradient", lutImage);
-    _qualityLut->setImageName("QualityGradient");
+    QualityGradientPainter painter;
+    _qualityLut->setImageName(
+        painter.generate(
+            LUT_WIDTH,
+            LUT_HEIGHT,
+            0.15 * LUT_HEIGHT));
 
 
     // Assess evaluators validy

@@ -27,7 +27,8 @@ SET(GpuMesh_MESHERS_HEADERS
 SET(GpuMesh_RENDERERS_HEADERS
     ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.h
     ${GpuMesh_SRC_DIR}/Renderers/ScaffoldRenderer.h
-    ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.h)
+    ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.h
+    ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.h)
 
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.h
@@ -82,7 +83,8 @@ SET(GpuMesh_MESHERS_SOURCES
 SET(GpuMesh_RENDERERS_SOURCES
     ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.cpp
     ${GpuMesh_SRC_DIR}/Renderers/ScaffoldRenderer.cpp
-    ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.cpp)
+    ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.cpp
+    ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.cpp)
 
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.cpp
