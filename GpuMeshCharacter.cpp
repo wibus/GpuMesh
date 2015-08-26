@@ -1,10 +1,14 @@
 #include "GpuMeshCharacter.h"
 
+#include <thread>
+#include <chrono>
 #include <sstream>
 #include <iostream>
 
 #include <GLM/gtx/transform.hpp>
 
+#include <CellarWorkbench/Image/Image.h>
+#include <CellarWorkbench/Image/ImageBank.h>
 #include <CellarWorkbench/Misc/StringUtils.h>
 #include <CellarWorkbench/Misc/Log.h>
 
@@ -51,7 +55,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightAltitude(-glm::pi<float>() * 2.0 / 4.0),
     _lightDistance(1.0),
     _cutAzimuth(0),
-    _cutAltitude(0),
+    _cutAltitude(-glm::pi<double>() / 2.0),
     _cutDistance(0),
     _mesh(new GpuMesh()),
     _availableMeshers("Available Meshers"),
@@ -61,7 +65,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableCameraMen("Available Camera Men"),
     _availableCutTypes("Available Cut Types")
 {
-    _availableMeshers.setDefault("Parametric");
+    _availableMeshers.setDefault("Delaunay");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
@@ -75,7 +79,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
     });
 
-    _availableSmoothers.setDefault("Quality Laplace");
+    _availableSmoothers.setDefault("Local Optimisation");
     _availableSmoothers.setContent({
         {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
@@ -116,6 +120,80 @@ void GpuMeshCharacter::enterStage()
     _ups->setHorizontalAnchor(EHorizontalAnchor::LEFT);
     _ups->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _ups->setHeight(16);
+
+    _qualityTitle = play().propTeam2D()->createTextHud();
+    _qualityTitle->setHandlePosition(glm::dvec2(-160, 340));
+    _qualityTitle->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
+    _qualityTitle->setVerticalAnchor(EVerticalAnchor::BOTTOM);
+    _qualityTitle->setHeight(20);
+    _qualityTitle->setText("Element Quality");
+
+    _qualityMax = play().propTeam2D()->createTextHud();
+    _qualityMax->setHandlePosition(glm::dvec2(-125, 308));
+    _qualityMax->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
+    _qualityMax->setVerticalAnchor(EVerticalAnchor::BOTTOM);
+    _qualityMax->setHeight(16);
+    _qualityMax->setText("Max -");
+
+    _qualityMin = play().propTeam2D()->createTextHud();
+    _qualityMin->setHandlePosition(glm::dvec2(-125, 92));
+    _qualityMin->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
+    _qualityMin->setVerticalAnchor(EVerticalAnchor::BOTTOM);
+    _qualityMin->setHeight(16);
+    _qualityMin->setText("Min -");
+
+    _qualityNeg = play().propTeam2D()->createTextHud();
+    _qualityNeg->setHandlePosition(glm::dvec2(-125, 70));
+    _qualityNeg->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
+    _qualityNeg->setVerticalAnchor(EVerticalAnchor::BOTTOM);
+    _qualityNeg->setHeight(16);
+    _qualityNeg->setText("Neg {");
+
+    int LUT_WIDTH = 40;
+    int LUT_HEIGHT = 256;
+    _qualityLut = play().propTeam2D()->createImageHud();
+    _qualityLut->setHandlePosition(glm::dvec2(-80, 60));
+    _qualityLut->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
+    _qualityLut->setVerticalAnchor(EVerticalAnchor::BOTTOM);
+    _qualityLut->setSize(glm::dvec2(LUT_WIDTH, LUT_HEIGHT));
+
+    cellar::Image lutImage(LUT_WIDTH, LUT_HEIGHT);
+
+    GLuint lutBuff;
+    glGenBuffers(1, &lutBuff);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lutBuff);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, lutImage.dataSize() * sizeof(GLfloat), nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    GlProgram lutProg;
+    lutProg.addShader(GL_COMPUTE_SHADER, {
+        _mesh->meshGeometryShaderName(),
+        ":/shaders/compute/Measuring/QualityGradient.glsl"});
+    lutProg.addShader(GL_COMPUTE_SHADER,
+        ":/shaders/generic/QualityLut.glsl");
+    lutProg.link();
+    lutProg.pushProgram();
+    lutProg.setFloat("MinHeight", 0.15);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+        _mesh->firstFreeBufferBinding(), lutBuff);
+    glDispatchCompute(LUT_WIDTH, 1, 1);
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+    lutProg.popProgram();
+
+    std::this_thread::sleep_for(chrono::seconds(1));
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lutBuff);
+    GLfloat* data = (GLfloat*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for(int i=0; i < lutImage.dataSize(); ++i)
+        lutImage.pixels()[i] = uchar(data[i] * 255.0);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glDeleteBuffers(1, &lutBuff);
+
+    getImageBank().addImage("QualityGradient", lutImage);
+    _qualityLut->setImageName("QualityGradient");
+
 
     // Assess evaluators validy
     for(auto evalName : _availableEvaluators.details().options)

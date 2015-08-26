@@ -161,6 +161,7 @@ SET(GpuMesh_BOUNDARY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
 
 SET(GpuMesh_MEASURING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/QualityGradient.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/TetrahedraEvaluation.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/PrismsEvaluation.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/HexahedraEvaluation.glsl

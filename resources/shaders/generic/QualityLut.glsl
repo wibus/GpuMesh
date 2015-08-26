@@ -7,5 +7,5 @@ vec3 qualityLut(in float q)
         smoothstep(0.5, 0.66, q),
         smoothstep(0.0, 0.15, q) - smoothstep(0.66, 1.0, q));
 
-    return mix(grad, vec3(1.0), q == 0);
+    return mix(grad, vec3(1.0), q <= 0);
 }

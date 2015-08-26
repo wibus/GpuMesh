@@ -41,5 +41,6 @@
         <file>shaders/compute/Boundary/Box.glsl</file>
         <file>shaders/compute/Smoothing/LocalOptimisation.glsl</file>
         <file>shaders/compute/Smoothing/SmoothingHelper.glsl</file>
+        <file>shaders/compute/Measuring/QualityGradient.glsl</file>
     </qresource>
 </RCC>

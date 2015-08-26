@@ -6,6 +6,7 @@
 #include <CellarWorkbench/Camera/CameraManFree.h>
 
 #include <PropRoom2D/Prop/Hud/TextHud.h>
+#include <PropRoom2D/Prop/Hud/ImageHud.h>
 
 #include <Scaena/Play/Character.h>
 
@@ -125,6 +126,11 @@ private:
 
     std::shared_ptr<prop2::TextHud> _fps;
     std::shared_ptr<prop2::TextHud> _ups;
+    std::shared_ptr<prop2::TextHud> _qualityTitle;
+    std::shared_ptr<prop2::TextHud> _qualityNeg;
+    std::shared_ptr<prop2::TextHud> _qualityMin;
+    std::shared_ptr<prop2::TextHud> _qualityMax;
+    std::shared_ptr<prop2::ImageHud> _qualityLut;
 
     OptionMap<std::shared_ptr<AbstractMesher>> _availableMeshers;
     OptionMap<std::shared_ptr<AbstractEvaluator>> _availableEvaluators;
