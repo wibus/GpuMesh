@@ -30,6 +30,7 @@
 #include "Smoothers/SpringLaplaceSmoother.h"
 #include "Smoothers/QualityLaplaceSmoother.h"
 #include "Smoothers/LocalOptimisationSmoother.h"
+#include "Smoothers/GetmeSmoother.h"
 
 using namespace std;
 using namespace cellar;
@@ -81,6 +82,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
         {string("Local Optimisation"), shared_ptr<AbstractSmoother>(new LocalOptimisationSmoother())},
+        {string("GETMe"),              shared_ptr<AbstractSmoother>(new GetmeSmoother())},
     });
 
     _availableRenderers.setDefault("Scaffold");

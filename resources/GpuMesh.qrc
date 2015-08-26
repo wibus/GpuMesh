@@ -42,5 +42,6 @@
         <file>shaders/compute/Smoothing/LocalOptimisation.glsl</file>
         <file>shaders/compute/Smoothing/SmoothingHelper.glsl</file>
         <file>shaders/compute/Measuring/QualityGradient.glsl</file>
+        <file>shaders/compute/Smoothing/GETMe.glsl</file>
     </qresource>
 </RCC>
