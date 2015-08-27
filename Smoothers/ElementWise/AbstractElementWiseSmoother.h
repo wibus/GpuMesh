@@ -31,6 +31,9 @@ protected:
             Mesh& mesh,
             AbstractEvaluator& evaluator) override;
 
+    virtual void updateVertexPositions(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator) = 0;
 
     virtual void smoothTets(
             Mesh& mesh,
