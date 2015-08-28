@@ -13,26 +13,21 @@ public:
     virtual ~GetmeSmoother();
 
 protected:
-    virtual void smoothTets(
-            Mesh& mesh,
+    virtual void smoothTets(Mesh& mesh,
             AbstractEvaluator& evaluator,
             size_t first,
-            size_t last,
-            bool synchronize) override;
+            size_t last) override;
 
-    virtual void smoothPris(
-            Mesh& mesh,
+    virtual void smoothPris(Mesh& mesh,
             AbstractEvaluator& evaluator,
             size_t first,
-            size_t last,
-            bool synchronize) override;
+            size_t last) override;
 
     virtual void smoothHexs(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
             size_t first,
-            size_t last,
-            bool synchronize) override;
+            size_t last) override;
 
 private:
     double _lambda;

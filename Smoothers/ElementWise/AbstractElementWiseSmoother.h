@@ -43,22 +43,19 @@ protected:
             Mesh& mesh,
             AbstractEvaluator& evaluator,
             size_t first,
-            size_t last,
-            bool synchronize) = 0;
+            size_t last) = 0;
 
     virtual void smoothPris(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
             size_t first,
-            size_t last,
-            bool synchronize) = 0;
+            size_t last) = 0;
 
     virtual void smoothHexs(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
             size_t first,
-            size_t last,
-            bool synchronize) = 0;
+            size_t last) = 0;
 
 protected:
     static const size_t WORKGROUP_SIZE;

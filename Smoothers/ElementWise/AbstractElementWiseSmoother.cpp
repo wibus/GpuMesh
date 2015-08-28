@@ -41,9 +41,9 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
     size_t hexCount = mesh.hexs.size();
     while(evaluateMeshQualitySerial(mesh, evaluator))
     {
-        smoothTets(mesh, evaluator, 0, tetCount, false);
-        smoothPris(mesh, evaluator, 0, priCount, false);
-        smoothHexs(mesh, evaluator, 0, hexCount, false);
+        smoothTets(mesh, evaluator, 0, tetCount);
+        smoothPris(mesh, evaluator, 0, priCount);
+        smoothHexs(mesh, evaluator, 0, hexCount);
 
         updateVertexPositions(mesh, evaluator, 0, vertCount);
     }
@@ -89,27 +89,31 @@ void AbstractElementWiseSmoother::smoothMeshThread(
         for(uint t=0; t < coreCountHint; ++t)
         {
             workers.push_back(thread([&, t]() {
+                // Vertex position accumulation
                 if(tetCount > 0)
                 {
                     size_t tetfirst = (tetCount * t) / coreCountHint;
                     size_t tetLast = (tetCount * (t+1)) / coreCountHint;
-                    smoothTets(mesh, evaluator, tetfirst, tetLast, true);
+                    smoothTets(mesh, evaluator, tetfirst, tetLast);
                 }
 
                 if(priCount > 0)
                 {
                     size_t prifirst = (priCount * t) / coreCountHint;
                     size_t priLast = (priCount * (t+1)) / coreCountHint;
-                    smoothPris(mesh, evaluator, prifirst, priLast, true);
+                    smoothPris(mesh, evaluator, prifirst, priLast);
                 }
 
                 if(hexCount > 0)
                 {
                     size_t hexfirst = (hexCount * t) / coreCountHint;
                     size_t hexLast = (hexCount * (t+1)) / coreCountHint;
-                    smoothHexs(mesh, evaluator, hexfirst, hexLast, true);
+                    smoothHexs(mesh, evaluator, hexfirst, hexLast);
                 }
 
+                // Now that vertex new positions were accumulated
+                // We wait for every worker to terminate in order
+                // to start the vertex update step.
                 {
                     std::lock_guard<std::mutex> lk(doneMutex);
                     threadDone[t] = true;
@@ -121,13 +125,14 @@ void AbstractElementWiseSmoother::smoothMeshThread(
                     stepCv.wait(lk, [&](){ return nextStep; });
                 }
 
+                // Vertex position update step
                 size_t vertFirst = (vertCount * t) / coreCountHint;
                 size_t vertLast = (vertCount * (t+1)) / coreCountHint;
                 updateVertexPositions(mesh, evaluator, vertFirst, vertLast);
             }));
         }
 
-        // Wait for thread to finish vertex accumulation
+        // Wait for thread to finish vertex position accumulation
         {
             std::unique_lock<std::mutex> lk(doneMutex);
             doneCv.wait(lk, [&](){
@@ -138,7 +143,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
             });
         }
 
-        // Notify threads to begin vertex update
+        // Notify threads to begin vertex position update
         {
             std::lock_guard<std::mutex> lk(stepMutex);
             nextStep = true;
