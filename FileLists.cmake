@@ -10,7 +10,8 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.h
     ${GpuMesh_SRC_DIR}/DataStructures/Triangle.h
-    ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h)
+    ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h
+    ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.h)
 
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
@@ -75,7 +76,8 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
-    ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp)
+    ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.cpp)
 
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp

@@ -3,6 +3,8 @@
 
 #include "../AbstractSmoother.h"
 
+class IVertexAccum;
+
 
 class AbstractElementWiseSmoother : public AbstractSmoother
 {
@@ -33,7 +35,9 @@ protected:
 
     virtual void updateVertexPositions(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) = 0;
+            AbstractEvaluator& evaluator,
+            size_t first,
+            size_t last);
 
     virtual void smoothTets(
             Mesh& mesh,
@@ -56,8 +60,10 @@ protected:
             size_t last,
             bool synchronize) = 0;
 
-private:
+protected:
     static const size_t WORKGROUP_SIZE;
+
+    IVertexAccum** _vertexAccums;
 };
 
 #endif // GPUMESH_ABSTRACTELEMENTWISESMOOTHER
