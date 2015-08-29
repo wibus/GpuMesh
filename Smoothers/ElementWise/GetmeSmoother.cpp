@@ -202,7 +202,6 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
         size_t first,
         size_t last)
 {
-    /*
     const vector<MeshVert>& verts = mesh.verts;
     const vector<MeshTopo>& topos = mesh.topos;
     const vector<MeshHex>& hexs = mesh.hexs;
@@ -300,5 +299,4 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
         _vertexAccums[vi[6]]->add(vpp[6], weight);
         _vertexAccums[vi[7]]->add(vpp[7], weight);
     }
-    //*/
 }

@@ -16,7 +16,6 @@ public:
 protected:
     virtual void genPipe(Mesh& mesh, size_t vertexCount);
     virtual void genBottle(Mesh& mesh, size_t vertexCount);
-    virtual void genSquish(Mesh& mesh, size_t vertexCount);
 
     virtual void insertStraightRingPipe(
             Mesh& mesh,

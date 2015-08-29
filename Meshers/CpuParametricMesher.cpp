@@ -91,7 +91,6 @@ CpuParametricMesher::CpuParametricMesher() :
     _modelFuncs.setContent({
         {string("Pipe"),   ModelFunc(bind(&CpuParametricMesher::genPipe,   this, _1, _2))},
         {string("Bottle"), ModelFunc(bind(&CpuParametricMesher::genBottle, this, _1, _2))},
-        {string("Squish"), ModelFunc(bind(&CpuParametricMesher::genSquish, this, _1, _2))},
     });
 }
 
@@ -500,56 +499,6 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
         }
 
         lastStackBaseIdx = currStackBaseIdx;
-    }
-}
-
-void CpuParametricMesher::genSquish(Mesh& mesh, size_t vertexCount)
-{
-    double squishRadius = 0.3;
-    double squishHeight = 0.6;
-
-    const int pow1_3 =  glm::pow((double)vertexCount, 1.0/3.0);
-    const int pow1_3_pair = ((pow1_3 + 1) / 2) * 2;
-    const int X_COUNT = pow1_3_pair;
-    const int Y_COUNT = pow1_3_pair;
-    const int Z_COUNT = pow1_3_pair;
-    for(int z=-Z_COUNT/2; z <= Z_COUNT/2; ++z)
-    {
-        for(int y=-Y_COUNT/2; y <= Y_COUNT/2; ++y)
-        {
-            for(int x=-X_COUNT/2; x <= X_COUNT/2; ++x)
-            {
-                glm::dvec2 arm;
-                double radius = glm::max(glm::abs(x), glm::abs(y)) * (2.0 * squishRadius / Y_COUNT);
-                if(radius != 0.0) arm = glm::normalize(glm::dvec2(x, y)) * radius;
-
-                mesh.verts.push_back(glm::dvec3(
-                    arm, z * squishHeight / Z_COUNT));
-            }
-        }
-    }
-
-    const int X_WIDTH = 1;
-    const int Y_WIDTH = X_COUNT + 1;
-    const int Z_WIDTH = (Y_COUNT+1) * Y_WIDTH;
-    for(int z=0; z < Z_COUNT; ++z)
-    {
-        for(int y=0; y< Y_COUNT; ++y)
-        {
-            for(int x=0; x< X_COUNT; ++x)
-            {
-                MeshHex hex(
-                    (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
-                    (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
-                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
-                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
-                    (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
-                    (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
-                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH,
-                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH);
-                mesh.hexs.push_back(hex);
-            }
-        }
     }
 }
 

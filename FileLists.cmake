@@ -23,7 +23,8 @@ SET(GpuMesh_EVALUATORS_HEADERS
 SET(GpuMesh_MESHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.h
     ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.h
-    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.h)
+    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.h
+    ${GpuMesh_SRC_DIR}/Meshers/DebugMesher.h)
 
 SET(GpuMesh_RENDERERS_HEADERS
     ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.h
@@ -89,7 +90,8 @@ SET(GpuMesh_EVALUATORS_SOURCES
 SET(GpuMesh_MESHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.cpp
     ${GpuMesh_SRC_DIR}/Meshers/CpuDelaunayMesher.cpp
-    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.cpp)
+    ${GpuMesh_SRC_DIR}/Meshers/CpuParametricMesher.cpp
+    ${GpuMesh_SRC_DIR}/Meshers/DebugMesher.cpp)
 
 SET(GpuMesh_RENDERERS_SOURCES
     ${GpuMesh_SRC_DIR}/Renderers/AbstractRenderer.cpp

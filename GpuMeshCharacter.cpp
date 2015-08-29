@@ -24,6 +24,7 @@
 #include "Evaluators/VolumeEdgeEvaluator.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
+#include "Meshers/DebugMesher.h"
 #include "Renderers/ScaffoldRenderer.h"
 #include "Renderers/SurfacicRenderer.h"
 #include "Renderers/QualityGradientPainter.h"
@@ -63,10 +64,11 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableCameraMen("Available Camera Men"),
     _availableCutTypes("Available Cut Types")
 {
-    _availableMeshers.setDefault("Delaunay");
+    _availableMeshers.setDefault("Parametric");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
+        {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
     _availableEvaluators.setDefault("Mean Ratio");
@@ -85,7 +87,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("GETMe"),              shared_ptr<AbstractSmoother>(new GetmeSmoother())},
     });
 
-    _availableRenderers.setDefault("Scaffold");
+    _availableRenderers.setDefault("Surfacic");
     _availableRenderers.setContent({
         {string("Scaffold"), shared_ptr<AbstractRenderer>(new ScaffoldRenderer())},
         {string("Surfacic"), shared_ptr<AbstractRenderer>(new SurfacicRenderer())},
