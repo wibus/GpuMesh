@@ -59,6 +59,14 @@ void GetmeSmoother::smoothTets(
             glm::cross(vp[1]-vp[0], vp[0]-vp[2]),
         };
 
+        glm::dvec3 vpp[] = {
+            vp[0] + n[0] * (_lambda / glm::sqrt(glm::length(n[0]))),
+            vp[1] + n[1] * (_lambda / glm::sqrt(glm::length(n[1]))),
+            vp[2] + n[2] * (_lambda / glm::sqrt(glm::length(n[2]))),
+            vp[3] + n[3] * (_lambda / glm::sqrt(glm::length(n[3]))),
+        };
+
+
         double volume =
             glm::determinant(
                 glm::dmat3(
@@ -66,40 +74,34 @@ void GetmeSmoother::smoothTets(
                     vp[1] - vp[3],
                     vp[2] - vp[3]));
 
-        double quality = evaluator.tetQuality(vp);
-
-        vp[0] = vp[0] + _lambda * n[0] / glm::sqrt(glm::length(n[0]));
-        vp[1] = vp[1] + _lambda * n[1] / glm::sqrt(glm::length(n[1]));
-        vp[2] = vp[2] + _lambda * n[2] / glm::sqrt(glm::length(n[2]));
-        vp[3] = vp[3] + _lambda * n[3] / glm::sqrt(glm::length(n[3]));
-
         double volumePrime =
             glm::determinant(
                 glm::dmat3(
-                    vp[0] - vp[3],
-                    vp[1] - vp[3],
-                    vp[2] - vp[3]));
+                    vpp[0] - vpp[3],
+                    vpp[1] - vpp[3],
+                    vpp[2] - vpp[3]));
 
         double absVolumeRation = glm::abs(volume / volumePrime);
         double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
 
-        vp[0] = center + volumeVar * (vp[0] - center);
-        vp[1] = center + volumeVar * (vp[1] - center);
-        vp[2] = center + volumeVar * (vp[2] - center);
-        vp[3] = center + volumeVar * (vp[3] - center);
+        vpp[0] = center + volumeVar * (vpp[0] - center);
+        vpp[1] = center + volumeVar * (vpp[1] - center);
+        vpp[2] = center + volumeVar * (vpp[2] - center);
+        vpp[3] = center + volumeVar * (vpp[3] - center);
 
-        if(topos[vi[0]].isBoundary) vp[0] = (*topos[vi[0]].snapToBoundary)(vp[0]);
-        if(topos[vi[1]].isBoundary) vp[1] = (*topos[vi[1]].snapToBoundary)(vp[1]);
-        if(topos[vi[2]].isBoundary) vp[2] = (*topos[vi[2]].snapToBoundary)(vp[2]);
-        if(topos[vi[3]].isBoundary) vp[3] = (*topos[vi[3]].snapToBoundary)(vp[3]);
+        if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
+        if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
+        if(topos[vi[2]].isBoundary) vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
+        if(topos[vi[3]].isBoundary) vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
 
-        double qualityPrime = evaluator.tetQuality(vp);
+        double quality = evaluator.tetQuality(vp);
+        double qualityPrime = evaluator.tetQuality(vpp);
         double weight = qualityPrime / quality;
 
-        _vertexAccums[tet[0]]->add(vp[0], weight);
-        _vertexAccums[tet[1]]->add(vp[1], weight);
-        _vertexAccums[tet[2]]->add(vp[2], weight);
-        _vertexAccums[tet[3]]->add(vp[3], weight);
+        _vertexAccums[tet[0]]->add(vpp[0], weight);
+        _vertexAccums[tet[1]]->add(vpp[1], weight);
+        _vertexAccums[tet[2]]->add(vpp[2], weight);
+        _vertexAccums[tet[3]]->add(vpp[3], weight);
     }
 }
 
@@ -109,7 +111,90 @@ void GetmeSmoother::smoothPris(
         size_t first,
         size_t last)
 {
+    const vector<MeshVert>& verts = mesh.verts;
+    const vector<MeshTopo>& topos = mesh.topos;
+    const vector<MeshPri>& pris = mesh.pris;
 
+    for(int e = first; e < last; ++e)
+    {
+        const MeshPri& pri = pris[e];
+
+        uint vi[] = {
+            pri.v[0],
+            pri.v[1],
+            pri.v[2],
+            pri.v[3],
+            pri.v[4],
+            pri.v[5],
+        };
+
+        glm::dvec3 vp[] = {
+            verts[vi[0]],
+            verts[vi[1]],
+            verts[vi[2]],
+            verts[vi[3]],
+            verts[vi[4]],
+            verts[vi[5]],
+        };
+
+        glm::dvec3 aux[] = {
+            (vp[0] + vp[2] + vp[4]) / 3.0,
+            (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0,
+            (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0,
+            (vp[2] + vp[3] + vp[4] + vp[5]) / 4.0,
+            (vp[1] + vp[3] + vp[5]) / 3.0,
+        };
+
+        glm::dvec3 n[] = {
+            glm::cross(aux[2] - aux[0], aux[1] - aux[0]),
+            glm::cross(aux[1] - aux[4], aux[2] - aux[4]),
+            glm::cross(aux[3] - aux[0], aux[2] - aux[0]),
+            glm::cross(aux[2] - aux[4], aux[3] - aux[4]),
+            glm::cross(aux[1] - aux[0], aux[3] - aux[0]),
+            glm::cross(aux[3] - aux[4], aux[1] - aux[4]),
+        };
+
+        double t = (4.0/5.0) * (1.0 - glm::pow(4.0/39.0, 0.25) * _lambda);
+        double it = 1.0 - t;
+        glm::dvec3 bases[] = {
+            it * aux[0] + t * (aux[1] + aux[2]) / 2.0,
+            it * aux[4] + t * (aux[1] + aux[2]) / 2.0,
+            it * aux[0] + t * (aux[2] + aux[3]) / 2.0,
+            it * aux[4] + t * (aux[2] + aux[3]) / 2.0,
+            it * aux[0] + t * (aux[1] + aux[3]) / 2.0,
+            it * aux[4] + t * (aux[1] + aux[3]) / 2.0,
+        };
+
+
+        // New positions
+        glm::dvec3 vpp[] = {
+            bases[0] + n[0] * (_lambda / glm::sqrt(glm::length(n[0]))),
+            bases[1] + n[1] * (_lambda / glm::sqrt(glm::length(n[1]))),
+            bases[2] + n[2] * (_lambda / glm::sqrt(glm::length(n[2]))),
+            bases[3] + n[3] * (_lambda / glm::sqrt(glm::length(n[3]))),
+            bases[4] + n[4] * (_lambda / glm::sqrt(glm::length(n[4]))),
+            bases[5] + n[5] * (_lambda / glm::sqrt(glm::length(n[5]))),
+        };
+
+        if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
+        if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
+        if(topos[vi[2]].isBoundary) vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
+        if(topos[vi[3]].isBoundary) vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
+        if(topos[vi[4]].isBoundary) vpp[4] = (*topos[vi[4]].snapToBoundary)(vpp[4]);
+        if(topos[vi[5]].isBoundary) vpp[5] = (*topos[vi[5]].snapToBoundary)(vpp[5]);
+
+
+        double quality = evaluator.priQuality(vp);
+        double qualityPrime = evaluator.priQuality(vpp);
+        double weight = qualityPrime / quality;
+
+        _vertexAccums[vi[0]]->add(vpp[0], weight);
+        _vertexAccums[vi[1]]->add(vpp[1], weight);
+        _vertexAccums[vi[2]]->add(vpp[2], weight);
+        _vertexAccums[vi[3]]->add(vpp[3], weight);
+        _vertexAccums[vi[4]]->add(vpp[4], weight);
+        _vertexAccums[vi[5]]->add(vpp[5], weight);
+    }
 }
 
 void GetmeSmoother::smoothHexs(Mesh& mesh,
@@ -117,6 +202,7 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
         size_t first,
         size_t last)
 {
+    /*
     const vector<MeshVert>& verts = mesh.verts;
     const vector<MeshTopo>& topos = mesh.topos;
     const vector<MeshHex>& hexs = mesh.hexs;
@@ -147,7 +233,7 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
             verts[vi[7]],
         };
 
-        glm::dvec3 oct[] = {
+        glm::dvec3 aux[] = {
             (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0,
             (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0,
             (vp[1] + vp[3] + vp[5] + vp[7]) / 4.0,
@@ -157,57 +243,62 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
         };
 
         glm::dvec3 n[] = {
-            glm::cross(oct[1] - oct[0], oct[4] - oct[0]),
-            glm::cross(oct[2] - oct[0], oct[1] - oct[0]),
-            glm::cross(oct[4] - oct[0], oct[3] - oct[0]),
-            glm::cross(oct[3] - oct[0], oct[2] - oct[0]),
-            glm::cross(oct[4] - oct[5], oct[1] - oct[5]),
-            glm::cross(oct[1] - oct[5], oct[2] - oct[5]),
-            glm::cross(oct[3] - oct[5], oct[4] - oct[5]),
-            glm::cross(oct[2] - oct[5], oct[3] - oct[5]),
+            glm::cross(aux[1] - aux[0], aux[4] - aux[0]),
+            glm::cross(aux[2] - aux[0], aux[1] - aux[0]),
+            glm::cross(aux[4] - aux[0], aux[3] - aux[0]),
+            glm::cross(aux[3] - aux[0], aux[2] - aux[0]),
+            glm::cross(aux[4] - aux[5], aux[1] - aux[5]),
+            glm::cross(aux[1] - aux[5], aux[2] - aux[5]),
+            glm::cross(aux[3] - aux[5], aux[4] - aux[5]),
+            glm::cross(aux[2] - aux[5], aux[3] - aux[5]),
         };
 
-        glm::dvec3 c[] = {
-            (oct[0] + oct[1] + oct[4]) / 3.0,
-            (oct[0] + oct[1] + oct[2]) / 3.0,
-            (oct[0] + oct[3] + oct[4]) / 3.0,
-            (oct[0] + oct[2] + oct[3]) / 3.0,
-            (oct[1] + oct[4] + oct[5]) / 3.0,
-            (oct[1] + oct[2] + oct[5]) / 3.0,
-            (oct[3] + oct[4] + oct[5]) / 3.0,
-            (oct[2] + oct[3] + oct[5]) / 3.0,
+        glm::dvec3 bases[] = {
+            (aux[0] + aux[1] + aux[4]) / 3.0,
+            (aux[0] + aux[1] + aux[2]) / 3.0,
+            (aux[0] + aux[3] + aux[4]) / 3.0,
+            (aux[0] + aux[2] + aux[3]) / 3.0,
+            (aux[1] + aux[4] + aux[5]) / 3.0,
+            (aux[1] + aux[2] + aux[5]) / 3.0,
+            (aux[3] + aux[4] + aux[5]) / 3.0,
+            (aux[2] + aux[3] + aux[5]) / 3.0,
         };
+
+
+        // New positions
+        glm::dvec3 vpp[] = {
+            bases[0] + n[0] * (_lambda / glm::sqrt(glm::length(n[0]))),
+            bases[1] + n[1] * (_lambda / glm::sqrt(glm::length(n[1]))),
+            bases[2] + n[2] * (_lambda / glm::sqrt(glm::length(n[2]))),
+            bases[3] + n[3] * (_lambda / glm::sqrt(glm::length(n[3]))),
+            bases[4] + n[4] * (_lambda / glm::sqrt(glm::length(n[4]))),
+            bases[5] + n[5] * (_lambda / glm::sqrt(glm::length(n[5]))),
+            bases[6] + n[6] * (_lambda / glm::sqrt(glm::length(n[6]))),
+            bases[7] + n[7] * (_lambda / glm::sqrt(glm::length(n[7]))),
+        };
+
+        if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
+        if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
+        if(topos[vi[2]].isBoundary) vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
+        if(topos[vi[3]].isBoundary) vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
+        if(topos[vi[4]].isBoundary) vpp[4] = (*topos[vi[4]].snapToBoundary)(vpp[4]);
+        if(topos[vi[5]].isBoundary) vpp[5] = (*topos[vi[5]].snapToBoundary)(vpp[5]);
+        if(topos[vi[6]].isBoundary) vpp[6] = (*topos[vi[6]].snapToBoundary)(vpp[6]);
+        if(topos[vi[7]].isBoundary) vpp[7] = (*topos[vi[7]].snapToBoundary)(vpp[7]);
+
 
         double quality = evaluator.hexQuality(vp);
-
-        vp[0] = c[0] + _lambda * n[0] / glm::sqrt(glm::length(n[0]));
-        vp[1] = c[1] + _lambda * n[1] / glm::sqrt(glm::length(n[1]));
-        vp[2] = c[2] + _lambda * n[2] / glm::sqrt(glm::length(n[2]));
-        vp[3] = c[3] + _lambda * n[3] / glm::sqrt(glm::length(n[3]));
-        vp[4] = c[4] + _lambda * n[4] / glm::sqrt(glm::length(n[4]));
-        vp[5] = c[5] + _lambda * n[5] / glm::sqrt(glm::length(n[5]));
-        vp[6] = c[6] + _lambda * n[6] / glm::sqrt(glm::length(n[6]));
-        vp[7] = c[7] + _lambda * n[7] / glm::sqrt(glm::length(n[7]));
-
-        if(topos[vi[0]].isBoundary) vp[0] = (*topos[vi[0]].snapToBoundary)(vp[0]);
-        if(topos[vi[1]].isBoundary) vp[1] = (*topos[vi[1]].snapToBoundary)(vp[1]);
-        if(topos[vi[2]].isBoundary) vp[2] = (*topos[vi[2]].snapToBoundary)(vp[2]);
-        if(topos[vi[3]].isBoundary) vp[3] = (*topos[vi[3]].snapToBoundary)(vp[3]);
-        if(topos[vi[4]].isBoundary) vp[4] = (*topos[vi[4]].snapToBoundary)(vp[4]);
-        if(topos[vi[5]].isBoundary) vp[5] = (*topos[vi[5]].snapToBoundary)(vp[5]);
-        if(topos[vi[6]].isBoundary) vp[6] = (*topos[vi[6]].snapToBoundary)(vp[6]);
-        if(topos[vi[7]].isBoundary) vp[7] = (*topos[vi[7]].snapToBoundary)(vp[7]);
-
         double qualityPrime = evaluator.hexQuality(vp);
         double weight = qualityPrime / quality;
 
-        _vertexAccums[vi[0]]->add(vp[0], weight);
-        _vertexAccums[vi[1]]->add(vp[1], weight);
-        _vertexAccums[vi[2]]->add(vp[2], weight);
-        _vertexAccums[vi[3]]->add(vp[3], weight);
-        _vertexAccums[vi[4]]->add(vp[4], weight);
-        _vertexAccums[vi[5]]->add(vp[5], weight);
-        _vertexAccums[vi[6]]->add(vp[6], weight);
-        _vertexAccums[vi[7]]->add(vp[7], weight);
+        _vertexAccums[vi[0]]->add(vpp[0], weight);
+        _vertexAccums[vi[1]]->add(vpp[1], weight);
+        _vertexAccums[vi[2]]->add(vpp[2], weight);
+        _vertexAccums[vi[3]]->add(vpp[3], weight);
+        _vertexAccums[vi[4]]->add(vpp[4], weight);
+        _vertexAccums[vi[5]]->add(vpp[5], weight);
+        _vertexAccums[vi[6]]->add(vpp[6], weight);
+        _vertexAccums[vi[7]]->add(vpp[7], weight);
     }
+    //*/
 }
