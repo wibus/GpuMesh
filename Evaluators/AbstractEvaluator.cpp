@@ -288,7 +288,15 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
     size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
 
-
+    // Workgroup integer accum VS. Mesh float accum for mean quality computation
+    //
+    //    Using atomic integer operations on an array (one int per workgroup)
+    // to compute mesh mean quality is faster than using a single floating point
+    // variable updated by all the invocations.
+    //
+    //    Not to metion that using a single float accumulator gives inacurate
+    // results while the workgroup specific integer accumulators gives the
+    // exact same result a the double floating point CPU computations.
     std::vector<GLint> qualBuff(1 + workgroupCount, 0);
     qualBuff[0] = GLint(MAX_INTEGER_VALUE);
     size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
