@@ -22,7 +22,6 @@
         <file>shaders/fragment/ScaffoldJoint.frag</file>
         <file>shaders/vertex/Wireframe.vert</file>
         <file>shaders/fragment/Wireframe.frag</file>
-        <file>shaders/compute/Smoothing/QualityLaplace.glsl</file>
         <file>shaders/compute/Boundary/ElbowPipe.glsl</file>
         <file>shaders/compute/Measuring/SimultaneousEvaluation.glsl</file>
         <file>shaders/compute/Measuring/TetrahedraEvaluation.glsl</file>
@@ -32,16 +31,19 @@
         <file>shaders/compute/Quality/VolumeEdge.glsl</file>
         <file>shaders/compute/Quality/InsphereEdge.glsl</file>
         <file>shaders/compute/Mesh.glsl</file>
-        <file>shaders/compute/Smoothing/SpringLaplace.glsl</file>
         <file>shaders/compute/Quality/MeanRatio.glsl</file>
         <file>shaders/compute/Quality/QualityInterface.glsl</file>
         <file>shaders/compute/Measuring/StatisticsReduction.glsl</file>
         <file>shaders/compute/Boundary/Sphere.glsl</file>
         <file>shaders/compute/Boundary/None.glsl</file>
         <file>shaders/compute/Boundary/Box.glsl</file>
-        <file>shaders/compute/Smoothing/LocalOptimisation.glsl</file>
         <file>shaders/compute/Smoothing/SmoothingHelper.glsl</file>
-        <file>shaders/compute/Measuring/QualityGradient.glsl</file>
-        <file>shaders/compute/Smoothing/GETMe.glsl</file>
+        <file>shaders/compute/Rendering/QualityGradient.glsl</file>
+        <file>shaders/compute/Smoothing/VertexWise/VertexWise.glsl</file>
+        <file>shaders/compute/Smoothing/VertexWise/SpringLaplace.glsl</file>
+        <file>shaders/compute/Smoothing/VertexWise/QualityLaplace.glsl</file>
+        <file>shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl</file>
+        <file>shaders/compute/Smoothing/ElementWise/GETMe.glsl</file>
+        <file>shaders/compute/Smoothing/ElementWise/ElementWise.glsl</file>
     </qresource>
 </RCC>

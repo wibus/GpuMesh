@@ -7,7 +7,8 @@ using namespace std;
 
 
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
-    AbstractVertexWiseSmoother({":/shaders/compute/Smoothing/QualityLaplace.glsl"})
+    AbstractVertexWiseSmoother(DISPATCH_MODE_CLUSTER,
+        {":/shaders/compute/Smoothing/VertexWise/QualityLaplace.glsl"})
 {
 
 }

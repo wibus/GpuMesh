@@ -10,10 +10,14 @@ using namespace cellar;
 
 
 const size_t AbstractVertexWiseSmoother::WORKGROUP_SIZE = 256;
+const int AbstractVertexWiseSmoother::DISPATCH_MODE_CLUSTER = 0;
+const int AbstractVertexWiseSmoother::DISPATCH_MODE_SCATTER = 1;
 
 AbstractVertexWiseSmoother::AbstractVertexWiseSmoother(
+        int dispatchMode,
         const std::vector<std::string>& smoothShaders) :
     _initialized(false),
+    _dispatchMode(dispatchMode),
     _smoothShaders(smoothShaders)
 {
 
@@ -84,6 +88,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     _smoothPassId = 0;
     _smoothingProgram.pushProgram();
     _smoothingProgram.setFloat("MoveCoeff", _moveFactor);
+    _smoothingProgram.setInt("DispatchMode", _dispatchMode);
     mesh.bindShaderStorageBuffers();
     const int vertCount = mesh.vertCount();
     while(evaluateMeshQualityGlsl(mesh, evaluator))
@@ -126,6 +131,9 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         SmoothingHelper::shaderName().c_str()});
+    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Smoothing/VertexWise/VertexWise.glsl"});
     for(const string& shader : _smoothShaders)
     {
         _smoothingProgram.addShader(GL_COMPUTE_SHADER, {

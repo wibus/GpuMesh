@@ -29,7 +29,7 @@ std::string QualityGradientPainter::generate(int width, int height, int minHeigh
 
     GlProgram lutProg;
     lutProg.addShader(GL_COMPUTE_SHADER,
-        ":/shaders/compute/Measuring/QualityGradient.glsl");
+        ":/shaders/compute/Rendering/QualityGradient.glsl");
     lutProg.addShader(GL_COMPUTE_SHADER,
         ":/shaders/generic/QualityLut.glsl");
     lutProg.link();

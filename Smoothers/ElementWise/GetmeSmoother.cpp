@@ -10,7 +10,8 @@ using namespace std;
 
 
 GetmeSmoother::GetmeSmoother() :
-    AbstractElementWiseSmoother({":/shader/compute/Smoothing/GETMe.glsl"}),
+    AbstractElementWiseSmoother({
+        ":/shader/compute/Smoothing/VertexWise/GETMe.glsl"}),
     _lambda(0.78)
 {
 

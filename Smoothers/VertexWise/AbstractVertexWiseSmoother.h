@@ -7,7 +7,9 @@
 class AbstractVertexWiseSmoother : public AbstractSmoother
 {
 protected:
-    AbstractVertexWiseSmoother(const std::vector<std::string>& smoothShaders);
+    AbstractVertexWiseSmoother(
+            int dispatchMode,
+            const std::vector<std::string>& smoothShaders);
 
 public:
     ~AbstractVertexWiseSmoother();
@@ -39,8 +41,13 @@ protected:
             bool synchronize) = 0;
 
 
+    static const int DISPATCH_MODE_CLUSTER;
+    static const int DISPATCH_MODE_SCATTER;
+
+
 private:
     bool _initialized;
+    int _dispatchMode;
     std::string _modelBoundsShader;
     std::string _shapeMeasureShader;
     std::vector<std::string> _smoothShaders;

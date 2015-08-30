@@ -185,7 +185,6 @@ SET(GpuMesh_BOUNDARY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
 
 SET(GpuMesh_MEASURING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/QualityGradient.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/TetrahedraEvaluation.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/PrismsEvaluation.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/HexahedraEvaluation.glsl
@@ -199,17 +198,29 @@ SET(GpuMesh_QUALITY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Quality/SolidAngle.glsl
     ${GpuMesh_SHADER_DIR}/compute/Quality/VolumeEdge.glsl)
 
+SET(GpuMesh_RENDERING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Rendering/QualityGradient.glsl)
+
+SET(GpuMesh_ELEMENTWISE_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/ElementWise.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/GETMe.glsl)
+
+SET(GpuMesh_VERTEXWISE_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/VertexWise.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/SpringLaplace.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/QualityLaplace.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/LocalOptimisation.glsl)
+
 SET(GpuMesh_SMOOTHING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/SmoothingHelper.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/SpringLaplace.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/QualityLaplace.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/LocalOptimisation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/GETMe.glsl)
+    ${GpuMesh_ELEMENTWISE_SHADERS}
+    ${GpuMesh_VERTEXWISE_SHADERS}
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/SmoothingHelper.glsl)
 
 
 SET(GpuMesh_COMPUTE_SHADERS
     ${GpuMesh_BOUNDARY_SHADERS}
     ${GpuMesh_MEASURING_SHADERS}
+    ${GpuMesh_RENDERING_SHADERS}
     ${GpuMesh_QUALITY_SHADERS}
     ${GpuMesh_SMOOTHING_SHADERS}
     ${GpuMesh_SHADER_DIR}/compute/Mesh.glsl)
