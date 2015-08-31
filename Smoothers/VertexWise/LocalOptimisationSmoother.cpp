@@ -7,7 +7,8 @@ using namespace std;
 
 
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
-    AbstractVertexWiseSmoother(DISPATCH_MODE_SCATTER,
+    AbstractVertexWiseSmoother(
+        SmoothingHelper::DISPATCH_MODE_SCATTER,
         {":/shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl"})
 {
 

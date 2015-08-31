@@ -9,6 +9,7 @@ float computeLocalElementSize(in uint vId);
 float computePatchQuality(in uint vId);
 
 
+// ENTRY POINT //
 void smoothVertex(uint vId)
 {
     // Compute local element size

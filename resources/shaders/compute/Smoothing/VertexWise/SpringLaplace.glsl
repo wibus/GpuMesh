@@ -8,6 +8,7 @@ vec3 snapToBoundary(int boundaryID, vec3 pos);
 vec3 computePatchCenter(in uint vId);
 
 
+// ENTRY POINT //
 void smoothVertex(uint vId)
 {
     vec3 patchCenter = computePatchCenter(vId);

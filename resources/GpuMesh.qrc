@@ -39,11 +39,13 @@
         <file>shaders/compute/Boundary/Box.glsl</file>
         <file>shaders/compute/Smoothing/SmoothingHelper.glsl</file>
         <file>shaders/compute/Rendering/QualityGradient.glsl</file>
-        <file>shaders/compute/Smoothing/VertexWise/VertexWise.glsl</file>
         <file>shaders/compute/Smoothing/VertexWise/SpringLaplace.glsl</file>
         <file>shaders/compute/Smoothing/VertexWise/QualityLaplace.glsl</file>
         <file>shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl</file>
         <file>shaders/compute/Smoothing/ElementWise/GETMe.glsl</file>
-        <file>shaders/compute/Smoothing/ElementWise/ElementWise.glsl</file>
+        <file>shaders/compute/Smoothing/VertexWise/SmoothVertices.glsl</file>
+        <file>shaders/compute/Smoothing/ElementWise/SmoothElements.glsl</file>
+        <file>shaders/compute/Smoothing/ElementWise/UpdateVertices.glsl</file>
+        <file>shaders/compute/Smoothing/ElementWise/VertexAccum.glsl</file>
     </qresource>
 </RCC>

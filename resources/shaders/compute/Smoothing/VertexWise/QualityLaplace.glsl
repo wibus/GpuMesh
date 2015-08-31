@@ -1,5 +1,7 @@
 uniform float MoveCoeff;
 
+const uint PROPOSITION_COUNT = 4;
+
 
 // Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
@@ -9,9 +11,7 @@ vec3 computePatchCenter(in uint vId);
 float computePatchQuality(in uint vId);
 
 
-const uint PROPOSITION_COUNT = 4;
-
-
+// ENTRY POINT //
 void smoothVertex(uint vId)
 {
     // Compute patch center

@@ -202,11 +202,13 @@ SET(GpuMesh_RENDERING_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Rendering/QualityGradient.glsl)
 
 SET(GpuMesh_ELEMENTWISE_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/ElementWise.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/SmoothElements.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/UpdateVertices.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/VertexAccum.glsl
     ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/GETMe.glsl)
 
 SET(GpuMesh_VERTEXWISE_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/VertexWise.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/SmoothVertices.glsl
     ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/SpringLaplace.glsl
     ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/QualityLaplace.glsl
     ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/LocalOptimisation.glsl)

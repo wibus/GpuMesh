@@ -10,8 +10,6 @@ using namespace cellar;
 
 
 const size_t AbstractVertexWiseSmoother::WORKGROUP_SIZE = 256;
-const int AbstractVertexWiseSmoother::DISPATCH_MODE_CLUSTER = 0;
-const int AbstractVertexWiseSmoother::DISPATCH_MODE_SCATTER = 1;
 
 AbstractVertexWiseSmoother::AbstractVertexWiseSmoother(
         int dispatchMode,
@@ -85,18 +83,24 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     mesh.updateGpuVertices();
 
 
-    _smoothPassId = 0;
     _smoothingProgram.pushProgram();
     _smoothingProgram.setFloat("MoveCoeff", _moveFactor);
     _smoothingProgram.setInt("DispatchMode", _dispatchMode);
-    mesh.bindShaderStorageBuffers();
-    const int vertCount = mesh.vertCount();
+    _smoothingProgram.popProgram();
+
+    size_t vertCount = mesh.verts.size();
+    size_t workgroupCount = glm::ceil(vertCount / double(WORKGROUP_SIZE));
+
+    _smoothPassId = 0;
     while(evaluateMeshQualityGlsl(mesh, evaluator))
     {
-        glDispatchCompute(glm::ceil(vertCount / double(WORKGROUP_SIZE)), 1, 1);
+        mesh.bindShaderStorageBuffers();
+
+        _smoothingProgram.pushProgram();
+        glDispatchCompute(workgroupCount, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        _smoothingProgram.popProgram();
     }
-    _smoothingProgram.popProgram();
 
 
     // Fetch new vertices' position
@@ -114,7 +118,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
 
 
     getLog().postMessage(new Message('I', false,
-        "Initializing smoothing compute shader", "AbstractSmoother"));
+        "Initializing smoothing compute shader", "AbstractVertexWiseSmoother"));
 
     _modelBoundsShader = mesh.modelBoundsShaderName();
     _shapeMeasureShader = evaluator.shapeMeasureShader();
@@ -133,7 +137,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
         SmoothingHelper::shaderName().c_str()});
     _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Smoothing/VertexWise/VertexWise.glsl"});
+        ":/shaders/compute/Smoothing/VertexWise/SmoothVertices.glsl"});
     for(const string& shader : _smoothShaders)
     {
         _smoothingProgram.addShader(GL_COMPUTE_SHADER, {

@@ -430,6 +430,8 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
 
 
     // Shader storage quality blocks
+    glDeleteBuffers(1, &_qualSsbo);
+    _qualSsbo = 0;
     glGenBuffers(1, &_qualSsbo);
 
 

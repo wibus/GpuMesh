@@ -9,7 +9,9 @@ class IVertexAccum;
 class AbstractElementWiseSmoother : public AbstractSmoother
 {
 protected:
-    AbstractElementWiseSmoother(const std::vector<std::string>& smoothShaders);
+    AbstractElementWiseSmoother(
+            int dispatchMode,
+            const std::vector<std::string>& smoothShaders);
 
 public:
     ~AbstractElementWiseSmoother();
@@ -60,7 +62,16 @@ protected:
 protected:
     static const size_t WORKGROUP_SIZE;
 
+    bool _initialized;
+    int _dispatchMode;
+    std::string _modelBoundsShader;
+    std::string _shapeMeasureShader;
+    std::vector<std::string> _smoothShaders;
+    cellar::GlProgram _smoothingProgram;
+    cellar::GlProgram _updateProgram;
+
     IVertexAccum** _vertexAccums;
+    GLuint _accumSsbo;
 };
 
 #endif // GPUMESH_ABSTRACTELEMENTWISESMOOTHER

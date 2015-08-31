@@ -25,7 +25,7 @@ NotThreadSafeVertexAccum::~NotThreadSafeVertexAccum()
 
 }
 
-void NotThreadSafeVertexAccum::add(const glm::dvec3 pos, double weight)
+void NotThreadSafeVertexAccum::addPosition(const glm::dvec3 pos, double weight)
 {
     _posAccum += pos * weight;
     _weightAccum += weight;
@@ -41,6 +41,12 @@ bool NotThreadSafeVertexAccum::assignAverage(glm::dvec3& pos) const
     return false;
 }
 
+void NotThreadSafeVertexAccum::reinit()
+{
+    _posAccum = glm::dvec3();
+    _weightAccum = 0.0;
+}
+
 
 ThreadSafeVertexAccum::ThreadSafeVertexAccum() :
     _posAccum(),
@@ -54,7 +60,7 @@ ThreadSafeVertexAccum::~ThreadSafeVertexAccum()
 
 }
 
-void ThreadSafeVertexAccum::add(const glm::dvec3 pos, double weight)
+void ThreadSafeVertexAccum::addPosition(const glm::dvec3 pos, double weight)
 {
     _mutex.lock();
     _posAccum += pos * weight;
@@ -73,4 +79,10 @@ bool ThreadSafeVertexAccum::assignAverage(glm::dvec3& pos) const
     }
     _mutex.unlock();
     return false;
+}
+
+void ThreadSafeVertexAccum::reinit()
+{
+    _posAccum = glm::dvec3();
+    _weightAccum = 0.0;
 }

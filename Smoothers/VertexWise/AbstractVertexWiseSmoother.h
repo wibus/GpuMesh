@@ -41,19 +41,17 @@ protected:
             bool synchronize) = 0;
 
 
-    static const int DISPATCH_MODE_CLUSTER;
-    static const int DISPATCH_MODE_SCATTER;
 
 
 private:
+    static const size_t WORKGROUP_SIZE;
+
     bool _initialized;
     int _dispatchMode;
     std::string _modelBoundsShader;
     std::string _shapeMeasureShader;
     std::vector<std::string> _smoothShaders;
     cellar::GlProgram _smoothingProgram;
-
-    static const size_t WORKGROUP_SIZE;
 };
 
 #endif // GPUMESH_ABSTRACTVERTEXWISESMOOTHER

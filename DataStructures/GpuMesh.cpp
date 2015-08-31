@@ -76,7 +76,7 @@ void GpuMesh::compileTopoly()
 void GpuMesh::updateGpuTopoly()
 {
     // Send mesh topology
-    int nbVert = vertCount();
+    size_t nbVert = verts.size();
     std::vector<GpuTopo> topoBuff(nbVert);
     std::vector<GpuNeigVert> neigVertBuff;
     std::vector<GpuNeigElem> neigElemBuff;
@@ -164,7 +164,7 @@ void GpuMesh::updateGpuTopoly()
 
 void GpuMesh::updateGpuVertices()
 {
-    int nbVert = vertCount();
+    size_t nbVert = verts.size();
     std::vector<GpuVert> buff(nbVert);
     size_t size = sizeof(decltype(buff.front())) * nbVert;
 
@@ -178,7 +178,7 @@ void GpuMesh::updateGpuVertices()
 
 void GpuMesh::updateCpuVertices()
 {
-    int nbVert = vertCount();
+    size_t nbVert = verts.size();
     std::vector<GpuVert> buff(nbVert);
     size_t size = sizeof(decltype(buff.front())) * nbVert;
 

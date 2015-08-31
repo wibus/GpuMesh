@@ -187,9 +187,6 @@ public:
     Mesh();
     virtual ~Mesh();
 
-    unsigned int vertCount() const;
-    unsigned int elemCount() const;
-
     virtual void clear();
 
     virtual void compileTopoly();
@@ -220,19 +217,5 @@ protected:
 
     std::string _modelBoundsShaderName;
 };
-
-
-
-
-// IMPLEMENTATION //
-inline unsigned int Mesh::vertCount() const
-{
-    return verts.size();
-}
-
-inline unsigned int Mesh::elemCount() const
-{
-    return tets.size() + pris.size() + hexs.size();
-}
 
 #endif // GPUMESH_MESH

@@ -1,5 +1,11 @@
 #version 440
 
+////////////////
+// Extensions //
+////////////////
+#extension GL_NV_shader_atomic_float : enable
+
+
 ////////////////////
 // Mesh tructures //
 ////////////////////

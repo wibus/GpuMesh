@@ -1,9 +1,67 @@
+// Element quality interface
 float tetQuality(in Tet tet);
 float priQuality(in Pri pri);
 float hexQuality(in Hex hex);
 
 
-bool isSmoothable(uint vId)
+// Worgroup invocation disptach mode
+uniform int DispatchMode = 0;
+const int DISPATCH_MODE_CLUSTER = 0;
+const int DISPATCH_MODE_SCATTER = 1;
+
+uint getInvocationVertexId()
+{
+    uint vId;
+
+    switch(DispatchMode)
+    {
+    case DISPATCH_MODE_SCATTER :
+        vId = gl_LocalInvocationID.x * gl_NumWorkGroups.x + gl_WorkGroupID.x;
+        break;
+
+    case DISPATCH_MODE_CLUSTER :
+        // FALLTHROUGH default case
+    default :
+        vId = gl_GlobalInvocationID.x;
+        break;
+    }
+
+    return vId;
+}
+
+uint getInvocationTetId()
+{
+    uint eId;
+
+    // No scatter mode available
+    eId = gl_GlobalInvocationID.x;
+
+    return eId;
+}
+
+uint getInvocationPriId()
+{
+    uint eId;
+
+    // No scatter mode available
+    eId = gl_GlobalInvocationID.x;
+
+    return eId;
+}
+
+
+uint getInvocationHexId()
+{
+    uint eId;
+
+    // No scatter mode available
+    eId = gl_GlobalInvocationID.x;
+
+    return eId;
+}
+
+
+bool isSmoothableVertex(uint vId)
 {
     if(vId >= verts.length())
         return false;
@@ -17,6 +75,31 @@ bool isSmoothable(uint vId)
 
     return true;
 }
+
+bool isSmoothableTet(uint eId)
+{
+    if(eId >= tets.length())
+        return false;
+
+    return true;
+}
+
+bool isSmoothablePri(uint eId)
+{
+    if(eId >= pris.length())
+        return false;
+
+    return true;
+}
+
+bool isSmoothableHex(uint eId)
+{
+    if(eId >= hexs.length())
+        return false;
+
+    return true;
+}
+
 
 float computeLocalElementSize(in uint vId)
 {

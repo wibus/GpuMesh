@@ -6,6 +6,10 @@
 using namespace std;
 
 
+const int SmoothingHelper::DISPATCH_MODE_CLUSTER = 0;
+const int SmoothingHelper::DISPATCH_MODE_SCATTER = 1;
+
+
 std::string SmoothingHelper::shaderName()
 {
     return ":/shaders/compute/Smoothing/SmoothingHelper.glsl";

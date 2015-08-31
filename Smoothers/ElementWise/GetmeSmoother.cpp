@@ -10,8 +10,9 @@ using namespace std;
 
 
 GetmeSmoother::GetmeSmoother() :
-    AbstractElementWiseSmoother({
-        ":/shader/compute/Smoothing/VertexWise/GETMe.glsl"}),
+    AbstractElementWiseSmoother(
+        SmoothingHelper::DISPATCH_MODE_SCATTER,
+        {":/shaders/compute/Smoothing/ElementWise/GETMe.glsl"}),
     _lambda(0.78)
 {
 
@@ -32,9 +33,9 @@ void GetmeSmoother::smoothTets(
     const vector<MeshTopo>& topos = mesh.topos;
     const vector<MeshTet>& tets = mesh.tets;
 
-    for(int e = first; e < last; ++e)
+    for(int eId = first; eId < last; ++eId)
     {
-        const MeshTet& tet = tets[e];
+        const MeshTet& tet = tets[eId];
 
         uint vi[] = {
             tet.v[0],
@@ -44,10 +45,10 @@ void GetmeSmoother::smoothTets(
         };
 
         glm::dvec3 vp[] = {
-            verts[vi[0]],
-            verts[vi[1]],
-            verts[vi[2]],
-            verts[vi[3]],
+            verts[vi[0]].p,
+            verts[vi[1]].p,
+            verts[vi[2]].p,
+            verts[vi[3]].p,
         };
 
         glm::dvec3 center = 0.25 * (
@@ -68,19 +69,15 @@ void GetmeSmoother::smoothTets(
         };
 
 
-        double volume =
-            glm::determinant(
-                glm::dmat3(
-                    vp[0] - vp[3],
-                    vp[1] - vp[3],
-                    vp[2] - vp[3]));
+        double volume = glm::determinant(
+                glm::dmat3(vp[0] - vp[3],
+                           vp[1] - vp[3],
+                           vp[2] - vp[3]));
 
-        double volumePrime =
-            glm::determinant(
-                glm::dmat3(
-                    vpp[0] - vpp[3],
-                    vpp[1] - vpp[3],
-                    vpp[2] - vpp[3]));
+        double volumePrime = glm::determinant(
+                glm::dmat3(vpp[0] - vpp[3],
+                           vpp[1] - vpp[3],
+                           vpp[2] - vpp[3]));
 
         double absVolumeRation = glm::abs(volume / volumePrime);
         double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
@@ -99,10 +96,10 @@ void GetmeSmoother::smoothTets(
         double qualityPrime = evaluator.tetQuality(vpp);
         double weight = qualityPrime / quality;
 
-        _vertexAccums[tet[0]]->add(vpp[0], weight);
-        _vertexAccums[tet[1]]->add(vpp[1], weight);
-        _vertexAccums[tet[2]]->add(vpp[2], weight);
-        _vertexAccums[tet[3]]->add(vpp[3], weight);
+        _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
+        _vertexAccums[vi[1]]->addPosition(vpp[1], weight);
+        _vertexAccums[vi[2]]->addPosition(vpp[2], weight);
+        _vertexAccums[vi[3]]->addPosition(vpp[3], weight);
     }
 }
 
@@ -116,9 +113,9 @@ void GetmeSmoother::smoothPris(
     const vector<MeshTopo>& topos = mesh.topos;
     const vector<MeshPri>& pris = mesh.pris;
 
-    for(int e = first; e < last; ++e)
+    for(int eId = first; eId < last; ++eId)
     {
-        const MeshPri& pri = pris[e];
+        const MeshPri& pri = pris[eId];
 
         uint vi[] = {
             pri.v[0],
@@ -130,12 +127,12 @@ void GetmeSmoother::smoothPris(
         };
 
         glm::dvec3 vp[] = {
-            verts[vi[0]],
-            verts[vi[1]],
-            verts[vi[2]],
-            verts[vi[3]],
-            verts[vi[4]],
-            verts[vi[5]],
+            verts[vi[0]].p,
+            verts[vi[1]].p,
+            verts[vi[2]].p,
+            verts[vi[3]].p,
+            verts[vi[4]].p,
+            verts[vi[5]].p,
         };
 
         glm::dvec3 aux[] = {
@@ -189,12 +186,12 @@ void GetmeSmoother::smoothPris(
         double qualityPrime = evaluator.priQuality(vpp);
         double weight = qualityPrime / quality;
 
-        _vertexAccums[vi[0]]->add(vpp[0], weight);
-        _vertexAccums[vi[1]]->add(vpp[1], weight);
-        _vertexAccums[vi[2]]->add(vpp[2], weight);
-        _vertexAccums[vi[3]]->add(vpp[3], weight);
-        _vertexAccums[vi[4]]->add(vpp[4], weight);
-        _vertexAccums[vi[5]]->add(vpp[5], weight);
+        _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
+        _vertexAccums[vi[1]]->addPosition(vpp[1], weight);
+        _vertexAccums[vi[2]]->addPosition(vpp[2], weight);
+        _vertexAccums[vi[3]]->addPosition(vpp[3], weight);
+        _vertexAccums[vi[4]]->addPosition(vpp[4], weight);
+        _vertexAccums[vi[5]]->addPosition(vpp[5], weight);
     }
 }
 
@@ -207,9 +204,9 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
     const vector<MeshTopo>& topos = mesh.topos;
     const vector<MeshHex>& hexs = mesh.hexs;
 
-    for(int e = first; e < last; ++e)
+    for(int eId = first; eId < last; ++eId)
     {
-        const MeshHex& hex = hexs[e];
+        const MeshHex& hex = hexs[eId];
 
         uint vi[] = {
             hex.v[0],
@@ -223,14 +220,14 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
         };
 
         glm::dvec3 vp[] = {
-            verts[vi[0]],
-            verts[vi[1]],
-            verts[vi[2]],
-            verts[vi[3]],
-            verts[vi[4]],
-            verts[vi[5]],
-            verts[vi[6]],
-            verts[vi[7]],
+            verts[vi[0]].p,
+            verts[vi[1]].p,
+            verts[vi[2]].p,
+            verts[vi[3]].p,
+            verts[vi[4]].p,
+            verts[vi[5]].p,
+            verts[vi[6]].p,
+            verts[vi[7]].p,
         };
 
         glm::dvec3 aux[] = {
@@ -288,16 +285,16 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
 
 
         double quality = evaluator.hexQuality(vp);
-        double qualityPrime = evaluator.hexQuality(vp);
+        double qualityPrime = evaluator.hexQuality(vpp);
         double weight = qualityPrime / quality;
 
-        _vertexAccums[vi[0]]->add(vpp[0], weight);
-        _vertexAccums[vi[1]]->add(vpp[1], weight);
-        _vertexAccums[vi[2]]->add(vpp[2], weight);
-        _vertexAccums[vi[3]]->add(vpp[3], weight);
-        _vertexAccums[vi[4]]->add(vpp[4], weight);
-        _vertexAccums[vi[5]]->add(vpp[5], weight);
-        _vertexAccums[vi[6]]->add(vpp[6], weight);
-        _vertexAccums[vi[7]]->add(vpp[7], weight);
+        _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
+        _vertexAccums[vi[1]]->addPosition(vpp[1], weight);
+        _vertexAccums[vi[2]]->addPosition(vpp[2], weight);
+        _vertexAccums[vi[3]]->addPosition(vpp[3], weight);
+        _vertexAccums[vi[4]]->addPosition(vpp[4], weight);
+        _vertexAccums[vi[5]]->addPosition(vpp[5], weight);
+        _vertexAccums[vi[6]]->addPosition(vpp[6], weight);
+        _vertexAccums[vi[7]]->addPosition(vpp[7], weight);
     }
 }

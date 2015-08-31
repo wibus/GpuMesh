@@ -13,8 +13,9 @@ protected:
 
 public:
     virtual ~IVertexAccum();
-    virtual void add(const glm::dvec3 pos, double weight) = 0;
+    virtual void addPosition(const glm::dvec3 pos, double weight) = 0;
     virtual bool assignAverage(glm::dvec3& pos) const = 0;
+    virtual void reinit() = 0;
 };
 
 
@@ -24,8 +25,9 @@ public:
     NotThreadSafeVertexAccum();
     virtual ~NotThreadSafeVertexAccum();
 
-    virtual void add(const glm::dvec3 pos, double weight) override;
+    virtual void addPosition(const glm::dvec3 pos, double weight) override;
     virtual bool assignAverage(glm::dvec3& pos) const override;
+    virtual void reinit() override;
 
 private:
     glm::dvec3 _posAccum;
@@ -39,8 +41,9 @@ public:
     ThreadSafeVertexAccum();
     virtual ~ThreadSafeVertexAccum();
 
-    virtual void add(const glm::dvec3 pos, double weight) override;
+    virtual void addPosition(const glm::dvec3 pos, double weight) override;
     virtual bool assignAverage(glm::dvec3& pos) const override;
+    virtual void reinit() override;
 
 private:
     glm::dvec3 _posAccum;

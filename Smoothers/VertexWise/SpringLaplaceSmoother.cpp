@@ -7,7 +7,8 @@ using namespace std;
 
 
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
-    AbstractVertexWiseSmoother(DISPATCH_MODE_CLUSTER,
+    AbstractVertexWiseSmoother(
+        SmoothingHelper::DISPATCH_MODE_CLUSTER,
         {":/shaders/compute/Smoothing/VertexWise/SpringLaplace.glsl"})
 {
 

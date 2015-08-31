@@ -243,10 +243,12 @@ void Mesh::compileTopoly()
 
     getLog().postMessage(new Message('I', false,
         "Vertice count: " + to_string(vertCount), "Mesh"));
-    getLog().postMessage(new Message('I', false,
-        "Element count: " + to_string(elemCount()), "Mesh"));
 
-    double elemVertRatio = elemCount()  / (double) vertCount;
+    size_t elemCount = tets.size() + pris.size() + hexs.size();
+    getLog().postMessage(new Message('I', false,
+        "Element count: " + to_string(elemCount), "Mesh"));
+
+    double elemVertRatio = elemCount  / (double) vertCount;
     getLog().postMessage(new Message('I', false,
         "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
 

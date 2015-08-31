@@ -22,51 +22,67 @@ DebugMesher::~DebugMesher()
 
 void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
 {
-    // Tetrahedron
-    mesh.tets.push_back(MeshTet(0, 1, 2, 3));
-    mesh.verts.push_back(glm::dvec3(0, 0, 0));
-    mesh.verts.push_back(glm::dvec3(1, 0, 0));
-    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
-    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
-    for(int i=0; i<4; ++i)
+    size_t eBase = 0;
+    glm::dvec3 offset;
+    glm::dvec3 jitter = glm::dvec3(0.4);
+    double scale = 0.4 / glm::pow(double(vertexCount), 1.0/3.0);
+    for(size_t vId=0; vId < vertexCount; ++vId)
     {
-        mesh.verts[i].p += glm::linearRand(glm::dvec3(-0.5), glm::dvec3(0.5));
-        mesh.verts[i].p *= 0.5;
-        mesh.verts[i].p += glm::dvec3(-0.75, 0.0, 0.0);
-    }
+        // Tetrahedron
+        mesh.verts.push_back(glm::dvec3(0, 0, 0));
+        mesh.verts.push_back(glm::dvec3(1, 0, 0));
+        mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
+        mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
+        mesh.tets.push_back(MeshTet(eBase + 0, eBase + 1,
+                                    eBase + 2, eBase + 3));
+        offset = glm::linearRand(glm::dvec3(-1.0), glm::dvec3(1.0));
+        for(int i=eBase; i<eBase+4; ++i)
+        {
+            mesh.verts[i].p += 0.75* glm::linearRand(-jitter, jitter);
+            mesh.verts[i].p *= scale;
+            mesh.verts[i].p += offset;
+        }
+        eBase += MeshTet::VERTEX_COUNT;
 
 
-    // Prism
-    mesh.pris.push_back(MeshPri(4, 5, 6, 7, 8, 9));
-    mesh.verts.push_back(glm::dvec3(0, 0, 0));
-    mesh.verts.push_back(glm::dvec3(1, 0, 0));
-    mesh.verts.push_back(glm::dvec3(0, 1, 0));
-    mesh.verts.push_back(glm::dvec3(1, 1, 0));
-    mesh.verts.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
-    mesh.verts.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
-    for(int i=4; i<10; ++i)
-    {
-        mesh.verts[i].p += glm::linearRand(glm::dvec3(-0.5), glm::dvec3(0.5));
-        mesh.verts[i].p *= 0.5;
-        mesh.verts[i].p += glm::dvec3(0.0);
-    }
+        // Prism
+        mesh.verts.push_back(glm::dvec3(0, 0, 0));
+        mesh.verts.push_back(glm::dvec3(1, 0, 0));
+        mesh.verts.push_back(glm::dvec3(0, 1, 0));
+        mesh.verts.push_back(glm::dvec3(1, 1, 0));
+        mesh.verts.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
+        mesh.verts.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
+        mesh.pris.push_back(MeshPri(eBase + 0, eBase + 1, eBase + 2,
+                                    eBase + 3, eBase + 4, eBase + 5));
+        offset = glm::linearRand(glm::dvec3(-1.0), glm::dvec3(1.0));
+        for(int i=eBase; i<eBase+6; ++i)
+        {
+            mesh.verts[i].p += glm::linearRand(-jitter, jitter);
+            mesh.verts[i].p *= scale;
+            mesh.verts[i].p += offset;
+        }
+        eBase += MeshPri::VERTEX_COUNT;
 
 
-    // Hexahedron
-    mesh.hexs.push_back(MeshHex(10, 11, 12, 13, 14, 15, 16, 17));
-    mesh.verts.push_back(glm::dvec3(0, 0, 0));
-    mesh.verts.push_back(glm::dvec3(1, 0, 0));
-    mesh.verts.push_back(glm::dvec3(0, 1, 0));
-    mesh.verts.push_back(glm::dvec3(1, 1, 0));
-    mesh.verts.push_back(glm::dvec3(0, 0, 1));
-    mesh.verts.push_back(glm::dvec3(1, 0, 1));
-    mesh.verts.push_back(glm::dvec3(0, 1, 1));
-    mesh.verts.push_back(glm::dvec3(1, 1, 1));
-    for(int i=10; i<18; ++i)
-    {
-        mesh.verts[i].p += glm::linearRand(glm::dvec3(-0.5), glm::dvec3(0.5));
-        mesh.verts[i].p *= 0.5;
-        mesh.verts[i].p += glm::dvec3(0.75, 0.0, 0.0);
+        // Hexahedron
+        mesh.verts.push_back(glm::dvec3(0, 0, 0));
+        mesh.verts.push_back(glm::dvec3(1, 0, 0));
+        mesh.verts.push_back(glm::dvec3(0, 1, 0));
+        mesh.verts.push_back(glm::dvec3(1, 1, 0));
+        mesh.verts.push_back(glm::dvec3(0, 0, 1));
+        mesh.verts.push_back(glm::dvec3(1, 0, 1));
+        mesh.verts.push_back(glm::dvec3(0, 1, 1));
+        mesh.verts.push_back(glm::dvec3(1, 1, 1));
+        mesh.hexs.push_back(MeshHex(eBase + 0, eBase + 1, eBase + 2, eBase + 3,
+                                    eBase + 4, eBase + 5, eBase + 6, eBase + 7));
+        offset = glm::linearRand(glm::dvec3(-1.0), glm::dvec3(1.0));
+        for(int i=eBase; i<eBase+8; ++i)
+        {
+            mesh.verts[i].p += glm::linearRand(-jitter, jitter);
+            mesh.verts[i].p *= scale;
+            mesh.verts[i].p += offset;
+        }
+        eBase += MeshHex::VERTEX_COUNT;
     }
 }
 
