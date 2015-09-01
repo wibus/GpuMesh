@@ -58,6 +58,101 @@ OptionMapDetails AbstractEvaluator::availableImplementations() const
     return _implementationFuncs.details();
 }
 
+double AbstractEvaluator::tetVolume(const Mesh& mesh, const MeshTet& tet) const
+{
+    const glm::dvec3 vp[] = {
+        mesh.verts[tet.v[0]],
+        mesh.verts[tet.v[1]],
+        mesh.verts[tet.v[2]],
+        mesh.verts[tet.v[3]],
+    };
+
+    return tetVolume(vp);
+}
+
+double AbstractEvaluator::tetVolume(const glm::dvec3 vp[]) const
+{
+    return glm::determinant(glm::dmat3(
+        vp[0] - vp[3],
+        vp[1] - vp[3],
+        vp[2] - vp[3]));
+}
+
+double AbstractEvaluator::priVolume(const Mesh& mesh, const MeshPri& pri) const
+{
+    const glm::dvec3 vp[] = {
+        mesh.verts[pri.v[0]],
+        mesh.verts[pri.v[1]],
+        mesh.verts[pri.v[2]],
+        mesh.verts[pri.v[3]],
+        mesh.verts[pri.v[4]],
+        mesh.verts[pri.v[5]]
+    };
+
+    return priVolume(vp);
+}
+
+double AbstractEvaluator::priVolume(const glm::dvec3 vp[]) const
+{
+    double volume = 0.0;
+    volume += glm::determinant(glm::dmat3(
+        vp[4] - vp[2],
+        vp[0] - vp[2],
+        vp[1] - vp[2]));
+    volume += glm::determinant(glm::dmat3(
+        vp[5] - vp[2],
+        vp[1] - vp[2],
+        vp[3] - vp[2]));
+    volume += glm::determinant(glm::dmat3(
+        vp[4] - vp[2],
+        vp[1] - vp[2],
+        vp[5] - vp[2]));
+    return volume;
+}
+
+double AbstractEvaluator::hexVolume(const Mesh& mesh, const MeshHex& hex) const
+{
+    const glm::dvec3 vp[] = {
+        mesh.verts[hex.v[0]],
+        mesh.verts[hex.v[1]],
+        mesh.verts[hex.v[2]],
+        mesh.verts[hex.v[3]],
+        mesh.verts[hex.v[4]],
+        mesh.verts[hex.v[5]],
+        mesh.verts[hex.v[6]],
+        mesh.verts[hex.v[7]]
+    };
+
+    return hexVolume(vp);
+}
+
+double AbstractEvaluator::hexVolume(const glm::dvec3 vp[]) const
+{
+    double volume = 0.0;
+    volume += glm::determinant(glm::dmat3(
+        vp[0] - vp[2],
+        vp[1] - vp[2],
+        vp[4] - vp[2]));
+    volume += glm::determinant(glm::dmat3(
+        vp[3] - vp[1],
+        vp[2] - vp[1],
+        vp[7] - vp[1]));
+    volume += glm::determinant(glm::dmat3(
+        vp[5] - vp[4],
+        vp[1] - vp[4],
+        vp[7] - vp[4]));
+    volume += glm::determinant(glm::dmat3(
+        vp[6] - vp[7],
+        vp[2] - vp[7],
+        vp[4] - vp[7]));
+    volume += glm::determinant(glm::dmat3(
+        vp[1] - vp[2],
+        vp[7] - vp[2],
+        vp[4] - vp[2]));
+    return volume;
+}
+
+
 double AbstractEvaluator::tetQuality(const Mesh& mesh, const MeshTet& tet) const
 {
     const glm::dvec3 vp[] = {

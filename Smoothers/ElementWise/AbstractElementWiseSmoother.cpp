@@ -235,28 +235,6 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
         glDispatchCompute(updateWgCount, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         _updateProgram.popProgram();
-
-        /*
-        if(_smoothPassId == 1)
-        {
-            glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, _accumSsbo);
-            GpuVertexAccum* data = (GpuVertexAccum*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-
-            for(size_t vId=0; vId < vertCount; ++vId)
-            {
-                std::cout <<
-                    "[(" << data[vId].posAccum.x << ", " <<
-                            data[vId].posAccum.y << ", " <<
-                            data[vId].posAccum.z  << "), " <<
-                        data[vId].weightAccum << "] \t";
-            }
-            std::cout << std::endl;
-
-            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-        }
-        */
     }
 
 

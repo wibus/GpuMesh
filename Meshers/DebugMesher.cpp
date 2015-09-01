@@ -28,6 +28,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
     double scale = 0.4 / glm::pow(double(vertexCount), 1.0/3.0);
     for(size_t vId=0; vId < vertexCount; ++vId)
     {
+        //*
         // Tetrahedron
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
         mesh.verts.push_back(glm::dvec3(1, 0, 0));
@@ -43,8 +44,9 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
             mesh.verts[i].p += offset;
         }
         eBase += MeshTet::VERTEX_COUNT;
+        //*/
 
-
+        /*
         // Prism
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
         mesh.verts.push_back(glm::dvec3(1, 0, 0));
@@ -62,8 +64,9 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
             mesh.verts[i].p += offset;
         }
         eBase += MeshPri::VERTEX_COUNT;
+        //*/
 
-
+        /*
         // Hexahedron
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
         mesh.verts.push_back(glm::dvec3(1, 0, 0));
@@ -83,6 +86,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
             mesh.verts[i].p += offset;
         }
         eBase += MeshHex::VERTEX_COUNT;
+        //*/
     }
 }
 

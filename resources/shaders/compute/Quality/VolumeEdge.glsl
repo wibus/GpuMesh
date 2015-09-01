@@ -1,3 +1,8 @@
+float tetVolume(in vec3 vp[TET_VERTEX_COUNT]);
+float priVolume(in vec3 vp[PRI_VERTEX_COUNT]);
+float hexVolume(in vec3 vp[HEX_VERTEX_COUNT]);
+
+
 float length2(in vec3 v)
 {
     return dot(v, v);
@@ -5,10 +10,7 @@ float length2(in vec3 v)
 
 float tetQuality(in vec3 vp[4])
 {
-    float volume =  determinant(mat3(
-        vp[0] - vp[3],
-        vp[1] - vp[3],
-        vp[2] - vp[3]));
+    float volume = tetVolume(vp);
 
     float edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);
@@ -19,25 +21,13 @@ float tetQuality(in vec3 vp[4])
     edge2Sum += length2(vp[3] - vp[1]);
     float edgeSum = sqrt(edge2Sum);
 
-    return min(volume / (edgeSum*edgeSum*edgeSum)
-            / 0.048112522432468815548, 1.0); // Normalization constant
+    return volume / (edgeSum*edgeSum*edgeSum)
+            / 0.048112522432468815548;
 }
 
 float priQuality(in vec3 vp[6])
 {
-    float volume = 0.0;
-    volume += determinant(mat3(
-        vp[4] - vp[2],
-        vp[0] - vp[2],
-        vp[1] - vp[2]));
-    volume += determinant(mat3(
-        vp[5] - vp[2],
-        vp[1] - vp[2],
-        vp[3] - vp[2]));
-    volume += determinant(mat3(
-        vp[4] - vp[2],
-        vp[1] - vp[2],
-        vp[5] - vp[2]));
+    float volume = priVolume(vp);
 
     float edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);
@@ -52,32 +42,12 @@ float priQuality(in vec3 vp[6])
     float edgeSum = sqrt(edge2Sum);
 
     return min(volume / (edgeSum*edgeSum*edgeSum)
-            / 0.096225044864937631095, 1.0); // Normalization constant
+            / 0.096225044864937631095, 1.0);
 }
 
 float hexQuality(in vec3 vp[8])
 {
-    float volume = 0.0;
-    volume += determinant(mat3(
-        vp[0] - vp[2],
-        vp[1] - vp[2],
-        vp[4] - vp[2]));
-    volume += determinant(mat3(
-        vp[3] - vp[1],
-        vp[2] - vp[1],
-        vp[7] - vp[1]));
-    volume += determinant(mat3(
-        vp[5] - vp[4],
-        vp[1] - vp[4],
-        vp[7] - vp[4]));
-    volume += determinant(mat3(
-        vp[6] - vp[7],
-        vp[2] - vp[7],
-        vp[4] - vp[7]));
-    volume += determinant(mat3(
-        vp[1] - vp[2],
-        vp[7] - vp[2],
-        vp[4] - vp[2]));
+    float volume = hexVolume(vp);
 
     float edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);
@@ -95,5 +65,5 @@ float hexQuality(in vec3 vp[8])
     float edgeSum = sqrt(edge2Sum);
 
     return min(volume / (edgeSum*edgeSum*edgeSum)
-            / 0.14433756729740643276, 1.0); // Normalization constant
+            / 0.14433756729740643276, 1.0);
 }

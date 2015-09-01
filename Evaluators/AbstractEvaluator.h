@@ -13,6 +13,16 @@ public:
     AbstractEvaluator(const std::string& shapeMeasuresShader);
     virtual ~AbstractEvaluator();
 
+    virtual double tetVolume(const Mesh& mesh, const MeshTet& tet) const;
+    virtual double tetVolume(const glm::dvec3 vp[]) const;
+
+    virtual double priVolume(const Mesh& mesh, const MeshPri& pri) const;
+    virtual double priVolume(const glm::dvec3 vp[]) const;
+
+    virtual double hexVolume(const Mesh& mesh, const MeshHex& hex) const;
+    virtual double hexVolume(const glm::dvec3 vp[]) const;
+
+
     virtual OptionMapDetails availableImplementations() const;
 
     virtual double tetQuality(const Mesh& mesh, const MeshTet& tet) const;
