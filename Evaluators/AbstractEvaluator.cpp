@@ -107,6 +107,7 @@ double AbstractEvaluator::priVolume(const glm::dvec3 vp[]) const
         vp[4] - vp[2],
         vp[1] - vp[2],
         vp[5] - vp[2]));
+
     return volume;
 }
 
@@ -149,6 +150,7 @@ double AbstractEvaluator::hexVolume(const glm::dvec3 vp[]) const
         vp[1] - vp[2],
         vp[7] - vp[2],
         vp[4] - vp[2]));
+
     return volume;
 }
 

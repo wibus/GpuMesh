@@ -51,9 +51,6 @@ void GetmeSmoother::smoothTets(
             verts[vi[3]].p,
         };
 
-        glm::dvec3 center = 0.25 * (
-            vp[0] + vp[1] + vp[2] + vp[3]);
-
         glm::dvec3 n[] = {
             glm::cross(vp[3]-vp[1], vp[1]-vp[2]),
             glm::cross(vp[3]-vp[2], vp[2]-vp[0]),
@@ -69,18 +66,13 @@ void GetmeSmoother::smoothTets(
         };
 
 
-        double volume = glm::determinant(
-                glm::dmat3(vp[0] - vp[3],
-                           vp[1] - vp[3],
-                           vp[2] - vp[3]));
-
-        double volumePrime = glm::determinant(
-                glm::dmat3(vpp[0] - vpp[3],
-                           vpp[1] - vpp[3],
-                           vpp[2] - vpp[3]));
-
+        double volume = evaluator.tetVolume(vp);
+        double volumePrime = evaluator.tetVolume(vpp);
         double absVolumeRation = glm::abs(volume / volumePrime);
         double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
+
+        glm::dvec3 center = (1.0/4.0) * (
+            vp[0] + vp[1] + vp[2] + vp[3]);
 
         vpp[0] = center + volumeVar * (vpp[0] - center);
         vpp[1] = center + volumeVar * (vpp[1] - center);
@@ -173,6 +165,22 @@ void GetmeSmoother::smoothPris(
             bases[4] + n[4] * (_lambda / glm::sqrt(glm::length(n[4]))),
             bases[5] + n[5] * (_lambda / glm::sqrt(glm::length(n[5]))),
         };
+
+
+        double volume = evaluator.priVolume(vp);
+        double volumePrime = evaluator.priVolume(vpp);
+        double absVolumeRation = glm::abs(volume / volumePrime);
+        double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
+
+        glm::dvec3 center = (1.0/6.0) * (
+            vp[0] + vp[1] + vp[2] + vp[3] + vp[4] + vp[5]);
+
+        vpp[0] = center + volumeVar * (vpp[0] - center);
+        vpp[1] = center + volumeVar * (vpp[1] - center);
+        vpp[2] = center + volumeVar * (vpp[2] - center);
+        vpp[3] = center + volumeVar * (vpp[3] - center);
+        vpp[4] = center + volumeVar * (vpp[4] - center);
+        vpp[5] = center + volumeVar * (vpp[5] - center);
 
         if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
         if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
@@ -273,6 +281,24 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
             bases[6] + n[6] * (_lambda / glm::sqrt(glm::length(n[6]))),
             bases[7] + n[7] * (_lambda / glm::sqrt(glm::length(n[7]))),
         };
+
+
+        double volume = evaluator.hexVolume(vp);
+        double volumePrime = evaluator.hexVolume(vpp);
+        double absVolumeRation = glm::abs(volume / volumePrime);
+        double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
+
+        glm::dvec3 center = (1.0/8.0) * (
+            vp[0] + vp[1] + vp[2] + vp[3] + vp[4] + vp[5] + vp[6] + vp[7]);
+
+        vpp[0] = center + volumeVar * (vpp[0] - center);
+        vpp[1] = center + volumeVar * (vpp[1] - center);
+        vpp[2] = center + volumeVar * (vpp[2] - center);
+        vpp[3] = center + volumeVar * (vpp[3] - center);
+        vpp[4] = center + volumeVar * (vpp[4] - center);
+        vpp[5] = center + volumeVar * (vpp[5] - center);
+        vpp[6] = center + volumeVar * (vpp[6] - center);
+        vpp[7] = center + volumeVar * (vpp[7] - center);
 
         if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
         if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);

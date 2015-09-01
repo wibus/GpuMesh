@@ -46,7 +46,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         eBase += MeshTet::VERTEX_COUNT;
         //*/
 
-        /*
+        //*
         // Prism
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
         mesh.verts.push_back(glm::dvec3(1, 0, 0));
@@ -66,7 +66,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         eBase += MeshPri::VERTEX_COUNT;
         //*/
 
-        /*
+        //*
         // Hexahedron
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
         mesh.verts.push_back(glm::dvec3(1, 0, 0));
