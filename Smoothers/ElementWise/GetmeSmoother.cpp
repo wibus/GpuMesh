@@ -86,8 +86,8 @@ void GetmeSmoother::smoothTets(
 
         double quality = evaluator.tetQuality(vp);
         double qualityPrime = evaluator.tetQuality(vpp);
-        double weight = qualityPrime / quality;
 
+        double weight = qualityPrime / (1.0 + quality);
         _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
         _vertexAccums[vi[1]]->addPosition(vpp[1], weight);
         _vertexAccums[vi[2]]->addPosition(vpp[2], weight);
@@ -192,8 +192,8 @@ void GetmeSmoother::smoothPris(
 
         double quality = evaluator.priQuality(vp);
         double qualityPrime = evaluator.priQuality(vpp);
-        double weight = qualityPrime / quality;
 
+        double weight = qualityPrime / (1.0 + quality);
         _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
         _vertexAccums[vi[1]]->addPosition(vpp[1], weight);
         _vertexAccums[vi[2]]->addPosition(vpp[2], weight);
@@ -312,8 +312,8 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
 
         double quality = evaluator.hexQuality(vp);
         double qualityPrime = evaluator.hexQuality(vpp);
-        double weight = qualityPrime / quality;
 
+        double weight = qualityPrime / (1.0 + quality);
         _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
         _vertexAccums[vi[1]]->addPosition(vpp[1], weight);
         _vertexAccums[vi[2]]->addPosition(vpp[2], weight);

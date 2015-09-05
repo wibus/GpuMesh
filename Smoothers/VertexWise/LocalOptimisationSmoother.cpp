@@ -1,5 +1,7 @@
 #include "LocalOptimisationSmoother.h"
 
+#include <limits>
+
 #include "../SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
 
@@ -122,7 +124,7 @@ void LocalOptimisationSmoother::smoothVertices(
             }
 
             uint bestProposition = 0;
-            double bestQualityMean = 0.0;
+            double bestQualityMean = -numeric_limits<double>::infinity();
             for(uint p=0; p < PROPOSITION_COUNT; ++p)
             {
                 // Since 'pos' is a reference on vertex's position

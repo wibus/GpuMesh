@@ -115,54 +115,57 @@ float hexVolume(in Hex hex)
 
 float tetVolume(in vec3 vp[TET_VERTEX_COUNT])
 {
-    return determinant(mat3(
+    float detSum = 0.0;
+    detSum += determinant(mat3(
         vp[0] - vp[3],
         vp[1] - vp[3],
         vp[2] - vp[3]));
+
+    return detSum / 6.0;
 }
 
 float priVolume(in vec3 vp[PRI_VERTEX_COUNT])
 {
-    float volume = 0.0;
-    volume += determinant(mat3(
+    float detSum = 0.0;
+    detSum += determinant(mat3(
         vp[4] - vp[2],
         vp[0] - vp[2],
         vp[1] - vp[2]));
-    volume += determinant(mat3(
+    detSum += determinant(mat3(
         vp[5] - vp[2],
         vp[1] - vp[2],
         vp[3] - vp[2]));
-    volume += determinant(mat3(
+    detSum += determinant(mat3(
         vp[4] - vp[2],
         vp[1] - vp[2],
         vp[5] - vp[2]));
 
-   return volume;
+    return detSum / 6.0;
 }
 
 float hexVolume(in vec3 vp[HEX_VERTEX_COUNT])
 {
-    float volume = 0.0;
-    volume += determinant(mat3(
+    float detSum = 0.0;
+    detSum += determinant(mat3(
         vp[0] - vp[2],
         vp[1] - vp[2],
         vp[4] - vp[2]));
-    volume += determinant(mat3(
+    detSum += determinant(mat3(
         vp[3] - vp[1],
         vp[2] - vp[1],
         vp[7] - vp[1]));
-    volume += determinant(mat3(
+    detSum += determinant(mat3(
         vp[5] - vp[4],
         vp[1] - vp[4],
         vp[7] - vp[4]));
-    volume += determinant(mat3(
+    detSum += determinant(mat3(
         vp[6] - vp[7],
         vp[2] - vp[7],
         vp[4] - vp[7]));
-    volume += determinant(mat3(
+    detSum += determinant(mat3(
         vp[1] - vp[2],
         vp[7] - vp[2],
         vp[4] - vp[2]));
 
-    return volume;
+    return detSum / 6.0;
 }

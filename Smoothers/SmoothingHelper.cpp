@@ -101,7 +101,10 @@ inline void SmoothingHelper::accumulatePatchQuality(
         double& patchWeight,
         double elemQuality)
 {
-    patchQuality = glm::min(patchQuality * elemQuality, elemQuality);
+    patchQuality = glm::min(
+        glm::min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
+        glm::min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
+                 patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
 }
 
 inline double SmoothingHelper::finalizePatchQuality(

@@ -95,7 +95,7 @@ void smoothVertex(uint vId)
         }
 
         uint bestProposition = 0;
-        float bestQualityMean = 0.0;
+        float bestQualityMean = -1.0/0.0; // -Inf
         for(uint p=0; p < PROPOSITION_COUNT; ++p)
         {
             // Quality evaluation functions will use this updated position

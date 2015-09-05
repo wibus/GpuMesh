@@ -73,8 +73,8 @@ void smoothTet(uint eId)
 
     float quality = tetQuality(vp);
     float qualityPrime = tetQuality(vpp);
-    float weight = qualityPrime / quality;
 
+    float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);
     addPosition(vi[1], vpp[1], weight);
     addPosition(vi[2], vpp[2], weight);
@@ -168,8 +168,8 @@ void smoothPri(uint eId)
 
     float quality = priQuality(vp);
     float qualityPrime = priQuality(vpp);
-    float weight = qualityPrime / quality;
 
+    float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);
     addPosition(vi[1], vpp[1], weight);
     addPosition(vi[2], vpp[2], weight);
@@ -278,8 +278,8 @@ void smoothHex(uint eId)
 
     float quality = hexQuality(vp);
     float qualityPrime = hexQuality(vpp);
-    float weight = qualityPrime / quality;
 
+    float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);
     addPosition(vi[1], vpp[1], weight);
     addPosition(vi[2], vpp[2], weight);

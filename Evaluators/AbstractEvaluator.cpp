@@ -72,10 +72,12 @@ double AbstractEvaluator::tetVolume(const Mesh& mesh, const MeshTet& tet) const
 
 double AbstractEvaluator::tetVolume(const glm::dvec3 vp[]) const
 {
-    return glm::determinant(glm::dmat3(
+    double detSum = glm::determinant(glm::dmat3(
         vp[0] - vp[3],
         vp[1] - vp[3],
         vp[2] - vp[3]));
+
+    return detSum / 6.0;
 }
 
 double AbstractEvaluator::priVolume(const Mesh& mesh, const MeshPri& pri) const
@@ -94,21 +96,21 @@ double AbstractEvaluator::priVolume(const Mesh& mesh, const MeshPri& pri) const
 
 double AbstractEvaluator::priVolume(const glm::dvec3 vp[]) const
 {
-    double volume = 0.0;
-    volume += glm::determinant(glm::dmat3(
+    double detSum = 0.0;
+    detSum += glm::determinant(glm::dmat3(
         vp[4] - vp[2],
         vp[0] - vp[2],
         vp[1] - vp[2]));
-    volume += glm::determinant(glm::dmat3(
+    detSum += glm::determinant(glm::dmat3(
         vp[5] - vp[2],
         vp[1] - vp[2],
         vp[3] - vp[2]));
-    volume += glm::determinant(glm::dmat3(
+    detSum += glm::determinant(glm::dmat3(
         vp[4] - vp[2],
         vp[1] - vp[2],
         vp[5] - vp[2]));
 
-    return volume;
+    return detSum / 6.0;
 }
 
 double AbstractEvaluator::hexVolume(const Mesh& mesh, const MeshHex& hex) const
@@ -129,29 +131,29 @@ double AbstractEvaluator::hexVolume(const Mesh& mesh, const MeshHex& hex) const
 
 double AbstractEvaluator::hexVolume(const glm::dvec3 vp[]) const
 {
-    double volume = 0.0;
-    volume += glm::determinant(glm::dmat3(
+    double detSum = 0.0;
+    detSum += glm::determinant(glm::dmat3(
         vp[0] - vp[2],
         vp[1] - vp[2],
         vp[4] - vp[2]));
-    volume += glm::determinant(glm::dmat3(
+    detSum += glm::determinant(glm::dmat3(
         vp[3] - vp[1],
         vp[2] - vp[1],
         vp[7] - vp[1]));
-    volume += glm::determinant(glm::dmat3(
+    detSum += glm::determinant(glm::dmat3(
         vp[5] - vp[4],
         vp[1] - vp[4],
         vp[7] - vp[4]));
-    volume += glm::determinant(glm::dmat3(
+    detSum += glm::determinant(glm::dmat3(
         vp[6] - vp[7],
         vp[2] - vp[7],
         vp[4] - vp[7]));
-    volume += glm::determinant(glm::dmat3(
+    detSum += glm::determinant(glm::dmat3(
         vp[1] - vp[2],
         vp[7] - vp[2],
         vp[4] - vp[2]));
 
-    return volume;
+    return detSum / 6.0;
 }
 
 
