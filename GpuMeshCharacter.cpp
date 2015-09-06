@@ -56,6 +56,9 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAzimuth(0),
     _cutAltitude(-glm::pi<double>() / 2.0),
     _cutDistance(0),
+    _tetVisibility(true),
+    _priVisibility(true),
+    _hexVisibility(true),
     _mesh(new GpuMesh()),
     _availableMeshers("Available Meshers"),
     _availableEvaluators("Available Evaluators"),
@@ -412,6 +415,20 @@ void GpuMeshCharacter::evaluateMesh(
     }
 }
 
+void GpuMeshCharacter::benchmarkEvaluator(
+        const std::string& evaluatorName,
+        const map<string, int>& cycleCounts)
+{
+    printStep("Shape measure evaluation benchmark "\
+              ": quality measure=" + evaluatorName);
+
+    std::shared_ptr<AbstractEvaluator> evaluator;
+    if(_availableEvaluators.select(evaluatorName, evaluator))
+    {
+        evaluator->benchmark(*_mesh, cycleCounts);
+    }
+}
+
 void GpuMeshCharacter::smoothMesh(
         const std::string& smootherName,
         const std::string& evaluatorName,
@@ -475,20 +492,6 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
     return OptimizationPlot("Could not launch benchmarks");
 }
 
-void GpuMeshCharacter::benchmarkEvaluator(
-        const std::string& evaluatorName,
-        const map<string, int>& cycleCounts)
-{
-    printStep("Shape measure evaluation benchmark "\
-              ": quality measure=" + evaluatorName);
-
-    std::shared_ptr<AbstractEvaluator> evaluator;
-    if(_availableEvaluators.select(evaluatorName, evaluator))
-    {
-        evaluator->benchmark(*_mesh, cycleCounts);
-    }
-}
-
 void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)
 {
     if(_availableEvaluators.select(evaluatorName, _evaluator))
@@ -530,6 +533,17 @@ void GpuMeshCharacter::useCutType(const std::string& cutTypeName)
     }
 }
 
+void GpuMeshCharacter::setElementVisibility(bool tet, bool pri, bool hex)
+{
+    if(_isEntered)
+    {
+        _tetVisibility = tet;
+        _priVisibility = pri;
+        _hexVisibility = hex;
+        _renderer->setElementVisibility(tet, pri, hex);
+    }
+}
+
 void GpuMeshCharacter::printStep(const std::string& stepDescription)
 {
     getLog().postMessage(new Message('I', false, stepDescription, "GpuMeshCharacter"));
@@ -561,6 +575,8 @@ void GpuMeshCharacter::setupInstalledRenderer()
 
         // Setup cut plane position
         moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
+
+        setElementVisibility( _tetVisibility, _priVisibility, _hexVisibility);
 
         // Setup viewport
         play().view()->camera3D()->registerObserver(*_renderer);

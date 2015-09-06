@@ -33,6 +33,14 @@ RenderTab::RenderTab(Ui::MainWindow* ui,
 
     // Define cut type
     deployCutTypes();
+
+    // Connect element visibility
+    connect(_ui->tetrahedraVisibility, &QCheckBox::toggled,
+            this, &RenderTab::elementVisibilityChanged);
+    connect(_ui->prismsVisibility, &QCheckBox::toggled,
+            this, &RenderTab::elementVisibilityChanged);
+    connect(_ui->hexahedraVisibility, &QCheckBox::toggled,
+            this, &RenderTab::elementVisibilityChanged);
 }
 
 RenderTab::~RenderTab()
@@ -131,4 +139,12 @@ void RenderTab::useCameraMan(const string& cameraName)
 void RenderTab::useCutType(const string& cutName)
 {
     _character->useCutType(cutName);
+}
+
+void RenderTab::elementVisibilityChanged(bool unused)
+{
+    _character->setElementVisibility(
+        _ui->tetrahedraVisibility->isChecked(),
+        _ui->prismsVisibility->isChecked(),
+        _ui->hexahedraVisibility->isChecked());
 }

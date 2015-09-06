@@ -13,6 +13,9 @@ AbstractRenderer::AbstractRenderer() :
     _physicalCutPlane(0.0),
     _virtualCutPlane(0.0),
     _cutType(ECutType::None),
+    _tetVisibility(true),
+    _priVisibility(true),
+    _hexVisibility(true),
     _shadingFuncs("Shadings")
 {
 
@@ -67,6 +70,14 @@ void AbstractRenderer::useCutType(const ECutType& cutType)
     _cutType = cutType;
     _buffNeedUpdate = true;
     updateCutPlane(_cutPlaneEq);
+}
+
+void AbstractRenderer::setElementVisibility(bool tet, bool pri, bool hex)
+{
+    _tetVisibility = tet;
+    _priVisibility = pri;
+    _hexVisibility = hex;
+    notifyMeshUpdate();
 }
 
 void AbstractRenderer::handleKeyPress(const scaena::KeyboardEvent& event)

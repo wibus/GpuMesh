@@ -26,6 +26,7 @@ protected slots:
     virtual void shadingChanged(const QString& text);
     virtual void useCameraMan(const std::string& cameraName);
     virtual void useCutType(const std::string& cutName);
+    virtual void elementVisibilityChanged(bool unused);
 
 protected:
     virtual void deployRenderTypes();

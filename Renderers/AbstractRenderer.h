@@ -29,7 +29,7 @@ public:
     virtual OptionMapDetails availableShadings() const;
     virtual void useShading(const std::string& shadingName);
     virtual void useCutType(const ECutType& cutType);
-
+    virtual void setElementVisibility(bool tet, bool pri, bool hex);
 
     virtual void updateCamera(const glm::mat4& view,
                               const glm::vec3& pos) = 0;
@@ -57,6 +57,11 @@ protected:
     glm::dvec4 _physicalCutPlane;
     glm::dvec4 _virtualCutPlane;
     ECutType _cutType;
+
+    // Element visibility
+    bool _tetVisibility;
+    bool _priVisibility;
+    bool _hexVisibility;
 
     // Shadings
     typedef std::function<void(void)> ShadingFunc;

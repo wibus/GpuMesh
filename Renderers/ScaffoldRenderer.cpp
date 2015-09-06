@@ -17,7 +17,9 @@ using namespace cellar;
 ScaffoldRenderer::ScaffoldRenderer() :
     _vao(0),
     _vbo(0),
-    _ibo(0),
+    _qbo(0),
+    _nibo(0),
+    _eibo(0),
     _lightMode(0),
     _tubeRadius(5.0f),
     _jointRadius(0.002f),
@@ -170,7 +172,11 @@ void ScaffoldRenderer::updateGeometry(
     glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _nibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -178,9 +184,10 @@ void ScaffoldRenderer::updateGeometry(
     // Fetch new vertex attributes
     vector<float> verts;
     vector<GLubyte> quals;
+    vector<GLuint> nodes;
     vector<GLuint> edges;
-    compileBuffers(mesh, evaluator, verts, quals, edges);
-    _vertElemCount = mesh.verts.size();
+    compileBuffers(mesh, evaluator, verts, quals, nodes, edges);
+    _vertElemCount = nodes.size();
     _indxElemCount = edges.size();
 
 
@@ -200,7 +207,14 @@ void ScaffoldRenderer::updateGeometry(
     quals.shrink_to_fit();
 
     // Send new element indices
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _nibo);
+    GLuint nodeSize = nodes.size() * sizeof(decltype(nodes.front()));
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, nodeSize, nodes.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    nodes.clear();
+    nodes.shrink_to_fit();
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eibo);
     GLuint edgeSize = edges.size() * sizeof(decltype(edges.front()));
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, edgeSize, edges.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -215,6 +229,7 @@ void ScaffoldRenderer::compileBuffers(
         const AbstractEvaluator& evaluator,
         std::vector<float>& verts,
         std::vector<GLubyte>& quals,
+        std::vector<GLuint>& nodes,
         std::vector<GLuint>& edges) const
 {
     size_t vertCount = mesh.verts.size();
@@ -229,6 +244,26 @@ void ScaffoldRenderer::compileBuffers(
     }
 
 
+    // Build Node Visibility and Index
+    vector<bool> visibility(vertCount, false);
+    for(size_t v=0; v < vertCount; ++v)
+    {
+        for(const MeshNeigElem& n : mesh.topos[v].neighborElems)
+        {
+            if((_tetVisibility && n.type == MeshTet::ELEMENT_TYPE) ||
+               (_priVisibility && n.type == MeshPri::ELEMENT_TYPE) ||
+               (_hexVisibility && n.type == MeshHex::ELEMENT_TYPE))
+            {
+                visibility[v] = true;
+                break;
+            }
+        }
+
+        if(visibility[v])
+            nodes.push_back(v);
+    }
+
+
     vector<double> qualMins(vertCount, 1.0);
 
     // Tetrahedrons
@@ -237,10 +272,10 @@ void ScaffoldRenderer::compileBuffers(
     {
         const MeshTet& tet = mesh.tets[i];
         double qual = evaluator.tetQuality(mesh, tet);
-        if(qual < qualMins[tet.v[0]]) qualMins[tet.v[0]] = qual;
-        if(qual < qualMins[tet.v[1]]) qualMins[tet.v[1]] = qual;
-        if(qual < qualMins[tet.v[2]]) qualMins[tet.v[2]] = qual;
-        if(qual < qualMins[tet.v[3]]) qualMins[tet.v[3]] = qual;
+        if(qual < qualMins[tet.v[0]] && visibility[tet.v[0]]) qualMins[tet.v[0]] = qual;
+        if(qual < qualMins[tet.v[1]] && visibility[tet.v[1]]) qualMins[tet.v[1]] = qual;
+        if(qual < qualMins[tet.v[2]] && visibility[tet.v[2]]) qualMins[tet.v[2]] = qual;
+        if(qual < qualMins[tet.v[3]] && visibility[tet.v[3]]) qualMins[tet.v[3]] = qual;
     }
 
     // Prisms
@@ -249,12 +284,12 @@ void ScaffoldRenderer::compileBuffers(
     {
         const MeshPri& pri = mesh.pris[i];
         double qual = evaluator.priQuality(mesh, pri);
-        if(qual < qualMins[pri.v[0]]) qualMins[pri.v[0]] = qual;
-        if(qual < qualMins[pri.v[1]]) qualMins[pri.v[1]] = qual;
-        if(qual < qualMins[pri.v[2]]) qualMins[pri.v[2]] = qual;
-        if(qual < qualMins[pri.v[3]]) qualMins[pri.v[3]] = qual;
-        if(qual < qualMins[pri.v[4]]) qualMins[pri.v[4]] = qual;
-        if(qual < qualMins[pri.v[5]]) qualMins[pri.v[5]] = qual;
+        if(qual < qualMins[pri.v[0]] && visibility[pri.v[0]]) qualMins[pri.v[0]] = qual;
+        if(qual < qualMins[pri.v[1]] && visibility[pri.v[1]]) qualMins[pri.v[1]] = qual;
+        if(qual < qualMins[pri.v[2]] && visibility[pri.v[2]]) qualMins[pri.v[2]] = qual;
+        if(qual < qualMins[pri.v[3]] && visibility[pri.v[3]]) qualMins[pri.v[3]] = qual;
+        if(qual < qualMins[pri.v[4]] && visibility[pri.v[4]]) qualMins[pri.v[4]] = qual;
+        if(qual < qualMins[pri.v[5]] && visibility[pri.v[5]]) qualMins[pri.v[5]] = qual;
     }
 
     // Hexahedrons
@@ -263,14 +298,26 @@ void ScaffoldRenderer::compileBuffers(
     {
         const MeshHex& hex = mesh.hexs[i];
         double qual = evaluator.hexQuality(mesh, hex);
-        if(qual < qualMins[hex.v[0]]) qualMins[hex.v[0]] = qual;
-        if(qual < qualMins[hex.v[1]]) qualMins[hex.v[1]] = qual;
-        if(qual < qualMins[hex.v[2]]) qualMins[hex.v[2]] = qual;
-        if(qual < qualMins[hex.v[3]]) qualMins[hex.v[3]] = qual;
-        if(qual < qualMins[hex.v[4]]) qualMins[hex.v[4]] = qual;
-        if(qual < qualMins[hex.v[5]]) qualMins[hex.v[5]] = qual;
-        if(qual < qualMins[hex.v[6]]) qualMins[hex.v[6]] = qual;
-        if(qual < qualMins[hex.v[7]]) qualMins[hex.v[7]] = qual;
+        if(qual < qualMins[hex.v[0]] && visibility[hex.v[0]]) qualMins[hex.v[0]] = qual;
+        if(qual < qualMins[hex.v[1]] && visibility[hex.v[1]]) qualMins[hex.v[1]] = qual;
+        if(qual < qualMins[hex.v[2]] && visibility[hex.v[2]]) qualMins[hex.v[2]] = qual;
+        if(qual < qualMins[hex.v[3]] && visibility[hex.v[3]]) qualMins[hex.v[3]] = qual;
+        if(qual < qualMins[hex.v[4]] && visibility[hex.v[4]]) qualMins[hex.v[4]] = qual;
+        if(qual < qualMins[hex.v[5]] && visibility[hex.v[5]]) qualMins[hex.v[5]] = qual;
+        if(qual < qualMins[hex.v[6]] && visibility[hex.v[6]]) qualMins[hex.v[6]] = qual;
+        if(qual < qualMins[hex.v[7]] && visibility[hex.v[7]]) qualMins[hex.v[7]] = qual;
+    }
+
+    quals.resize(vertCount);
+    if(_cutType == ECutType::InvertedElements)
+    {
+        for(size_t v=0; v < vertCount; ++v)
+            quals[v] = 255 * glm::clamp(-qualMins[v], 0.0, 1.0);
+    }
+    else
+    {
+        for(size_t v=0; v < vertCount; ++v)
+            quals[v] = 255 * glm::max(qualMins[v], 0.0);
     }
 
 
@@ -294,6 +341,10 @@ void ScaffoldRenderer::compileBuffers(
 
     for(const pair<int, int>& e : edgeSet)
     {
+        if(!visibility[e.first] ||
+           !visibility[e.second])
+            continue;
+
         if(glm::dot(mesh.verts[e.first].p, cutNormal) > cutDistance ||
            glm::dot(mesh.verts[e.second].p, cutNormal) > cutDistance)
             continue;
@@ -304,19 +355,6 @@ void ScaffoldRenderer::compileBuffers(
 
         edges.push_back(e.first);
         edges.push_back(e.second);
-    }
-
-
-    quals.resize(vertCount);
-    if(_cutType == ECutType::InvertedElements)
-    {
-        for(size_t v=0; v < vertCount; ++v)
-            quals[v] = 255 * glm::clamp(-qualMins[v], 0.0, 1.0);
-    }
-    else
-    {
-        for(size_t v=0; v < vertCount; ++v)
-            quals[v] = 255 * glm::max(qualMins[v], 0.0);
     }
 }
 
@@ -331,8 +369,11 @@ void ScaffoldRenderer::clearResources()
     glDeleteBuffers(1, &_qbo);
     _qbo = 0;
 
-    glDeleteBuffers(1, &_ibo);
-    _ibo = 0;
+    glDeleteBuffers(1, &_nibo);
+    _nibo = 0;
+
+    glDeleteBuffers(1, &_eibo);
+    _eibo = 0;
 }
 
 void ScaffoldRenderer::resetResources()
@@ -352,8 +393,12 @@ void ScaffoldRenderer::resetResources()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(1);
 
-    glGenBuffers(1, &_ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+    glGenBuffers(1, &_nibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _nibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glGenBuffers(1, &_eibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
@@ -415,7 +460,7 @@ void ScaffoldRenderer::render()
         glBindVertexArray(_vao);
         _wireframeProgram.pushProgram();
         _wireframeProgram.setVec4f("CutPlaneEq", _virtualCutPlane);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eibo);
         glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         _wireframeProgram.popProgram();
@@ -429,7 +474,9 @@ void ScaffoldRenderer::render()
         _scaffoldJointProgram.pushProgram();
         _scaffoldJointProgram.setInt("LightMode", _lightMode);
         _scaffoldJointProgram.setVec4f("CutPlaneEq", _virtualCutPlane);
-        glDrawArrays(GL_POINTS, 0, _vertElemCount);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _nibo);
+        glDrawElements(GL_POINTS, _vertElemCount, GL_UNSIGNED_INT, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         _scaffoldJointProgram.popProgram();
 
         glDisable(GL_PROGRAM_POINT_SIZE);
@@ -438,7 +485,7 @@ void ScaffoldRenderer::render()
         _scaffoldTubeProgram.pushProgram();
         _scaffoldTubeProgram.setInt("LightMode", _lightMode);
         _scaffoldTubeProgram.setVec4f("CutPlaneEq", _virtualCutPlane);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eibo);
         glDrawElements(GL_LINES, _indxElemCount, GL_UNSIGNED_INT, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         _scaffoldTubeProgram.popProgram();

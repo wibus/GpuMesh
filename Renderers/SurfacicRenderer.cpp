@@ -278,157 +278,166 @@ void SurfacicRenderer::compileFacesAttributes(
     double cutDistance = _physicalCutPlane.w;
 
     // Tetrahedrons
-    int tetCount = mesh.tets.size();
-    for(int i=0; i < tetCount; ++i)
+    if(_tetVisibility)
     {
-        const MeshTet& tet = mesh.tets[i];
-
-        glm::dvec3 verts[] = {
-            glm::dvec3(mesh.verts[tet[0]]),
-            glm::dvec3(mesh.verts[tet[1]]),
-            glm::dvec3(mesh.verts[tet[2]]),
-            glm::dvec3(mesh.verts[tet[3]])
-        };
-
-        if(_cutType == ECutType::PhysicalPlane)
+        int tetCount = mesh.tets.size();
+        for(int i=0; i < tetCount; ++i)
         {
-            if(glm::dot(verts[0], cutNormal) > cutDistance ||
-               glm::dot(verts[1], cutNormal) > cutDistance ||
-               glm::dot(verts[2], cutNormal) > cutDistance ||
-               glm::dot(verts[3], cutNormal) > cutDistance)
-                continue;
-        }
+            const MeshTet& tet = mesh.tets[i];
+
+            glm::dvec3 verts[] = {
+                glm::dvec3(mesh.verts[tet[0]]),
+                glm::dvec3(mesh.verts[tet[1]]),
+                glm::dvec3(mesh.verts[tet[2]]),
+                glm::dvec3(mesh.verts[tet[3]])
+            };
+
+            if(_cutType == ECutType::PhysicalPlane)
+            {
+                if(glm::dot(verts[0], cutNormal) > cutDistance ||
+                   glm::dot(verts[1], cutNormal) > cutDistance ||
+                   glm::dot(verts[2], cutNormal) > cutDistance ||
+                   glm::dot(verts[3], cutNormal) > cutDistance)
+                    continue;
+            }
 
 
-        double quality = evaluator.tetQuality(verts);
-        if(_cutType == ECutType::InvertedElements)
-        {
-            if(quality >= 0.0)
-                continue;
-            quality = glm::min(-quality, 1.0);
-        }
-        else
-        {
-            quality = glm::max(quality, 0.0);
-        }
+            double quality = evaluator.tetQuality(verts);
+            if(_cutType == ECutType::InvertedElements)
+            {
+                if(quality >= 0.0)
+                    continue;
+                quality = glm::min(-quality, 1.0);
+            }
+            else
+            {
+                quality = glm::max(quality, 0.0);
+            }
 
-        for(int f=0; f < MeshTet::TRI_COUNT; ++f)
-        {
-            const MeshTri& tri = MeshTet::tris[f];
-            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
-            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
-            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-            pushTriangle(vertices, normals, triEdges, qualities,
-                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, false, quality);
+            for(int f=0; f < MeshTet::TRI_COUNT; ++f)
+            {
+                const MeshTri& tri = MeshTet::tris[f];
+                glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+                glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+                glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+                pushTriangle(vertices, normals, triEdges, qualities,
+                             verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                             normal, false, quality);
+            }
         }
     }
 
 
     // Prisms
-    int priCount = mesh.pris.size();
-    for(int i=0; i < priCount; ++i)
+    if(_priVisibility)
     {
-        const MeshPri& pri = mesh.pris[i];
-
-        glm::dvec3 verts[] = {
-            glm::dvec3(mesh.verts[pri[0]]),
-            glm::dvec3(mesh.verts[pri[1]]),
-            glm::dvec3(mesh.verts[pri[2]]),
-            glm::dvec3(mesh.verts[pri[3]]),
-            glm::dvec3(mesh.verts[pri[4]]),
-            glm::dvec3(mesh.verts[pri[5]])
-        };
-
-        if(_cutType == ECutType::PhysicalPlane)
+        int priCount = mesh.pris.size();
+        for(int i=0; i < priCount; ++i)
         {
-            if(glm::dot(verts[0], cutNormal) > cutDistance ||
-               glm::dot(verts[1], cutNormal) > cutDistance ||
-               glm::dot(verts[2], cutNormal) > cutDistance ||
-               glm::dot(verts[3], cutNormal) > cutDistance ||
-               glm::dot(verts[4], cutNormal) > cutDistance ||
-               glm::dot(verts[5], cutNormal) > cutDistance)
-                continue;
-        }
+            const MeshPri& pri = mesh.pris[i];
+
+            glm::dvec3 verts[] = {
+                glm::dvec3(mesh.verts[pri[0]]),
+                glm::dvec3(mesh.verts[pri[1]]),
+                glm::dvec3(mesh.verts[pri[2]]),
+                glm::dvec3(mesh.verts[pri[3]]),
+                glm::dvec3(mesh.verts[pri[4]]),
+                glm::dvec3(mesh.verts[pri[5]])
+            };
+
+            if(_cutType == ECutType::PhysicalPlane)
+            {
+                if(glm::dot(verts[0], cutNormal) > cutDistance ||
+                   glm::dot(verts[1], cutNormal) > cutDistance ||
+                   glm::dot(verts[2], cutNormal) > cutDistance ||
+                   glm::dot(verts[3], cutNormal) > cutDistance ||
+                   glm::dot(verts[4], cutNormal) > cutDistance ||
+                   glm::dot(verts[5], cutNormal) > cutDistance)
+                    continue;
+            }
 
 
-        double quality = evaluator.priQuality(verts);
-        if(_cutType == ECutType::InvertedElements)
-        {
-            if(quality >= 0.0)
-                continue;
-            quality = glm::min(-quality, 1.0);
-        }
-        else
-        {
-            quality = glm::max(quality, 0.0);
-        }
+            double quality = evaluator.priQuality(verts);
+            if(_cutType == ECutType::InvertedElements)
+            {
+                if(quality >= 0.0)
+                    continue;
+                quality = glm::min(-quality, 1.0);
+            }
+            else
+            {
+                quality = glm::max(quality, 0.0);
+            }
 
-        for(int f=0; f < MeshPri::TRI_COUNT; ++f)
-        {
-            const MeshTri& tri = MeshPri::tris[f];
-            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
-            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
-            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-            pushTriangle(vertices, normals, triEdges, qualities,
-                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, f < 6, quality);
+            for(int f=0; f < MeshPri::TRI_COUNT; ++f)
+            {
+                const MeshTri& tri = MeshPri::tris[f];
+                glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+                glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+                glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+                pushTriangle(vertices, normals, triEdges, qualities,
+                             verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                             normal, f < 6, quality);
+            }
         }
     }
 
 
     // Hexahedrons
-    int hexCount = mesh.hexs.size();
-    for(int i=0; i < hexCount; ++i)
+    if(_hexVisibility)
     {
-        const MeshHex& hex = mesh.hexs[i];
-
-        glm::dvec3 verts[] = {
-            glm::dvec3(mesh.verts[hex[0]]),
-            glm::dvec3(mesh.verts[hex[1]]),
-            glm::dvec3(mesh.verts[hex[2]]),
-            glm::dvec3(mesh.verts[hex[3]]),
-            glm::dvec3(mesh.verts[hex[4]]),
-            glm::dvec3(mesh.verts[hex[5]]),
-            glm::dvec3(mesh.verts[hex[6]]),
-            glm::dvec3(mesh.verts[hex[7]])
-        };
-
-        if(_cutType == ECutType::PhysicalPlane)
+        int hexCount = mesh.hexs.size();
+        for(int i=0; i < hexCount; ++i)
         {
-            if(glm::dot(verts[0], cutNormal) > cutDistance ||
-               glm::dot(verts[1], cutNormal) > cutDistance ||
-               glm::dot(verts[2], cutNormal) > cutDistance ||
-               glm::dot(verts[3], cutNormal) > cutDistance ||
-               glm::dot(verts[4], cutNormal) > cutDistance ||
-               glm::dot(verts[5], cutNormal) > cutDistance ||
-               glm::dot(verts[6], cutNormal) > cutDistance ||
-               glm::dot(verts[7], cutNormal) > cutDistance)
-                continue;
-        }
+            const MeshHex& hex = mesh.hexs[i];
+
+            glm::dvec3 verts[] = {
+                glm::dvec3(mesh.verts[hex[0]]),
+                glm::dvec3(mesh.verts[hex[1]]),
+                glm::dvec3(mesh.verts[hex[2]]),
+                glm::dvec3(mesh.verts[hex[3]]),
+                glm::dvec3(mesh.verts[hex[4]]),
+                glm::dvec3(mesh.verts[hex[5]]),
+                glm::dvec3(mesh.verts[hex[6]]),
+                glm::dvec3(mesh.verts[hex[7]])
+            };
+
+            if(_cutType == ECutType::PhysicalPlane)
+            {
+                if(glm::dot(verts[0], cutNormal) > cutDistance ||
+                   glm::dot(verts[1], cutNormal) > cutDistance ||
+                   glm::dot(verts[2], cutNormal) > cutDistance ||
+                   glm::dot(verts[3], cutNormal) > cutDistance ||
+                   glm::dot(verts[4], cutNormal) > cutDistance ||
+                   glm::dot(verts[5], cutNormal) > cutDistance ||
+                   glm::dot(verts[6], cutNormal) > cutDistance ||
+                   glm::dot(verts[7], cutNormal) > cutDistance)
+                    continue;
+            }
 
 
-        double quality = evaluator.hexQuality(verts);
-        if(_cutType == ECutType::InvertedElements)
-        {
-            if(quality >= 0.0)
-                continue;
-            quality = glm::min(-quality, 1.0);
-        }
-        else
-        {
-            quality = glm::max(quality, 0.0);
-        }
+            double quality = evaluator.hexQuality(verts);
+            if(_cutType == ECutType::InvertedElements)
+            {
+                if(quality >= 0.0)
+                    continue;
+                quality = glm::min(-quality, 1.0);
+            }
+            else
+            {
+                quality = glm::max(quality, 0.0);
+            }
 
-        for(int f=0; f < MeshHex::TRI_COUNT; ++f)
-        {
-            const MeshTri& tri = MeshHex::tris[f];
-            glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
-            glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
-            glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-            pushTriangle(vertices, normals, triEdges, qualities,
-                         verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                         normal, true, quality);
+            for(int f=0; f < MeshHex::TRI_COUNT; ++f)
+            {
+                const MeshTri& tri = MeshHex::tris[f];
+                glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+                glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+                glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+                pushTriangle(vertices, normals, triEdges, qualities,
+                             verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                             normal, true, quality);
+            }
         }
     }
 }

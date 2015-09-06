@@ -31,11 +31,13 @@ protected:
     virtual void updateGeometry(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator) override;
+
     virtual void compileBuffers(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
             std::vector<float>& verts,
             std::vector<GLubyte>& quals,
+            std::vector<GLuint>& nodes,
             std::vector<GLuint>& edges) const;
 
     virtual void clearResources() override;
@@ -60,7 +62,9 @@ protected:
     GLuint _vao;
     GLuint _vbo;
     GLuint _qbo;
-    GLuint _ibo;
+    GLuint _nibo;
+    GLuint _eibo;
+
 
     int _lightMode;
     float _tubeRadius;

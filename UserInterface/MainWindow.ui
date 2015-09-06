@@ -399,6 +399,121 @@
          </widget>
         </item>
         <item>
+         <widget class="QGroupBox" name="elementVisibilityGroup">
+          <property name="title">
+           <string>Element Visibility</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QCheckBox" name="tetrahedraVisibility">
+             <property name="text">
+              <string>Tetrahedra</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="prismsVisibility">
+             <property name="text">
+              <string>Prisms</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="hexahedraVisibility">
+             <property name="text">
+              <string>Hexahedra</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="qualityCullingGroup">
+          <property name="title">
+           <string>Quality Culling</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QCheckBox" name="enableQualityCullingCheck">
+             <property name="text">
+              <string>Enable Quality Culling</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="qualityCullingWidget" native="true">
+             <layout class="QGridLayout" name="gridLayout_2">
+              <item row="0" column="1">
+               <widget class="QSlider" name="minQualityCullingSlider">
+                <property name="maximum">
+                 <number>100</number>
+                </property>
+                <property name="value">
+                 <number>50</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QDoubleSpinBox" name="minQualityCullingSpin">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0" rowspan="2">
+               <widget class="QLabel" name="minQualityCullingLabel">
+                <property name="text">
+                 <string>Min</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="maxQualityCullingLabel">
+                <property name="text">
+                 <string>Max</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QSlider" name="maxQualityCullingSlider">
+                <property name="maximum">
+                 <number>100</number>
+                </property>
+                <property name="value">
+                 <number>100</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QDoubleSpinBox" name="maxQualityCullingSpin">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <spacer name="renderingSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>

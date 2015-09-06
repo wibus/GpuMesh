@@ -52,15 +52,22 @@ public:
     virtual OptionMapDetails availableCameraMen() const;
     virtual OptionMapDetails availableCutTypes() const;
 
+    // Mesh
     virtual void generateMesh(
             const std::string& mesherName,
             const std::string& modelName,
             size_t vertexCount);
 
+    // Evaluate
     virtual void evaluateMesh(
             const std::string& evaluatorName,
             const std::string& implementationName);
 
+    virtual void benchmarkEvaluator(
+            const std::string& evaluatorName,
+            const std::map<std::string, int>& cycleCounts);
+
+    // Smooth
     virtual void smoothMesh(
             const std::string& smootherName,
             const std::string& evaluatorName,
@@ -77,15 +84,13 @@ public:
             double moveFactor,
             double gainThreshold);
 
-    virtual void benchmarkEvaluator(
-            const std::string& evaluatorName,
-            const std::map<std::string, int>& cycleCounts);
-
+    // Render
     virtual void useEvaluator(const std::string& evaluatorName);
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
     virtual void useCameraMan(const std::string& cameraManName);
     virtual void useCutType(const std::string& cutTypeName);
+    virtual void setElementVisibility(bool tet, bool pri, bool hex);
 
 protected:
     virtual void printStep(const std::string& stepDescription);
@@ -114,6 +119,10 @@ protected:
     double _cutAzimuth;
     double _cutAltitude;
     double _cutDistance;
+
+    bool _tetVisibility;
+    bool _priVisibility;
+    bool _hexVisibility;
 
 private:
     std::unique_ptr<Mesh> _mesh;
