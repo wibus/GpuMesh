@@ -91,6 +91,7 @@ public:
     virtual void useCameraMan(const std::string& cameraManName);
     virtual void useCutType(const std::string& cutTypeName);
     virtual void setElementVisibility(bool tet, bool pri, bool hex);
+    virtual void setQualityCullingBounds(double min, double max);
 
 protected:
     virtual void printStep(const std::string& stepDescription);
@@ -123,6 +124,9 @@ protected:
     bool _tetVisibility;
     bool _priVisibility;
     bool _hexVisibility;
+
+    double _qualityCullingMin;
+    double _qualityCullingMax;
 
 private:
     std::unique_ptr<Mesh> _mesh;

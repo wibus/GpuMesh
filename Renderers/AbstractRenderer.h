@@ -30,6 +30,8 @@ public:
     virtual void useShading(const std::string& shadingName);
     virtual void useCutType(const ECutType& cutType);
     virtual void setElementVisibility(bool tet, bool pri, bool hex);
+    virtual void setQualityCullingBounds(double min, double max);
+
 
     virtual void updateCamera(const glm::mat4& view,
                               const glm::vec3& pos) = 0;
@@ -62,6 +64,10 @@ protected:
     bool _tetVisibility;
     bool _priVisibility;
     bool _hexVisibility;
+
+    // Quality Culling Bounds
+    double _qualityCullingMin;
+    double _qualityCullingMax;
 
     // Shadings
     typedef std::function<void(void)> ShadingFunc;

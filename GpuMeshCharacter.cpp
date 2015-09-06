@@ -59,6 +59,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _tetVisibility(true),
     _priVisibility(true),
     _hexVisibility(true),
+    _qualityCullingMin(-INFINITY),
+    _qualityCullingMax(INFINITY),
     _mesh(new GpuMesh()),
     _availableMeshers("Available Meshers"),
     _availableEvaluators("Available Evaluators"),
@@ -535,12 +537,24 @@ void GpuMeshCharacter::useCutType(const std::string& cutTypeName)
 
 void GpuMeshCharacter::setElementVisibility(bool tet, bool pri, bool hex)
 {
+    _tetVisibility = tet;
+    _priVisibility = pri;
+    _hexVisibility = hex;
+
     if(_isEntered)
     {
-        _tetVisibility = tet;
-        _priVisibility = pri;
-        _hexVisibility = hex;
         _renderer->setElementVisibility(tet, pri, hex);
+    }
+}
+
+void GpuMeshCharacter::setQualityCullingBounds(double min, double max)
+{
+    _qualityCullingMin = min;
+    _qualityCullingMax = max;
+
+    if(_isEntered)
+    {
+        _renderer->setQualityCullingBounds(min, max);
     }
 }
 
@@ -577,6 +591,8 @@ void GpuMeshCharacter::setupInstalledRenderer()
         moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
 
         setElementVisibility( _tetVisibility, _priVisibility, _hexVisibility);
+
+        setQualityCullingBounds(_qualityCullingMin, _qualityCullingMax);
 
         // Setup viewport
         play().view()->camera3D()->registerObserver(*_renderer);

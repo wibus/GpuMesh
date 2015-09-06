@@ -16,6 +16,8 @@ AbstractRenderer::AbstractRenderer() :
     _tetVisibility(true),
     _priVisibility(true),
     _hexVisibility(true),
+    _qualityCullingMin(-INFINITY),
+    _qualityCullingMax(INFINITY),
     _shadingFuncs("Shadings")
 {
 
@@ -77,6 +79,13 @@ void AbstractRenderer::setElementVisibility(bool tet, bool pri, bool hex)
     _tetVisibility = tet;
     _priVisibility = pri;
     _hexVisibility = hex;
+    notifyMeshUpdate();
+}
+
+void AbstractRenderer::setQualityCullingBounds(double min, double max)
+{
+    _qualityCullingMin = min;
+    _qualityCullingMax = max;
     notifyMeshUpdate();
 }
 

@@ -303,26 +303,30 @@ void SurfacicRenderer::compileFacesAttributes(
 
 
             double quality = evaluator.tetQuality(verts);
-            if(_cutType == ECutType::InvertedElements)
+            if(quality >= _qualityCullingMin &&
+               quality <= _qualityCullingMax)
             {
-                if(quality >= 0.0)
-                    continue;
-                quality = glm::min(-quality, 1.0);
-            }
-            else
-            {
-                quality = glm::max(quality, 0.0);
-            }
+                if(_cutType == ECutType::InvertedElements)
+                {
+                    if(quality >= 0.0)
+                        continue;
+                    quality = glm::min(-quality, 1.0);
+                }
+                else
+                {
+                    quality = glm::max(quality, 0.0);
+                }
 
-            for(int f=0; f < MeshTet::TRI_COUNT; ++f)
-            {
-                const MeshTri& tri = MeshTet::tris[f];
-                glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
-                glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
-                glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-                pushTriangle(vertices, normals, triEdges, qualities,
-                             verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                             normal, false, quality);
+                for(int f=0; f < MeshTet::TRI_COUNT; ++f)
+                {
+                    const MeshTri& tri = MeshTet::tris[f];
+                    glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+                    glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+                    glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+                    pushTriangle(vertices, normals, triEdges, qualities,
+                                 verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                                 normal, false, quality);
+                }
             }
         }
     }
@@ -358,26 +362,30 @@ void SurfacicRenderer::compileFacesAttributes(
 
 
             double quality = evaluator.priQuality(verts);
-            if(_cutType == ECutType::InvertedElements)
+            if(quality >= _qualityCullingMin &&
+               quality <= _qualityCullingMax)
             {
-                if(quality >= 0.0)
-                    continue;
-                quality = glm::min(-quality, 1.0);
-            }
-            else
-            {
-                quality = glm::max(quality, 0.0);
-            }
+                if(_cutType == ECutType::InvertedElements)
+                {
+                    if(quality >= 0.0)
+                        continue;
+                    quality = glm::min(-quality, 1.0);
+                }
+                else
+                {
+                    quality = glm::max(quality, 0.0);
+                }
 
-            for(int f=0; f < MeshPri::TRI_COUNT; ++f)
-            {
-                const MeshTri& tri = MeshPri::tris[f];
-                glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
-                glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
-                glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-                pushTriangle(vertices, normals, triEdges, qualities,
-                             verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                             normal, f < 6, quality);
+                for(int f=0; f < MeshPri::TRI_COUNT; ++f)
+                {
+                    const MeshTri& tri = MeshPri::tris[f];
+                    glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+                    glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+                    glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+                    pushTriangle(vertices, normals, triEdges, qualities,
+                                 verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                                 normal, f < 6, quality);
+                }
             }
         }
     }
@@ -417,26 +425,30 @@ void SurfacicRenderer::compileFacesAttributes(
 
 
             double quality = evaluator.hexQuality(verts);
-            if(_cutType == ECutType::InvertedElements)
+            if(quality >= _qualityCullingMin &&
+               quality <= _qualityCullingMax)
             {
-                if(quality >= 0.0)
-                    continue;
-                quality = glm::min(-quality, 1.0);
-            }
-            else
-            {
-                quality = glm::max(quality, 0.0);
-            }
+                if(_cutType == ECutType::InvertedElements)
+                {
+                    if(quality >= 0.0)
+                        continue;
+                    quality = glm::min(-quality, 1.0);
+                }
+                else
+                {
+                    quality = glm::max(quality, 0.0);
+                }
 
-            for(int f=0; f < MeshHex::TRI_COUNT; ++f)
-            {
-                const MeshTri& tri = MeshHex::tris[f];
-                glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
-                glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
-                glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-                pushTriangle(vertices, normals, triEdges, qualities,
-                             verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                             normal, true, quality);
+                for(int f=0; f < MeshHex::TRI_COUNT; ++f)
+                {
+                    const MeshTri& tri = MeshHex::tris[f];
+                    glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+                    glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+                    glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+                    pushTriangle(vertices, normals, triEdges, qualities,
+                                 verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                                 normal, true, quality);
+                }
             }
         }
     }

@@ -41,6 +41,37 @@ RenderTab::RenderTab(Ui::MainWindow* ui,
             this, &RenderTab::elementVisibilityChanged);
     connect(_ui->hexahedraVisibility, &QCheckBox::toggled,
             this, &RenderTab::elementVisibilityChanged);
+
+    // Connect quality culling
+    connect(_ui->minQualityCullingSlider, &QSlider::valueChanged,
+            [this](int val){_ui->minQualityCullingSpin->setValue(val/50.0-1.0);});
+    connect(_ui->maxQualityCullingSlider, &QSlider::valueChanged,
+            [this](int val){_ui->maxQualityCullingSpin->setValue(val/50.0-1.0);});
+
+    connect(_ui->minQualityCullingSpin,
+            static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+            [this](double val){
+        _ui->minQualityCullingSlider->setValue((val+1.0)*50.0);
+        if(val > _ui->maxQualityCullingSpin->value())
+            _ui->maxQualityCullingSpin->setValue(val);
+        else
+            updateQualityCulling();
+    });
+    connect(_ui->maxQualityCullingSpin,
+            static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+            [this](double val){
+        _ui->maxQualityCullingSlider->setValue((val+1.0)*50.0);
+        if(val < _ui->minQualityCullingSpin->value())
+            _ui->minQualityCullingSpin->setValue(val);
+        else
+            updateQualityCulling();
+    });
+
+    connect(_ui->qualityCullingCheck, &QCheckBox::toggled,
+            [this](bool enabled){
+        _ui->qualityCullingWidget->setEnabled(enabled);
+        updateQualityCulling();
+    });
 }
 
 RenderTab::~RenderTab()
@@ -147,4 +178,19 @@ void RenderTab::elementVisibilityChanged(bool unused)
         _ui->tetrahedraVisibility->isChecked(),
         _ui->prismsVisibility->isChecked(),
         _ui->hexahedraVisibility->isChecked());
+}
+
+void RenderTab::updateQualityCulling()
+{
+    if(_ui->qualityCullingCheck->isChecked())
+    {
+        _character->setQualityCullingBounds(
+            _ui->minQualityCullingSpin->value(),
+            _ui->maxQualityCullingSpin->value());
+    }
+    else
+    {
+        _character->setQualityCullingBounds(
+            -INFINITY, INFINITY);
+    }
 }

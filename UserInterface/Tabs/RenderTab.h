@@ -33,6 +33,7 @@ protected:
     virtual void deployShadings();
     virtual void deployCameraMen();
     virtual void deployCutTypes();
+    virtual void updateQualityCulling();
 
 private:
     Ui::MainWindow* _ui;

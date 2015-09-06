@@ -232,6 +232,7 @@ void ScaffoldRenderer::compileBuffers(
         std::vector<GLuint>& nodes,
         std::vector<GLuint>& edges) const
 {
+    // Vertex positions //
     size_t vertCount = mesh.verts.size();
 
     verts.resize(vertCount * 3);
@@ -243,27 +244,7 @@ void ScaffoldRenderer::compileBuffers(
         verts[++idx] = v.z;
     }
 
-
-    // Build Node Visibility and Index
-    vector<bool> visibility(vertCount, false);
-    for(size_t v=0; v < vertCount; ++v)
-    {
-        for(const MeshNeigElem& n : mesh.topos[v].neighborElems)
-        {
-            if((_tetVisibility && n.type == MeshTet::ELEMENT_TYPE) ||
-               (_priVisibility && n.type == MeshPri::ELEMENT_TYPE) ||
-               (_hexVisibility && n.type == MeshHex::ELEMENT_TYPE))
-            {
-                visibility[v] = true;
-                break;
-            }
-        }
-
-        if(visibility[v])
-            nodes.push_back(v);
-    }
-
-
+    // Vertex qualities //
     vector<double> qualMins(vertCount, 1.0);
 
     // Tetrahedrons
@@ -272,10 +253,10 @@ void ScaffoldRenderer::compileBuffers(
     {
         const MeshTet& tet = mesh.tets[i];
         double qual = evaluator.tetQuality(mesh, tet);
-        if(qual < qualMins[tet.v[0]] && visibility[tet.v[0]]) qualMins[tet.v[0]] = qual;
-        if(qual < qualMins[tet.v[1]] && visibility[tet.v[1]]) qualMins[tet.v[1]] = qual;
-        if(qual < qualMins[tet.v[2]] && visibility[tet.v[2]]) qualMins[tet.v[2]] = qual;
-        if(qual < qualMins[tet.v[3]] && visibility[tet.v[3]]) qualMins[tet.v[3]] = qual;
+        if(qual < qualMins[tet.v[0]]) qualMins[tet.v[0]] = qual;
+        if(qual < qualMins[tet.v[1]]) qualMins[tet.v[1]] = qual;
+        if(qual < qualMins[tet.v[2]]) qualMins[tet.v[2]] = qual;
+        if(qual < qualMins[tet.v[3]]) qualMins[tet.v[3]] = qual;
     }
 
     // Prisms
@@ -284,12 +265,12 @@ void ScaffoldRenderer::compileBuffers(
     {
         const MeshPri& pri = mesh.pris[i];
         double qual = evaluator.priQuality(mesh, pri);
-        if(qual < qualMins[pri.v[0]] && visibility[pri.v[0]]) qualMins[pri.v[0]] = qual;
-        if(qual < qualMins[pri.v[1]] && visibility[pri.v[1]]) qualMins[pri.v[1]] = qual;
-        if(qual < qualMins[pri.v[2]] && visibility[pri.v[2]]) qualMins[pri.v[2]] = qual;
-        if(qual < qualMins[pri.v[3]] && visibility[pri.v[3]]) qualMins[pri.v[3]] = qual;
-        if(qual < qualMins[pri.v[4]] && visibility[pri.v[4]]) qualMins[pri.v[4]] = qual;
-        if(qual < qualMins[pri.v[5]] && visibility[pri.v[5]]) qualMins[pri.v[5]] = qual;
+        if(qual < qualMins[pri.v[0]]) qualMins[pri.v[0]] = qual;
+        if(qual < qualMins[pri.v[1]]) qualMins[pri.v[1]] = qual;
+        if(qual < qualMins[pri.v[2]]) qualMins[pri.v[2]] = qual;
+        if(qual < qualMins[pri.v[3]]) qualMins[pri.v[3]] = qual;
+        if(qual < qualMins[pri.v[4]]) qualMins[pri.v[4]] = qual;
+        if(qual < qualMins[pri.v[5]]) qualMins[pri.v[5]] = qual;
     }
 
     // Hexahedrons
@@ -298,14 +279,14 @@ void ScaffoldRenderer::compileBuffers(
     {
         const MeshHex& hex = mesh.hexs[i];
         double qual = evaluator.hexQuality(mesh, hex);
-        if(qual < qualMins[hex.v[0]] && visibility[hex.v[0]]) qualMins[hex.v[0]] = qual;
-        if(qual < qualMins[hex.v[1]] && visibility[hex.v[1]]) qualMins[hex.v[1]] = qual;
-        if(qual < qualMins[hex.v[2]] && visibility[hex.v[2]]) qualMins[hex.v[2]] = qual;
-        if(qual < qualMins[hex.v[3]] && visibility[hex.v[3]]) qualMins[hex.v[3]] = qual;
-        if(qual < qualMins[hex.v[4]] && visibility[hex.v[4]]) qualMins[hex.v[4]] = qual;
-        if(qual < qualMins[hex.v[5]] && visibility[hex.v[5]]) qualMins[hex.v[5]] = qual;
-        if(qual < qualMins[hex.v[6]] && visibility[hex.v[6]]) qualMins[hex.v[6]] = qual;
-        if(qual < qualMins[hex.v[7]] && visibility[hex.v[7]]) qualMins[hex.v[7]] = qual;
+        if(qual < qualMins[hex.v[0]]) qualMins[hex.v[0]] = qual;
+        if(qual < qualMins[hex.v[1]]) qualMins[hex.v[1]] = qual;
+        if(qual < qualMins[hex.v[2]]) qualMins[hex.v[2]] = qual;
+        if(qual < qualMins[hex.v[3]]) qualMins[hex.v[3]] = qual;
+        if(qual < qualMins[hex.v[4]]) qualMins[hex.v[4]] = qual;
+        if(qual < qualMins[hex.v[5]]) qualMins[hex.v[5]] = qual;
+        if(qual < qualMins[hex.v[6]]) qualMins[hex.v[6]] = qual;
+        if(qual < qualMins[hex.v[7]]) qualMins[hex.v[7]] = qual;
     }
 
     quals.resize(vertCount);
@@ -318,6 +299,30 @@ void ScaffoldRenderer::compileBuffers(
     {
         for(size_t v=0; v < vertCount; ++v)
             quals[v] = 255 * glm::max(qualMins[v], 0.0);
+    }
+
+
+    // Build Node Visibility and Index
+    vector<bool> visibility(vertCount, false);
+    for(size_t v=0; v < vertCount; ++v)
+    {
+        if(qualMins[v] >= _qualityCullingMin &&
+           qualMins[v] <= _qualityCullingMax)
+        {
+            for(const MeshNeigElem& n : mesh.topos[v].neighborElems)
+            {
+                if((_tetVisibility && n.type == MeshTet::ELEMENT_TYPE) ||
+                    (_priVisibility && n.type == MeshPri::ELEMENT_TYPE) ||
+                    (_hexVisibility && n.type == MeshHex::ELEMENT_TYPE))
+                {
+                    visibility[v] = true;
+                    break;
+                }
+            }
+
+            if(visibility[v])
+                nodes.push_back(v);
+        }
     }
 
 

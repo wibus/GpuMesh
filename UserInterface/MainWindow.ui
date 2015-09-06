@@ -444,7 +444,7 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8">
            <item>
-            <widget class="QCheckBox" name="enableQualityCullingCheck">
+            <widget class="QCheckBox" name="qualityCullingCheck">
              <property name="text">
               <string>Enable Quality Culling</string>
              </property>
@@ -452,7 +452,25 @@
            </item>
            <item>
             <widget class="QWidget" name="qualityCullingWidget" native="true">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <layout class="QGridLayout" name="gridLayout_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <property name="spacing">
+               <number>0</number>
+              </property>
               <item row="0" column="1">
                <widget class="QSlider" name="minQualityCullingSlider">
                 <property name="maximum">
@@ -464,12 +482,27 @@
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
+                <property name="tickPosition">
+                 <enum>QSlider::TicksBelow</enum>
+                </property>
+                <property name="tickInterval">
+                 <number>50</number>
+                </property>
                </widget>
               </item>
               <item row="0" column="2">
                <widget class="QDoubleSpinBox" name="minQualityCullingSpin">
                 <property name="decimals">
-                 <number>4</number>
+                 <number>3</number>
+                </property>
+                <property name="minimum">
+                 <double>-1.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>1.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
                 </property>
                </widget>
               </item>
@@ -498,12 +531,30 @@
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
+                <property name="tickPosition">
+                 <enum>QSlider::TicksBelow</enum>
+                </property>
+                <property name="tickInterval">
+                 <number>50</number>
+                </property>
                </widget>
               </item>
               <item row="2" column="2">
                <widget class="QDoubleSpinBox" name="maxQualityCullingSpin">
                 <property name="decimals">
-                 <number>4</number>
+                 <number>3</number>
+                </property>
+                <property name="minimum">
+                 <double>-1.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>1.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.000000000000000</double>
                 </property>
                </widget>
               </item>
