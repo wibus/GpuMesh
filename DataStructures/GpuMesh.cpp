@@ -91,8 +91,9 @@ void GpuMesh::updateGpuTopoly()
         int type = meshTopo.isFixed ? -1 :
                 meshTopo.snapToBoundary->id();
 
-        topoBuff[i] = GpuTopo(type, neigVertBase, neigVertCount,
-                                    neigElemBase, neigElemCount);
+        topoBuff[i] = GpuTopo(type,
+                              neigVertBase, neigVertCount,
+                              neigElemBase, neigElemCount);
 
         for(int n=0; n < neigVertCount; ++n)
             neigVertBuff.push_back(GpuNeigVert(meshTopo.neighborVerts[n]));

@@ -9,10 +9,10 @@ using namespace cellar;
 
 AbstractRenderer::AbstractRenderer() :
     _buffNeedUpdate(false),
+    _cutType(ECutType::None),
     _cutPlaneEq(0.0),
     _physicalCutPlane(0.0),
     _virtualCutPlane(0.0),
-    _cutType(ECutType::None),
     _tetVisibility(true),
     _priVisibility(true),
     _hexVisibility(true),

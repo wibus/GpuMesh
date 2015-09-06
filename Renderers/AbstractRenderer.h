@@ -55,17 +55,19 @@ protected:
     virtual void render() = 0;
 
     bool _buffNeedUpdate;
+
+    // Cut plane
+    ECutType _cutType;
     glm::dvec4 _cutPlaneEq;
     glm::dvec4 _physicalCutPlane;
     glm::dvec4 _virtualCutPlane;
-    ECutType _cutType;
 
     // Element visibility
     bool _tetVisibility;
     bool _priVisibility;
     bool _hexVisibility;
 
-    // Quality Culling Bounds
+    // Quality culling
     double _qualityCullingMin;
     double _qualityCullingMax;
 

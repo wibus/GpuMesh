@@ -92,6 +92,9 @@ struct GpuTopo
     //  * >0 = boundary
     int type;
 
+    // Indepent group index
+    GLint exclusiveGroup;
+
     // Neighbor vertices list start location
     GLuint neigVertBase;
 
@@ -104,12 +107,16 @@ struct GpuTopo
     // Neighbor elements count
     GLuint neigElemCount;
 
-    inline GpuTopo() : type(0), neigVertBase(0), neigVertCount(0),
-                                neigElemBase(0), neigElemCount(0)  {}
-    inline GpuTopo(int type, uint neigVertBase, uint neigVertCount,
-                             uint neigElemBase, uint neigElemCount) :
-        type(type), neigVertBase(neigVertBase), neigVertCount(neigVertCount),
-                    neigElemBase(neigElemBase), neigElemCount(neigElemCount) {}
+    inline GpuTopo() :
+        type(0),
+        neigVertBase(0), neigVertCount(0),
+        neigElemBase(0), neigElemCount(0)  {}
+    inline GpuTopo(int type,
+                   uint neigVertBase, uint neigVertCount,
+                   uint neigElemBase, uint neigElemCount) :
+        type(type),
+        neigVertBase(neigVertBase), neigVertCount(neigVertCount),
+        neigElemBase(neigElemBase), neigElemCount(neigElemCount) {}
 };
 
 

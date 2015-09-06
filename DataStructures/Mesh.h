@@ -209,7 +209,11 @@ public:
     std::vector<MeshHex>  hexs;
     std::vector<MeshTopo> topos;
 
-    std::mutex vertMutex;
+    std::vector<std::vector<uint>> exclusiveGroups;
+
+    static const int NO_GROUP;
+    static const int UNSET_GROUP;
+    static const int FIRST_GROUP;
 
 protected:
     virtual void addEdge(int firstVert,
