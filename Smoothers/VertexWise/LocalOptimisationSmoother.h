@@ -15,9 +15,7 @@ protected:
     virtual void smoothVertices(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
-            size_t first,
-            size_t last,
-            bool synchronize) override;
+            const std::vector<uint>& vIds) override;
 };
 
 #endif // GPUMESH_LOCALOPTIMISATIONSMOOTHER

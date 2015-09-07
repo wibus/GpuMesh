@@ -84,40 +84,40 @@ void AbstractElementWiseSmoother::smoothMeshThread(
     size_t hexCount = mesh.hexs.size();
     while(evaluateMeshQualityThread(mesh, evaluator))
     {
-        uint coreCountHint = thread::hardware_concurrency();
+        uint threadCount = thread::hardware_concurrency();
 
         // TODO : Use a thread pool
         std::mutex doneMutex;
         std::mutex stepMutex;
         std::condition_variable doneCv;
         std::condition_variable stepCv;
-        std::vector<bool> threadDone(coreCountHint, false);
+        std::vector<bool> threadDone(threadCount, false);
         bool nextStep = false;
 
         // Accumulated vertex positions
         vector<thread> workers;
-        for(uint t=0; t < coreCountHint; ++t)
+        for(uint t=0; t < threadCount; ++t)
         {
             workers.push_back(thread([&, t]() {
                 // Vertex position accumulation
                 if(tetCount > 0)
                 {
-                    size_t tetfirst = (tetCount * t) / coreCountHint;
-                    size_t tetLast = (tetCount * (t+1)) / coreCountHint;
+                    size_t tetfirst = (tetCount * t) / threadCount;
+                    size_t tetLast = (tetCount * (t+1)) / threadCount;
                     smoothTets(mesh, evaluator, tetfirst, tetLast);
                 }
 
                 if(priCount > 0)
                 {
-                    size_t prifirst = (priCount * t) / coreCountHint;
-                    size_t priLast = (priCount * (t+1)) / coreCountHint;
+                    size_t prifirst = (priCount * t) / threadCount;
+                    size_t priLast = (priCount * (t+1)) / threadCount;
                     smoothPris(mesh, evaluator, prifirst, priLast);
                 }
 
                 if(hexCount > 0)
                 {
-                    size_t hexfirst = (hexCount * t) / coreCountHint;
-                    size_t hexLast = (hexCount * (t+1)) / coreCountHint;
+                    size_t hexfirst = (hexCount * t) / threadCount;
+                    size_t hexLast = (hexCount * (t+1)) / threadCount;
                     smoothHexs(mesh, evaluator, hexfirst, hexLast);
                 }
 
@@ -136,8 +136,8 @@ void AbstractElementWiseSmoother::smoothMeshThread(
                 }
 
                 // Vertex position update step
-                size_t vertFirst = (vertCount * t) / coreCountHint;
-                size_t vertLast = (vertCount * (t+1)) / coreCountHint;
+                size_t vertFirst = (vertCount * t) / threadCount;
+                size_t vertLast = (vertCount * (t+1)) / threadCount;
                 updateVertexPositions(mesh, evaluator, vertFirst, vertLast);
             }));
         }
@@ -147,7 +147,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
             std::unique_lock<std::mutex> lk(doneMutex);
             doneCv.wait(lk, [&](){
                 bool allFinished = true;
-                for(uint t=0; t < coreCountHint; ++t)
+                for(uint t=0; t < threadCount; ++t)
                     allFinished = allFinished && threadDone[t];
                 return allFinished;
             });
@@ -160,7 +160,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
         }
         stepCv.notify_all();
 
-        for(uint t=0; t < coreCountHint; ++t)
+        for(uint t=0; t < threadCount; ++t)
         {
             workers[t].join();
         }

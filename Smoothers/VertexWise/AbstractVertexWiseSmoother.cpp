@@ -1,6 +1,9 @@
 #include "AbstractVertexWiseSmoother.h"
 
 #include <thread>
+#include <atomic>
+#include <condition_variable>
+#include <algorithm>
 
 #include "../SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
@@ -32,9 +35,11 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
 {
     _smoothPassId = 0;
     size_t vertCount = mesh.verts.size();
+    std::vector<uint> vIds(vertCount);
+    std::iota(std::begin(vIds), std::end(vIds), 0);
     while(evaluateMeshQualitySerial(mesh, evaluator))
     {
-        smoothVertices(mesh, evaluator, 0, vertCount, false);
+        smoothVertices(mesh, evaluator, vIds);
     }
 
     mesh.updateGpuVertices();
@@ -46,22 +51,65 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
 {
     // TODO : Use a thread pool
 
+    size_t groupCount = mesh.exclusiveGroups.size();
+    uint threadCount = thread::hardware_concurrency();
+
+    std::mutex mutex;
+    std::condition_variable doneCv;
+    std::condition_variable stepCv;
+    std::vector<bool> threadDone(threadCount, false);
+    std::vector<bool> threadStep(threadCount, false);
+
     _smoothPassId = 0;
-    size_t vertCount = mesh.verts.size();
     while(evaluateMeshQualityThread(mesh, evaluator))
     {
         vector<thread> workers;
-        uint coreCountHint = thread::hardware_concurrency();
-        for(uint t=0; t < coreCountHint; ++t)
+        for(uint t=0; t < threadCount; ++t)
         {
             workers.push_back(thread([&, t]() {
-                size_t first = (vertCount * t) / coreCountHint;
-                size_t last = (vertCount * (t+1)) / coreCountHint;
-                smoothVertices(mesh, evaluator, first, last, true);
+                for(size_t g=0; g < groupCount; ++g)
+                {
+                    const std::vector<uint>& group = mesh.exclusiveGroups[g];
+                    size_t memberCount = group.size();
+                    size_t first = (memberCount * t) / threadCount;
+                    size_t last = (memberCount * (t+1)) / threadCount;
+                    std::vector<uint> assginee(group.begin()+first, group.begin()+last);
+                    smoothVertices(mesh, evaluator, assginee);
+
+                    if(g < groupCount-1)
+                    {
+                        std::unique_lock<std::mutex> lk(mutex);
+                        threadDone[t] = true;
+                        doneCv.notify_one();
+
+                        stepCv.wait(lk, [&](){ return threadStep[t]; });
+                        threadStep[t] = false;
+                    }
+                }
             }));
         }
 
-        for(uint t=0; t < coreCountHint; ++t)
+        for(size_t g=0; g < groupCount-1; ++g)
+        {
+            {
+                std::unique_lock<std::mutex> lk(mutex);
+                doneCv.wait(lk, [&](){
+                    bool allFinished = true;
+                    for(uint t=0; t < threadCount; ++t)
+                        allFinished = allFinished && threadDone[t];
+                    return allFinished;
+                });
+
+                for(uint t=0; t < threadCount; ++t)
+                {
+                    threadDone[t] = false;
+                    threadStep[t] = true;
+                }
+            }
+            stepCv.notify_all();
+        }
+
+        for(uint t=0; t < threadCount; ++t)
         {
             workers[t].join();
         }

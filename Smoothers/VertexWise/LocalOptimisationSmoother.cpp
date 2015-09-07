@@ -24,16 +24,16 @@ LocalOptimisationSmoother::~LocalOptimisationSmoother()
 void LocalOptimisationSmoother::smoothVertices(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
-        size_t first,
-        size_t last,
-        bool synchronize)
+        const std::vector<uint>& vIds)
 {
     std::vector<MeshVert>& verts = mesh.verts;
     const vector<MeshTopo>& topos = mesh.topos;
 
-
-    for(int vId = first; vId < last; ++vId)
+    size_t vIdCount = vIds.size();
+    for(int v = 0; v < vIdCount; ++v)
     {
+        uint vId = vIds[v];
+
         if(!SmoothingHelper::isSmoothable(mesh, vId))
             continue;
 

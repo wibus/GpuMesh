@@ -36,9 +36,7 @@ protected:
     virtual void smoothVertices(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
-            size_t first,
-            size_t last,
-            bool synchronize) = 0;
+            const std::vector<uint>& vIds) = 0;
 
 
 
