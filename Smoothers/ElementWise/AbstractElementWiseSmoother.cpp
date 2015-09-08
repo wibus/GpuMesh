@@ -18,10 +18,8 @@ const size_t AbstractElementWiseSmoother::WORKGROUP_SIZE = 256;
 
 
 AbstractElementWiseSmoother::AbstractElementWiseSmoother(
-        int dispatchMode,
         const std::vector<std::string>& smoothShaders) :
     _initialized(false),
-    _dispatchMode(dispatchMode),
     _smoothShaders(smoothShaders),
     _vertexAccums(nullptr),
     _accumSsbo(0)
@@ -204,16 +202,17 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     glBufferData(GL_SHADER_STORAGE_BUFFER, accumSize, accumVec.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+    vector<ExclusiveDispatch> dispatches;
+    organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
+    size_t dispatchCount = dispatches.size();
 
-    _smoothingProgram.pushProgram();
-    _smoothingProgram.setFloat("Lambda", 0.78);
-    _smoothingProgram.setInt("DispatchMode", _dispatchMode);
-    _smoothingProgram.popProgram();
+    _elemSmoothProgram.pushProgram();
+    setElementProgramUniforms(mesh, _elemSmoothProgram);
+    _elemSmoothProgram.popProgram();
 
-    _updateProgram.pushProgram();
-    _updateProgram.setFloat("Lambda", 0.78);
-    _updateProgram.setInt("DispatchMode", _dispatchMode);
-    _updateProgram.popProgram();
+    _vertUpdateProgram.pushProgram();
+    setVertexProgramUniforms(mesh, _vertUpdateProgram);
+    _vertUpdateProgram.popProgram();
 
     _smoothPassId = 0;
     while(evaluateMeshQualityGlsl(mesh, evaluator))
@@ -222,33 +221,22 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
                          mesh.firstFreeBufferBinding(), _accumSsbo);
 
-        _smoothingProgram.pushProgram();
+        _elemSmoothProgram.pushProgram();
         glDispatchCompute(smoothWgCount, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-        _smoothingProgram.popProgram();
+        _elemSmoothProgram.popProgram();
 
-        _updateProgram.pushProgram();
-        if(_dispatchMode == SmoothingHelper::DISPATCH_MODE_EXCLUSIVE)
+        _vertUpdateProgram.pushProgram();
+        for(size_t d=0; d < dispatchCount; ++d)
         {
-            size_t base = 0;
-            for(const std::vector<uint>& group : mesh.exclusiveGroups)
-            {
-                size_t size = group.size();
-                _updateProgram.setInt("GroupBase", base);
-                _updateProgram.setInt("GroupSize", size);
-                base += size;
+            const ExclusiveDispatch& dispatch = dispatches[d];
+            _vertUpdateProgram.setInt("GroupBase", dispatch.base);
+            _vertUpdateProgram.setInt("GroupSize", dispatch.size);
 
-                updateWgCount = glm::ceil(size / double(WORKGROUP_SIZE));
-                glDispatchCompute(updateWgCount, 1, 1);
-                glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-            }
-        }
-        else
-        {
-            glDispatchCompute(updateWgCount, 1, 1);
+            glDispatchCompute(dispatch.workgroupCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
-        _updateProgram.popProgram();
+        _vertUpdateProgram.popProgram();
     }
 
     // Clear Vertex Accum shader storage buffer
@@ -279,57 +267,57 @@ void AbstractElementWiseSmoother::initializeProgram(
 
 
     // Element Smoothing Program
-    _smoothingProgram.clearShaders();
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER,
+    _elemSmoothProgram.clearShaders();
+    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER,
         _modelBoundsShader);
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         _shapeMeasureShader.c_str()});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Quality/QualityInterface.glsl"});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         SmoothingHelper::shaderName().c_str()});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/ElementWise/VertexAccum.glsl"});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/ElementWise/SmoothElements.glsl"});
     for(const string& shader : _smoothShaders)
     {
-        _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
             mesh.meshGeometryShaderName(),
             shader.c_str()});
     }
-    _smoothingProgram.link();
+    _elemSmoothProgram.link();
 
-    mesh.uploadGeometry(_smoothingProgram);
+    mesh.uploadGeometry(_elemSmoothProgram);
 
 
     // Update Vertex Positions Program
-    _updateProgram.clearShaders();
-    _updateProgram.addShader(GL_COMPUTE_SHADER,
+    _vertUpdateProgram.clearShaders();
+    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER,
         _modelBoundsShader);
-    _updateProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         _shapeMeasureShader.c_str()});
-    _updateProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Quality/QualityInterface.glsl"});
-    _updateProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         SmoothingHelper::shaderName().c_str()});
-    _updateProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/ElementWise/VertexAccum.glsl"});
-    _updateProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/ElementWise/UpdateVertices.glsl"});
-    _updateProgram.link();
+    _vertUpdateProgram.link();
 
-    mesh.uploadGeometry(_updateProgram);
+    mesh.uploadGeometry(_vertUpdateProgram);
 
 
     // Shader storage vertex accum blocks
@@ -339,6 +327,20 @@ void AbstractElementWiseSmoother::initializeProgram(
 
 
     _initialized = true;
+}
+
+void AbstractElementWiseSmoother::setElementProgramUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program)
+{
+    program.setFloat("Lambda", 0.78);
+}
+
+void AbstractElementWiseSmoother::setVertexProgramUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program)
+{
+    program.setFloat("Lambda", 0.78);
 }
 
 void AbstractElementWiseSmoother::updateVertexPositions(

@@ -11,7 +11,6 @@ using namespace std;
 
 GetmeSmoother::GetmeSmoother() :
     AbstractElementWiseSmoother(
-        SmoothingHelper::DISPATCH_MODE_EXCLUSIVE,
         {":/shaders/compute/Smoothing/ElementWise/GETMe.glsl"}),
     _lambda(0.78)
 {

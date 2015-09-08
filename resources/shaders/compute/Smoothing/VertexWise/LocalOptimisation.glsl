@@ -1,5 +1,5 @@
 uniform float MoveCoeff;
-
+uniform int SecurityCycleCount;
 
 // Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
@@ -19,8 +19,7 @@ void smoothVertex(uint vId)
     float nodeShift = localSize / 25.0;
     float originalNodeShift = nodeShift;
 
-    bool done = false;
-    while(!done)
+    for(int c=0; c < SecurityCycleCount; ++c)
     {
         // Define patch quality gradient samples
         vec3 pos = vec3(verts[vId].p);
@@ -119,6 +118,6 @@ void smoothVertex(uint vId)
         // Scale node shift and stop if it is too small
         nodeShift *= abs(offsets[bestProposition]);
         if(nodeShift < originalNodeShift / 10.0)
-            done = true;
+            break;
     }
 }

@@ -10,7 +10,6 @@ class AbstractElementWiseSmoother : public AbstractSmoother
 {
 protected:
     AbstractElementWiseSmoother(
-            int dispatchMode,
             const std::vector<std::string>& smoothShaders);
 
 public:
@@ -34,6 +33,14 @@ protected:
     virtual void initializeProgram(
             Mesh& mesh,
             AbstractEvaluator& evaluator) override;
+
+    virtual void setElementProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program);
+
+    virtual void setVertexProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program);
 
     virtual void updateVertexPositions(
             Mesh& mesh,
@@ -62,12 +69,11 @@ protected:
     static const size_t WORKGROUP_SIZE;
 
     bool _initialized;
-    int _dispatchMode;
     std::string _modelBoundsShader;
     std::string _shapeMeasureShader;
     std::vector<std::string> _smoothShaders;
-    cellar::GlProgram _smoothingProgram;
-    cellar::GlProgram _updateProgram;
+    cellar::GlProgram _elemSmoothProgram;
+    cellar::GlProgram _vertUpdateProgram;
 
     IVertexAccum** _vertexAccums;
     GLuint _accumSsbo;

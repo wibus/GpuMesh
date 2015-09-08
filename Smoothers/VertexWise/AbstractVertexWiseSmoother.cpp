@@ -15,10 +15,8 @@ using namespace cellar;
 const size_t AbstractVertexWiseSmoother::WORKGROUP_SIZE = 256;
 
 AbstractVertexWiseSmoother::AbstractVertexWiseSmoother(
-        int dispatchMode,
         const std::vector<std::string>& smoothShaders) :
     _initialized(false),
-    _dispatchMode(dispatchMode),
     _smoothShaders(smoothShaders)
 {
 
@@ -118,43 +116,32 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     mesh.updateGpuVertices();
 
 
-    _smoothingProgram.pushProgram();
-    _smoothingProgram.setFloat("MoveCoeff", _moveFactor);
-    _smoothingProgram.setInt("DispatchMode", _dispatchMode);
-    _smoothingProgram.popProgram();
+    vector<ExclusiveDispatch> dispatches;
+    organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
+    size_t dispatchCount = dispatches.size();
 
-    size_t dispatchWidth = glm::ceil(
-        mesh.verts.size() / double(WORKGROUP_SIZE));
+    _vertSmoothProgram.pushProgram();
+    setVertexProgramUniforms(mesh, _vertSmoothProgram);
+    _vertSmoothProgram.popProgram();
 
     _smoothPassId = 0;
     while(evaluateMeshQualityGlsl(mesh, evaluator))
     {
         mesh.bindShaderStorageBuffers();
 
-        _smoothingProgram.pushProgram();
+        _vertSmoothProgram.pushProgram();
 
-        if(_dispatchMode == SmoothingHelper::DISPATCH_MODE_EXCLUSIVE)
+        for(size_t d=0; d < dispatchCount; ++d)
         {
-            size_t base = 0;
-            for(const std::vector<uint>& group : mesh.exclusiveGroups)
-            {
-                size_t size = group.size();
-                _smoothingProgram.setInt("GroupBase", base);
-                _smoothingProgram.setInt("GroupSize", size);
-                base += size;
+            const ExclusiveDispatch& dispatch = dispatches[d];
+            _vertSmoothProgram.setInt("GroupBase", dispatch.base);
+            _vertSmoothProgram.setInt("GroupSize", dispatch.size);
 
-                dispatchWidth = glm::ceil(size / double(WORKGROUP_SIZE));
-                glDispatchCompute(dispatchWidth, 1, 1);
-                glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-            }
-        }
-        else
-        {
-            glDispatchCompute(dispatchWidth, 1, 1);
+            glDispatchCompute(dispatch.workgroupCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
 
-        _smoothingProgram.popProgram();
+        _vertSmoothProgram.popProgram();
     }
 
 
@@ -178,31 +165,38 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _modelBoundsShader = mesh.modelBoundsShaderName();
     _shapeMeasureShader = evaluator.shapeMeasureShader();
 
-    _smoothingProgram.clearShaders();
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER,
+    _vertSmoothProgram.clearShaders();
+    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER,
         _modelBoundsShader);
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         _shapeMeasureShader.c_str()});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Quality/QualityInterface.glsl"});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         SmoothingHelper::shaderName().c_str()});
-    _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/VertexWise/SmoothVertices.glsl"});
     for(const string& shader : _smoothShaders)
     {
-        _smoothingProgram.addShader(GL_COMPUTE_SHADER, {
+        _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
             mesh.meshGeometryShaderName(),
             shader.c_str()});
     }
-    _smoothingProgram.link();
+    _vertSmoothProgram.link();
 
-    mesh.uploadGeometry(_smoothingProgram);
+    mesh.uploadGeometry(_vertSmoothProgram);
 
 
     _initialized = true;
+}
+
+void AbstractVertexWiseSmoother::setVertexProgramUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program)
+{
+    program.setFloat("MoveCoeff", _moveFactor);
 }

@@ -8,7 +8,6 @@ class AbstractVertexWiseSmoother : public AbstractSmoother
 {
 protected:
     AbstractVertexWiseSmoother(
-            int dispatchMode,
             const std::vector<std::string>& smoothShaders);
 
 public:
@@ -33,6 +32,10 @@ protected:
             Mesh& mesh,
             AbstractEvaluator& evaluator) override;
 
+    virtual void setVertexProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program);
+
     virtual void smoothVertices(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
@@ -45,11 +48,10 @@ private:
     static const size_t WORKGROUP_SIZE;
 
     bool _initialized;
-    int _dispatchMode;
     std::string _modelBoundsShader;
     std::string _shapeMeasureShader;
     std::vector<std::string> _smoothShaders;
-    cellar::GlProgram _smoothingProgram;
+    cellar::GlProgram _vertSmoothProgram;
 };
 
 #endif // GPUMESH_ABSTRACTVERTEXWISESMOOTHER

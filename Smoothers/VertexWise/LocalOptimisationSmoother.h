@@ -17,6 +17,11 @@ protected:
             AbstractEvaluator& evaluator,
             const std::vector<uint>& vIds) override;
 
+protected:
+    virtual void setVertexProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program);
+
 private:
     int _securityCycleCount;
 };

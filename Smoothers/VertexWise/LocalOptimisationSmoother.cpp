@@ -10,7 +10,6 @@ using namespace std;
 
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
     AbstractVertexWiseSmoother(
-        SmoothingHelper::DISPATCH_MODE_EXCLUSIVE,
         {":/shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl"}),
     _securityCycleCount(5)
 {
@@ -154,4 +153,12 @@ void LocalOptimisationSmoother::smoothVertices(
                 break;
         }
     }
+}
+
+void LocalOptimisationSmoother::setVertexProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program)
+{
+    AbstractVertexWiseSmoother::setVertexProgramUniforms(mesh, program);
+    program.setInt("SecurityCycleCount", _securityCycleCount);
 }

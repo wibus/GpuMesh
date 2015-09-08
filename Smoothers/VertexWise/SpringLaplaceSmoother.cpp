@@ -8,7 +8,6 @@ using namespace std;
 
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
     AbstractVertexWiseSmoother(
-        SmoothingHelper::DISPATCH_MODE_EXCLUSIVE,
         {":/shaders/compute/Smoothing/VertexWise/SpringLaplace.glsl"})
 {
 

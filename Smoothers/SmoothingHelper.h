@@ -43,11 +43,6 @@ public:
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
             size_t vId);
-
-
-    static const int DISPATCH_MODE_CLUSTER;
-    static const int DISPATCH_MODE_SCATTER;
-    static const int DISPATCH_MODE_EXCLUSIVE;
 };
 
 #endif // GPUMESH_OPTIMIZATIONHELPER
