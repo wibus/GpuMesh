@@ -38,8 +38,7 @@ protected:
     virtual void updateVertexPositions(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
-            size_t first,
-            size_t last);
+            const std::vector<uint>& vIds);
 
     virtual void smoothTets(
             Mesh& mesh,

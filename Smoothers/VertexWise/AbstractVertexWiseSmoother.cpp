@@ -33,10 +33,11 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
         Mesh& mesh,
         AbstractEvaluator& evaluator)
 {
-    _smoothPassId = 0;
     size_t vertCount = mesh.verts.size();
     std::vector<uint> vIds(vertCount);
     std::iota(std::begin(vIds), std::end(vIds), 0);
+
+    _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, evaluator))
     {
         smoothVertices(mesh, evaluator, vIds);
@@ -49,8 +50,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         Mesh& mesh,
         AbstractEvaluator& evaluator)
 {
-    // TODO : Use a thread pool
-
+    // TODO : Use a thread pool    
     size_t groupCount = mesh.exclusiveGroups.size();
     uint threadCount = thread::hardware_concurrency();
 
@@ -68,21 +68,23 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
             workers.push_back(thread([&, t]() {
                 for(size_t g=0; g < groupCount; ++g)
                 {
-                    const std::vector<uint>& group = mesh.exclusiveGroups[g];
-                    size_t memberCount = group.size();
-                    size_t first = (memberCount * t) / threadCount;
-                    size_t last = (memberCount * (t+1)) / threadCount;
-                    std::vector<uint> assginee(group.begin()+first, group.begin()+last);
-                    smoothVertices(mesh, evaluator, assginee);
+                    const std::vector<uint>& group =
+                            mesh.exclusiveGroups[g];
+
+                    size_t groupSize = group.size();
+                    std::vector<uint> vIds(
+                        group.begin() + (groupSize * t) / threadCount,
+                        group.begin() + (groupSize * (t+1)) / threadCount);
+
+                    smoothVertices(mesh, evaluator, vIds);
 
                     if(g < groupCount-1)
                     {
                         std::unique_lock<std::mutex> lk(mutex);
-                        if(done.fetch_add( 1, std::memory_order_relaxed )
-                            < threadCount - 1)
+                        if(done.fetch_add( 1 ) == threadCount-1)
                         {
                             ++step;
-                            done.store( 0 , std::memory_order_relaxed);
+                            done.store( 0 );
                             cv.notify_all();
                         }
                         else

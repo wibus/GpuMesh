@@ -1,9 +1,10 @@
 #include "AbstractElementWiseSmoother.h"
 
-#include <iostream>
 #include <thread>
 #include <atomic>
 #include <condition_variable>
+#include <iostream>
+#include <algorithm>
 
 #include "../SmoothingHelper.h"
 #include "Evaluators/AbstractEvaluator.h"
@@ -45,17 +46,20 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
         _vertexAccums[i] = new NotThreadSafeVertexAccum();
 
 
-    _smoothPassId = 0;
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
     size_t hexCount = mesh.hexs.size();
+    std::vector<uint> vIds(vertCount);
+    std::iota(std::begin(vIds), std::end(vIds), 0);
+
+    _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, evaluator))
     {
         smoothTets(mesh, evaluator, 0, tetCount);
         smoothPris(mesh, evaluator, 0, priCount);
         smoothHexs(mesh, evaluator, 0, hexCount);
 
-        updateVertexPositions(mesh, evaluator, 0, vertCount);
+        updateVertexPositions(mesh, evaluator, vIds);
     }
 
     mesh.updateGpuVertices();
@@ -78,21 +82,21 @@ void AbstractElementWiseSmoother::smoothMeshThread(
         _vertexAccums[i] = new ThreadSafeVertexAccum();
 
 
+    // TODO : Use a thread pool
+    size_t groupCount = mesh.exclusiveGroups.size();
+    uint threadCount = thread::hardware_concurrency();
+
+
     _smoothPassId = 0;
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
     size_t hexCount = mesh.hexs.size();
     while(evaluateMeshQualityThread(mesh, evaluator))
     {
-        uint threadCount = thread::hardware_concurrency();
-
-        // TODO : Use a thread pool
-        std::mutex doneMutex;
-        std::mutex stepMutex;
-        std::condition_variable doneCv;
-        std::condition_variable stepCv;
-        std::vector<bool> threadDone(threadCount, false);
-        bool nextStep = false;
+        std::mutex mutex;
+        std::condition_variable cv;
+        std::atomic_int done( 0 );
+        std::atomic_int step( 0 );
 
         // Accumulated vertex positions
         vector<thread> workers;
@@ -121,44 +125,36 @@ void AbstractElementWiseSmoother::smoothMeshThread(
                     smoothHexs(mesh, evaluator, hexfirst, hexLast);
                 }
 
-                // Now that vertex new positions were accumulated
-                // We wait for every worker to terminate in order
-                // to start the vertex update step.
+                for(size_t g=0; g < groupCount; ++g)
                 {
-                    std::lock_guard<std::mutex> lk(doneMutex);
-                    threadDone[t] = true;
-                }
-                doneCv.notify_one();
+                    {
+                        std::unique_lock<std::mutex> lk(mutex);
+                        if(done.fetch_add( 1 ) == threadCount-1)
+                        {
+                            ++step;
+                            done.store( 0 );
+                            cv.notify_all();
+                        }
+                        else
+                        {
+                            cv.wait(lk, [&](){ return step > g; });
+                        }
+                    }
 
-                {
-                    std::unique_lock<std::mutex> lk(stepMutex);
-                    stepCv.wait(lk, [&](){ return nextStep; });
-                }
 
-                // Vertex position update step
-                size_t vertFirst = (vertCount * t) / threadCount;
-                size_t vertLast = (vertCount * (t+1)) / threadCount;
-                updateVertexPositions(mesh, evaluator, vertFirst, vertLast);
+                    // Vertex position update step
+                    const std::vector<uint>& group =
+                            mesh.exclusiveGroups[g];
+
+                    size_t groupSize = group.size();
+                    std::vector<uint> vIds(
+                        group.begin() + (groupSize * t) / threadCount,
+                        group.begin() + (groupSize * (t+1)) / threadCount);
+
+                    updateVertexPositions(mesh, evaluator, vIds);
+                }
             }));
         }
-
-        // Wait for thread to finish vertex position accumulation
-        {
-            std::unique_lock<std::mutex> lk(doneMutex);
-            doneCv.wait(lk, [&](){
-                bool allFinished = true;
-                for(uint t=0; t < threadCount; ++t)
-                    allFinished = allFinished && threadDone[t];
-                return allFinished;
-            });
-        }
-
-        // Notify threads to begin vertex position update
-        {
-            std::lock_guard<std::mutex> lk(stepMutex);
-            nextStep = true;
-        }
-        stepCv.notify_all();
 
         for(uint t=0; t < threadCount; ++t)
         {
@@ -232,10 +228,33 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
         _smoothingProgram.popProgram();
 
         _updateProgram.pushProgram();
-        glDispatchCompute(updateWgCount, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        if(_dispatchMode == SmoothingHelper::DISPATCH_MODE_EXCLUSIVE)
+        {
+            size_t base = 0;
+            for(const std::vector<uint>& group : mesh.exclusiveGroups)
+            {
+                size_t size = group.size();
+                _updateProgram.setInt("GroupBase", base);
+                _updateProgram.setInt("GroupSize", size);
+                base += size;
+
+                updateWgCount = glm::ceil(size / double(WORKGROUP_SIZE));
+                glDispatchCompute(updateWgCount, 1, 1);
+                glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+            }
+        }
+        else
+        {
+            glDispatchCompute(updateWgCount, 1, 1);
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        }
         _updateProgram.popProgram();
     }
+
+    // Clear Vertex Accum shader storage buffer
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _accumSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
     // Fetch new vertices' position
@@ -325,14 +344,16 @@ void AbstractElementWiseSmoother::initializeProgram(
 void AbstractElementWiseSmoother::updateVertexPositions(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
-        size_t first,
-        size_t last)
+        const std::vector<uint>& vIds)
 {
     vector<MeshVert>& verts = mesh.verts;
     const vector<MeshTopo>& topos = mesh.topos;
 
-    for(size_t vId = first; vId < last; ++vId)
+    size_t vIdCount = vIds.size();
+    for(int v = 0; v < vIdCount; ++v)
     {
+        uint vId = vIds[v];
+
         glm::dvec3 pos = verts[vId].p;
         glm::dvec3 posPrim = pos;
         if(_vertexAccums[vId]->assignAverage(posPrim))

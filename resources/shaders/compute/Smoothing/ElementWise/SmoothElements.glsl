@@ -18,7 +18,6 @@ bool isSmoothableHex(uint eId);
 
 void main()
 {
-
     uint tetId = getInvocationTetId();
     if(isSmoothableTet(tetId))
     {
