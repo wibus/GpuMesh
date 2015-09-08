@@ -250,90 +250,105 @@ void Mesh::compileTopoly()
 
 
     // Compile 'Patch Exclusive Groups'
-    const size_t STARTING_NODE = 0;
-    std::vector<int> vertGroup(vertCount, NO_GROUP);
-    vertGroup[STARTING_NODE] = UNSET_GROUP;
-
+    size_t seekStart = 0;
     std::set<uint> existingGroups;
-
     std::vector<size_t> nextNodes;
-    nextNodes.push_back( STARTING_NODE );
-    for(int v=0; v < nextNodes.size(); ++v)
+    std::vector<int> vertGroup(vertCount, NO_GROUP);
+    while(nextNodes.size() < vertCount)
     {
-        MeshTopo& topo = topos[v];
-        std::set<uint> availableGroups = existingGroups;
-
-        for(size_t e=0; e < topo.neighborElems.size(); ++e)
+        size_t firstNode = nextNodes.size();
+        for(size_t v=seekStart; v < vertCount; ++v)
         {
-            MeshNeigElem& neigElem = topo.neighborElems[e];
-            if(neigElem.type == MeshTet::ELEMENT_TYPE)
+            ++seekStart;
+            if(vertGroup[v] == NO_GROUP)
             {
-                MeshTet& elem = tets[neigElem.id];
-                for(size_t n=0; n < MeshTet::VERTEX_COUNT; ++n)
-                {
-                    int& group = vertGroup[elem.v[n]];
-                    if(group == NO_GROUP)
-                    {
-                        group = UNSET_GROUP;
-                        nextNodes.push_back(elem.v[n]);
-                    }
-                    else if(group != UNSET_GROUP)
-                    {
-                        availableGroups.erase(group);
-                    }
-                }
-            }
-            else if(neigElem.type == MeshPri::ELEMENT_TYPE)
-            {
-                MeshPri& elem = pris[neigElem.id];
-                for(size_t n=0; n < MeshPri::VERTEX_COUNT; ++n)
-                {
-                    int& group = vertGroup[elem.v[n]];
-                    if(group == NO_GROUP)
-                    {
-                        group = UNSET_GROUP;
-                        nextNodes.push_back(elem.v[n]);
-                    }
-                    else if(group != UNSET_GROUP)
-                    {
-                        availableGroups.erase(group);
-                    }
-                }
-            }
-            else if(neigElem.type == MeshHex::ELEMENT_TYPE)
-            {
-                MeshHex& elem = hexs[neigElem.id];
-                for(size_t n=0; n < MeshHex::VERTEX_COUNT; ++n)
-                {
-                    int& group = vertGroup[elem.v[n]];
-                    if(group == NO_GROUP)
-                    {
-                        group = UNSET_GROUP;
-                        nextNodes.push_back(elem.v[n]);
-                    }
-                    else if(group != UNSET_GROUP)
-                    {
-                        availableGroups.erase(group);
-                    }
-                }
+                vertGroup[v] = UNSET_GROUP;
+                nextNodes.push_back(v);
+                break;
             }
         }
 
-        int group;
-        if(availableGroups.empty())
+        for(int v=firstNode; v < nextNodes.size(); ++v)
         {
-            group = existingGroups.size() + 1;
-            existingGroups.insert(group);
-            exclusiveGroups.push_back(std::vector<uint>());
-        }
-        else
-        {
-            group = *availableGroups.begin();
-        }
+            MeshTopo& topo = topos[v];
+            std::set<uint> availableGroups = existingGroups;
 
-        vertGroup[v] = group;
-        exclusiveGroups[group-1].push_back(v);
+            for(size_t e=0; e < topo.neighborElems.size(); ++e)
+            {
+                MeshNeigElem& neigElem = topo.neighborElems[e];
+                if(neigElem.type == MeshTet::ELEMENT_TYPE)
+                {
+                    MeshTet& elem = tets[neigElem.id];
+                    for(size_t n=0; n < MeshTet::VERTEX_COUNT; ++n)
+                    {
+                        int& group = vertGroup[elem.v[n]];
+                        if(group == NO_GROUP)
+                        {
+                            group = UNSET_GROUP;
+                            nextNodes.push_back(elem.v[n]);
+                        }
+                        else if(group != UNSET_GROUP)
+                        {
+                            availableGroups.erase(group);
+                        }
+                    }
+                }
+                else if(neigElem.type == MeshPri::ELEMENT_TYPE)
+                {
+                    MeshPri& elem = pris[neigElem.id];
+                    for(size_t n=0; n < MeshPri::VERTEX_COUNT; ++n)
+                    {
+                        int& group = vertGroup[elem.v[n]];
+                        if(group == NO_GROUP)
+                        {
+                            group = UNSET_GROUP;
+                            nextNodes.push_back(elem.v[n]);
+                        }
+                        else if(group != UNSET_GROUP)
+                        {
+                            availableGroups.erase(group);
+                        }
+                    }
+                }
+                else if(neigElem.type == MeshHex::ELEMENT_TYPE)
+                {
+                    MeshHex& elem = hexs[neigElem.id];
+                    for(size_t n=0; n < MeshHex::VERTEX_COUNT; ++n)
+                    {
+                        int& group = vertGroup[elem.v[n]];
+                        if(group == NO_GROUP)
+                        {
+                            group = UNSET_GROUP;
+                            nextNodes.push_back(elem.v[n]);
+                        }
+                        else if(group != UNSET_GROUP)
+                        {
+                            availableGroups.erase(group);
+                        }
+                    }
+                }
+            }
+
+            int group;
+            if(availableGroups.empty())
+            {
+                group = existingGroups.size() + 1;
+                existingGroups.insert(group);
+                exclusiveGroups.push_back(std::vector<uint>());
+            }
+            else
+            {
+                group = *availableGroups.begin();
+            }
+
+            vertGroup[v] = group;
+            exclusiveGroups[group-1].push_back(v);
+        }
     }
+
+    exclusiveGroups.shrink_to_fit();
+    for(auto& group : exclusiveGroups)
+        group.shrink_to_fit();
 
 
     getLog().postMessage(new Message('I', false,
