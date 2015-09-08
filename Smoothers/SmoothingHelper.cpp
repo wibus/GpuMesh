@@ -8,6 +8,7 @@ using namespace std;
 
 const int SmoothingHelper::DISPATCH_MODE_CLUSTER = 0;
 const int SmoothingHelper::DISPATCH_MODE_SCATTER = 1;
+const int SmoothingHelper::DISPATCH_MODE_EXCLUSIVE = 2;
 
 
 std::string SmoothingHelper::shaderName()

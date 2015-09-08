@@ -55,10 +55,9 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
     uint threadCount = thread::hardware_concurrency();
 
     std::mutex mutex;
-    std::condition_variable doneCv;
-    std::condition_variable stepCv;
-    std::vector<bool> threadDone(threadCount, false);
-    std::vector<bool> threadStep(threadCount, false);
+    std::condition_variable cv;
+    std::atomic_int done( 0 );
+    std::atomic_int step( 0 );
 
     _smoothPassId = 0;
     while(evaluateMeshQualityThread(mesh, evaluator))
@@ -79,34 +78,20 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
                     if(g < groupCount-1)
                     {
                         std::unique_lock<std::mutex> lk(mutex);
-                        threadDone[t] = true;
-                        doneCv.notify_one();
-
-                        stepCv.wait(lk, [&](){ return threadStep[t]; });
-                        threadStep[t] = false;
+                        if(done.fetch_add( 1, std::memory_order_relaxed )
+                            < threadCount - 1)
+                        {
+                            ++step;
+                            done.store( 0 , std::memory_order_relaxed);
+                            cv.notify_all();
+                        }
+                        else
+                        {
+                            cv.wait(lk, [&](){ return step > g; });
+                        }
                     }
                 }
             }));
-        }
-
-        for(size_t g=0; g < groupCount-1; ++g)
-        {
-            {
-                std::unique_lock<std::mutex> lk(mutex);
-                doneCv.wait(lk, [&](){
-                    bool allFinished = true;
-                    for(uint t=0; t < threadCount; ++t)
-                        allFinished = allFinished && threadDone[t];
-                    return allFinished;
-                });
-
-                for(uint t=0; t < threadCount; ++t)
-                {
-                    threadDone[t] = false;
-                    threadStep[t] = true;
-                }
-            }
-            stepCv.notify_all();
         }
 
         for(uint t=0; t < threadCount; ++t)
@@ -136,8 +121,8 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     _smoothingProgram.setInt("DispatchMode", _dispatchMode);
     _smoothingProgram.popProgram();
 
-    size_t vertCount = mesh.verts.size();
-    size_t workgroupCount = glm::ceil(vertCount / double(WORKGROUP_SIZE));
+    size_t dispatchWidth = glm::ceil(
+        mesh.verts.size() / double(WORKGROUP_SIZE));
 
     _smoothPassId = 0;
     while(evaluateMeshQualityGlsl(mesh, evaluator))
@@ -145,8 +130,28 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
         mesh.bindShaderStorageBuffers();
 
         _smoothingProgram.pushProgram();
-        glDispatchCompute(workgroupCount, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        if(_dispatchMode == SmoothingHelper::DISPATCH_MODE_EXCLUSIVE)
+        {
+            size_t base = 0;
+            for(const std::vector<uint>& group : mesh.exclusiveGroups)
+            {
+                size_t size = group.size();
+                _smoothingProgram.setInt("GroupBase", base);
+                _smoothingProgram.setInt("GroupSize", size);
+                base += size;
+
+                dispatchWidth = glm::ceil(size / double(WORKGROUP_SIZE));
+                glDispatchCompute(dispatchWidth, 1, 1);
+                glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+            }
+        }
+        else
+        {
+            glDispatchCompute(dispatchWidth, 1, 1);
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        }
+
         _smoothingProgram.popProgram();
     }
 

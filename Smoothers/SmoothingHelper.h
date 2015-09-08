@@ -47,6 +47,7 @@ public:
 
     static const int DISPATCH_MODE_CLUSTER;
     static const int DISPATCH_MODE_SCATTER;
+    static const int DISPATCH_MODE_EXCLUSIVE;
 };
 
 #endif // GPUMESH_OPTIMIZATIONHELPER

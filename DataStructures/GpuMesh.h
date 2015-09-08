@@ -92,9 +92,6 @@ struct GpuTopo
     //  * >0 = boundary
     int type;
 
-    // Indepent group index
-    GLint exclusiveGroup;
-
     // Neighbor vertices list start location
     GLuint neigVertBase;
 
@@ -154,6 +151,7 @@ protected:
     GLuint _topoSsbo;
     GLuint _neigVertSsbo;
     GLuint _neigElemSsbo;
+    GLuint _groupMembersSsbo;
 };
 
 

@@ -10,8 +10,9 @@ using namespace std;
 
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
     AbstractVertexWiseSmoother(
-        SmoothingHelper::DISPATCH_MODE_SCATTER,
-        {":/shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl"})
+        SmoothingHelper::DISPATCH_MODE_EXCLUSIVE,
+        {":/shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl"}),
+    _securityCycleCount(5)
 {
 
 }
@@ -47,8 +48,7 @@ void LocalOptimisationSmoother::smoothVertices(
         double nodeShift = localSize / 25.0;
         double originalNodeShift = nodeShift;
 
-        bool done = false;
-        while(!done)
+        for(int c=0; c < _securityCycleCount; ++c)
         {
             // Define patch quality gradient samples
             glm::dvec3& pos = verts[vId].p;
@@ -107,14 +107,15 @@ void LocalOptimisationSmoother::smoothVertices(
                  1.25,
             };
 
+            glm::dvec3 shift = gradQ * lambda;
             glm::dvec3 propositions[PROPOSITION_COUNT] = {
-                pos + gradQ * (lambda * offsets[0]),
-                pos + gradQ * (lambda * offsets[1]),
-                pos + gradQ * (lambda * offsets[2]),
-                pos + gradQ * (lambda * offsets[3]),
-                pos + gradQ * (lambda * offsets[4]),
-                pos + gradQ * (lambda * offsets[5]),
-                pos + gradQ * (lambda * offsets[6]),
+                pos + shift * offsets[0],
+                pos + shift * offsets[1],
+                pos + shift * offsets[2],
+                pos + shift * offsets[3],
+                pos + shift * offsets[4],
+                pos + shift * offsets[5],
+                pos + shift * offsets[6],
             };
 
             if(topo.isBoundary)
@@ -150,7 +151,7 @@ void LocalOptimisationSmoother::smoothVertices(
             // Scale node shift and stop if it is too small
             nodeShift *= glm::abs(offsets[bestProposition]);
             if(nodeShift < originalNodeShift / 10.0)
-                done = true;
+                break;
         }
     }
 }

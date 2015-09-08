@@ -14,7 +14,8 @@ GpuMesh::GpuMesh() :
     _hexSsbo(0),
     _tetSsbo(0),
     _neigVertSsbo(0),
-    _neigElemSsbo(0)
+    _neigElemSsbo(0),
+    _groupMembersSsbo(0)
 {
 
 }
@@ -28,6 +29,7 @@ GpuMesh::~GpuMesh()
     glDeleteBuffers(1, &_topoSsbo);
     glDeleteBuffers(1, &_neigVertSsbo);
     glDeleteBuffers(1, &_neigElemSsbo);
+    glDeleteBuffers(1, &_groupMembersSsbo);
 }
 
 void GpuMesh::clear()
@@ -41,6 +43,7 @@ void GpuMesh::clear()
     glDeleteBuffers(1, &_topoSsbo);
     glDeleteBuffers(1, &_neigVertSsbo);
     glDeleteBuffers(1, &_neigElemSsbo);
+    glDeleteBuffers(1, &_groupMembersSsbo);
 
     _vertSsbo = 0;
     _tetSsbo = 0;
@@ -49,6 +52,7 @@ void GpuMesh::clear()
     _topoSsbo = 0;
     _neigVertSsbo = 0;
     _neigElemSsbo = 0;
+    _groupMembersSsbo = 0;
 }
 
 void GpuMesh::compileTopoly()
@@ -67,6 +71,7 @@ void GpuMesh::compileTopoly()
         glGenBuffers(1, &_topoSsbo);
         glGenBuffers(1, &_neigVertSsbo);
         glGenBuffers(1, &_neigElemSsbo);
+        glGenBuffers(1, &_groupMembersSsbo);
     }
 
     updateGpuVertices();
@@ -76,14 +81,14 @@ void GpuMesh::compileTopoly()
 void GpuMesh::updateGpuTopoly()
 {
     // Send mesh topology
-    size_t nbVert = verts.size();
-    std::vector<GpuTopo> topoBuff(nbVert);
+    size_t vertCount = verts.size();
+    std::vector<GpuTopo> topoBuff(vertCount);
     std::vector<GpuNeigVert> neigVertBuff;
     std::vector<GpuNeigElem> neigElemBuff;
 
     int neigVertBase = 0;
     int neigElemBase = 0;
-    for(int i=0; i < nbVert; ++i)
+    for(int i=0; i < vertCount; ++i)
     {
         const MeshTopo& meshTopo = topos[i];
         int neigVertCount = meshTopo.neighborVerts.size();
@@ -160,6 +165,22 @@ void GpuMesh::updateGpuTopoly()
     hexBuff.clear();
     hexBuff.shrink_to_fit();
 
+
+    size_t groupCount = exclusiveGroups.size();
+    std::vector<GLuint> groupMembers;
+    groupMembers.reserve(vertCount);
+    for(size_t g=0; g < groupCount; ++g)
+    {
+        size_t memberCount = exclusiveGroups[g].size();
+        for(size_t m=0; m < memberCount; ++m)
+            groupMembers.push_back(exclusiveGroups[g][m]);
+    }
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
+    size_t membersSize = sizeof(decltype(groupMembers.front())) * groupMembers.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMembers.data(), GL_STATIC_DRAW);
+    groupMembers.clear();
+    groupMembers.shrink_to_fit();
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
@@ -195,13 +216,14 @@ unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const
 {
     switch(buffer)
     {
-    case EMeshBuffer::VERT: return _vertSsbo;
-    case EMeshBuffer::TET:  return _tetSsbo;
-    case EMeshBuffer::PRI:  return _priSsbo;
-    case EMeshBuffer::HEX:  return _hexSsbo;
-    case EMeshBuffer::TOPO: return _topoSsbo;
-    case EMeshBuffer::NEIG_VERT: return _neigVertSsbo;
-    case EMeshBuffer::NEIG_ELEM: return _neigElemSsbo;
+    case EMeshBuffer::VERT:             return _vertSsbo;
+    case EMeshBuffer::TET:              return _tetSsbo;
+    case EMeshBuffer::PRI:              return _priSsbo;
+    case EMeshBuffer::HEX:              return _hexSsbo;
+    case EMeshBuffer::TOPO:             return _topoSsbo;
+    case EMeshBuffer::NEIG_VERT:        return _neigVertSsbo;
+    case EMeshBuffer::NEIG_ELEM:        return _neigElemSsbo;
+    case EMeshBuffer::GROUP_MEMBERS:    return _groupMembersSsbo;
     default : return 0;
     }
 }
@@ -269,9 +291,10 @@ void GpuMesh::bindShaderStorageBuffers() const
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, _topoSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, _neigVertSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, _neigElemSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, _groupMembersSsbo);
 }
 
 size_t GpuMesh::firstFreeBufferBinding() const
 {
-    return 7;
+    return 8;
 }

@@ -1,13 +1,17 @@
-// Element quality interface
-float tetQuality(in Tet tet);
-float priQuality(in Pri pri);
-float hexQuality(in Hex hex);
-
+// Patch exclusive group range
+uniform int GroupBase;
+uniform int GroupSize;
 
 // Worgroup invocation disptach mode
 uniform int DispatchMode = 0;
 const int DISPATCH_MODE_CLUSTER = 0;
 const int DISPATCH_MODE_SCATTER = 1;
+const int DISPATCH_MODE_EXCLUSIVE = 2;
+
+// Element quality interface
+float tetQuality(in Tet tet);
+float priQuality(in Pri pri);
+float hexQuality(in Hex hex);
 
 uint getInvocationVertexId()
 {
@@ -17,6 +21,12 @@ uint getInvocationVertexId()
     {
     case DISPATCH_MODE_SCATTER :
         vId = gl_LocalInvocationID.x * gl_NumWorkGroups.x + gl_WorkGroupID.x;
+        break;
+
+    case DISPATCH_MODE_EXCLUSIVE:
+        vId = verts.length();
+        if(gl_GlobalInvocationID.x < GroupSize)
+            vId = groupMembers[GroupBase + gl_GlobalInvocationID.x];
         break;
 
     case DISPATCH_MODE_CLUSTER :

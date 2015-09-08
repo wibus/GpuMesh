@@ -40,6 +40,17 @@ struct Hex
     uint v[8];
 };
 
+struct NeigVert
+{
+    uint v;
+};
+
+struct NeigElem
+{
+    int type;
+    uint id;
+};
+
 // Topology indirection table
 // type == -1 : fixed vertex
 // type ==  0 : free vertex
@@ -55,17 +66,6 @@ struct Topo
     uint neigVertCount;
     uint neigElemBase;
     uint neigElemCount;
-};
-
-struct NeigVert
-{
-    uint v;
-};
-
-struct NeigElem
-{
-    int type;
-    uint id;
 };
 
 ///////////////////////
@@ -106,7 +106,12 @@ layout(shared, binding = 6) buffer NeigElems
     NeigElem neigElems[];
 };
 
-const uint FIRST_FREE_BUFFER_BINDING = 7;
+layout(shared, binding = 7) buffer GroupMembers
+{
+    uint groupMembers[];
+};
+
+const uint FIRST_FREE_BUFFER_BINDING = 8;
 
 
 //////////////////////////////////

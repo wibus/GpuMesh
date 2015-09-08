@@ -170,6 +170,8 @@ enum class EMeshBuffer
     TOPO,
     NEIG_VERT,
     NEIG_ELEM,
+
+    GROUP_MEMBERS
 };
 
 enum class ECutType

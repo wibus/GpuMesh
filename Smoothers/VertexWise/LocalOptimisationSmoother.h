@@ -16,6 +16,9 @@ protected:
             Mesh& mesh,
             AbstractEvaluator& evaluator,
             const std::vector<uint>& vIds) override;
+
+private:
+    int _securityCycleCount;
 };
 
 #endif // GPUMESH_LOCALOPTIMISATIONSMOOTHER
