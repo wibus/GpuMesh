@@ -86,3 +86,13 @@ void QualityLaplaceSmoother::smoothVertices(
         pos = propositions[bestProposition];
     }
 }
+
+void QualityLaplaceSmoother::printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const
+{
+    AbstractVertexWiseSmoother::printImplParameters(mesh, evaluator, implementation);
+    implementation.parameters["Line Sample Count"] = to_string(PROPOSITION_COUNT);
+    implementation.parameters["Line Gaps"] = to_string(_moveFactor);
+}

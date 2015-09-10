@@ -1,8 +1,7 @@
 #include "OptimizationPlot.h"
 
 
-OptimizationPlot::OptimizationPlot(const std::string& title) :
-    _title(title)
+OptimizationPlot::OptimizationPlot()
 {
 
 }
@@ -12,24 +11,42 @@ OptimizationPlot::~OptimizationPlot()
 
 }
 
-void OptimizationPlot::clear()
+void OptimizationPlot::setMeshModelName(const std::string& name)
 {
-    _curves.clear();
+    _meshModelName = name;
 }
 
-void OptimizationPlot::addCurve(
-        const std::string label,
-        const OptimizationPassVect& passes)
+void OptimizationPlot::setSmoothingMethodName(const std::string& name)
 {
-    _curves.insert(make_pair(label, passes));
+    _smoothingMethodName = name;
 }
 
-const std::string& OptimizationPlot::title() const
+void OptimizationPlot::addImplementation(const OptimizationImpl& impl)
 {
-    return _title;
+    _implementations.push_back(impl);
 }
 
-const OptimizationCurvesMap& OptimizationPlot::curves() const
+void OptimizationPlot::addMeshProperty(const std::string& name, const std::string& value)
 {
-    return _curves;
+    _meshProperties[name] = value;
+}
+
+const std::string& OptimizationPlot::meshModelName() const
+{
+    return _meshModelName;
+}
+
+const std::string& OptimizationPlot::smoothingMethodName() const
+{
+    return _smoothingMethodName;
+}
+
+const std::vector<OptimizationImpl>& OptimizationPlot::implementations() const
+{
+    return _implementations;
+}
+
+const std::map<std::string, std::string>& OptimizationPlot::meshProperties() const
+{
+    return _meshProperties;
 }

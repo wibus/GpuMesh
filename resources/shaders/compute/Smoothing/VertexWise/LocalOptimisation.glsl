@@ -1,5 +1,6 @@
 uniform float MoveCoeff;
 uniform int SecurityCycleCount;
+uniform float LocalSizeToNodeShift;
 
 // Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
@@ -16,7 +17,7 @@ void smoothVertex(uint vId)
     float localSize = computeLocalElementSize(vId);
 
     // Initialize node shift distance
-    float nodeShift = localSize / 25.0;
+    float nodeShift = localSize * LocalSizeToNodeShift;
     float originalNodeShift = nodeShift;
 
     for(int c=0; c < SecurityCycleCount; ++c)
@@ -65,8 +66,7 @@ void smoothVertex(uint vId)
 
 
         const uint PROPOSITION_COUNT = 7;
-        float lambda = nodeShift / gradQNorm;
-        float offsets[PROPOSITION_COUNT] = float[](
+        const float OFFSETS[PROPOSITION_COUNT] = float[](
             -0.25,
              0.00,
              0.25,
@@ -76,14 +76,15 @@ void smoothVertex(uint vId)
              1.25
         );
 
+        vec3 shift = gradQ * (nodeShift / gradQNorm);
         vec3 propositions[PROPOSITION_COUNT] = vec3[](
-            pos + gradQ * (lambda * offsets[0]),
-            pos + gradQ * (lambda * offsets[1]),
-            pos + gradQ * (lambda * offsets[2]),
-            pos + gradQ * (lambda * offsets[3]),
-            pos + gradQ * (lambda * offsets[4]),
-            pos + gradQ * (lambda * offsets[5]),
-            pos + gradQ * (lambda * offsets[6])
+            pos + shift * OFFSETS[0],
+            pos + shift * OFFSETS[1],
+            pos + shift * OFFSETS[2],
+            pos + shift * OFFSETS[3],
+            pos + shift * OFFSETS[4],
+            pos + shift * OFFSETS[5],
+            pos + shift * OFFSETS[6]
         );
 
         if(topo.type > 0)
@@ -116,7 +117,7 @@ void smoothVertex(uint vId)
         verts[vId].p = vec4(propositions[bestProposition], 0.0);
 
         // Scale node shift and stop if it is too small
-        nodeShift *= abs(offsets[bestProposition]);
+        nodeShift *= abs(OFFSETS[bestProposition]);
         if(nodeShift < originalNodeShift / 10.0)
             break;
     }

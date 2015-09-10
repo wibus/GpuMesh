@@ -124,13 +124,13 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evalua
     if(_smoothPassId == 0)
     {
         _implBeginTimeStamp = statsNow;
-        _currentPassVect.clear();
+        _currentImplementation.passes.clear();
     }
     OptimizationPass stats;
     stats.timeStamp = (statsNow - _implBeginTimeStamp).count() / 1.0e9;
     stats.minQuality = qualMin;
     stats.qualityMean = qualMean;
-    _currentPassVect.push_back(stats);
+    _currentImplementation.passes.push_back(stats);
 
 
     _lastQualityMean = qualMean;
@@ -146,7 +146,7 @@ struct SmoothBenchmarkStats
     double minQuality;
     double qualityMean;
     double qualityMeanGain;
-    chrono::high_resolution_clock::rep time;
+    double totalSeconds;
 };
 
 OptimizationPlot AbstractSmoother::benchmark(
@@ -155,7 +155,8 @@ OptimizationPlot AbstractSmoother::benchmark(
         const map<string, bool>& activeImpls,
         int minIteration,
         double moveFactor,
-        double gainThreshold)
+        double gainThreshold,
+        OptimizationPlot& outPlot)
 {
     _minIteration = minIteration;
     _moveFactor = moveFactor;
@@ -170,12 +171,6 @@ OptimizationPlot AbstractSmoother::benchmark(
     // We must make a copy of the vertices in order to
     // restore mesh's vertices after benchmarks.
     auto verticesBackup = mesh.verts;
-
-    using std::chrono::high_resolution_clock;
-    high_resolution_clock::time_point tStart;
-    high_resolution_clock::time_point tEnd;
-
-    OptimizationPlot plotModel("Smoothing implementation benchmarks");
 
     std::vector<SmoothBenchmarkStats> statsVec;
     for(auto& impl : _implementationFuncs.details().options)
@@ -197,23 +192,28 @@ OptimizationPlot AbstractSmoother::benchmark(
             continue;
         }
 
-        getLog().postMessage(new Message('I', false,
-           "Benchmarking "+ impl +" implementation",
-           "AbstractSmoother"));
-
         ImplementationFunc implementationFunc;
         if(_implementationFuncs.select(impl, implementationFunc))
         {
-            tStart = high_resolution_clock::now();
-            implementationFunc(mesh, evaluator);
-            tEnd = high_resolution_clock::now();
+            getLog().postMessage(new Message('I', false,
+               "Benchmarking "+ impl +" implementation",
+               "AbstractSmoother"));
 
-            plotModel.addCurve(impl, _currentPassVect);
+            _currentImplementation = OptimizationImpl();
+            _currentImplementation.name = impl;
+            printImplParameters(
+                mesh, evaluator,
+                _currentImplementation);
+
+            implementationFunc(mesh, evaluator);
+
+            outPlot.addImplementation(_currentImplementation);
 
 
             SmoothBenchmarkStats stats;
             stats.impl = impl;
-            stats.time = (tEnd - tStart).count();
+            stats.totalSeconds = _currentImplementation.passes.back().timeStamp -
+                                 _currentImplementation.passes.front().timeStamp;
             evaluator.evaluateMeshQualityThread(
                 mesh, stats.minQuality, stats.qualityMean);
             stats.qualityMeanGain = (stats.qualityMean - initialQualityMean) /
@@ -225,14 +225,20 @@ OptimizationPlot AbstractSmoother::benchmark(
             mesh.verts = verticesBackup;
             mesh.updateGpuVertices();
         }
+        else
+        {
+            getLog().postMessage(new Message('E', false,
+               "Requested implementation not found: " + impl,
+               "AbstractSmoother"));
+        }
     }
 
     // Get minimums for ratio computations
-    double minTime = statsVec[0].time;
+    double minTime = statsVec[0].totalSeconds;
     double minGain = statsVec[0].qualityMeanGain;
     for(size_t i = 1; i < statsVec.size(); ++i)
     {
-        minTime = glm::min(minTime, double(statsVec[i].time));
+        minTime = glm::min(minTime, double(statsVec[i].totalSeconds));
         minGain = glm::min(minGain, statsVec[i].qualityMeanGain);
     }
 
@@ -245,8 +251,8 @@ OptimizationPlot AbstractSmoother::benchmark(
     for(size_t i = 0; i < statsVec.size(); ++i)
     {
         nameStream << statsVec[i].impl << ":";
-        timeStream << fixed << setprecision(2) << statsVec[i].time / 1000000.0 << ":";
-        normTimeStream << fixed << setprecision(2)  << statsVec[i].time / minTime << ":";
+        timeStream << fixed << setprecision(2) << statsVec[i].totalSeconds * 1000.0 << ":";
+        normTimeStream << fixed << setprecision(2)  << statsVec[i].totalSeconds / minTime << ":";
         gainStream << fixed << setprecision(6)  << statsVec[i].qualityMeanGain << ":";
         normGainStream << fixed << setprecision(6)  << statsVec[i].qualityMeanGain / minGain  << ":";
     }
@@ -274,5 +280,5 @@ OptimizationPlot AbstractSmoother::benchmark(
         + normGainString,
        "AbstractSmoother"));
 
-    return plotModel;
+    return outPlot;
 }

@@ -29,6 +29,12 @@ protected:
             size_t first,
             size_t last) override;
 
+protected:
+    virtual void printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const override;
+
 private:
     double _lambda;
 };

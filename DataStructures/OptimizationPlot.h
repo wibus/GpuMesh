@@ -13,27 +13,39 @@ struct OptimizationPass
     double qualityMean;
 };
 
-typedef std::vector<OptimizationPass> OptimizationPassVect;
-typedef std::map<std::string, OptimizationPassVect> OptimizationCurvesMap;
+struct OptimizationImpl
+{
+    std::string name;
+    std::map<std::string, std::string> parameters;
+    std::vector<OptimizationPass> passes;
+};
 
 
 class OptimizationPlot
 {
 public:
-    explicit OptimizationPlot(const std::string& title);
+    explicit OptimizationPlot();
     virtual ~OptimizationPlot();
 
-    void clear();
+    void setMeshModelName(const std::string& name);
 
-    void addCurve(const std::string label, const OptimizationPassVect& passes);
+    void setSmoothingMethodName(const std::string& name);
 
-    const std::string& title() const;
-    const OptimizationCurvesMap& curves() const;
+    void addImplementation(const OptimizationImpl& impl);
+
+    void addMeshProperty(const std::string& name, const std::string& value);
+
+    const std::string& meshModelName() const;
+    const std::string& smoothingMethodName() const;
+    const std::vector<OptimizationImpl>& implementations() const;
+    const std::map<std::string, std::string>& meshProperties() const;
 
 
 private:
-    std::string _title;
-    OptimizationCurvesMap _curves;
+    std::string _meshModelName;
+    std::string _smoothingMethodName;
+    std::vector<OptimizationImpl> _implementations;
+    std::map<std::string, std::string> _meshProperties;
 };
 
 #endif // GPUMESH_OPTIMIZATIONPLOT

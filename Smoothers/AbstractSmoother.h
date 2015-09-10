@@ -62,10 +62,16 @@ public:
             const std::map<std::string, bool>& activeImpls,
             int minIteration,
             double moveFactor,
-            double gainThreshold);
+            double gainThreshold,
+            OptimizationPlot& outPlot);
 
 
 protected:
+    virtual void printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const = 0;
+
     virtual void initializeProgram(
             Mesh& mesh,
             AbstractEvaluator& evaluator) = 0;
@@ -89,8 +95,9 @@ protected:
     double _lastQualityMean;
     double _lastMinQuality;
 
+private:
     std::chrono::high_resolution_clock::time_point _implBeginTimeStamp;
-    OptimizationPassVect _currentPassVect;
+    OptimizationImpl _currentImplementation;
 
     typedef std::function<void(Mesh&, AbstractEvaluator&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;

@@ -16,6 +16,12 @@ protected:
             Mesh& mesh,
             AbstractEvaluator& evaluator,
             const std::vector<uint>& vIds) override;
+
+protected:
+    virtual void printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const override;
 };
 
 #endif // GPUMESH_SPRINGLAPLACESMOOTHER

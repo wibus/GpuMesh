@@ -84,7 +84,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
     });
 
-    _availableSmoothers.setDefault("Local Optimisation");
+    _availableSmoothers.setDefault("Spring Laplace");
     _availableSmoothers.setContent({
         {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
@@ -389,6 +389,7 @@ void GpuMeshCharacter::generateMesh(
 
         _mesh->compileTopoly();
         _renderer->notifyMeshUpdate();
+        _mesh->modelName = modelName;
     }
 }
 
@@ -475,23 +476,29 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
               ": smoother=" + smootherName +
               ", quality measure=" + evaluatorName);
 
+    OptimizationPlot plot;
+    _mesh->printPropperties(plot);
+    plot.setMeshModelName(_mesh->modelName);
+    plot.setSmoothingMethodName(smootherName);
+
     std::shared_ptr<AbstractSmoother> smoother;
     if(_availableSmoothers.select(smootherName, smoother))
     {
         std::shared_ptr<AbstractEvaluator> evaluator;
         if(_availableEvaluators.select(evaluatorName, evaluator))
         {
-            return smoother->benchmark(
+            smoother->benchmark(
                 *_mesh,
                 *evaluator,
                 activeImpls,
                 minIterationCount,
                 moveFactor,
-                gainThreshold);
+                gainThreshold,
+                plot);
         }
     }
 
-    return OptimizationPlot("Could not launch benchmarks");
+    return plot;
 }
 
 void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)

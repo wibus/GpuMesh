@@ -30,6 +30,11 @@ public:
 
 
 protected:
+    virtual void printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const override;
+
     virtual void initializeProgram(
             Mesh& mesh,
             AbstractEvaluator& evaluator) override;

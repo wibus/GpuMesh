@@ -11,7 +11,8 @@ using namespace std;
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
     AbstractVertexWiseSmoother(
         {":/shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl"}),
-    _securityCycleCount(5)
+    _securityCycleCount(5),
+    _localSizeToNodeShift(1.0 / 25.0)
 {
 
 }
@@ -44,7 +45,7 @@ void LocalOptimisationSmoother::smoothVertices(
                     mesh, vId);
 
         // Initialize node shift distance
-        double nodeShift = localSize / 25.0;
+        double nodeShift = localSize * _localSizeToNodeShift;
         double originalNodeShift = nodeShift;
 
         for(int c=0; c < _securityCycleCount; ++c)
@@ -95,8 +96,7 @@ void LocalOptimisationSmoother::smoothVertices(
 
 
             const uint PROPOSITION_COUNT = 7;
-            double lambda = nodeShift / gradQNorm;
-            double offsets[PROPOSITION_COUNT] = {
+            const double OFFSETS[PROPOSITION_COUNT] = {
                 -0.25,
                  0.00,
                  0.25,
@@ -106,15 +106,15 @@ void LocalOptimisationSmoother::smoothVertices(
                  1.25,
             };
 
-            glm::dvec3 shift = gradQ * lambda;
+            glm::dvec3 shift = gradQ * (nodeShift / gradQNorm);
             glm::dvec3 propositions[PROPOSITION_COUNT] = {
-                pos + shift * offsets[0],
-                pos + shift * offsets[1],
-                pos + shift * offsets[2],
-                pos + shift * offsets[3],
-                pos + shift * offsets[4],
-                pos + shift * offsets[5],
-                pos + shift * offsets[6],
+                pos + shift * OFFSETS[0],
+                pos + shift * OFFSETS[1],
+                pos + shift * OFFSETS[2],
+                pos + shift * OFFSETS[3],
+                pos + shift * OFFSETS[4],
+                pos + shift * OFFSETS[5],
+                pos + shift * OFFSETS[6],
             };
 
             if(topo.isBoundary)
@@ -148,11 +148,21 @@ void LocalOptimisationSmoother::smoothVertices(
             pos = propositions[bestProposition];
 
             // Scale node shift and stop if it is too small
-            nodeShift *= glm::abs(offsets[bestProposition]);
+            nodeShift *= glm::abs(OFFSETS[bestProposition]);
             if(nodeShift < originalNodeShift / 10.0)
                 break;
         }
     }
+}
+
+void LocalOptimisationSmoother::printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const
+{
+    AbstractVertexWiseSmoother::printImplParameters(mesh, evaluator, implementation);
+    implementation.parameters["Local Size to Node Shift"] = to_string(_localSizeToNodeShift);
+    implementation.parameters["Security Cycle Count"] = to_string(_securityCycleCount);
 }
 
 void LocalOptimisationSmoother::setVertexProgramUniforms(
@@ -161,4 +171,5 @@ void LocalOptimisationSmoother::setVertexProgramUniforms(
 {
     AbstractVertexWiseSmoother::setVertexProgramUniforms(mesh, program);
     program.setInt("SecurityCycleCount", _securityCycleCount);
+    program.setFloat("LocalSizeToNodeShift", _localSizeToNodeShift);
 }

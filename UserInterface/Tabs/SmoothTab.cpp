@@ -8,10 +8,15 @@
 #include <QTextDocument>
 #include <QFont>
 
+#include <CellarWorkbench/Image/Image.h>
+#include <CellarWorkbench/GL/GlToolkit.h>
+
+#include "../SmoothingReport.h"
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
 
 using namespace std;
+using namespace cellar;
 
 
 SmoothTab::SmoothTab(Ui::MainWindow* ui,
@@ -35,7 +40,7 @@ SmoothTab::SmoothTab(Ui::MainWindow* ui,
     deployImplementations();
     connect(_ui->smoothingImplementationMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &SmoothTab::ImplementationChanged);
+            this, &SmoothTab::implementationChanged);
 
     connect(_ui->smoothMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
@@ -56,7 +61,7 @@ void SmoothTab::techniqueChanged(const QString&)
     deployImplementations();
 }
 
-void SmoothTab::ImplementationChanged(const QString& implName)
+void SmoothTab::implementationChanged(const QString& implName)
 {
     _lastImpl = implName.toStdString();
 }
@@ -74,15 +79,30 @@ void SmoothTab::smoothMesh()
 
 void SmoothTab::benchmarkImplementations()
 {
-    displayOptimizationPlot(
+    const string REPORT_PATH = "Reports/Report.pdf";
+    const QString preShootPath = "Reports/PreSmoothingShot.png";
+    const QString postShootPath = "Reports/PreSmoothingShot.png";
+
+    Image preSmoothingShot;
+    GlToolkit::takeFramebufferShot(preSmoothingShot);
+    preSmoothingShot.save(preShootPath.toStdString());
+
+    OptimizationPlot plot =
         _character->benchmarkSmoother(
             _ui->smoothingTechniqueMenu->currentText().toStdString(),
             _ui->shapeMeasureTypeMenu->currentText().toStdString(),
             _activeImpls,
             _ui->smoothMinIterationSpin->value(),
             _ui->smoothMoveFactorSpin->value(),
-            _ui->smoothGainThresholdSpin->value())
-   );
+            _ui->smoothGainThresholdSpin->value());
+
+    displayOptimizationPlot(plot);
+
+    SmoothingReport report;
+    report.setPreSmoothingShot(QImage(preShootPath));
+    report.setPostSmoothingShot(QImage(postShootPath));
+    report.setOptimizationPlot(plot);
+    report.save(REPORT_PATH);
 }
 
 void SmoothTab::deployTechniques()
@@ -186,9 +206,9 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
     double maxQ = 0.0;
     double begQ = 0.0;
     map<string, QPen> pens;
-    for(const auto& keyVal : plot.curves())
+    for(const OptimizationImpl& impl : plot.implementations())
     {
-        const string& label = keyVal.first;
+        const string& label = impl.name;
 
         pens.insert(make_pair(
             label,
@@ -198,14 +218,14 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
                 ((uchar) label[2]) % 3 * 75))
         ));
 
-        for(const auto& pass : keyVal.second)
+        for(const auto& pass : impl.passes)
         {
             maxT = glm::max(maxT, pass.timeStamp);
             minQ = glm::min(minQ, pass.qualityMean);
             maxQ = glm::max(maxQ, pass.qualityMean);
         }
 
-        begQ = keyVal.second.front().qualityMean;
+        begQ = impl.passes.front().qualityMean;
     }
     double marginQ = (maxQ - minQ) * 0.05;
     double bottomQ = minQ - marginQ;
@@ -226,11 +246,11 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
 
     double labelHeight = 10.0;
     double legendLeft = sceneWidth - 200;
-    double legendTop = sceneHeight - 20.0 * (plot.curves().size() + 2);
-    for(const auto& keyVal : plot.curves())
+    double legendTop = sceneHeight - 20.0 * (plot.implementations().size() + 2);
+    for(const OptimizationImpl& impl : plot.implementations())
     {
-        const string& label = keyVal.first;
-        const OptimizationPassVect& samples = keyVal.second;
+        const string& label = impl.name;
+        const std::vector<OptimizationPass>& samples = impl.passes;
 
         // Asymptotes
         double totalTime = samples.back().timeStamp;
@@ -262,14 +282,14 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
     }
     _currentScene->addRect(
         legendLeft, legendTop,
-        180.0, 20.0 * (plot.curves().size()+1.3));
+        180.0, 20.0 * (plot.implementations().size()+1.3));
 
 
     // Optimization curves
-    for(const auto& keyVal : plot.curves())
+    for(const OptimizationImpl& impl : plot.implementations())
     {
-        const string& label = keyVal.first;
-        const OptimizationPassVect& samples = keyVal.second;
+        const string& label = impl.name;
+        const std::vector<OptimizationPass>& samples = impl.passes;
         for(size_t i=1; i < samples.size(); ++i)
         {
             const OptimizationPass& prevPass = samples[i-1];
@@ -289,7 +309,8 @@ void SmoothTab::displayOptimizationPlot(const OptimizationPlot& plot)
 
     QFont titleFont;
     titleFont.setPointSize(20);
-    QGraphicsTextItem* titleText = _currentScene->addText(plot.title().c_str(), titleFont);
+    QGraphicsTextItem* titleText = _currentScene->addText(
+        (plot.smoothingMethodName() + ": " + plot.meshModelName()).c_str(), titleFont);
     titleText->setPos((sceneWidth - titleText->document()->size().width())/2.0, -50.0);
 
     _currentView->setScene(_currentScene);

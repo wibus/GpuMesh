@@ -8,6 +8,8 @@
 
 #include "Evaluators/AbstractEvaluator.h"
 
+#include "OptimizationPlot.h"
+
 using namespace std;
 using namespace cellar;
 
@@ -433,6 +435,14 @@ std::string Mesh::modelBoundsShaderName() const
 void Mesh::setmodelBoundariesShaderName(const std::string& name)
 {
     _modelBoundsShaderName = name;
+}
+
+void Mesh::printPropperties(OptimizationPlot& plot) const
+{
+    plot.addMeshProperty("Vertex Count", to_string(verts.size()));
+    plot.addMeshProperty("Tet Count",   to_string(tets.size()));
+    plot.addMeshProperty("Prism Count", to_string(pris.size()));
+    plot.addMeshProperty("Hex Count",   to_string(hexs.size()));
 }
 
 void Mesh::addEdge(int firstVert, int secondVert)

@@ -149,6 +149,14 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     mesh.updateCpuVertices();
 }
 
+void AbstractVertexWiseSmoother::printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const
+{
+    implementation.parameters["Category"] = "Vertex-Wise";
+}
+
 void AbstractVertexWiseSmoother::initializeProgram(
         Mesh& mesh,
         AbstractEvaluator& evaluator)

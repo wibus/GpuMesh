@@ -182,6 +182,8 @@ enum class ECutType
     InvertedElements
 };
 
+class OptimizationPlot;
+
 
 class Mesh
 {
@@ -205,6 +207,9 @@ public:
     virtual std::string modelBoundsShaderName() const;
     virtual void setmodelBoundariesShaderName(const std::string& name);
 
+    virtual void printPropperties(OptimizationPlot& plot) const;
+
+    std::string modelName;
     std::vector<MeshVert> verts;
     std::vector<MeshTet>  tets;
     std::vector<MeshPri>  pris;

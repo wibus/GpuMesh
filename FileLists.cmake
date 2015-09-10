@@ -56,7 +56,8 @@ SET(GpuMesh_UITABS_HEADERS
 
 SET(GpuMesh_USERINTERFACE_HEADERS
     ${GpuMesh_UITABS_HEADERS}
-    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.h)
+    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.h
+    ${GpuMesh_SRC_DIR}/UserInterface/SmoothingReport.h)
 
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
@@ -123,7 +124,8 @@ SET(GpuMesh_UITABS_SOURCES
 
 SET(GpuMesh_USERINTERFACE_SOURCES
     ${GpuMesh_UITABS_SOURCES}
-    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.cpp)
+    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/SmoothingReport.cpp)
 
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}

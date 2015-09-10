@@ -323,3 +323,12 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
         _vertexAccums[vi[7]]->addPosition(vpp[7], weight);
     }
 }
+
+void GetmeSmoother::printImplParameters(
+            const Mesh& mesh,
+            const AbstractEvaluator& evaluator,
+            OptimizationImpl& implementation) const
+{
+    AbstractElementWiseSmoother::printImplParameters(mesh, evaluator, implementation);
+    implementation.parameters["Lambda"] = to_string(_lambda);
+}
