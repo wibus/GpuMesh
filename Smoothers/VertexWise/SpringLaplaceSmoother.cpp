@@ -49,11 +49,12 @@ void SpringLaplaceSmoother::smoothVertices(
     }
 }
 
-void SpringLaplaceSmoother::printImplParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationImpl& implementation) const
+void SpringLaplaceSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        const AbstractEvaluator& evaluator,
+        OptimizationPlot& plot) const
 {
-    AbstractVertexWiseSmoother::printImplParameters(mesh, evaluator, implementation);
-    implementation.parameters["Move Factor"] = to_string(_moveFactor);
+    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
+    plot.addSmoothingProperty("Method Name", "Spring Laplace");
+    plot.addSmoothingProperty("Move Factor", to_string(_moveFactor));
 }

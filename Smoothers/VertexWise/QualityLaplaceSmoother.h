@@ -17,11 +17,10 @@ protected:
             AbstractEvaluator& evaluator,
             const std::vector<uint>& vIds) override;
 
-protected:
-    virtual void printImplParameters(
+    virtual void printSmoothingParameters(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
-            OptimizationImpl& implementation) const override;
+            OptimizationPlot& plot) const override;
 };
 
 #endif // GPUMESH_QUALITYLAPLACESMOOTHER

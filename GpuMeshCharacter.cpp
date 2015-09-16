@@ -495,6 +495,8 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
                 moveFactor,
                 gainThreshold,
                 plot);
+
+            _renderer->notifyMeshUpdate();
         }
     }
 

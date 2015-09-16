@@ -6,6 +6,8 @@
 #include <string>
 
 
+typedef std::vector<std::pair<std::string, std::string>> Properties;
+
 struct OptimizationPass
 {
     double timeStamp;
@@ -16,7 +18,6 @@ struct OptimizationPass
 struct OptimizationImpl
 {
     std::string name;
-    std::map<std::string, std::string> parameters;
     std::vector<OptimizationPass> passes;
 };
 
@@ -31,21 +32,25 @@ public:
 
     void setSmoothingMethodName(const std::string& name);
 
-    void addImplementation(const OptimizationImpl& impl);
-
     void addMeshProperty(const std::string& name, const std::string& value);
+
+    void addSmoothingProperty(const std::string& name, const std::string& value);
+
+    void addImplementation(const OptimizationImpl& impl);
 
     const std::string& meshModelName() const;
     const std::string& smoothingMethodName() const;
+    const Properties& meshProperties() const;
+    const Properties& smoothingProperties() const;
     const std::vector<OptimizationImpl>& implementations() const;
-    const std::map<std::string, std::string>& meshProperties() const;
 
 
 private:
     std::string _meshModelName;
     std::string _smoothingMethodName;
+    Properties _meshProperties;
+    Properties _smoothingProperties;
     std::vector<OptimizationImpl> _implementations;
-    std::map<std::string, std::string> _meshProperties;
 };
 
 #endif // GPUMESH_OPTIMIZATIONPLOT

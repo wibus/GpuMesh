@@ -249,12 +249,12 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     mesh.updateCpuVertices();
 }
 
-void AbstractElementWiseSmoother::printImplParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationImpl& implementation) const
+void AbstractElementWiseSmoother::printSmoothingParameters(
+         const Mesh& mesh,
+         const AbstractEvaluator& evaluator,
+         OptimizationPlot& plot) const
 {
-    implementation.parameters["Category"] = "Element-Wise";
+    plot.addSmoothingProperty("Category", "Element-Wise");
 }
 
 void AbstractElementWiseSmoother::initializeProgram(

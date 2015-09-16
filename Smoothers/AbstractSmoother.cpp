@@ -163,14 +163,23 @@ OptimizationPlot AbstractSmoother::benchmark(
     _gainThreshold = gainThreshold;
     initializeProgram(mesh, evaluator);
 
+
+    printSmoothingParameters(
+        mesh, evaluator,
+        outPlot);
+
     double initialMinQuality = 0.0;
     double initialQualityMean = 0.0;
     evaluator.evaluateMeshQualityThread(
         mesh, initialMinQuality, initialQualityMean);
 
     // We must make a copy of the vertices in order to
-    // restore mesh's vertices after benchmarks.
+    // restore mesh's vertices after each implementation.
     auto verticesBackup = mesh.verts;
+
+    // Make a copy of the smoothed vertices from the firts valid
+    // implementation to show the results of the smoothing process.
+    vector<MeshVert> smoothedVertices;
 
     std::vector<SmoothBenchmarkStats> statsVec;
     for(auto& impl : _implementationFuncs.details().options)
@@ -201,9 +210,6 @@ OptimizationPlot AbstractSmoother::benchmark(
 
             _currentImplementation = OptimizationImpl();
             _currentImplementation.name = impl;
-            printImplParameters(
-                mesh, evaluator,
-                _currentImplementation);
 
             implementationFunc(mesh, evaluator);
 
@@ -221,6 +227,10 @@ OptimizationPlot AbstractSmoother::benchmark(
 
             statsVec.push_back(stats);
 
+            // Keep a copy of the smoothed vertices
+            if(smoothedVertices.empty())
+                smoothedVertices = mesh.verts;
+
             // Restore mesh vertices' initial position
             mesh.verts = verticesBackup;
             mesh.updateGpuVertices();
@@ -231,6 +241,12 @@ OptimizationPlot AbstractSmoother::benchmark(
                "Requested implementation not found: " + impl,
                "AbstractSmoother"));
         }
+    }
+
+    if(!smoothedVertices.empty())
+    {
+        mesh.verts = smoothedVertices;
+        mesh.updateGpuVertices();
     }
 
     // Get minimums for ratio computations

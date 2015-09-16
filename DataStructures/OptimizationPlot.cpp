@@ -21,14 +21,19 @@ void OptimizationPlot::setSmoothingMethodName(const std::string& name)
     _smoothingMethodName = name;
 }
 
+void OptimizationPlot::addMeshProperty(const std::string& name, const std::string& value)
+{
+    _meshProperties.push_back(make_pair(name, value));
+}
+
+void OptimizationPlot::addSmoothingProperty(const std::string& name, const std::string& value)
+{
+    _smoothingProperties.push_back(make_pair(name, value));
+}
+
 void OptimizationPlot::addImplementation(const OptimizationImpl& impl)
 {
     _implementations.push_back(impl);
-}
-
-void OptimizationPlot::addMeshProperty(const std::string& name, const std::string& value)
-{
-    _meshProperties[name] = value;
 }
 
 const std::string& OptimizationPlot::meshModelName() const
@@ -41,12 +46,17 @@ const std::string& OptimizationPlot::smoothingMethodName() const
     return _smoothingMethodName;
 }
 
+const Properties& OptimizationPlot::meshProperties() const
+{
+    return _meshProperties;
+}
+
+const Properties& OptimizationPlot::smoothingProperties() const
+{
+    return _smoothingProperties;
+}
+
 const std::vector<OptimizationImpl>& OptimizationPlot::implementations() const
 {
     return _implementations;
-}
-
-const std::map<std::string, std::string>& OptimizationPlot::meshProperties() const
-{
-    return _meshProperties;
 }

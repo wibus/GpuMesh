@@ -324,11 +324,12 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
     }
 }
 
-void GetmeSmoother::printImplParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationImpl& implementation) const
+void GetmeSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        const AbstractEvaluator& evaluator,
+        OptimizationPlot& plot) const
 {
-    AbstractElementWiseSmoother::printImplParameters(mesh, evaluator, implementation);
-    implementation.parameters["Lambda"] = to_string(_lambda);
+    AbstractElementWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
+    plot.addSmoothingProperty("Method Name", "GETMe");
+    plot.addSmoothingProperty("Lambda", to_string(_lambda));
 }

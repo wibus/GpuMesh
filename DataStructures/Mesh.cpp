@@ -439,10 +439,12 @@ void Mesh::setmodelBoundariesShaderName(const std::string& name)
 
 void Mesh::printPropperties(OptimizationPlot& plot) const
 {
-    plot.addMeshProperty("Vertex Count", to_string(verts.size()));
-    plot.addMeshProperty("Tet Count",   to_string(tets.size()));
-    plot.addMeshProperty("Prism Count", to_string(pris.size()));
-    plot.addMeshProperty("Hex Count",   to_string(hexs.size()));
+    plot.addMeshProperty("Model Name",        modelName);
+    plot.addMeshProperty("Vertex Count",      to_string(verts.size()));
+    plot.addMeshProperty("Tet Count",         to_string(tets.size()));
+    plot.addMeshProperty("Prism Count",       to_string(pris.size()));
+    plot.addMeshProperty("Hex Count",         to_string(hexs.size()));
+    plot.addMeshProperty("Patch Group Count", to_string(exclusiveGroups.size()));
 }
 
 void Mesh::addEdge(int firstVert, int secondVert)

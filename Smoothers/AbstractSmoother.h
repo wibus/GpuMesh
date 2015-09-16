@@ -54,8 +54,6 @@ public:
             Mesh& mesh,
             AbstractEvaluator& evaluator) = 0;
 
-
-    // Mesh is garanteed to be reset to initial state after benchmarks
     virtual OptimizationPlot benchmark(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
@@ -65,13 +63,13 @@ public:
             double gainThreshold,
             OptimizationPlot& outPlot);
 
-
-protected:
-    virtual void printImplParameters(
+    virtual void printSmoothingParameters(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
-            OptimizationImpl& implementation) const = 0;
+            OptimizationPlot& plot) const = 0;
 
+
+protected:
     virtual void initializeProgram(
             Mesh& mesh,
             AbstractEvaluator& evaluator) = 0;

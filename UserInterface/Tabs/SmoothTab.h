@@ -4,6 +4,7 @@
 #include <memory>
 
 #include <QWidget>
+#include <QTextEdit>
 class QGraphicsView;
 class QGraphicsScene;
 
@@ -35,7 +36,6 @@ protected slots:
 protected:
     virtual void deployTechniques();
     virtual void deployImplementations();
-    virtual void displayOptimizationPlot(const OptimizationPlot& plot);
 
 private:
     Ui::MainWindow* _ui;
@@ -43,8 +43,7 @@ private:
     std::map<std::string, bool> _activeImpls;
     std::string _lastImpl;
 
-    QGraphicsView* _currentView;
-    QGraphicsScene* _currentScene;
+    QTextEdit* _reportWidget;
 };
 
 #endif // GPUMESH_SMOOTHTAB

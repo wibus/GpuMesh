@@ -87,12 +87,13 @@ void QualityLaplaceSmoother::smoothVertices(
     }
 }
 
-void QualityLaplaceSmoother::printImplParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationImpl& implementation) const
+void QualityLaplaceSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        const AbstractEvaluator& evaluator,
+        OptimizationPlot& plot) const
 {
-    AbstractVertexWiseSmoother::printImplParameters(mesh, evaluator, implementation);
-    implementation.parameters["Line Sample Count"] = to_string(PROPOSITION_COUNT);
-    implementation.parameters["Line Gaps"] = to_string(_moveFactor);
+    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
+    plot.addSmoothingProperty("Method Name", "Quality Laplace");
+    plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
+    plot.addSmoothingProperty("Line Gaps", to_string(_moveFactor));
 }

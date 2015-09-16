@@ -155,14 +155,15 @@ void LocalOptimisationSmoother::smoothVertices(
     }
 }
 
-void LocalOptimisationSmoother::printImplParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationImpl& implementation) const
+void LocalOptimisationSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        const AbstractEvaluator& evaluator,
+        OptimizationPlot& plot) const
 {
-    AbstractVertexWiseSmoother::printImplParameters(mesh, evaluator, implementation);
-    implementation.parameters["Local Size to Node Shift"] = to_string(_localSizeToNodeShift);
-    implementation.parameters["Security Cycle Count"] = to_string(_securityCycleCount);
+    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
+    plot.addSmoothingProperty("Method Name", "Local Optimization");
+    plot.addSmoothingProperty("Local Size to Node Shift", to_string(_localSizeToNodeShift));
+    plot.addSmoothingProperty("Security Cycle Count", to_string(_securityCycleCount));
 }
 
 void LocalOptimisationSmoother::setVertexProgramUniforms(
