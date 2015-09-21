@@ -16,7 +16,7 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
                        const std::shared_ptr<GpuMeshCharacter>& character) :
     _ui(new Ui::MainWindow),
     _play(play),
-    _view(new QGlWidgetView("MainView"))
+    _view(new QGlWidgetView("MainView", this))
 {
     _ui->setupUi(this);
     _ui->horizontalLayout->addWidget(_view.get());
@@ -31,8 +31,6 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
     resize(1200, 720);
     QPoint center = QApplication::desktop()->availableGeometry(this).center();
     move(center.x()-width()*0.5, center.y()-height()*0.5);
-
-    showMaximized();
 }
 
 MainWindow::~MainWindow()

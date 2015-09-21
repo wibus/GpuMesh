@@ -31,7 +31,7 @@ int main(int argc, char** argv) try
     play->appendAct(act);
 
     std::shared_ptr<MainWindow> window(new MainWindow(play, character));
-    window->show();
+    window->showMaximized();
 
     getApplication().setPlay(play);
     return getApplication().execute();    
