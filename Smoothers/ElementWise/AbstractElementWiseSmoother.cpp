@@ -81,7 +81,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
 
 
     // TODO : Use a thread pool
-    size_t groupCount = mesh.exclusiveGroups.size();
+    size_t groupCount = mesh.independentGroups.size();
     uint threadCount = thread::hardware_concurrency();
 
 
@@ -142,7 +142,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
 
                     // Vertex position update step
                     const std::vector<uint>& group =
-                            mesh.exclusiveGroups[g];
+                            mesh.independentGroups[g];
 
                     size_t groupSize = group.size();
                     std::vector<uint> vIds(
@@ -181,13 +181,11 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     // It looks like glGetBufferSubData takes it out of the GPU.
     mesh.updateGpuVertices();
 
-    size_t vertCount = mesh.verts.size();
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
     size_t hexCount = mesh.hexs.size();
     size_t maxElem = glm::max(glm::max(tetCount, priCount), hexCount);
     size_t smoothWgCount = glm::ceil(maxElem / double(WORKGROUP_SIZE));
-    size_t updateWgCount = glm::ceil(vertCount / double(WORKGROUP_SIZE));
 
     struct GpuVertexAccum
     {
@@ -202,7 +200,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     glBufferData(GL_SHADER_STORAGE_BUFFER, accumSize, accumVec.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    vector<ExclusiveDispatch> dispatches;
+    vector<IndependentDispatch> dispatches;
     organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
     size_t dispatchCount = dispatches.size();
 
@@ -229,7 +227,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
         _vertUpdateProgram.pushProgram();
         for(size_t d=0; d < dispatchCount; ++d)
         {
-            const ExclusiveDispatch& dispatch = dispatches[d];
+            const IndependentDispatch& dispatch = dispatches[d];
             _vertUpdateProgram.setInt("GroupBase", dispatch.base);
             _vertUpdateProgram.setInt("GroupSize", dispatch.size);
 

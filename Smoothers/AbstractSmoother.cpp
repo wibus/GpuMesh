@@ -60,16 +60,16 @@ void AbstractSmoother::smoothMesh(
 void AbstractSmoother::organizeDispatches(
         const Mesh& mesh,
         size_t workgroupSize,
-        std::vector<ExclusiveDispatch>& dispatches) const
+        std::vector<IndependentDispatch>& dispatches) const
 {
-    size_t groupCount = mesh.exclusiveGroups.size();
+    size_t groupCount = mesh.independentGroups.size();
 
     size_t base = 0;
     for(size_t i=0; i < groupCount; ++i)
     {
-        size_t count = mesh.exclusiveGroups[i].size();
+        size_t count = mesh.independentGroups[i].size();
         size_t wg = glm::ceil(count / double(workgroupSize));
-        dispatches.push_back(ExclusiveDispatch(base, count, wg));
+        dispatches.push_back(IndependentDispatch(base, count, wg));
 
         base += count;
     }

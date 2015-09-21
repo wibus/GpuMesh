@@ -173,8 +173,8 @@ void Mesh::clear()
     hexs.shrink_to_fit();
     topos.clear();
     topos.shrink_to_fit();
-    exclusiveGroups.clear();
-    exclusiveGroups.shrink_to_fit();
+    independentGroups.clear();
+    independentGroups.shrink_to_fit();
 }
 
 void Mesh::compileTopoly()
@@ -182,6 +182,7 @@ void Mesh::compileTopoly()
     getLog().postMessage(new Message('I', false,
         "Compiling mesh topology...", "Mesh"));
 
+    // Compact verts and elems data structures
     verts.shrink_to_fit();
     tets.shrink_to_fit();
     pris.shrink_to_fit();
@@ -191,6 +192,119 @@ void Mesh::compileTopoly()
     topos.resize(vertCount);
     topos.shrink_to_fit();
 
+    auto neigBegin = chrono::high_resolution_clock::now();
+    compileNeighborhoods();
+
+    auto indeBegin = chrono::high_resolution_clock::now();
+    compileIndependentGroups();
+
+    auto compileEnd = chrono::high_resolution_clock::now();
+
+
+    getLog().postMessage(new Message('I', false,
+        "Vertice count: " + to_string(vertCount), "Mesh"));
+
+    size_t elemCount = tets.size() + pris.size() + hexs.size();
+    getLog().postMessage(new Message('I', false,
+        "Element count: " + to_string(elemCount), "Mesh"));
+
+    double elemVertRatio = elemCount  / (double) vertCount;
+    getLog().postMessage(new Message('I', false,
+        "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
+
+    getLog().postMessage(new Message('I', false,
+        "Independent set count: " + to_string(independentGroups.size()), "Mesh"));
+
+    size_t neigVertCount = 0;
+    size_t neigElemCount = 0;
+    for(int i=0; i < vertCount; ++i)
+    {
+        neigVertCount += topos[i].neighborVerts.size();
+        neigElemCount += topos[i].neighborElems.size();
+    }
+
+    int64_t meshMemorySize =
+            int64_t(verts.size() * sizeof(decltype(verts.front()))) +
+            int64_t(tets.size() * sizeof(decltype(tets.front()))) +
+            int64_t(pris.size() * sizeof(decltype(pris.front()))) +
+            int64_t(hexs.size() * sizeof(decltype(hexs.front()))) +
+            int64_t(topos.size() * sizeof(decltype(topos.front()))) +
+            int64_t(neigVertCount * sizeof(MeshNeigVert)) +
+            int64_t(neigElemCount * sizeof(MeshNeigElem));
+    getLog().postMessage(new Message('I', false,
+        "Approx mesh size in memory: " + to_string(meshMemorySize) + " Bytes", "Mesh"));
+
+    int neigTime = chrono::duration_cast<chrono::milliseconds>(indeBegin - neigBegin).count();
+    getLog().postMessage(new Message('I', false,
+        "Neighborhood compilation time: " + to_string(neigTime) + "ms", "Mesh"));
+
+    int indeTime = chrono::duration_cast<chrono::milliseconds>(compileEnd - indeBegin).count();
+    getLog().postMessage(new Message('I', false,
+        "Independent groups compilation time: " + to_string(indeTime) + "ms", "Mesh"));
+}
+
+void Mesh::updateGpuTopoly()
+{
+
+}
+
+void Mesh::updateGpuVertices()
+{
+
+}
+
+void Mesh::updateCpuVertices()
+{
+
+}
+
+std::string Mesh::meshGeometryShaderName() const
+{
+    return std::string();
+}
+
+void Mesh::uploadGeometry(cellar::GlProgram& program) const
+{
+
+}
+
+unsigned int Mesh::glBuffer(const EMeshBuffer&) const
+{
+    return 0;
+}
+
+void Mesh::bindShaderStorageBuffers() const
+{
+
+}
+
+size_t Mesh::firstFreeBufferBinding() const
+{
+    return 0;
+}
+
+std::string Mesh::modelBoundsShaderName() const
+{
+    return _modelBoundsShaderName;
+}
+
+void Mesh::setmodelBoundariesShaderName(const std::string& name)
+{
+    _modelBoundsShaderName = name;
+}
+
+void Mesh::printPropperties(OptimizationPlot& plot) const
+{
+    plot.addMeshProperty("Model Name",        modelName);
+    plot.addMeshProperty("Vertex Count",      to_string(verts.size()));
+    plot.addMeshProperty("Tet Count",         to_string(tets.size()));
+    plot.addMeshProperty("Prism Count",       to_string(pris.size()));
+    plot.addMeshProperty("Hex Count",         to_string(hexs.size()));
+    plot.addMeshProperty("Patch Group Count", to_string(independentGroups.size()));
+}
+
+void Mesh::compileNeighborhoods()
+{
     size_t tetCount = tets.size();
     for(size_t i=0; i < tetCount; ++i)
     {
@@ -240,18 +354,34 @@ void Mesh::compileTopoly()
     }
 
 
-    size_t neigVertCount = 0;
-    size_t neigElemCount = 0;
+    // Compact topology neighborhoods
+    size_t vertCount = verts.size();
     for(int i=0; i < vertCount; ++i)
     {
         topos[i].neighborVerts.shrink_to_fit();
         topos[i].neighborElems.shrink_to_fit();
-        neigVertCount += topos[i].neighborVerts.size();
-        neigElemCount += topos[i].neighborElems.size();
+    }
+}
+
+void Mesh::addEdge(int firstVert, int secondVert)
+{
+    vector<MeshNeigVert>& neighbors = topos[firstVert].neighborVerts;
+    int neighborCount = neighbors.size();
+    for(int n=0; n < neighborCount; ++n)
+    {
+        if(secondVert == neighbors[n])
+            return;
     }
 
+    // This really is a new edge
+    topos[firstVert].neighborVerts.push_back(secondVert);
+    topos[secondVert].neighborVerts.push_back(firstVert);
+}
 
-    // Compile 'Patch Exclusive Groups'
+void Mesh::compileIndependentGroups()
+{
+    size_t vertCount = verts.size();
+
     size_t seekStart = 0;
     std::set<uint> existingGroups;
     std::vector<size_t> nextNodes;
@@ -336,7 +466,7 @@ void Mesh::compileTopoly()
             {
                 group = existingGroups.size() + 1;
                 existingGroups.insert(group);
-                exclusiveGroups.push_back(std::vector<uint>());
+                independentGroups.push_back(std::vector<uint>());
             }
             else
             {
@@ -344,120 +474,13 @@ void Mesh::compileTopoly()
             }
 
             vertGroup[v] = group;
-            exclusiveGroups[group-1].push_back(v);
+            independentGroups[group-1].push_back(v);
         }
     }
 
-    exclusiveGroups.shrink_to_fit();
-    for(auto& group : exclusiveGroups)
+
+    // Make independent groups as compact as possible
+    independentGroups.shrink_to_fit();
+    for(auto& group : independentGroups)
         group.shrink_to_fit();
-
-
-    getLog().postMessage(new Message('I', false,
-        "Vertice count: " + to_string(vertCount), "Mesh"));
-
-    size_t elemCount = tets.size() + pris.size() + hexs.size();
-    getLog().postMessage(new Message('I', false,
-        "Element count: " + to_string(elemCount), "Mesh"));
-
-    double elemVertRatio = elemCount  / (double) vertCount;
-    getLog().postMessage(new Message('I', false,
-        "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
-
-    getLog().postMessage(new Message('I', false,
-        "Exclusive group count: " + to_string(exclusiveGroups.size()), "Mesh"));
-
-    double neigVertMean = neigVertCount / (double) vertCount;
-    getLog().postMessage(new Message('I', false,
-        "Neighbor verts / Vertices: " + to_string(neigVertMean), "Mesh"));
-
-    double neigElemMean = neigElemCount / (double) vertCount;
-    getLog().postMessage(new Message('I', false,
-        "Neighbor elems / Vertices: " + to_string(neigElemMean), "Mesh"));
-
-    int64_t meshMemorySize =
-            int64_t(verts.size() * sizeof(decltype(verts.front()))) +
-            int64_t(tets.size() * sizeof(decltype(tets.front()))) +
-            int64_t(pris.size() * sizeof(decltype(pris.front()))) +
-            int64_t(hexs.size() * sizeof(decltype(hexs.front()))) +
-            int64_t(topos.size() * sizeof(decltype(topos.front()))) +
-            int64_t(neigVertCount * sizeof(MeshNeigVert)) +
-            int64_t(neigElemCount * sizeof(MeshNeigElem));
-    getLog().postMessage(new Message('I', false,
-        "Approx mesh size in memory: " + to_string(meshMemorySize) + " Bytes", "Mesh"));
-}
-
-void Mesh::updateGpuTopoly()
-{
-
-}
-
-void Mesh::updateGpuVertices()
-{
-
-}
-
-void Mesh::updateCpuVertices()
-{
-
-}
-
-std::string Mesh::meshGeometryShaderName() const
-{
-    return std::string();
-}
-
-void Mesh::uploadGeometry(cellar::GlProgram& program) const
-{
-
-}
-
-unsigned int Mesh::glBuffer(const EMeshBuffer&) const
-{
-    return 0;
-}
-
-void Mesh::bindShaderStorageBuffers() const
-{
-
-}
-
-size_t Mesh::firstFreeBufferBinding() const
-{
-    return 0;
-}
-
-std::string Mesh::modelBoundsShaderName() const
-{
-    return _modelBoundsShaderName;
-}
-
-void Mesh::setmodelBoundariesShaderName(const std::string& name)
-{
-    _modelBoundsShaderName = name;
-}
-
-void Mesh::printPropperties(OptimizationPlot& plot) const
-{
-    plot.addMeshProperty("Model Name",        modelName);
-    plot.addMeshProperty("Vertex Count",      to_string(verts.size()));
-    plot.addMeshProperty("Tet Count",         to_string(tets.size()));
-    plot.addMeshProperty("Prism Count",       to_string(pris.size()));
-    plot.addMeshProperty("Hex Count",         to_string(hexs.size()));
-    plot.addMeshProperty("Patch Group Count", to_string(exclusiveGroups.size()));
-}
-
-void Mesh::addEdge(int firstVert, int secondVert)
-{
-    vector<MeshNeigVert>& neighbors = topos[firstVert].neighborVerts;
-    int neighborCount = neighbors.size();
-    for(int n=0; n < neighborCount; ++n)
-    {
-        if(secondVert == neighbors[n])
-            return;
-    }
-
-    // This really is a new edge
-    topos[firstVert].neighborVerts.push_back(secondVert);
-    topos[secondVert].neighborVerts.push_back(firstVert);
 }

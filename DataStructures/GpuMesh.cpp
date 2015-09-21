@@ -74,6 +74,12 @@ void GpuMesh::compileTopoly()
         glGenBuffers(1, &_groupMembersSsbo);
     }
 
+    // Allocation GPU side vertex positions storage space
+    size_t vertBuffSize = sizeof(GpuVert) * verts.size();
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
     updateGpuVertices();
     updateGpuTopoly();
 }
@@ -166,14 +172,14 @@ void GpuMesh::updateGpuTopoly()
     hexBuff.shrink_to_fit();
 
 
-    size_t groupCount = exclusiveGroups.size();
+    size_t groupCount = independentGroups.size();
     std::vector<GLuint> groupMembers;
     groupMembers.reserve(vertCount);
     for(size_t g=0; g < groupCount; ++g)
     {
-        size_t memberCount = exclusiveGroups[g].size();
+        size_t memberCount = independentGroups[g].size();
         for(size_t m=0; m < memberCount; ++m)
-            groupMembers.push_back(exclusiveGroups[g][m]);
+            groupMembers.push_back(independentGroups[g][m]);
     }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
     size_t membersSize = sizeof(decltype(groupMembers.front())) * groupMembers.size();
@@ -187,29 +193,36 @@ void GpuMesh::updateGpuTopoly()
 void GpuMesh::updateGpuVertices()
 {
     size_t nbVert = verts.size();
-    std::vector<GpuVert> buff(nbVert);
-    size_t size = sizeof(decltype(buff.front())) * nbVert;
-
-    for(int i=0; i < nbVert; ++i)
-        buff[i] = GpuVert(verts[i]);
+    size_t vertBuffSize = sizeof(GpuVert) * nbVert;
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, size, buff.data(), GL_STATIC_DRAW);
+    GpuVert* gpuVerts = (GpuVert*) glMapBufferRange(
+        GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
+        GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+    for(int i=0; i < nbVert; ++i)
+        gpuVerts[i] = GpuVert(verts[i]);
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void GpuMesh::updateCpuVertices()
 {
     size_t nbVert = verts.size();
-    std::vector<GpuVert> buff(nbVert);
-    size_t size = sizeof(decltype(buff.front())) * nbVert;
+    size_t vertBuffSize = sizeof(GpuVert) * nbVert;
 
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, buff.data());
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    GpuVert* gpuVerts = (GpuVert*) glMapBufferRange(
+        GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
+        GL_MAP_READ_BIT);
 
     for(int i=0; i < nbVert; ++i)
-        verts[i] = buff[i];
+        verts[i].p = glm::dvec3(gpuVerts[i].p);
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const

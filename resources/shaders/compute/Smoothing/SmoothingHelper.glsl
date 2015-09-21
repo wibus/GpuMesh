@@ -1,4 +1,4 @@
-// Patch exclusive group range
+// Independent group range
 uniform int GroupBase;
 uniform int GroupSize;
 

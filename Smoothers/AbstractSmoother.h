@@ -12,12 +12,12 @@
 class AbstractEvaluator;
 
 
-struct ExclusiveDispatch
+struct IndependentDispatch
 {
-    ExclusiveDispatch(uint base, uint size, uint wgc) :
+    IndependentDispatch(uint base, uint size, uint wgc) :
         base(base), size(size), workgroupCount(wgc) {}
 
-    // Patch exclusive group range
+    // Independent set range
     uint base;
     uint size;
 
@@ -77,7 +77,7 @@ protected:
     virtual void organizeDispatches(
             const Mesh& mesh,
             size_t workgroupSize,
-            std::vector<ExclusiveDispatch>& dispatches) const;
+            std::vector<IndependentDispatch>& dispatches) const;
 
     bool evaluateMeshQualitySerial(Mesh& mesh, AbstractEvaluator& evaluator);
     bool evaluateMeshQualityThread(Mesh& mesh, AbstractEvaluator& evaluator);

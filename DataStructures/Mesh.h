@@ -209,6 +209,7 @@ public:
 
     virtual void printPropperties(OptimizationPlot& plot) const;
 
+
     std::string modelName;
     std::vector<MeshVert> verts;
     std::vector<MeshTet>  tets;
@@ -216,15 +217,18 @@ public:
     std::vector<MeshHex>  hexs;
     std::vector<MeshTopo> topos;
 
-    std::vector<std::vector<uint>> exclusiveGroups;
+    std::vector<std::vector<uint>> independentGroups;
+
 
     static const int NO_GROUP;
     static const int UNSET_GROUP;
     static const int FIRST_GROUP;
 
 protected:
+    virtual void compileNeighborhoods();
     virtual void addEdge(int firstVert,
                          int secondVert);
+    virtual void compileIndependentGroups();
 
     std::string _modelBoundsShaderName;
 };

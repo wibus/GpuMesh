@@ -55,7 +55,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _lightDistance(1.0),
     _cutAzimuth(0),
     _cutAltitude(-glm::pi<double>() / 2.0),
-    _cutDistance(0),
+    _cutDistance(1.0e-8),
     _tetVisibility(true),
     _priVisibility(true),
     _hexVisibility(true),

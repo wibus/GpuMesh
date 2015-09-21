@@ -448,7 +448,8 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // before and after the call to glGetBufferSubData).
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    GLint* data = (GLint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    GLint* data = (GLint*) glMapBufferRange(
+        GL_SHADER_STORAGE_BUFFER, 0, qualSize, GL_MAP_READ_BIT);
 
     // Get minimum quality
     minQuality = data[0] / MAX_INTEGER_VALUE;

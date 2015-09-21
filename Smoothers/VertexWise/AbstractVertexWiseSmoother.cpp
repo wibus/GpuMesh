@@ -49,7 +49,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         AbstractEvaluator& evaluator)
 {
     // TODO : Use a thread pool    
-    size_t groupCount = mesh.exclusiveGroups.size();
+    size_t groupCount = mesh.independentGroups.size();
     uint threadCount = thread::hardware_concurrency();
 
     std::mutex mutex;
@@ -67,7 +67,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
                 for(size_t g=0; g < groupCount; ++g)
                 {
                     const std::vector<uint>& group =
-                            mesh.exclusiveGroups[g];
+                            mesh.independentGroups[g];
 
                     size_t groupSize = group.size();
                     std::vector<uint> vIds(
@@ -116,7 +116,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     mesh.updateGpuVertices();
 
 
-    vector<ExclusiveDispatch> dispatches;
+    vector<IndependentDispatch> dispatches;
     organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
     size_t dispatchCount = dispatches.size();
 
@@ -133,7 +133,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
 
         for(size_t d=0; d < dispatchCount; ++d)
         {
-            const ExclusiveDispatch& dispatch = dispatches[d];
+            const IndependentDispatch& dispatch = dispatches[d];
             _vertSmoothProgram.setInt("GroupBase", dispatch.base);
             _vertSmoothProgram.setInt("GroupSize", dispatch.size);
 
