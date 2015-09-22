@@ -60,9 +60,9 @@ void main(void)
     if(dist > 0.0)
         discard;
 
-    float dist = length(eye);
+    float scale = length(eye);
     float occl = chebyshevUpperBound(lgt);
-    vec3 base = qualityLut(qual) * bold(edg, dist);
+    vec3 base = qualityLut(qual) * bold(edg, scale);
     vec3 diff = lambertDiffuse(nrm) * LIGHT_DIFF * occl;
     vec3 spec = phongSpecular(nrm, pos, MAT_SHINE) * LIGHT_SPEC * occl;
     FragColor = vec4(base * (LIGHT_AMBT + diff) + spec, 1);

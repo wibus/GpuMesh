@@ -220,14 +220,22 @@ public:
     std::vector<std::vector<uint>> independentGroups;
 
 
-    static const int NO_GROUP;
-    static const int UNSET_GROUP;
-    static const int FIRST_GROUP;
-
 protected:
     virtual void compileNeighborhoods();
     virtual void addEdge(int firstVert,
                          int secondVert);
+
+
+    /// @brief Independent vertex groups compilation
+    /// Compiles independent vertex groups that is used by parallel smoothing
+    /// algorithms to ensure that no two _adjacent_ vertices are moved at the
+    /// same time. Independent vertices are vertices that do not share a common
+    /// element. This is more strict than prohibiting edge existance.
+    ///
+    /// A simple graph coloring scheme is used to generate the groups. The
+    /// algorithm works well with connected and highly disconnected graphs and
+    /// show a linear complexity in either case : O(n*d), where _n_ is the
+    /// number of vertices and _d_ is the 'mean' vertex degree.
     virtual void compileIndependentGroups();
 
     std::string _modelBoundsShaderName;

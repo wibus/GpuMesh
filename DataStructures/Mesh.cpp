@@ -146,10 +146,6 @@ MeshTopo::MeshTopo(const MeshBound* boundaryCallback) :
 }
 
 
-const int Mesh::NO_GROUP = 0;
-const int Mesh::UNSET_GROUP = -1;
-const int Mesh::FIRST_GROUP =  1;
-
 Mesh::Mesh() :
     _modelBoundsShaderName(":/shaders/compute/Boundary/None.glsl")
 {
@@ -380,6 +376,10 @@ void Mesh::addEdge(int firstVert, int secondVert)
 
 void Mesh::compileIndependentGroups()
 {
+    const int NO_GROUP = 0;
+    const int UNSET_GROUP = -1;
+    const int FIRST_GROUP =  1;
+
     size_t vertCount = verts.size();
 
     size_t seekStart = 0;

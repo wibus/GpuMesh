@@ -43,8 +43,8 @@ void main(void)
     if(dist > 0.0)
         discard;
 
-    float dist = length(eye);
-    vec3 baseCol = qualityLut(qual) * bold(edg, dist);
+    float scale = length(eye);
+    vec3 baseCol = qualityLut(qual) * bold(edg, scale);
     vec3 diffCol = lambertDiffuse(nrm) * LIGHT_DIFFUSE;
     FragColor = vec4(baseCol * (LIGHT_AMBIANT + diffCol), 1);
 }
