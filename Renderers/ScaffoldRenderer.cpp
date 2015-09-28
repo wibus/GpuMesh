@@ -457,8 +457,7 @@ void ScaffoldRenderer::setupShaders()
 
 void ScaffoldRenderer::render()
 {
-    glClearColor(0.3, 0.3, 0.3, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    drawBackdrop();
 
     if(_lightMode == 0)
     {

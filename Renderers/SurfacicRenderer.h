@@ -1,10 +1,6 @@
 #ifndef GPUMESH_MIDENDRENDERER
 #define GPUMESH_MIDENDRENDERER
 
-#include <GL3/gl3w.h>
-
-#include <CellarWorkbench/GL/GlProgram.h>
-
 #include "AbstractRenderer.h"
 
 
@@ -64,7 +60,6 @@ protected:
     cellar::GlProgram _shadowShader;
     cellar::GlProgram _bloomBlurShader;
     cellar::GlProgram _bloomBlendShader;
-    cellar::GlProgram _gradientShader;
     cellar::GlProgram _screenShader;
     cellar::GlProgram _brushShader;
     cellar::GlProgram _grainShader;
@@ -74,15 +69,6 @@ protected:
     GLuint _nbo;
     GLuint _ebo;
     GLuint _qbo;
-
-
-    bool _useBackdrop;
-    int _filterWidth;
-    int _filterHeight;
-    GLuint _fullscreenVao;
-    GLuint _fullscreenVbo;
-    GLuint _filterTex;
-
 
     bool _lightingEnabled;
     bool _updateShadow;

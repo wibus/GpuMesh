@@ -3,6 +3,9 @@
 
 #include <functional>
 
+#include <GL3/gl3w.h>
+
+#include <CellarWorkbench/GL/GlProgram.h>
 #include <CellarWorkbench/Camera/Camera.h>
 #include <CellarWorkbench/DesignPattern/SpecificObserver.h>
 
@@ -45,6 +48,15 @@ public:
 
 
 protected:
+    virtual void updateBackdropScale(const glm::vec2& scale);
+    virtual void drawBackdrop();
+
+    virtual void fullScreenDraw();
+
+    GLuint filterTex() const { return _filterTex;   }
+    int filterWidth() const  { return _filterWidth; }
+    int filterHeight() const { return _filterHeight;}
+
     virtual void updateGeometry(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator) = 0;
@@ -74,6 +86,15 @@ protected:
     // Shadings
     typedef std::function<void(void)> ShadingFunc;
     OptionMap<ShadingFunc> _shadingFuncs;
+
+private:
+    // Backdrop rendering
+    cellar::GlProgram _gradientShader;
+    GLuint _fullscreenVao;
+    GLuint _fullscreenVbo;
+    GLuint _filterTex;
+    int _filterWidth;
+    int _filterHeight;
 };
 
 #endif // GPUMESH_ABSTRACTRENDERER

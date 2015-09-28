@@ -1,6 +1,9 @@
 #include "AbstractRenderer.h"
 
 #include <CellarWorkbench/Misc/Log.h>
+#include <CellarWorkbench/Image/Image.h>
+#include <CellarWorkbench/Image/ImageBank.h>
+#include <CellarWorkbench/GL/GlToolkit.h>
 
 #include <Scaena/StageManagement/Event/KeyboardEvent.h>
 
@@ -18,7 +21,12 @@ AbstractRenderer::AbstractRenderer() :
     _hexVisibility(true),
     _qualityCullingMin(-INFINITY),
     _qualityCullingMax(INFINITY),
-    _shadingFuncs("Shadings")
+    _shadingFuncs("Shadings"),
+    _fullscreenVao(0),
+    _fullscreenVbo(0),
+    _filterTex(0),
+    _filterWidth(1),
+    _filterHeight(1)
 {
 
 }
@@ -33,11 +41,53 @@ void AbstractRenderer::setup()
 {
     resetResources();
     setupShaders();
+
+
+    // Backdrop
+    GLfloat backTriangle[] = {
+        -1.0f, -1.0f,
+         3.0f, -1.0f,
+        -1.0f,  3.0f
+    };
+
+    glGenVertexArrays(1, &_fullscreenVao);
+    glBindVertexArray(_fullscreenVao);
+
+    glGenBuffers(1, &_fullscreenVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _fullscreenVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(backTriangle), backTriangle, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+
+    _gradientShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Filter.vert");
+    _gradientShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Gradient.frag");
+    _gradientShader.link();
+    _gradientShader.pushProgram();
+    _gradientShader.setInt("Filter", 1);
+    _gradientShader.setVec2f("TexScale", glm::vec2(1.0f));
+    _gradientShader.popProgram();
+
+    Image& filterTex =  getImageBank().getImage("resources/textures/Filter.png");
+    _filterTex = GlToolkit::genTextureId(filterTex);
+    _filterWidth = filterTex.width();
+    _filterHeight = filterTex.height();
 }
 
 void AbstractRenderer::tearDown()
 {
     clearResources();
+
+    glDeleteVertexArrays(1, &_fullscreenVao);
+    _fullscreenVao = 0;
+
+    glDeleteBuffers(1, &_fullscreenVbo);
+    _fullscreenVbo = 0;
+
+    GlToolkit::deleteTextureId(_filterTex);
+    _filterTex = 0;
 }
 
 void AbstractRenderer::notifyMeshUpdate()
@@ -118,4 +168,34 @@ void AbstractRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
         getLog().postMessage(new Message('I', false,
             std::string("Physical cut : ") + rep, "AbstractRenderer"));
     }
+}
+
+void AbstractRenderer::updateBackdropScale(const glm::vec2& scale)
+{
+    _gradientShader.pushProgram();
+    _gradientShader.setVec2f("TexScale", scale);
+    _gradientShader.popProgram();
+}
+
+void AbstractRenderer::drawBackdrop()
+{
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _filterTex);
+    glActiveTexture(GL_TEXTURE0);
+
+    _gradientShader.pushProgram();
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
+
+    fullScreenDraw();
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    _gradientShader.popProgram();
+}
+
+void AbstractRenderer::fullScreenDraw()
+{
+    glBindVertexArray(_fullscreenVao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }

@@ -2,10 +2,6 @@
 
 #include <GLM/gtc/matrix_transform.hpp>
 
-#include <CellarWorkbench/Image/Image.h>
-#include <CellarWorkbench/Image/ImageBank.h>
-#include <CellarWorkbench/GL/GlToolkit.h>
-
 #include <Scaena/StageManagement/Event/KeyboardEvent.h>
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
@@ -30,10 +26,6 @@ SurfacicRenderer::SurfacicRenderer() :
     _bloomDpt(0),
     _bloomBaseTex(0),
     _bloomBlurTex(0),
-    _useBackdrop(true),
-    _fullscreenVao(0),
-    _fullscreenVbo(0),
-    _filterTex(0),
     _lightingEnabled(false),
     _updateShadow(false),
     _shadowSize(1024, 1024)
@@ -75,16 +67,15 @@ void SurfacicRenderer::notify(cellar::CameraMsg& msg)
 
         // Background scale
         glm::vec2 viewportf(viewport);
-        glm::vec2 backSize(_filterWidth, _filterHeight);
+        glm::vec2 backSize(filterWidth(),
+                           filterHeight());
         glm::vec2 scale = viewportf / backSize;
         if(scale.x > 1.0)
             scale /= scale.x;
         if(scale.y > 1.0)
             scale /= scale.y;
 
-        _gradientShader.pushProgram();
-        _gradientShader.setVec2f("TexScale", scale);
-        _gradientShader.popProgram();
+        updateBackdropScale(scale);
 
         _screenShader.pushProgram();
         _screenShader.setVec2f("TexScale", scale);
@@ -537,16 +528,6 @@ void SurfacicRenderer::clearResources()
     _qbo = 0;
 
 
-    glDeleteVertexArrays(1, &_fullscreenVao);
-    _fullscreenVao = 0;
-
-    glDeleteBuffers(1, &_fullscreenVbo);
-    _fullscreenVbo = 0;
-
-    GlToolkit::deleteTextureId(_filterTex);
-    _filterTex = 0;
-
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteRenderbuffers(1, &_shadowDpt);
     _shadowDpt = 0;
@@ -667,44 +648,11 @@ void SurfacicRenderer::resetResources()
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _bloomBaseTex, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _bloomDpt);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-    // Backdrop
-    GLfloat backTriangle[] = {
-        -1.0f, -1.0f,
-         3.0f, -1.0f,
-        -1.0f,  3.0f
-    };
-
-    Image& filterTex =  getImageBank().getImage("resources/textures/Filter.png");
-    _filterTex = GlToolkit::genTextureId(filterTex);
-    _filterWidth = filterTex.width();
-    _filterHeight = filterTex.height();
-
-    glGenVertexArrays(1, &_fullscreenVao);
-    glBindVertexArray(_fullscreenVao);
-
-    glGenBuffers(1, &_fullscreenVbo);
-    glBindBuffer(GL_ARRAY_BUFFER, _fullscreenVbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(backTriangle), backTriangle, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(0);
 }
 
 void SurfacicRenderer::setupShaders()
 {
     // Compile shaders
-    _gradientShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Filter.vert");
-    _gradientShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Gradient.frag");
-    _gradientShader.link();
-    _gradientShader.pushProgram();
-    _gradientShader.setInt("Filter", 1);
-    _gradientShader.setVec2f("TexScale", glm::vec2(1.0f));
-    _gradientShader.popProgram();
-
     _shadowShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Shadow.vert");
     _shadowShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Shadow.frag");
     _shadowShader.link();
@@ -780,18 +728,6 @@ void SurfacicRenderer::setupShaders()
 
 void SurfacicRenderer::render()
 {
-    int viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, _bloomBlurTex);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _bloomBaseTex);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _filterTex);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _shadowTex);
-
     if(_lightingEnabled)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, _bloomFbo);
@@ -801,14 +737,18 @@ void SurfacicRenderer::render()
     }
 
     // Render background
-    glBindVertexArray(_fullscreenVao);
-    _gradientShader.pushProgram();
-    glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    _gradientShader.popProgram();
+    drawBackdrop();
+
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, _bloomBlurTex);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _bloomBaseTex);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, filterTex());
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _shadowTex);
+
     glBindVertexArray(_meshVao);
 
 
@@ -821,6 +761,9 @@ void SurfacicRenderer::render()
     {
         if(_updateShadow)
         {
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+
             glBindFramebuffer(GL_FRAMEBUFFER, _shadowFbo);
             glViewport(0, 0, _shadowSize.x, _shadowSize.y);
 
@@ -873,40 +816,38 @@ void SurfacicRenderer::render()
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
 
-        glBindVertexArray(_fullscreenVao);
-
 
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                              _bloomBlurTex,  0);
         _bloomBlurShader.pushProgram();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        fullScreenDraw();
         _bloomBlurShader.popProgram();
 
 
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                              _bloomBaseTex,  0);
         _bloomBlendShader.pushProgram();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        fullScreenDraw();
         _bloomBlendShader.popProgram();
 
 
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                              _bloomBlurTex,  0);
         _screenShader.pushProgram();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        fullScreenDraw();
         _screenShader.popProgram();
 
 
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                              _bloomBaseTex,  0);
         _brushShader.pushProgram();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        fullScreenDraw();
         _brushShader.popProgram();
 
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         _grainShader.pushProgram();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        fullScreenDraw();
         _grainShader.popProgram();
 
 
