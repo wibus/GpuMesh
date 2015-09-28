@@ -39,41 +39,6 @@ ScaffoldRenderer::~ScaffoldRenderer()
     clearResources();
 }
 
-void ScaffoldRenderer::notify(cellar::CameraMsg& msg)
-{
-    if(msg.change == CameraMsg::EChange::VIEWPORT)
-    {
-        const glm::ivec2& viewport = msg.camera.viewport();
-
-        // Camera projection
-        const float n = 0.1;
-        const float f = 12.0;
-        _projMat = glm::perspectiveFov(
-                glm::pi<float>() / 6,
-                (float) viewport.x,
-                (float) viewport.y,
-                n, f);
-
-        glm::mat4 projInv = glm::inverse(_projMat);
-
-        _scaffoldJointProgram.pushProgram();
-        _scaffoldJointProgram.setMat4f("ProjInv", projInv);
-        _scaffoldJointProgram.setMat4f("ProjMat", _projMat);
-        _scaffoldJointProgram.setVec2f("Viewport", viewport);
-        _scaffoldJointProgram.popProgram();
-
-        _scaffoldTubeProgram.pushProgram();
-        _scaffoldTubeProgram.setMat4f("ProjInv", projInv);
-        _scaffoldTubeProgram.setMat4f("ProjMat", _projMat);
-        _scaffoldTubeProgram.setVec2f("Viewport", viewport);
-        _scaffoldTubeProgram.popProgram();
-
-        _wireframeProgram.pushProgram();
-        _wireframeProgram.setMat4f("ProjViewMat", _projMat * _viewMat);
-        _wireframeProgram.popProgram();
-    }
-}
-
 void ScaffoldRenderer::updateCamera(const glm::mat4& view,
                                       const glm::vec3& pos)
 {
@@ -158,6 +123,41 @@ void ScaffoldRenderer::handleInputs(
         const scaena::SynchronousMouse& mouse)
 {
 
+}
+
+void ScaffoldRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
+{
+    if(msg.change == CameraMsg::EChange::VIEWPORT)
+    {
+        const glm::ivec2& viewport = msg.camera.viewport();
+
+        // Camera projection
+        const float n = 0.1;
+        const float f = 12.0;
+        _projMat = glm::perspectiveFov(
+                glm::pi<float>() / 6,
+                (float) viewport.x,
+                (float) viewport.y,
+                n, f);
+
+        glm::mat4 projInv = glm::inverse(_projMat);
+
+        _scaffoldJointProgram.pushProgram();
+        _scaffoldJointProgram.setMat4f("ProjInv", projInv);
+        _scaffoldJointProgram.setMat4f("ProjMat", _projMat);
+        _scaffoldJointProgram.setVec2f("Viewport", viewport);
+        _scaffoldJointProgram.popProgram();
+
+        _scaffoldTubeProgram.pushProgram();
+        _scaffoldTubeProgram.setMat4f("ProjInv", projInv);
+        _scaffoldTubeProgram.setMat4f("ProjMat", _projMat);
+        _scaffoldTubeProgram.setVec2f("Viewport", viewport);
+        _scaffoldTubeProgram.popProgram();
+
+        _wireframeProgram.pushProgram();
+        _wireframeProgram.setMat4f("ProjViewMat", _projMat * _viewMat);
+        _wireframeProgram.popProgram();
+    }
 }
 
 void ScaffoldRenderer::updateGeometry(

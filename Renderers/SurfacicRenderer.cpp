@@ -42,72 +42,6 @@ SurfacicRenderer::~SurfacicRenderer()
     clearResources();
 }
 
-void SurfacicRenderer::notify(cellar::CameraMsg& msg)
-{
-    if(msg.change == CameraMsg::EChange::VIEWPORT)
-    {
-        const glm::ivec2& viewport = msg.camera.viewport();
-
-        // Camera projection
-        glm::mat4 proj = glm::perspectiveFov(
-                glm::pi<float>() / 6,
-                (float) viewport.x,
-                (float) viewport.y,
-                0.1f,
-                12.0f);
-
-        _litShader.pushProgram();
-        _litShader.setMat4f("ProjMat", proj);
-        _litShader.popProgram();
-
-        _unlitShader.pushProgram();
-        _unlitShader.setMat4f("ProjMat", proj);
-        _unlitShader.popProgram();
-
-
-        // Background scale
-        glm::vec2 viewportf(viewport);
-        glm::vec2 backSize(filterWidth(),
-                           filterHeight());
-        glm::vec2 scale = viewportf / backSize;
-        if(scale.x > 1.0)
-            scale /= scale.x;
-        if(scale.y > 1.0)
-            scale /= scale.y;
-
-        updateBackdropScale(scale);
-
-        _screenShader.pushProgram();
-        _screenShader.setVec2f("TexScale", scale);
-        _screenShader.popProgram();
-
-        _brushShader.pushProgram();
-        _brushShader.setVec2f("TexScale", scale);
-        _brushShader.popProgram();
-
-        _grainShader.pushProgram();
-        _grainShader.setVec2f("TexScale", scale);
-        _grainShader.popProgram();
-
-        _updateShadow = true;
-
-        // Resize bloom buffers
-        glBindTexture(GL_TEXTURE_2D, _bloomBaseTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, viewport.x, viewport.y,
-                     0, GL_RGB, GL_UNSIGNED_INT, NULL);
-
-        glBindTexture(GL_TEXTURE_2D, _bloomBlurTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, viewport.x, viewport.y,
-                     0, GL_RGB, GL_UNSIGNED_INT, NULL);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        glBindRenderbuffer(GL_RENDERBUFFER, _bloomDpt);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32,
-                              viewport.x, viewport.y);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    }
-}
-
 void SurfacicRenderer::updateCamera(const glm::mat4& view,
                                   const glm::vec3& pos)
 {
@@ -190,6 +124,63 @@ void SurfacicRenderer::handleInputs(const scaena::SynchronousKeyboard& keyboard,
                                   const scaena::SynchronousMouse& mouse)
 {
 
+}
+
+void SurfacicRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
+{
+    if(msg.change == CameraMsg::EChange::VIEWPORT)
+    {
+        const glm::ivec2& viewport = msg.camera.viewport();
+
+        // Camera projection
+        glm::mat4 proj = glm::perspectiveFov(
+                glm::pi<float>() / 6,
+                (float) viewport.x,
+                (float) viewport.y,
+                0.1f,
+                12.0f);
+
+        _litShader.pushProgram();
+        _litShader.setMat4f("ProjMat", proj);
+        _litShader.popProgram();
+
+        _unlitShader.pushProgram();
+        _unlitShader.setMat4f("ProjMat", proj);
+        _unlitShader.popProgram();
+
+
+        // Effects scale
+        glm::vec2 scale = filterScale();
+
+        _screenShader.pushProgram();
+        _screenShader.setVec2f("TexScale", scale);
+        _screenShader.popProgram();
+
+        _brushShader.pushProgram();
+        _brushShader.setVec2f("TexScale", scale);
+        _brushShader.popProgram();
+
+        _grainShader.pushProgram();
+        _grainShader.setVec2f("TexScale", scale);
+        _grainShader.popProgram();
+
+        _updateShadow = true;
+
+        // Resize bloom buffers
+        glBindTexture(GL_TEXTURE_2D, _bloomBaseTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, viewport.x, viewport.y,
+                     0, GL_RGB, GL_UNSIGNED_INT, NULL);
+
+        glBindTexture(GL_TEXTURE_2D, _bloomBlurTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, viewport.x, viewport.y,
+                     0, GL_RGB, GL_UNSIGNED_INT, NULL);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glBindRenderbuffer(GL_RENDERBUFFER, _bloomDpt);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32,
+                              viewport.x, viewport.y);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
 }
 
 void SurfacicRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator& evaluator)

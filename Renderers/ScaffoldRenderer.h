@@ -1,9 +1,5 @@
-#ifndef GPUMESH_SCIENTIFICRENDERER
-#define GPUMESH_SCIENTIFICRENDERER
-
-#include <GL3/gl3w.h>
-
-#include <CellarWorkbench/GL/GlProgram.h>
+#ifndef GPUMESH_SCAFFOLDRENDERER
+#define GPUMESH_SCAFFOLDRENDERER
 
 #include "AbstractRenderer.h"
 
@@ -13,8 +9,6 @@ class ScaffoldRenderer : public AbstractRenderer
 public:
     ScaffoldRenderer();
     virtual ~ScaffoldRenderer();
-
-    virtual void notify(cellar::CameraMsg& msg) override;
 
     virtual void updateCamera(const glm::mat4& view,
                               const glm::vec3& pos) override;
@@ -40,6 +34,7 @@ protected:
             std::vector<GLuint>& nodes,
             std::vector<GLuint>& edges) const;
 
+    virtual void notifyCameraUpdate(cellar::CameraMsg& msg) override;
     virtual void clearResources() override;
     virtual void resetResources() override;
     virtual void setupShaders() override;
@@ -72,4 +67,4 @@ protected:
     float _jointTubeMinRatio;
 };
 
-#endif // GPUMESH_MIDENDRENDERER
+#endif // GPUMESH_SCAFFOLDRENDERER

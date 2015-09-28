@@ -25,6 +25,7 @@
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
 #include "Meshers/DebugMesher.h"
+#include "Renderers/BlindRenderer.h"
 #include "Renderers/ScaffoldRenderer.h"
 #include "Renderers/SurfacicRenderer.h"
 #include "Renderers/QualityGradientPainter.h"
@@ -94,6 +95,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableRenderers.setDefault("Surfacic");
     _availableRenderers.setContent({
+        {string("Blind"),    shared_ptr<AbstractRenderer>(new BlindRenderer())},
         {string("Scaffold"), shared_ptr<AbstractRenderer>(new ScaffoldRenderer())},
         {string("Surfacic"), shared_ptr<AbstractRenderer>(new SurfacicRenderer())},
     });

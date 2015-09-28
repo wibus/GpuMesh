@@ -1,5 +1,5 @@
-#ifndef GPUMESH_MIDENDRENDERER
-#define GPUMESH_MIDENDRENDERER
+#ifndef GPUMESH_SURFACICRENDERER
+#define GPUMESH_SURFACICRENDERER
 
 #include "AbstractRenderer.h"
 
@@ -10,7 +10,6 @@ public:
     SurfacicRenderer();
     virtual ~SurfacicRenderer();
 
-    virtual void notify(cellar::CameraMsg& msg) override;
 
     virtual void updateCamera(const glm::mat4& view,
                               const glm::vec3& pos) override;
@@ -21,7 +20,6 @@ public:
     virtual void handleKeyPress(const scaena::KeyboardEvent& event) override;
     virtual void handleInputs(const scaena::SynchronousKeyboard& keyboard,
                               const scaena::SynchronousMouse& mouse) override;
-
 
 
 protected:
@@ -47,6 +45,7 @@ protected:
             bool fromQuad,
             double quality) const;
 
+    virtual void notifyCameraUpdate(cellar::CameraMsg& msg) override;
     virtual void clearResources() override;
     virtual void resetResources() override;
     virtual void setupShaders() override;
@@ -83,4 +82,4 @@ protected:
     GLuint _bloomBlurTex;
 };
 
-#endif // GPUMESH_MIDENDRENDERER
+#endif // GPUMESH_SURFACICRENDERER

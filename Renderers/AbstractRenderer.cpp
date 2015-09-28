@@ -26,7 +26,8 @@ AbstractRenderer::AbstractRenderer() :
     _fullscreenVbo(0),
     _filterTex(0),
     _filterWidth(1),
-    _filterHeight(1)
+    _filterHeight(1),
+    _filterScale(1, 1)
 {
 
 }
@@ -36,6 +37,29 @@ AbstractRenderer::~AbstractRenderer()
 
 }
 
+void AbstractRenderer::notify(cellar::CameraMsg& msg)
+{
+    if(msg.change == CameraMsg::EChange::VIEWPORT)
+    {
+        const glm::ivec2& viewport = msg.camera.viewport();
+
+        // Background scale
+        glm::vec2 viewportf(viewport);
+        glm::vec2 backSize(_filterWidth,
+                           _filterHeight);
+        _filterScale = viewportf / backSize;
+        if(_filterScale.x > 1.0)
+            _filterScale /= _filterScale.x;
+        if(_filterScale.y > 1.0)
+            _filterScale /= _filterScale.y;
+
+        _gradientShader.pushProgram();
+        _gradientShader.setVec2f("TexScale", _filterScale);
+        _gradientShader.popProgram();
+    }
+
+    notifyCameraUpdate(msg);
+}
 
 void AbstractRenderer::setup()
 {
@@ -67,7 +91,7 @@ void AbstractRenderer::setup()
     _gradientShader.link();
     _gradientShader.pushProgram();
     _gradientShader.setInt("Filter", 1);
-    _gradientShader.setVec2f("TexScale", glm::vec2(1.0f));
+    _gradientShader.setVec2f("TexScale", _filterScale);
     _gradientShader.popProgram();
 
     Image& filterTex =  getImageBank().getImage("resources/textures/Filter.png");
@@ -168,13 +192,6 @@ void AbstractRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
         getLog().postMessage(new Message('I', false,
             std::string("Physical cut : ") + rep, "AbstractRenderer"));
     }
-}
-
-void AbstractRenderer::updateBackdropScale(const glm::vec2& scale)
-{
-    _gradientShader.pushProgram();
-    _gradientShader.setVec2f("TexScale", scale);
-    _gradientShader.popProgram();
 }
 
 void AbstractRenderer::drawBackdrop()

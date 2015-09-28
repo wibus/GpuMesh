@@ -24,6 +24,8 @@ public:
     AbstractRenderer();
     virtual ~AbstractRenderer();
 
+    virtual void notify(cellar::CameraMsg& msg) override;
+
     virtual void setup();
     virtual void tearDown();
     virtual void notifyMeshUpdate();
@@ -48,19 +50,17 @@ public:
 
 
 protected:
-    virtual void updateBackdropScale(const glm::vec2& scale);
+    GLuint filterTex() const      { return _filterTex;   }
+    glm::vec2 filterScale() const { return _filterScale; }
+
     virtual void drawBackdrop();
-
     virtual void fullScreenDraw();
-
-    GLuint filterTex() const { return _filterTex;   }
-    int filterWidth() const  { return _filterWidth; }
-    int filterHeight() const { return _filterHeight;}
 
     virtual void updateGeometry(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator) = 0;
 
+    virtual void notifyCameraUpdate(cellar::CameraMsg& msg) = 0;
     virtual void clearResources() = 0;
     virtual void resetResources() = 0;
     virtual void setupShaders() = 0;
@@ -95,6 +95,7 @@ private:
     GLuint _filterTex;
     int _filterWidth;
     int _filterHeight;
+    glm::vec2 _filterScale;
 };
 
 #endif // GPUMESH_ABSTRACTRENDERER
