@@ -58,6 +58,12 @@ public:
             const std::string& modelName,
             size_t vertexCount);
 
+    virtual void saveMesh(
+            const std::string& fileName);
+
+    virtual void loadMesh(
+            const std::string& fileName);
+
     // Evaluate
     virtual void evaluateMesh(
             const std::string& evaluatorName,

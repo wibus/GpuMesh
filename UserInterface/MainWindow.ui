@@ -112,6 +112,20 @@
           </property>
          </spacer>
         </item>
+        <item>
+         <widget class="QPushButton" name="saveMeshButton">
+          <property name="text">
+           <string>Save Mesh</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="loadMeshButton">
+          <property name="text">
+           <string>Load Mesh</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="evaluateTab">

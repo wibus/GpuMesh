@@ -1,5 +1,7 @@
 #include "MeshTab.h"
 
+#include <QFileDialog>
+
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
 
@@ -20,6 +22,14 @@ MeshTab::MeshTab(Ui::MainWindow* ui,
     connect(_ui->generateMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &MeshTab::generateMesh);
+
+    connect(_ui->saveMeshButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &MeshTab::saveMesh);
+
+    connect(_ui->loadMeshButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &MeshTab::loadMesh);
 }
 
 MeshTab::~MeshTab()
@@ -38,6 +48,29 @@ void MeshTab::generateMesh()
         _ui->geometryTechniqueMenu->currentText().toStdString(),
         _ui->geometryModelMenu->currentText().toStdString(),
         _ui->meshVertexCountSpin->value());
+}
+
+void MeshTab::saveMesh()
+{
+    QString fileName = QFileDialog::getSaveFileName(
+            nullptr, "Save Mesh", "Meshes/");
+    if(!fileName.isNull())
+    {
+        if(QFileInfo(fileName).suffix().isEmpty())
+            fileName = fileName.split(".").at(0) + ".json";
+
+        _character->saveMesh(fileName.toStdString());
+    }
+}
+
+void MeshTab::loadMesh()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+        nullptr, "Load Mesh", "Meshes/");
+    if(!fileName.isNull())
+    {
+        _character->loadMesh(fileName.toStdString());
+    }
 }
 
 void MeshTab::deployTechniques()

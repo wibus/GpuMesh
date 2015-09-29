@@ -29,6 +29,8 @@
 #include "Renderers/ScaffoldRenderer.h"
 #include "Renderers/SurfacicRenderer.h"
 #include "Renderers/QualityGradientPainter.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonDeserializer.h"
 #include "Smoothers/VertexWise/SpringLaplaceSmoother.h"
 #include "Smoothers/VertexWise/QualityLaplaceSmoother.h"
 #include "Smoothers/VertexWise/LocalOptimisationSmoother.h"
@@ -392,6 +394,39 @@ void GpuMeshCharacter::generateMesh(
         _mesh->compileTopoly();
         _renderer->notifyMeshUpdate();
         _mesh->modelName = modelName;
+    }
+}
+
+void GpuMeshCharacter::saveMesh(
+        const std::string& fileName)
+{
+    printStep("Saving mesh at " + fileName);
+
+    JsonSerializer serializer;
+    if(!serializer.serialize(fileName, *_mesh))
+    {
+        getLog().postMessage(new Message('E', false,
+            "An error occured while saving the mesh.", "GpuMeshCharacter"));
+    }
+}
+
+void GpuMeshCharacter::loadMesh(
+        const std::string& fileName)
+{
+    printStep("Loading mesh from " + fileName);
+
+    _mesh->clear();
+
+    JsonDeserializer deserializer;
+    if(deserializer.deserialize(fileName, *_mesh))
+    {
+        _mesh->compileTopoly();
+        _renderer->notifyMeshUpdate();
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "An error occured while loading the mesh.", "GpuMeshCharacter"));
     }
 }
 

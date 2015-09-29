@@ -33,6 +33,11 @@ SET(GpuMesh_RENDERERS_HEADERS
     ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.h
     ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.h)
 
+SET(GpuMesh_SERIALIZATION_HEADERS
+    ${GpuMesh_SRC_DIR}/Serialization/JsonMeshTags.h
+    ${GpuMesh_SRC_DIR}/Serialization/JsonSerializer.h
+    ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.h)
+
 SET(GpuMesh_VERTEXWISE_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/AbstractVertexWiseSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpringLaplaceSmoother.h
@@ -65,6 +70,7 @@ SET(GpuMesh_HEADERS
     ${GpuMesh_EVALUATORS_HEADERS}
     ${GpuMesh_MESHERS_HEADERS}
     ${GpuMesh_RENDERERS_HEADERS}
+    ${GpuMesh_SERIALIZATION_HEADERS}
     ${GpuMesh_SMOOTHERS_HEADERS}
     ${GpuMesh_USERINTERFACE_HEADERS}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
@@ -102,6 +108,12 @@ SET(GpuMesh_RENDERERS_SOURCES
     ${GpuMesh_SRC_DIR}/Renderers/SurfacicRenderer.cpp
     ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.cpp)
 
+SET(GpuMesh_SERIALIZATION_SOURCES
+    ${GpuMesh_SRC_DIR}/Serialization/JsonMeshTags.cpp
+    ${GpuMesh_SRC_DIR}/Serialization/JsonSerializer.cpp
+    ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.cpp)
+
+
 SET(GpuMesh_VERTEXWISE_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/AbstractVertexWiseSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpringLaplaceSmoother.cpp
@@ -134,6 +146,7 @@ SET(GpuMesh_SOURCES
     ${GpuMesh_EVALUATORS_SOURCES}
     ${GpuMesh_MESHERS_SOURCES}
     ${GpuMesh_RENDERERS_SOURCES}
+    ${GpuMesh_SERIALIZATION_SOURCES}
     ${GpuMesh_SMOOTHERS_SOURCES}
     ${GpuMesh_USERINTERFACE_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp

@@ -24,6 +24,8 @@ public:
 protected slots:
     virtual void techniqueChanged(const QString&);
     virtual void generateMesh();
+    virtual void saveMesh();
+    virtual void loadMesh();
 
 protected:
     virtual void deployTechniques();
