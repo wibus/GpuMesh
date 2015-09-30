@@ -23,6 +23,10 @@ MeshTab::MeshTab(Ui::MainWindow* ui,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &MeshTab::generateMesh);
 
+    connect(_ui->clearMeshButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &MeshTab::clearMesh);
+
     connect(_ui->saveMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &MeshTab::saveMesh);
@@ -48,6 +52,11 @@ void MeshTab::generateMesh()
         _ui->geometryTechniqueMenu->currentText().toStdString(),
         _ui->geometryModelMenu->currentText().toStdString(),
         _ui->meshVertexCountSpin->value());
+}
+
+void MeshTab::clearMesh()
+{
+    _character->clearMesh();
 }
 
 void MeshTab::saveMesh()

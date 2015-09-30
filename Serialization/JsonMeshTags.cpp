@@ -1,7 +1,7 @@
 #include "JsonMeshTags.h"
 
 
-const QString MESH_MODEL_TAG    = "model";
+const QString MESH_MODEL_TAG    = "Model";
 
 const QString MESH_VERTS_TAG    = "verts";
 

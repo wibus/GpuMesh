@@ -3,10 +3,11 @@
 
 #include <QJsonValue>
 
+#include "AbstractSerializer.h"
 #include "DataStructures/Mesh.h"
 
 
-class JsonSerializer
+class JsonSerializer : public AbstractSerializer
 {
 public:
     JsonSerializer();
@@ -14,7 +15,8 @@ public:
 
     virtual bool serialize(
             const std::string& fileName,
-            const Mesh& mesh) const;
+            const AbstractEvaluator& evaluator,
+            const Mesh& mesh) const override;
 
 protected:
     static QJsonValue toJson(const MeshVert& v);

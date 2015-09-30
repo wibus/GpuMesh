@@ -18,6 +18,8 @@ class AbstractMesher;
 class AbstractEvaluator;
 class AbstractSmoother;
 class AbstractRenderer;
+class AbstractSerializer;
+class AbstractDeserializer;
 enum class ECutType;
 
 enum class ECameraMan
@@ -57,6 +59,8 @@ public:
             const std::string& mesherName,
             const std::string& modelName,
             size_t vertexCount);
+
+    virtual void clearMesh();
 
     virtual void saveMesh(
             const std::string& fileName);
@@ -155,6 +159,8 @@ private:
     OptionMap<std::shared_ptr<AbstractEvaluator>> _availableEvaluators;
     OptionMap<std::shared_ptr<AbstractSmoother>> _availableSmoothers;
     OptionMap<std::shared_ptr<AbstractRenderer>> _availableRenderers;
+    OptionMap<std::shared_ptr<AbstractSerializer>> _availableSerializers;
+    OptionMap<std::shared_ptr<AbstractDeserializer>> _availableDeserializers;
     OptionMap<ECameraMan> _availableCameraMen;
     OptionMap<ECutType> _availableCutTypes;
 };

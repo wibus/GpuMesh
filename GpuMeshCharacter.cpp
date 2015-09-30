@@ -5,6 +5,8 @@
 
 #include <GLM/gtx/transform.hpp>
 
+#include <QFileInfo>
+
 #include <CellarWorkbench/Misc/StringUtils.h>
 #include <CellarWorkbench/Misc/Log.h>
 
@@ -31,6 +33,7 @@
 #include "Renderers/QualityGradientPainter.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonDeserializer.h"
+#include "Serialization/StlSerializer.h"
 #include "Smoothers/VertexWise/SpringLaplaceSmoother.h"
 #include "Smoothers/VertexWise/QualityLaplaceSmoother.h"
 #include "Smoothers/VertexWise/LocalOptimisationSmoother.h"
@@ -70,7 +73,9 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSmoothers("Available Smoothers"),
     _availableRenderers("Available Renderers"),
     _availableCameraMen("Available Camera Men"),
-    _availableCutTypes("Available Cut Types")
+    _availableCutTypes("Available Cut Types"),
+    _availableSerializers("Available Mesh Serializers"),
+    _availableDeserializers("Available Mesh Deserializers")
 {
     _availableMeshers.setDefault("Parametric");
     _availableMeshers.setContent({
@@ -114,6 +119,17 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Virtual Plane"),     ECutType::VirtualPlane},
         {string("Physical Plane"),    ECutType::PhysicalPlane},
         {string("Inverted Elements"), ECutType::InvertedElements},
+    });
+
+    _availableSerializers.setDefault("json");
+    _availableSerializers.setContent({
+        {string("json"), shared_ptr<AbstractSerializer>(new JsonSerializer())},
+        {string("stl"),  shared_ptr<AbstractSerializer>(new StlSerializer())},
+    });
+
+    _availableDeserializers.setDefault("json");
+    _availableDeserializers.setContent({
+        {string("json"), shared_ptr<AbstractDeserializer>(new JsonDeserializer())},
     });
 }
 
@@ -397,16 +413,34 @@ void GpuMeshCharacter::generateMesh(
     }
 }
 
+void GpuMeshCharacter::clearMesh()
+{
+    _mesh->clear();
+    _renderer->notifyMeshUpdate();
+    _mesh->modelName = "";
+}
+
+string fileExt(const std::string& fileName)
+{
+    QString qFileName(fileName.c_str());
+    QString qExt = QFileInfo(qFileName).suffix();
+    return qExt.toStdString();
+}
+
 void GpuMeshCharacter::saveMesh(
         const std::string& fileName)
 {
     printStep("Saving mesh at " + fileName);
 
-    JsonSerializer serializer;
-    if(!serializer.serialize(fileName, *_mesh))
+    string ext = fileExt(fileName);
+    shared_ptr<AbstractSerializer> serializer;
+    if(_availableSerializers.select(ext, serializer))
     {
-        getLog().postMessage(new Message('E', false,
-            "An error occured while saving the mesh.", "GpuMeshCharacter"));
+        if(!serializer->serialize(fileName, *_evaluator, *_mesh))
+        {
+            getLog().postMessage(new Message('E', false,
+                "An error occured while saving the mesh.", "GpuMeshCharacter"));
+        }
     }
 }
 
@@ -415,18 +449,22 @@ void GpuMeshCharacter::loadMesh(
 {
     printStep("Loading mesh from " + fileName);
 
-    _mesh->clear();
+    string ext = fileExt(fileName);
+    shared_ptr<AbstractDeserializer> deserializer;
+    if(_availableDeserializers.select(ext, deserializer))
+    {
+        _mesh->clear();
 
-    JsonDeserializer deserializer;
-    if(deserializer.deserialize(fileName, *_mesh))
-    {
-        _mesh->compileTopoly();
-        _renderer->notifyMeshUpdate();
-    }
-    else
-    {
-        getLog().postMessage(new Message('E', false,
-            "An error occured while loading the mesh.", "GpuMeshCharacter"));
+        if(deserializer->deserialize(fileName, *_mesh))
+        {
+            _mesh->compileTopoly();
+            _renderer->notifyMeshUpdate();
+        }
+        else
+        {
+            getLog().postMessage(new Message('E', false,
+                "An error occured while loading the mesh.", "GpuMeshCharacter"));
+        }
     }
 }
 

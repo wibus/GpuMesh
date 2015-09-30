@@ -21,6 +21,7 @@ JsonSerializer::~JsonSerializer()
 
 bool JsonSerializer::serialize(
         const std::string& fileName,
+        const AbstractEvaluator& evaluator,
         const Mesh& mesh) const
 {
     QJsonObject meshObj;

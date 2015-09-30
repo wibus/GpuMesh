@@ -34,9 +34,12 @@ SET(GpuMesh_RENDERERS_HEADERS
     ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.h)
 
 SET(GpuMesh_SERIALIZATION_HEADERS
+    ${GpuMesh_SRC_DIR}/Serialization/AbstractSerializer.h
+    ${GpuMesh_SRC_DIR}/Serialization/AbstractDeserializer.h
     ${GpuMesh_SRC_DIR}/Serialization/JsonMeshTags.h
     ${GpuMesh_SRC_DIR}/Serialization/JsonSerializer.h
-    ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.h)
+    ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.h
+    ${GpuMesh_SRC_DIR}/Serialization/StlSerializer.h)
 
 SET(GpuMesh_VERTEXWISE_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/AbstractVertexWiseSmoother.h
@@ -54,6 +57,9 @@ SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.h
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h)
 
+SET(GpuMesh_DIALOGS_HEADERS
+    ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.h)
+
 SET(GpuMesh_UITABS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.h
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/EvaluateTab.h
@@ -61,6 +67,7 @@ SET(GpuMesh_UITABS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderTab.h)
 
 SET(GpuMesh_USERINTERFACE_HEADERS
+    ${GpuMesh_DIALOGS_HEADERS}
     ${GpuMesh_UITABS_HEADERS}
     ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.h
     ${GpuMesh_SRC_DIR}/UserInterface/SmoothingReport.h)
@@ -109,9 +116,12 @@ SET(GpuMesh_RENDERERS_SOURCES
     ${GpuMesh_SRC_DIR}/Renderers/QualityGradientPainter.cpp)
 
 SET(GpuMesh_SERIALIZATION_SOURCES
+    ${GpuMesh_SRC_DIR}/Serialization/AbstractSerializer.cpp
+    ${GpuMesh_SRC_DIR}/Serialization/AbstractDeserializer.cpp
     ${GpuMesh_SRC_DIR}/Serialization/JsonMeshTags.cpp
     ${GpuMesh_SRC_DIR}/Serialization/JsonSerializer.cpp
-    ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.cpp)
+    ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.cpp
+    ${GpuMesh_SRC_DIR}/Serialization/StlSerializer.cpp)
 
 
 SET(GpuMesh_VERTEXWISE_SOURCES
@@ -136,7 +146,11 @@ SET(GpuMesh_UITABS_SOURCES
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/SmoothTab.cpp
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderTab.cpp)
 
+SET(GpuMesh_DIALOGS_HEADERS
+    ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.cpp)
+
 SET(GpuMesh_USERINTERFACE_SOURCES
+    ${GpuMesh_DIALOGS_HEADERS}
     ${GpuMesh_UITABS_SOURCES}
     ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.cpp
     ${GpuMesh_SRC_DIR}/UserInterface/SmoothingReport.cpp)
@@ -155,7 +169,8 @@ SET(GpuMesh_SOURCES
 
 ## UI
 SET(GpuMesh_UI_FILES
-    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.ui)
+    ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.ui
+    ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.ui)
 QT5_WRAP_UI(GpuMesh_UI_SRCS ${GpuMesh_UI_FILES})
 
 
