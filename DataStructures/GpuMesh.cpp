@@ -55,9 +55,9 @@ void GpuMesh::clear()
     _groupMembersSsbo = 0;
 }
 
-void GpuMesh::compileTopoly()
+void GpuMesh::compileTopology()
 {
-    Mesh::compileTopoly();
+    Mesh::compileTopology();
 
     getLog().postMessage(new Message('I', false,
         "Generating mesh shader storage buffers", "GpuMesh"));
@@ -81,10 +81,10 @@ void GpuMesh::compileTopoly()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     updateGpuVertices();
-    updateGpuTopoly();
+    updateGpuTopology();
 }
 
-void GpuMesh::updateGpuTopoly()
+void GpuMesh::updateGpuTopology()
 {
     // Send mesh topology
     size_t vertCount = verts.size();
@@ -192,6 +192,10 @@ void GpuMesh::updateGpuTopoly()
 
 void GpuMesh::updateGpuVertices()
 {
+#ifndef NDEBUG
+    return;
+#endif
+
     size_t nbVert = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * nbVert;
 

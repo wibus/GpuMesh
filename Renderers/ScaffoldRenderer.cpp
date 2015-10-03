@@ -252,7 +252,7 @@ void ScaffoldRenderer::compileBuffers(
     for(int i=0; i < tetCount; ++i)
     {
         const MeshTet& tet = mesh.tets[i];
-        double qual = evaluator.tetQuality(mesh, tet);
+        double qual = tet.value;
         if(qual < qualMins[tet.v[0]]) qualMins[tet.v[0]] = qual;
         if(qual < qualMins[tet.v[1]]) qualMins[tet.v[1]] = qual;
         if(qual < qualMins[tet.v[2]]) qualMins[tet.v[2]] = qual;
@@ -264,7 +264,7 @@ void ScaffoldRenderer::compileBuffers(
     for(int i=0; i < priCount; ++i)
     {
         const MeshPri& pri = mesh.pris[i];
-        double qual = evaluator.priQuality(mesh, pri);
+        double qual = pri.value;
         if(qual < qualMins[pri.v[0]]) qualMins[pri.v[0]] = qual;
         if(qual < qualMins[pri.v[1]]) qualMins[pri.v[1]] = qual;
         if(qual < qualMins[pri.v[2]]) qualMins[pri.v[2]] = qual;
@@ -278,7 +278,7 @@ void ScaffoldRenderer::compileBuffers(
     for(int i=0; i < hexCount; ++i)
     {
         const MeshHex& hex = mesh.hexs[i];
-        double qual = evaluator.hexQuality(mesh, hex);
+        double qual = hex.value;
         if(qual < qualMins[hex.v[0]]) qualMins[hex.v[0]] = qual;
         if(qual < qualMins[hex.v[1]]) qualMins[hex.v[1]] = qual;
         if(qual < qualMins[hex.v[2]]) qualMins[hex.v[2]] = qual;
@@ -312,8 +312,8 @@ void ScaffoldRenderer::compileBuffers(
             for(const MeshNeigElem& n : mesh.topos[v].neighborElems)
             {
                 if((_tetVisibility && n.type == MeshTet::ELEMENT_TYPE) ||
-                    (_priVisibility && n.type == MeshPri::ELEMENT_TYPE) ||
-                    (_hexVisibility && n.type == MeshHex::ELEMENT_TYPE))
+                   (_priVisibility && n.type == MeshPri::ELEMENT_TYPE) ||
+                   (_hexVisibility && n.type == MeshHex::ELEMENT_TYPE))
                 {
                     visibility[v] = true;
                     break;

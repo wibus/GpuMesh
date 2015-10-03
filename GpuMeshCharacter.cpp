@@ -427,8 +427,8 @@ void GpuMeshCharacter::generateMesh(
     {
         mesher->generateMesh( *_mesh, modelName, vertexCount);
 
-        _mesh->compileTopoly();
         _mesh->modelName = modelName;
+        _mesh->compileTopology();
         updateMeshMeasures();
         updateDiscretization();
     }
@@ -479,7 +479,7 @@ void GpuMeshCharacter::loadMesh(
 
         if(deserializer->deserialize(fileName, *_mesh))
         {
-            _mesh->compileTopoly();
+            _mesh->compileTopology();
             updateMeshMeasures();
             updateDiscretization();
         }

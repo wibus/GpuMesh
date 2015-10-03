@@ -23,7 +23,10 @@ public:
             const glm::ivec3& gridSize) = 0;
 
 protected:
-    double vertValue(const Mesh& mesh, uint vId);
+    double vertValue(const Mesh& mesh, uint vId) const;
+    void boundingBox(const Mesh& mesh,
+                     glm::dvec3& minBounds,
+                     glm::dvec3& maxBounds) const;
 };
 
 #endif // GPUMESH_ABSTRACTDISCRETIZER

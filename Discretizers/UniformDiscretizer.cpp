@@ -2,7 +2,7 @@
 
 #include <CellarWorkbench/DataStructure/Grid3D.h>
 
-#include "DataStructures/GpuMesh.h"
+#include "DataStructures/Mesh.h"
 
 using namespace cellar;
 
@@ -34,9 +34,9 @@ struct ElemValue
 };
 
 UniformDiscretizer::UniformDiscretizer() :
-    _gridMesh(new GpuMesh())
+    _gridMesh(new Mesh())
 {
-
+    _gridMesh->modelName = "Uniform Discretization Grid";
 }
 
 UniformDiscretizer::~UniformDiscretizer()
@@ -54,15 +54,8 @@ void UniformDiscretizer::discretize(
         const glm::ivec3& gridSize)
 {
     // Find grid bounds
-    glm::dvec3 minBounds(INFINITY);
-    glm::dvec3 maxBounds(-INFINITY);
-    size_t vertCount = mesh.verts.size();
-    for(size_t v=0; v < vertCount; ++v)
-    {
-        const glm::dvec3& vertPos = mesh.verts[v].p;
-        minBounds = glm::min(minBounds, vertPos);
-        maxBounds = glm::max(maxBounds, vertPos);
-    }
+    glm::dvec3 minBounds, maxBounds;
+    boundingBox(mesh, minBounds, maxBounds);
     glm::dvec3 extents = maxBounds - minBounds;
 
 
@@ -214,6 +207,8 @@ void UniformDiscretizer::discretize(
             }
         }
     }
+
+    _gridMesh->compileTopology();
 }
 
 inline glm::ivec3 UniformDiscretizer::cellId(

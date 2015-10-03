@@ -125,8 +125,8 @@ public:
 
     virtual void clear() override;
 
-    virtual void compileTopoly() override;
-    virtual void updateGpuTopoly() override;
+    virtual void compileTopology() override;
+    virtual void updateGpuTopology() override;
     virtual void updateGpuVertices() override;
     virtual void updateCpuVertices() override;
 

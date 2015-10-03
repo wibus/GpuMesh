@@ -30,9 +30,9 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             this, &EvaluateTab::benchmarkImplementations);
 
     deployDiscretizations();
-    connect(_ui->shapeMeasureImplMenu,
+    connect(_ui->discretizationTypeMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &EvaluateTab::ImplementationChanged);
+            this, &EvaluateTab::discretizationTypeChanged);
 
     _character->useDiscretizationSize(glm::ivec3(
         _ui->discretizetionGridXSpin->value(),
@@ -93,8 +93,7 @@ void EvaluateTab::discretizationSizeChanged(int unused)
 
 void EvaluateTab::displayDicretizationToggled(bool display)
 {
-    _character->displayDiscretizationMesh(
-        _ui->discretizationDisplayCheck->isChecked());
+    _character->displayDiscretizationMesh(display);
 }
 
 void EvaluateTab::deployShapeMeasures()

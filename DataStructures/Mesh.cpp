@@ -173,10 +173,10 @@ void Mesh::clear()
     independentGroups.shrink_to_fit();
 }
 
-void Mesh::compileTopoly()
+void Mesh::compileTopology()
 {
     getLog().postMessage(new Message('I', false,
-        "Compiling mesh topology...", "Mesh"));
+        modelName + ": Compiling mesh topology...", "Mesh"));
 
     // Compact verts and elems data structures
     verts.shrink_to_fit();
@@ -239,7 +239,7 @@ void Mesh::compileTopoly()
         "Independent groups compilation time: " + to_string(indeTime) + "ms", "Mesh"));
 }
 
-void Mesh::updateGpuTopoly()
+void Mesh::updateGpuTopology()
 {
 
 }

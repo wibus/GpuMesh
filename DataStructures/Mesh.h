@@ -196,8 +196,8 @@ public:
 
     virtual void clear();
 
-    virtual void compileTopoly();
-    virtual void updateGpuTopoly();
+    virtual void compileTopology();
+    virtual void updateGpuTopology();
     virtual void updateGpuVertices();
     virtual void updateCpuVertices();
 
