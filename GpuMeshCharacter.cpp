@@ -20,6 +20,8 @@
 #include <Scaena/StageManagement/Event/StageTime.h>
 
 #include "DataStructures/GpuMesh.h"
+#include "Discretizers/UniformDiscretizer.h"
+#include "Discretizers/KdTreeDiscretizer.h"
 #include "Evaluators/InsphereEdgeEvaluator.h"
 #include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/SolidAngleEvaluator.h"
@@ -67,8 +69,11 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _hexVisibility(true),
     _qualityCullingMin(-INFINITY),
     _qualityCullingMax(INFINITY),
+    _discretizationSize(1, 1, 1),
+    _displayDiscretizationMesh(false),
     _mesh(new GpuMesh()),
     _availableMeshers("Available Meshers"),
+    _availableDiscretizers("Available Discretizers"),
     _availableEvaluators("Available Evaluators"),
     _availableSmoothers("Available Smoothers"),
     _availableRenderers("Available Renderers"),
@@ -82,6 +87,12 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
+    });
+
+    _availableDiscretizers.setDefault("Uniform");
+    _availableDiscretizers.setContent({
+        {string("Uniform"), shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
+        {string("Kd-Tree"), shared_ptr<AbstractDiscretizer>(new KdTreeDiscretizer())},
     });
 
     _availableEvaluators.setDefault("Mean Ratio");
@@ -314,7 +325,11 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
 void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
 {
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
-    _renderer->display(*_mesh, *_evaluator);
+
+    if(_displayDiscretizationMesh)
+        _renderer->display(*_discretizer->gridMesh(), *_evaluator);
+    else
+        _renderer->display(*_mesh, *_evaluator);
 }
 
 void GpuMeshCharacter::exitStage()
@@ -340,6 +355,11 @@ OptionMapDetails GpuMeshCharacter::availableMeshModels(const string& mesherName)
         return mesher->availableMeshModels();
     else
         return OptionMapDetails();
+}
+
+OptionMapDetails GpuMeshCharacter::availableDiscretizers() const
+{
+    return _availableDiscretizers.details();
 }
 
 OptionMapDetails GpuMeshCharacter::availableEvaluators() const
@@ -408,16 +428,18 @@ void GpuMeshCharacter::generateMesh(
         mesher->generateMesh( *_mesh, modelName, vertexCount);
 
         _mesh->compileTopoly();
-        _renderer->notifyMeshUpdate();
         _mesh->modelName = modelName;
+        updateMeshMeasures();
+        updateDiscretization();
     }
 }
 
 void GpuMeshCharacter::clearMesh()
 {
     _mesh->clear();
-    _renderer->notifyMeshUpdate();
     _mesh->modelName = "";
+    updateMeshMeasures();
+    updateDiscretization();
 }
 
 string fileExt(const std::string& fileName)
@@ -458,7 +480,8 @@ void GpuMeshCharacter::loadMesh(
         if(deserializer->deserialize(fileName, *_mesh))
         {
             _mesh->compileTopoly();
-            _renderer->notifyMeshUpdate();
+            updateMeshMeasures();
+            updateDiscretization();
         }
         else
         {
@@ -534,7 +557,8 @@ void GpuMeshCharacter::smoothMesh(
                 moveFactor,
                 gainThreshold);
 
-            _renderer->notifyMeshUpdate();
+            updateMeshMeasures();
+            updateDiscretization();
         }
     }
 }
@@ -571,19 +595,40 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
                 gainThreshold,
                 plot);
 
-            _renderer->notifyMeshUpdate();
+            updateMeshMeasures();
+            updateDiscretization();
         }
     }
 
     return plot;
 }
 
+void GpuMeshCharacter::displayDiscretizationMesh(bool display)
+{
+    _displayDiscretizationMesh = display;
+    if(_renderer.get() != nullptr)
+        _renderer->notifyMeshUpdate();
+}
+
+void GpuMeshCharacter::useDiscretizationSize(const glm::ivec3& gridSize)
+{
+    _discretizationSize = gridSize;
+    updateDiscretization();
+}
+
+void GpuMeshCharacter::useDiscretizer(const std::string& discretizerName)
+{
+    if(_availableDiscretizers.select(discretizerName, _discretizer))
+    {
+        updateDiscretization();
+    }
+}
+
 void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)
 {
     if(_availableEvaluators.select(evaluatorName, _evaluator))
     {
-        if(_renderer.get() != nullptr)
-            _renderer->notifyMeshUpdate();
+        updateMeshMeasures();
     }
 }
 
@@ -654,6 +699,48 @@ void GpuMeshCharacter::refreshCamera()
     else if(_cameraMan == ECameraMan::Free)
         _renderer->updateCamera(_cameraManFree->camera()->viewMatrix(),
                                 _cameraManFree->position());
+}
+
+void GpuMeshCharacter::updateMeshMeasures()
+{
+    if(_isEntered)
+    {
+        size_t tetCount = _mesh->tets.size();
+        for(size_t e=0; e < tetCount; ++e)
+        {
+            MeshTet& elem = _mesh->tets[e];
+            elem.value = _evaluator->tetQuality(*_mesh, elem);
+        }
+
+        size_t priCount = _mesh->pris.size();
+        for(size_t e=0; e < priCount; ++e)
+        {
+            MeshPri& elem = _mesh->pris[e];
+            elem.value = _evaluator->priQuality(*_mesh, elem);
+        }
+
+        size_t hexCount = _mesh->hexs.size();
+        for(size_t e=0; e < hexCount; ++e)
+        {
+            MeshHex& elem = _mesh->hexs[e];
+            elem.value = _evaluator->hexQuality(*_mesh, elem);
+        }
+
+        if(_renderer.get() != nullptr)
+            _renderer->notifyMeshUpdate();
+    }
+}
+
+void GpuMeshCharacter::updateDiscretization()
+{
+    if(_isEntered)
+    {
+        _discretizer->discretize(*_mesh, _discretizationSize);
+
+        if(_displayDiscretizationMesh)
+            if(_renderer.get() != nullptr)
+                _renderer->notifyMeshUpdate();
+    }
 }
 
 void GpuMeshCharacter::setupInstalledRenderer()

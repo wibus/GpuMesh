@@ -24,13 +24,18 @@ public:
 protected slots:
     virtual void shapeMeasureTypeChanged(const QString& type);
     virtual void ImplementationChanged(const QString&);
-    virtual void evaluateMesh();
 
+    virtual void evaluateMesh();
     virtual void benchmarkImplementations();
+
+    virtual void discretizationTypeChanged(const QString& type);
+    virtual void discretizationSizeChanged(int unused);
+    virtual void displayDicretizationToggled(bool display);
 
 protected:
     virtual void deployShapeMeasures();
     virtual void deployImplementations();
+    virtual void deployDiscretizations();
 
 private:
     Ui::MainWindow* _ui;

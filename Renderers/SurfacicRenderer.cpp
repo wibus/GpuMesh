@@ -284,7 +284,7 @@ void SurfacicRenderer::compileFacesAttributes(
             }
 
 
-            double quality = evaluator.tetQuality(verts);
+            double quality = tet.value;//evaluator.tetQuality(verts);
             if(quality >= _qualityCullingMin &&
                quality <= _qualityCullingMax)
             {
@@ -343,7 +343,7 @@ void SurfacicRenderer::compileFacesAttributes(
             }
 
 
-            double quality = evaluator.priQuality(verts);
+            double quality = pri.value;//evaluator.priQuality(verts);
             if(quality >= _qualityCullingMin &&
                quality <= _qualityCullingMax)
             {
@@ -406,7 +406,7 @@ void SurfacicRenderer::compileFacesAttributes(
             }
 
 
-            double quality = evaluator.hexQuality(verts);
+            double quality = hex.value;//evaluator.hexQuality(verts);
             if(quality >= _qualityCullingMin &&
                quality <= _qualityCullingMax)
             {

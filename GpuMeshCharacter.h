@@ -15,6 +15,7 @@
 
 class Mesh;
 class AbstractMesher;
+class AbstractDiscretizer;
 class AbstractEvaluator;
 class AbstractSmoother;
 class AbstractRenderer;
@@ -45,6 +46,7 @@ public:
 
     virtual OptionMapDetails availableMeshers() const;
     virtual OptionMapDetails availableMeshModels(const std::string& mesherName) const;
+    virtual OptionMapDetails availableDiscretizers() const;
     virtual OptionMapDetails availableEvaluators() const;
     virtual OptionMapDetails availableEvaluatorImplementations(const std::string& evaluatorName) const;
     virtual OptionMapDetails availableSmoothers() const;
@@ -95,6 +97,9 @@ public:
             double gainThreshold);
 
     // Render
+    virtual void displayDiscretizationMesh(bool display);
+    virtual void useDiscretizationSize(const glm::ivec3& gridSize);
+    virtual void useDiscretizer(const std::string& discretizerName);
     virtual void useEvaluator(const std::string& evaluatorName);
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
@@ -107,6 +112,8 @@ protected:
     virtual void printStep(const std::string& stepDescription);
 
     virtual void refreshCamera();
+    virtual void updateMeshMeasures();
+    virtual void updateDiscretization();
     virtual void setupInstalledRenderer();
     virtual void tearDownInstalledRenderer();
     virtual void installRenderer(const std::shared_ptr<AbstractRenderer>& renderer);
@@ -138,10 +145,14 @@ protected:
     double _qualityCullingMin;
     double _qualityCullingMax;
 
+    glm::ivec3 _discretizationSize;
+    bool _displayDiscretizationMesh;
+
 private:
     std::unique_ptr<Mesh> _mesh;
     std::shared_ptr<AbstractRenderer> _renderer;
     std::shared_ptr<AbstractEvaluator> _evaluator;
+    std::shared_ptr<AbstractDiscretizer> _discretizer;
     std::shared_ptr<cellar::CameraManFree> _cameraManFree;
 
     static const glm::vec3 nullVec;
@@ -155,12 +166,13 @@ private:
     std::shared_ptr<prop2::TextHud> _qualityMax;
     std::shared_ptr<prop2::ImageHud> _qualityLut;
 
-    OptionMap<std::shared_ptr<AbstractMesher>> _availableMeshers;
-    OptionMap<std::shared_ptr<AbstractEvaluator>> _availableEvaluators;
-    OptionMap<std::shared_ptr<AbstractSmoother>> _availableSmoothers;
-    OptionMap<std::shared_ptr<AbstractRenderer>> _availableRenderers;
-    OptionMap<std::shared_ptr<AbstractSerializer>> _availableSerializers;
-    OptionMap<std::shared_ptr<AbstractDeserializer>> _availableDeserializers;
+    OptionMap<std::shared_ptr<AbstractMesher>>          _availableMeshers;
+    OptionMap<std::shared_ptr<AbstractDiscretizer>>     _availableDiscretizers;
+    OptionMap<std::shared_ptr<AbstractEvaluator>>       _availableEvaluators;
+    OptionMap<std::shared_ptr<AbstractSmoother>>        _availableSmoothers;
+    OptionMap<std::shared_ptr<AbstractRenderer>>        _availableRenderers;
+    OptionMap<std::shared_ptr<AbstractSerializer>>      _availableSerializers;
+    OptionMap<std::shared_ptr<AbstractDeserializer>>    _availableDeserializers;
     OptionMap<ECameraMan> _availableCameraMen;
     OptionMap<ECutType> _availableCutTypes;
 };

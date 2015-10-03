@@ -51,6 +51,7 @@ struct MeshTri
 struct MeshTet
 {
     uint v[4];
+    double value;
 
     inline MeshTet() : v{0, 0, 0, 0} {}
     inline MeshTet(uint v0, uint v1, uint v2, uint v3) : v{v0, v1, v2, v3} {}
@@ -71,6 +72,7 @@ struct MeshTet
 struct MeshPri
 {
     uint v[6];
+    double value;
 
     inline MeshPri() : v{0, 0, 0, 0, 0, 0} {}
     inline MeshPri(uint v0, uint v1, uint v2,
@@ -93,6 +95,7 @@ struct MeshPri
 struct MeshHex
 {
     uint v[8];
+    double value;
 
     inline MeshHex() : v{0, 0, 0, 0, 0, 0, 0, 0} {}
     inline MeshHex(uint v0, uint v1, uint v2, uint v3,

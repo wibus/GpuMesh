@@ -13,6 +13,11 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h
     ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.h)
 
+SET(GpuMesh_DISCRETIZERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Discretizers/AbstractDiscretizer.h
+    ${GpuMesh_SRC_DIR}/Discretizers/UniformDiscretizer.h
+    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.h)
+
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/InsphereEdgeEvaluator.h
@@ -74,6 +79,7 @@ SET(GpuMesh_USERINTERFACE_HEADERS
 
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
+    ${GpuMesh_DISCRETIZERS_HEADERS}
     ${GpuMesh_EVALUATORS_HEADERS}
     ${GpuMesh_MESHERS_HEADERS}
     ${GpuMesh_RENDERERS_HEADERS}
@@ -94,6 +100,11 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.cpp)
+
+SET(GpuMesh_DISCRETIZERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Discretizers/AbstractDiscretizer.cpp
+    ${GpuMesh_SRC_DIR}/Discretizers/UniformDiscretizer.cpp
+    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.cpp)
 
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
@@ -157,6 +168,7 @@ SET(GpuMesh_USERINTERFACE_SOURCES
 
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
+    ${GpuMesh_DISCRETIZERS_SOURCES}
     ${GpuMesh_EVALUATORS_SOURCES}
     ${GpuMesh_MESHERS_SOURCES}
     ${GpuMesh_RENDERERS_SOURCES}

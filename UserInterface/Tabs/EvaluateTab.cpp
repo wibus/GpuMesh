@@ -28,6 +28,24 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
     connect(_ui->evaluateBenchmarkImplButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &EvaluateTab::benchmarkImplementations);
+
+    deployDiscretizations();
+    connect(_ui->shapeMeasureImplMenu,
+            static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
+            this, &EvaluateTab::ImplementationChanged);
+
+    _character->useDiscretizationSize(glm::ivec3(
+        _ui->discretizetionGridXSpin->value(),
+        _ui->discretizetionGridYSpin->value(),
+        _ui->discretizetionGridZSpin->value()));
+    connect(_ui->discretizetionGridXSpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &EvaluateTab::discretizationSizeChanged);
+
+    _character->displayDiscretizationMesh(
+        _ui->discretizationDisplayCheck->isChecked());
+    connect(_ui->discretizationDisplayCheck, &QCheckBox::toggled,
+            this, &EvaluateTab::displayDicretizationToggled);
 }
 
 EvaluateTab::~EvaluateTab()
@@ -58,6 +76,25 @@ void EvaluateTab::benchmarkImplementations()
     _character->benchmarkEvaluator(
         _ui->shapeMeasureTypeMenu->currentText().toStdString(),
         _cycleCounts);
+}
+
+void EvaluateTab::discretizationTypeChanged(const QString& type)
+{
+    _character->useDiscretizer(type.toStdString());
+}
+
+void EvaluateTab::discretizationSizeChanged(int unused)
+{
+    _character->useDiscretizationSize(glm::ivec3(
+        _ui->discretizetionGridXSpin->value(),
+        _ui->discretizetionGridYSpin->value(),
+        _ui->discretizetionGridZSpin->value()));
+}
+
+void EvaluateTab::displayDicretizationToggled(bool display)
+{
+    _character->displayDiscretizationMesh(
+        _ui->discretizationDisplayCheck->isChecked());
 }
 
 void EvaluateTab::deployShapeMeasures()
@@ -129,4 +166,16 @@ void EvaluateTab::deployImplementations()
     }
     _ui->evaluateImplCycleCountsLayout->setLayout(layout);
     _cycleCounts = newCycleCounts;
+}
+
+void EvaluateTab::deployDiscretizations()
+{
+    OptionMapDetails discretizers = _character->availableDiscretizers();
+
+    _ui->discretizationTypeMenu->clear();
+    for(const auto& name : discretizers.options)
+        _ui->discretizationTypeMenu->addItem(QString(name.c_str()));
+    _ui->discretizationTypeMenu->setCurrentText(discretizers.defaultOption.c_str());
+
+    _character->useDiscretizer(discretizers.defaultOption);
 }
