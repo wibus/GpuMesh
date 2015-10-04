@@ -27,9 +27,9 @@ private:
             const Mesh& mesh,
             const glm::dvec3& minBox,
             const glm::dvec3& maxBox,
-            const std::vector<uint>& xSort,
-            const std::vector<uint>& ySort,
-            const std::vector<uint>& zSort);
+            std::vector<uint>& xSort,
+            std::vector<uint>& ySort,
+            std::vector<uint>& zSort);
     void meshTree(KdNode* node, Mesh& mesh);
 
     std::shared_ptr<Mesh> _gridMesh;

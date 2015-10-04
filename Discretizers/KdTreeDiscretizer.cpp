@@ -2,7 +2,11 @@
 
 #include <algorithm>
 
+#include <CellarWorkbench/Misc/Log.h>
+
 #include "DataStructures/Mesh.h"
+
+using namespace cellar;
 
 
 struct KdNode
@@ -22,9 +26,9 @@ struct KdNode
     KdNode* left;
     KdNode* right;
 
+    glm::dvec3 separator;
     glm::dvec3 minBox;
     glm::dvec3 maxBox;
-    glm::dvec3 separator;
 
     double value;
 };
@@ -48,6 +52,15 @@ std::shared_ptr<Mesh> KdTreeDiscretizer::gridMesh() const
 void KdTreeDiscretizer::discretize(const Mesh& mesh, const glm::ivec3& gridSize)
 {
     size_t vertCount = mesh.verts.size();
+    int height = glm::min((int)std::log2(vertCount), gridSize.x);
+
+    getLog().postMessage(new Message('I', false,
+        "Discretizing mesh metric in a Kd-Tree",
+         "KdTreeDiscretizer"));
+    getLog().postMessage(new Message('I', false,
+        "Maximum Kd-Tree's depth: " + std::to_string(height),
+        "KdTreeDiscretizer"));
+
     std::vector<uint> xSort(vertCount);
     std::iota(xSort.begin(), xSort.end(), 0);
     std::vector<uint> ySort(xSort);
@@ -63,11 +76,11 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, const glm::ivec3& gridSize)
     glm::dvec3 minBounds, maxBounds;
     boundingBox(mesh, minBounds, maxBounds);
 
-    KdNode* root = new KdNode();
-    build(root, gridSize.x, mesh, minBounds, maxBounds, xSort, ySort, zSort);
+    KdNode root;
+    build(&root, height, mesh, minBounds, maxBounds, xSort, ySort, zSort);
 
     _gridMesh->clear();
-    meshTree(root, *_gridMesh);
+    meshTree(&root, *_gridMesh);
     _gridMesh->compileTopology();
 }
 
@@ -77,40 +90,48 @@ void KdTreeDiscretizer::build(
         const Mesh& mesh,
         const glm::dvec3& minBox,
         const glm::dvec3& maxBox,
-        const std::vector<uint>& xSort,
-        const std::vector<uint>& ySort,
-        const std::vector<uint>& zSort)
+        std::vector<uint>& xSort,
+        std::vector<uint>& ySort,
+        std::vector<uint>& zSort)
 {
     node->minBox = minBox;
     node->maxBox = maxBox;
 
     size_t vertCount = xSort.size();
-    if(vertCount >= 2 && height > 0)
+    if(height > 0 && vertCount >= 2)
     {
-        size_t childVertCount = (vertCount + 1) / 2;
+        glm::dvec3 extents(
+            mesh.verts[xSort.back()].p.x - mesh.verts[xSort.front()].p.x,
+            mesh.verts[ySort.back()].p.y - mesh.verts[ySort.front()].p.y,
+            mesh.verts[zSort.back()].p.z - mesh.verts[zSort.front()].p.z);
 
-        glm::dvec3 extent = maxBox - minBox;
-
-        uint sep = xSort[childVertCount];
+        // Find separator position and axis
         glm::dvec3 axis = glm::dvec3(1, 0, 0);
-        if(extent.y > extent.x && extent.y > extent.z)
+        size_t sepIdR = vertCount/2;
+        size_t sepIdL = sepIdR - 1;
+
+        uint sepL = xSort[sepIdL];
+        uint sepR = xSort[sepIdR];
+        if(extents.y > extents.x && extents.y > extents.z)
         {
-            sep = ySort[childVertCount];
             axis = glm::dvec3(0, 1, 0);
+            sepL = ySort[sepIdL];
+            sepR = ySort[sepIdR];
         }
-        else if(extent.z > extent.x && extent.z > extent.y)
+        else if(extents.z > extents.x && extents.z > extents.y)
         {
-            sep = zSort[childVertCount];
             axis = glm::dvec3(0, 0, 1);
+            sepL = zSort[sepIdL];
+            sepR = zSort[sepIdR];
         }
-        node->separator = mesh.verts[sep];
 
-        glm::dvec3 minBoxL = minBox;
-        glm::dvec3 maxBoxL = glm::mix(maxBox, node->separator, axis);
+        if(vertCount % 2 == 0)
+            node->separator = (mesh.verts[sepL].p + mesh.verts[sepR].p) / 2.0;
+        else
+            node->separator = mesh.verts[sepR].p;
 
-        glm::dvec3 minBoxR = glm::mix(minBox, node->separator, axis);
-        glm::dvec3 maxBoxR = maxBox;
 
+        // Distribute vertices around the separator
         std::vector<uint> xSortL;
         std::vector<uint> xSortR;
         std::vector<uint> ySortL;
@@ -119,35 +140,66 @@ void KdTreeDiscretizer::build(
         std::vector<uint> zSortR;
         for(size_t v=0; v < vertCount; ++v)
         {
-            if(glm::dot(mesh.verts[xSort[v]].p - node->separator, axis) < 0.0)
+            double xDist = glm::dot(mesh.verts[xSort[v]].p - node->separator, axis);
+            if(xDist <= 0.0)
                 xSortL.push_back(xSort[v]);
-            else
+            if(xDist >= 0.0)
                 xSortR.push_back(xSort[v]);
 
-            if(glm::dot(mesh.verts[ySort[v]].p - node->separator, axis) < 0.0)
+            double yDist = glm::dot(mesh.verts[ySort[v]].p - node->separator, axis);
+            if(yDist <= 0.0)
                 ySortL.push_back(ySort[v]);
-            else
+            if(yDist >= 0.0)
                 ySortR.push_back(ySort[v]);
 
-            if(glm::dot(mesh.verts[zSort[v]].p - node->separator, axis) < 0.0)
+            double zDist = glm::dot(mesh.verts[zSort[v]].p - node->separator, axis);
+            if(zDist <= 0.0)
                 zSortL.push_back(zSort[v]);
-            else
+            if(zDist >= 0.0)
                 zSortR.push_back(zSort[v]);
         }
 
+        // Deallocate sorted vertices vectors
+        xSort.clear();
+        xSort.shrink_to_fit();
+        ySort.clear();
+        ySort.shrink_to_fit();
+        zSort.clear();
+        zSort.shrink_to_fit();
+
+
+        // Child bounding boxes
+        glm::dvec3 minBoxL = minBox;
+        glm::dvec3 maxBoxL = glm::mix(maxBox, node->separator, axis);
+
+        glm::dvec3 minBoxR = glm::mix(minBox, node->separator, axis);
+        glm::dvec3 maxBoxR = maxBox;
+
+        // Build children nodes
         node->left = new KdNode();
         build(node->left, height-1, mesh, minBoxL, maxBoxL, xSortL, ySortL, zSortL);
 
         node->right = new KdNode();
         build(node->right, height-1, mesh, minBoxR, maxBoxR, xSortR, ySortR, zSortR);
 
+        // Compute node's value from children's
         node->value = (node->left->value + node->right->value) / 2.0;
     }
     else
     {
-        for(size_t v=0; v < vertCount; ++v)
-            node->value += vertValue(mesh, xSort[v]);
-        node->value /= vertCount;
+        assert(vertCount > 0);
+
+        // Compute node's value from vertices'
+        if(vertCount > 0)
+        {
+            for(size_t v=0; v < vertCount; ++v)
+                node->value += vertValue(mesh, xSort[v]);
+            node->value /= vertCount;
+        }
+        else
+        {
+            node->value = -1.0;
+        }
     }
 }
 

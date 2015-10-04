@@ -389,20 +389,21 @@ void Mesh::compileIndependentGroups()
     while(nextNodes.size() < vertCount)
     {
         size_t firstNode = nextNodes.size();
-        for(size_t v=seekStart; v < vertCount; ++v)
+        for(size_t vId=seekStart; vId < vertCount; ++vId)
         {
             ++seekStart;
-            if(vertGroup[v] == NO_GROUP)
+            if(vertGroup[vId] == NO_GROUP)
             {
-                vertGroup[v] = UNSET_GROUP;
-                nextNodes.push_back(v);
+                vertGroup[vId] = UNSET_GROUP;
+                nextNodes.push_back(vId);
                 break;
             }
         }
 
         for(int v=firstNode; v < nextNodes.size(); ++v)
         {
-            MeshTopo& topo = topos[v];
+            uint vId = nextNodes[v];
+            MeshTopo& topo = topos[vId];
             std::set<uint> availableGroups = existingGroups;
 
             for(size_t e=0; e < topo.neighborElems.size(); ++e)
@@ -473,8 +474,8 @@ void Mesh::compileIndependentGroups()
                 group = *availableGroups.begin();
             }
 
-            vertGroup[v] = group;
-            independentGroups[group-1].push_back(v);
+            vertGroup[vId] = group;
+            independentGroups[group-1].push_back(vId);
         }
     }
 

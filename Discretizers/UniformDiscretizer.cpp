@@ -1,6 +1,7 @@
 #include "UniformDiscretizer.h"
 
 #include <CellarWorkbench/DataStructure/Grid3D.h>
+#include <CellarWorkbench/Misc/Log.h>
 
 #include "DataStructures/Mesh.h"
 
@@ -53,6 +54,15 @@ void UniformDiscretizer::discretize(
         const Mesh& mesh,
         const glm::ivec3& gridSize)
 {
+    getLog().postMessage(new Message('I', false,
+        "Discretizing mesh metric in a Uniform grid",
+        "UniformDiscretizer"));
+    getLog().postMessage(new Message('I', false,
+        "Grid size: (" + std::to_string(gridSize.x) + ", " +
+                         std::to_string(gridSize.y) + ", " +
+                         std::to_string(gridSize.z) + ")",
+        "UniformDiscretizer"));
+
     // Find grid bounds
     glm::dvec3 minBounds, maxBounds;
     boundingBox(mesh, minBounds, maxBounds);
@@ -162,6 +172,10 @@ void UniformDiscretizer::discretize(
                 {
                     cell.value /= cell.weight;
                 }
+                else
+                {
+                    cell.value = -1.0;
+                }
             }
         }
     }
@@ -183,7 +197,8 @@ void UniformDiscretizer::discretize(
                 _gridMesh->verts.push_back(MeshVert(
                     glm::dvec3(minBounds + cellPos * extents)));
 
-                if(glm::all(glm::lessThan(cellId, gridSize)))
+                if(glm::all(glm::lessThan(cellId, gridSize)) &&
+                   weightedMeanGrid[cellId].value >= 0.0)
                 {
                     int xb = i;
                     int xt = i+1;
