@@ -241,7 +241,7 @@ std::shared_ptr<Mesh> UniformDiscretizer::debugMesh()
         {
             meshGrid(*_grid.get(), *_debugMesh);
 
-            _debugMesh->modelName = "Uniform Discretization Grid";
+            _debugMesh->modelName = "Uniform Discretization Mesh";
             _debugMesh->compileTopology();
         }
     }

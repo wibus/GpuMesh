@@ -16,7 +16,8 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
 SET(GpuMesh_DISCRETIZERS_HEADERS
     ${GpuMesh_SRC_DIR}/Discretizers/AbstractDiscretizer.h
     ${GpuMesh_SRC_DIR}/Discretizers/UniformDiscretizer.h
-    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.h)
+    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.h
+    ${GpuMesh_SRC_DIR}/Discretizers/DummyDiscretizer.h)
 
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
@@ -104,7 +105,8 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
 SET(GpuMesh_DISCRETIZERS_SOURCES
     ${GpuMesh_SRC_DIR}/Discretizers/AbstractDiscretizer.cpp
     ${GpuMesh_SRC_DIR}/Discretizers/UniformDiscretizer.cpp
-    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.cpp)
+    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.cpp
+    ${GpuMesh_SRC_DIR}/Discretizers/DummyDiscretizer.cpp)
 
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp

@@ -20,6 +20,7 @@
 #include <Scaena/StageManagement/Event/StageTime.h>
 
 #include "DataStructures/GpuMesh.h"
+#include "Discretizers/DummyDiscretizer.h"
 #include "Discretizers/UniformDiscretizer.h"
 #include "Discretizers/KdTreeDiscretizer.h"
 #include "Evaluators/InsphereEdgeEvaluator.h"
@@ -89,8 +90,9 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault("Uniform");
+    _availableDiscretizers.setDefault("None");
     _availableDiscretizers.setContent({
+        {string("None"),    shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
         {string("Uniform"), shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
         {string("Kd-Tree"), shared_ptr<AbstractDiscretizer>(new KdTreeDiscretizer())},
     });

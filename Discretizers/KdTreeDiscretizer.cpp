@@ -117,7 +117,7 @@ std::shared_ptr<Mesh> KdTreeDiscretizer::debugMesh()
         {
             meshTree(_rootNode.get(), *_debugMesh);
 
-            _debugMesh->modelName = "Kd-Tree Discretization Grid";
+            _debugMesh->modelName = "Kd-Tree Discretization Mesh";
             _debugMesh->compileTopology();
         }
     }
