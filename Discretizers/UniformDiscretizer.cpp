@@ -8,36 +8,60 @@
 using namespace cellar;
 
 
-struct GridCell
-{
-    GridCell() :
-        value(0.0),
-        weight(0.0)
-    {
-    }
-
-    double value;
-    double weight;
-};
 
 struct ElemValue
 {
     ElemValue() :
         minBox(INT32_MAX),
         maxBox(INT32_MIN),
-        value()
+        metric()
     {
     }
 
     glm::ivec3 minBox;
     glm::ivec3 maxBox;
-    double value;
+    Metric metric;
 };
 
-UniformDiscretizer::UniformDiscretizer() :
-    _gridMesh(new Mesh())
+const Metric ISOTROPIC_METRIC(1.0);
+
+struct GridCell
 {
-    _gridMesh->modelName = "Uniform Discretization Grid";
+    GridCell() : metric(0), weight(0) {}
+
+    Metric metric;
+    double weight;
+};
+
+class UniformGrid
+{
+public:
+    UniformGrid(const glm::ivec3& size,
+                const glm::dvec3& extents,
+                const glm::dvec3& minBounds):
+        size(size),
+        extents(extents),
+        minBounds(minBounds),
+        _impl(size.x, size.y, size.z)
+    {
+    }
+
+    inline GridCell& operator[] (const glm::ivec3& pos)
+    {
+        return _impl[pos];
+    }
+
+    const glm::ivec3 size;
+    const glm::dvec3 extents;
+    const glm::dvec3 minBounds;
+
+private:
+    Grid3D<GridCell> _impl;
+};
+
+
+UniformDiscretizer::UniformDiscretizer()
+{
 }
 
 UniformDiscretizer::~UniformDiscretizer()
@@ -45,15 +69,16 @@ UniformDiscretizer::~UniformDiscretizer()
 
 }
 
-std::shared_ptr<Mesh> UniformDiscretizer::gridMesh() const
-{
-    return _gridMesh;
-}
-
 void UniformDiscretizer::discretize(
         const Mesh& mesh,
         const glm::ivec3& gridSize)
 {
+    _debugMesh.reset();
+    if(mesh.verts.empty())
+    {
+        _grid.reset();
+    }
+
     getLog().postMessage(new Message('I', false,
         "Discretizing mesh metric in a Uniform grid",
         "UniformDiscretizer"));
@@ -84,12 +109,12 @@ void UniformDiscretizer::discretize(
             const glm::dvec3& vertPos = mesh.verts[vId].p;
             minBoxPos = glm::min(minBoxPos, vertPos);
             maxBoxPos = glm::max(maxBoxPos, vertPos);
-            ev.value += vertValue(mesh, vId);
+            ev.metric += vertMetric(mesh, vId);
         }
 
         ev.minBox = cellId(gridSize, minBounds, extents, minBoxPos);
         ev.maxBox = cellId(gridSize, minBounds, extents, maxBoxPos);
-        ev.value /= MeshTet::VERTEX_COUNT;
+        ev.metric /= MeshTet::VERTEX_COUNT;
         elemValues.push_back(ev);
     }
 
@@ -106,12 +131,12 @@ void UniformDiscretizer::discretize(
             const glm::dvec3& vertPos = mesh.verts[vId].p;
             minBoxPos = glm::min(minBoxPos, vertPos);
             maxBoxPos = glm::max(maxBoxPos, vertPos);
-            ev.value += vertValue(mesh, vId);
+            ev.metric += vertMetric(mesh, vId);
         }
 
         ev.minBox = cellId(gridSize, minBounds, extents, minBoxPos);
         ev.maxBox = cellId(gridSize, minBounds, extents, maxBoxPos);
-        ev.value /= MeshPri::VERTEX_COUNT;
+        ev.metric /= MeshPri::VERTEX_COUNT;
         elemValues.push_back(ev);
     }
 
@@ -128,17 +153,17 @@ void UniformDiscretizer::discretize(
             const glm::dvec3& vertPos = mesh.verts[vId].p;
             minBoxPos = glm::min(minBoxPos, vertPos);
             maxBoxPos = glm::max(maxBoxPos, vertPos);
-            ev.value += vertValue(mesh, vId);
+            ev.metric += vertMetric(mesh, vId);
         }
 
         ev.minBox = cellId(gridSize, minBounds, extents, minBoxPos);
         ev.maxBox = cellId(gridSize, minBounds, extents, maxBoxPos);
-        ev.value /= MeshHex::VERTEX_COUNT;
+        ev.metric /= MeshHex::VERTEX_COUNT;
         elemValues.push_back(ev);
     }
 
 
-    Grid3D<GridCell> weightedMeanGrid(gridSize.x, gridSize.y, gridSize.z);
+    _grid.reset(new UniformGrid(gridSize, extents, minBounds));
 
     size_t elemCount = elemValues.size();
     for(size_t e=0; e < elemCount; ++e)
@@ -151,8 +176,8 @@ void UniformDiscretizer::discretize(
                 for(int i=ev.minBox.x; i <= ev.maxBox.x; ++i)
                 {
                     glm::ivec3 id(i, j, k);
-                    GridCell& cell = weightedMeanGrid[id];
-                    cell.value += ev.value;
+                    GridCell& cell = (*_grid)[id];
+                    cell.metric += ev.metric;
                     cell.weight += 1.0;
                 }
             }
@@ -167,23 +192,83 @@ void UniformDiscretizer::discretize(
             for(int i=0; i < gridSize.x; ++i)
             {
                 glm::ivec3 id(i, j, k);
-                GridCell& cell = weightedMeanGrid[id];
+                GridCell& cell = (*_grid)[id];
                 if(cell.weight > 0.0)
                 {
-                    cell.value /= cell.weight;
+                    cell.metric /= cell.weight;
                 }
                 else
                 {
-                    cell.value = -1.0;
+                    cell.metric = ISOTROPIC_METRIC;
                 }
             }
         }
     }
+}
 
-    // Build the grid mesh for visualization
-    _gridMesh->clear();
+Metric UniformDiscretizer::metricAt(
+        const glm::dvec3& position) const
+{
+
+}
+
+void UniformDiscretizer::installPlugIn(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
+}
+
+void UniformDiscretizer::uploadPlugInUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
+}
+
+void UniformDiscretizer::releaseDebugMesh()
+{
+    _debugMesh.reset();
+}
+
+std::shared_ptr<Mesh> UniformDiscretizer::debugMesh()
+{
+    if(_debugMesh.get() == nullptr)
+    {
+        _debugMesh.reset(new Mesh());
+
+        if(_grid.get() != nullptr)
+        {
+            meshGrid(*_grid.get(), *_debugMesh);
+
+            _debugMesh->modelName = "Uniform Discretization Grid";
+            _debugMesh->compileTopology();
+        }
+    }
+
+    return _debugMesh;
+}
+
+inline glm::ivec3 UniformDiscretizer::cellId(
+        const glm::ivec3& gridSize,
+        const glm::dvec3& minBounds,
+        const glm::dvec3& extents,
+        const glm::dvec3& vertPos) const
+{
+    glm::dvec3 origDist = vertPos - minBounds;
+    glm::dvec3 distRatio = origDist / extents;
+    glm::ivec3 cellId = glm::ivec3(distRatio * glm::dvec3(gridSize));
+    cellId = glm::clamp(cellId, glm::ivec3(), gridSize - glm::ivec3(1));
+    return cellId;
+}
+
+void UniformDiscretizer::meshGrid(UniformGrid& grid, Mesh& mesh)
+{
+    const glm::ivec3 gridSize(grid.size);
+
     const int ROW_SIZE = gridSize.x + 1;
     const int LEVEL_SIZE = ROW_SIZE * (gridSize.y+1);
+
     for(int k=0; k <= gridSize.z; ++k)
     {
         for(int j=0; j <= gridSize.y; ++j)
@@ -194,11 +279,11 @@ void UniformDiscretizer::discretize(
                 glm::dvec3 cellPos = glm::dvec3(cellId) /
                                      glm::dvec3(gridSize);
 
-                _gridMesh->verts.push_back(MeshVert(
-                    glm::dvec3(minBounds + cellPos * extents)));
+                mesh.verts.push_back(MeshVert(
+                    glm::dvec3(grid.minBounds + cellPos * grid.extents)));
 
                 if(glm::all(glm::lessThan(cellId, gridSize)) &&
-                   weightedMeanGrid[cellId].value >= 0.0)
+                   grid[cellId].metric != ISOTROPIC_METRIC)
                 {
                     int xb = i;
                     int xt = i+1;
@@ -216,25 +301,10 @@ void UniformDiscretizer::discretize(
                         xb + yt + zt,
                         xt + yt + zt);
 
-                    hex.value = weightedMeanGrid[cellId].value;
-                    _gridMesh->hexs.push_back(hex);
+                    hex.value = grid[cellId].metric.x;
+                    mesh.hexs.push_back(hex);
                 }
             }
         }
     }
-
-    _gridMesh->compileTopology();
-}
-
-inline glm::ivec3 UniformDiscretizer::cellId(
-        const glm::ivec3& gridSize,
-        const glm::dvec3& minBounds,
-        const glm::dvec3& extents,
-        const glm::dvec3& vertPos) const
-{
-    glm::dvec3 origDist = vertPos - minBounds;
-    glm::dvec3 distRatio = origDist / extents;
-    glm::ivec3 cellId = glm::ivec3(distRatio * glm::dvec3(gridSize));
-    cellId = glm::clamp(cellId, glm::ivec3(), gridSize - glm::ivec3(1));
-    return cellId;
 }

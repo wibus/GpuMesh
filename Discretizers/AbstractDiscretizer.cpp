@@ -1,5 +1,7 @@
 #include "AbstractDiscretizer.h"
 
+#include <CellarWorkbench/GL/GlProgram.h>
+
 #include "DataStructures/Mesh.h"
 
 
@@ -13,10 +15,25 @@ AbstractDiscretizer::~AbstractDiscretizer()
 
 }
 
-double AbstractDiscretizer::vertValue(const Mesh& mesh, uint vId) const
+void AbstractDiscretizer::installPlugIn(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
+}
+
+void AbstractDiscretizer::uploadPlugInUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
+}
+
+Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
 {
     const glm::dvec3& vp = mesh.verts[vId].p;
-    return (1.0 + sin((vp.x + vp.y) / (0.1 + vp.x*vp.x))) / 2.1 + 0.01;
+    double xDilat = (1.0 + sin((vp.x + vp.y) / (0.1 + vp.x*vp.x))) / 2.1 + 0.01;
+    return Metric(glm::dvec4(xDilat, 1.0, 1.0, 0.0));
 }
 
 void AbstractDiscretizer::boundingBox(

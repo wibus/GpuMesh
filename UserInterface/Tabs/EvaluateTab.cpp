@@ -41,6 +41,13 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
     connect(_ui->discretizetionGridXSpin,
             static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this, &EvaluateTab::discretizationSizeChanged);
+    connect(_ui->discretizetionGridYSpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &EvaluateTab::discretizationSizeChanged);
+    connect(_ui->discretizetionGridZSpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &EvaluateTab::discretizationSizeChanged);
+
 
     _character->displayDiscretizationMesh(
         _ui->discretizationDisplayCheck->isChecked());

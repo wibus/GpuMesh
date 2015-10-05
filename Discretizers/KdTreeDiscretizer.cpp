@@ -14,7 +14,7 @@ struct KdNode
     KdNode() :
         left(nullptr),
         right(nullptr),
-        value(0)
+        metric(0)
     {}
 
     ~KdNode()
@@ -26,31 +26,30 @@ struct KdNode
     KdNode* left;
     KdNode* right;
 
-    glm::dvec3 separator;
+    glm::dvec4 separator;
     glm::dvec3 minBox;
     glm::dvec3 maxBox;
 
-    double value;
+    Metric metric;
 };
 
-KdTreeDiscretizer::KdTreeDiscretizer() :
-    _gridMesh(new Mesh())
+
+KdTreeDiscretizer::KdTreeDiscretizer()
 {
-    _gridMesh->modelName = "Kd-Tree Discretization Grid";
 }
 
 KdTreeDiscretizer::~KdTreeDiscretizer()
 {
-
-}
-
-std::shared_ptr<Mesh> KdTreeDiscretizer::gridMesh() const
-{
-    return _gridMesh;
 }
 
 void KdTreeDiscretizer::discretize(const Mesh& mesh, const glm::ivec3& gridSize)
 {
+    _debugMesh.reset();
+    if(mesh.verts.empty())
+    {
+        _rootNode.reset();
+    }
+
     size_t vertCount = mesh.verts.size();
     int height = glm::min((int)std::log2(vertCount), gridSize.x);
 
@@ -76,12 +75,54 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, const glm::ivec3& gridSize)
     glm::dvec3 minBounds, maxBounds;
     boundingBox(mesh, minBounds, maxBounds);
 
-    KdNode root;
-    build(&root, height, mesh, minBounds, maxBounds, xSort, ySort, zSort);
 
-    _gridMesh->clear();
-    meshTree(&root, *_gridMesh);
-    _gridMesh->compileTopology();
+    _rootNode.reset(new KdNode());
+    build(_rootNode.get(), height, mesh,
+          minBounds, maxBounds,
+          xSort, ySort, zSort);
+}
+
+Metric KdTreeDiscretizer::metricAt(
+        const glm::dvec3& position) const
+{
+
+}
+
+void KdTreeDiscretizer::installPlugIn(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
+}
+
+void KdTreeDiscretizer::uploadPlugInUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
+}
+
+void KdTreeDiscretizer::releaseDebugMesh()
+{
+    _debugMesh.reset();
+}
+
+std::shared_ptr<Mesh> KdTreeDiscretizer::debugMesh()
+{
+    if(_debugMesh.get() == nullptr)
+    {
+        _debugMesh.reset(new Mesh());
+
+        if(_rootNode.get() != nullptr)
+        {
+            meshTree(_rootNode.get(), *_debugMesh);
+
+            _debugMesh->modelName = "Kd-Tree Discretization Grid";
+            _debugMesh->compileTopology();
+        }
+    }
+
+    return _debugMesh;
 }
 
 void KdTreeDiscretizer::build(
@@ -125,10 +166,14 @@ void KdTreeDiscretizer::build(
             sepR = zSort[sepIdR];
         }
 
+        glm::dvec3 sepPos;
         if(vertCount % 2 == 0)
-            node->separator = (mesh.verts[sepL].p + mesh.verts[sepR].p) / 2.0;
+            sepPos = (mesh.verts[sepL].p + mesh.verts[sepR].p) / 2.0;
         else
-            node->separator = mesh.verts[sepR].p;
+            sepPos = mesh.verts[sepR].p;
+        double sepVal = glm::dot(axis, sepPos);
+
+        node->separator = glm::dvec4(axis, sepVal);
 
 
         // Distribute vertices around the separator
@@ -140,19 +185,19 @@ void KdTreeDiscretizer::build(
         std::vector<uint> zSortR;
         for(size_t v=0; v < vertCount; ++v)
         {
-            double xDist = glm::dot(mesh.verts[xSort[v]].p - node->separator, axis);
+            double xDist = glm::dot(mesh.verts[xSort[v]].p, axis) - sepVal;
             if(xDist <= 0.0)
                 xSortL.push_back(xSort[v]);
             if(xDist >= 0.0)
                 xSortR.push_back(xSort[v]);
 
-            double yDist = glm::dot(mesh.verts[ySort[v]].p - node->separator, axis);
+            double yDist = glm::dot(mesh.verts[ySort[v]].p, axis) - sepVal;
             if(yDist <= 0.0)
                 ySortL.push_back(ySort[v]);
             if(yDist >= 0.0)
                 ySortR.push_back(ySort[v]);
 
-            double zDist = glm::dot(mesh.verts[zSort[v]].p - node->separator, axis);
+            double zDist = glm::dot(mesh.verts[zSort[v]].p, axis) - sepVal;
             if(zDist <= 0.0)
                 zSortL.push_back(zSort[v]);
             if(zDist >= 0.0)
@@ -170,9 +215,9 @@ void KdTreeDiscretizer::build(
 
         // Child bounding boxes
         glm::dvec3 minBoxL = minBox;
-        glm::dvec3 maxBoxL = glm::mix(maxBox, node->separator, axis);
+        glm::dvec3 maxBoxL = glm::mix(maxBox, sepPos, axis);
 
-        glm::dvec3 minBoxR = glm::mix(minBox, node->separator, axis);
+        glm::dvec3 minBoxR = glm::mix(minBox, sepPos, axis);
         glm::dvec3 maxBoxR = maxBox;
 
         // Build children nodes
@@ -183,7 +228,7 @@ void KdTreeDiscretizer::build(
         build(node->right, height-1, mesh, minBoxR, maxBoxR, xSortR, ySortR, zSortR);
 
         // Compute node's value from children's
-        node->value = (node->left->value + node->right->value) / 2.0;
+        node->metric = (node->left->metric + node->right->metric) / 2.0;
     }
     else
     {
@@ -193,12 +238,12 @@ void KdTreeDiscretizer::build(
         if(vertCount > 0)
         {
             for(size_t v=0; v < vertCount; ++v)
-                node->value += vertValue(mesh, xSort[v]);
-            node->value /= vertCount;
+                node->metric += vertMetric(mesh, xSort[v]);
+            node->metric /= vertCount;
         }
         else
         {
-            node->value = -1.0;
+            node->metric = Metric(-1.0);
         }
     }
 }
@@ -220,7 +265,7 @@ void KdTreeDiscretizer::meshTree(KdNode* node, Mesh& mesh)
 
         MeshHex hex(baseVert + 0, baseVert + 1, baseVert + 2, baseVert + 3,
                     baseVert + 4, baseVert + 5, baseVert + 6, baseVert + 7);
-        hex.value = node->value;
+        hex.value = node->metric.x;
         mesh.hexs.push_back(hex);
     }
     else

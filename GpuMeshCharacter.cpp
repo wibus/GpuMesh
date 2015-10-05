@@ -327,7 +327,7 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
 
     if(_displayDiscretizationMesh)
-        _renderer->display(*_discretizer->gridMesh());
+        _renderer->display(*_discretizer->debugMesh());
     else
         _renderer->display(*_mesh);
 }
@@ -608,6 +608,9 @@ void GpuMeshCharacter::displayDiscretizationMesh(bool display)
     _displayDiscretizationMesh = display;
     if(_renderer.get() != nullptr)
         _renderer->notifyMeshUpdate();
+
+    if(!_displayDiscretizationMesh)
+        _discretizer->releaseDebugMesh();
 }
 
 void GpuMeshCharacter::useDiscretizationSize(const glm::ivec3& gridSize)
