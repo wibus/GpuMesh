@@ -49,9 +49,7 @@ void BlindRenderer::handleInputs(
 
 }
 
-void BlindRenderer::updateGeometry(
-        const Mesh& mesh,
-        const AbstractEvaluator& evaluator)
+void BlindRenderer::updateGeometry(const Mesh& mesh)
 {
 
 }

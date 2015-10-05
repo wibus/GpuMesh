@@ -8,8 +8,6 @@
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 
-#include "Evaluators/AbstractEvaluator.h"
-
 using namespace std;
 using namespace cellar;
 
@@ -160,9 +158,7 @@ void ScaffoldRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
     }
 }
 
-void ScaffoldRenderer::updateGeometry(
-        const Mesh& mesh,
-        const AbstractEvaluator& evaluator)
+void ScaffoldRenderer::updateGeometry(const Mesh& mesh)
 {
     // Clear old vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -186,7 +182,7 @@ void ScaffoldRenderer::updateGeometry(
     vector<GLubyte> quals;
     vector<GLuint> nodes;
     vector<GLuint> edges;
-    compileBuffers(mesh, evaluator, verts, quals, nodes, edges);
+    compileBuffers(mesh, verts, quals, nodes, edges);
     _vertElemCount = nodes.size();
     _indxElemCount = edges.size();
 
@@ -226,7 +222,6 @@ void ScaffoldRenderer::updateGeometry(
 
 void ScaffoldRenderer::compileBuffers(
         const Mesh& mesh,
-        const AbstractEvaluator& evaluator,
         std::vector<float>& verts,
         std::vector<GLubyte>& quals,
         std::vector<GLuint>& nodes,

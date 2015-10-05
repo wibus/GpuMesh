@@ -112,13 +112,13 @@ void KdTreeDiscretizer::build(
 
         uint sepL = xSort[sepIdL];
         uint sepR = xSort[sepIdR];
-        if(extents.y > extents.x && extents.y > extents.z)
+        if(extents.y >= extents.x && extents.y >= extents.z)
         {
             axis = glm::dvec3(0, 1, 0);
             sepL = ySort[sepIdL];
             sepR = ySort[sepIdR];
         }
-        else if(extents.z > extents.x && extents.z > extents.y)
+        else if(extents.z >= extents.x && extents.z >= extents.y)
         {
             axis = glm::dvec3(0, 0, 1);
             sepL = zSort[sepIdL];

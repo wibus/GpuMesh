@@ -23,12 +23,10 @@ public:
 
 protected:
     virtual void updateGeometry(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator) override;
+            const Mesh& mesh) override;
 
     virtual void compileBuffers(
             const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
             std::vector<float>& verts,
             std::vector<GLubyte>& quals,
             std::vector<GLuint>& nodes,

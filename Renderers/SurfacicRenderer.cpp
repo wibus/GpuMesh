@@ -6,8 +6,6 @@
 #include <Scaena/StageManagement/Event/SynchronousKeyboard.h>
 #include <Scaena/StageManagement/Event/SynchronousMouse.h>
 
-#include "Evaluators/AbstractEvaluator.h"
-
 using namespace std;
 using namespace cellar;
 
@@ -183,7 +181,7 @@ void SurfacicRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
     }
 }
 
-void SurfacicRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator& evaluator)
+void SurfacicRenderer::updateGeometry(const Mesh& mesh)
 {
     // Clear old vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -209,7 +207,6 @@ void SurfacicRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator&
 
     compileFacesAttributes(
         mesh,
-        evaluator,
         vertices,
         normals,
         edges,
@@ -250,7 +247,6 @@ void SurfacicRenderer::updateGeometry(const Mesh& mesh, const AbstractEvaluator&
 
 void SurfacicRenderer::compileFacesAttributes(
         const Mesh& mesh,
-        const AbstractEvaluator& evaluator,
         std::vector<glm::vec3>& vertices,
         std::vector<signed char>& normals,
         std::vector<unsigned char>& triEdges,

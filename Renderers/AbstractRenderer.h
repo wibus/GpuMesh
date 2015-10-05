@@ -14,8 +14,6 @@
 #include "DataStructures/Mesh.h"
 #include "DataStructures/OptionMap.h"
 
-class AbstractEvaluator;
-
 
 class AbstractRenderer:
         public cellar::SpecificObserver<cellar::CameraMsg>
@@ -29,7 +27,7 @@ public:
     virtual void setup();
     virtual void tearDown();
     virtual void notifyMeshUpdate();
-    virtual void display(const Mesh& mesh, const AbstractEvaluator& evaluator);
+    virtual void display(const Mesh& mesh);
 
     virtual OptionMapDetails availableShadings() const;
     virtual void useShading(const std::string& shadingName);
@@ -57,8 +55,7 @@ protected:
     virtual void fullScreenDraw();
 
     virtual void updateGeometry(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator) = 0;
+            const Mesh& mesh) = 0;
 
     virtual void notifyCameraUpdate(cellar::CameraMsg& msg) = 0;
     virtual void clearResources() = 0;

@@ -22,7 +22,7 @@ float tetQuality(in vec3 vp[4])
     float edgeSum = sqrt(edge2Sum);
 
     return volume / (edgeSum*edgeSum*edgeSum)
-            / 0.048112522432468815548;
+            / 0.0080187537387448014348;
 }
 
 float priQuality(in vec3 vp[6])
@@ -42,7 +42,7 @@ float priQuality(in vec3 vp[6])
     float edgeSum = sqrt(edge2Sum);
 
     return min(volume / (edgeSum*edgeSum*edgeSum)
-            / 0.096225044864937631095, 1.0);
+            / 0.016037507477489606339, 1.0);
 }
 
 float hexQuality(in vec3 vp[8])
@@ -65,5 +65,5 @@ float hexQuality(in vec3 vp[8])
     float edgeSum = sqrt(edge2Sum);
 
     return min(volume / (edgeSum*edgeSum*edgeSum)
-            / 0.14433756729740643276, 1.0);
+            / 0.024056261216234407774, 1.0);
 }

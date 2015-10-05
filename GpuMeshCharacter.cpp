@@ -327,9 +327,9 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
 
     if(_displayDiscretizationMesh)
-        _renderer->display(*_discretizer->gridMesh(), *_evaluator);
+        _renderer->display(*_discretizer->gridMesh());
     else
-        _renderer->display(*_mesh, *_evaluator);
+        _renderer->display(*_mesh);
 }
 
 void GpuMeshCharacter::exitStage()

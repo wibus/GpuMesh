@@ -21,8 +21,7 @@ public:
 
 
 protected:
-    virtual void updateGeometry(const Mesh& mesh,
-            const AbstractEvaluator& evaluator) override;
+    virtual void updateGeometry(const Mesh& mesh) override;
     virtual void notifyCameraUpdate(cellar::CameraMsg& msg) override;
     virtual void clearResources() override;
     virtual void resetResources() override;

@@ -24,15 +24,15 @@ public:
 
 protected:
     virtual void updateGeometry(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator) override;
+            const Mesh& mesh) override;
+
     virtual void compileFacesAttributes(
             const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
             std::vector<unsigned char>& triEdges,
             std::vector<unsigned char>& qualities) const;
+
     virtual void pushTriangle(
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
