@@ -174,14 +174,9 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _shapeMeasureShader = evaluator.shapeMeasureShader();
 
     _vertSmoothProgram.clearShaders();
+    evaluator.installPlugIn(mesh, _vertSmoothProgram);
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER,
         _modelBoundsShader);
-    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        _shapeMeasureShader.c_str()});
-    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Quality/QualityInterface.glsl"});
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         SmoothingHelper::shaderName().c_str()});
@@ -194,9 +189,10 @@ void AbstractVertexWiseSmoother::initializeProgram(
             mesh.meshGeometryShaderName(),
             shader.c_str()});
     }
-    _vertSmoothProgram.link();
 
+    _vertSmoothProgram.link();
     mesh.uploadGeometry(_vertSmoothProgram);
+    evaluator.uploadPlugInUniforms(mesh, _vertSmoothProgram);
 
 
     _initialized = true;

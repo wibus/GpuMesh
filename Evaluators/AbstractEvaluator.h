@@ -62,6 +62,8 @@ public:
             const std::map<std::string, int>& cycleCounts);
 
     virtual std::string shapeMeasureShader() const;
+    virtual void installPlugIn(const Mesh& mesh, cellar::GlProgram& program) const;
+    virtual void uploadPlugInUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
 
 
 protected:

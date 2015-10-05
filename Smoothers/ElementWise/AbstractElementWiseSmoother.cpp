@@ -274,14 +274,9 @@ void AbstractElementWiseSmoother::initializeProgram(
 
     // Element Smoothing Program
     _elemSmoothProgram.clearShaders();
+    evaluator.installPlugIn(mesh, _elemSmoothProgram);
     _elemSmoothProgram.addShader(GL_COMPUTE_SHADER,
         _modelBoundsShader);
-    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        _shapeMeasureShader.c_str()});
-    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Quality/QualityInterface.glsl"});
     _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         SmoothingHelper::shaderName().c_str()});
@@ -297,21 +292,17 @@ void AbstractElementWiseSmoother::initializeProgram(
             mesh.meshGeometryShaderName(),
             shader.c_str()});
     }
-    _elemSmoothProgram.link();
 
+    _elemSmoothProgram.link();
     mesh.uploadGeometry(_elemSmoothProgram);
+    evaluator.uploadPlugInUniforms(mesh, _elemSmoothProgram);
 
 
     // Update Vertex Positions Program
     _vertUpdateProgram.clearShaders();
+    evaluator.installPlugIn(mesh, _vertUpdateProgram);
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER,
         _modelBoundsShader);
-    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        _shapeMeasureShader.c_str()});
-    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Quality/QualityInterface.glsl"});
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         SmoothingHelper::shaderName().c_str()});
@@ -321,9 +312,10 @@ void AbstractElementWiseSmoother::initializeProgram(
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/ElementWise/UpdateVertices.glsl"});
-    _vertUpdateProgram.link();
 
+    _vertUpdateProgram.link();
     mesh.uploadGeometry(_vertUpdateProgram);
+    evaluator.uploadPlugInUniforms(mesh, _vertUpdateProgram);
 
 
     // Shader storage vertex accum blocks

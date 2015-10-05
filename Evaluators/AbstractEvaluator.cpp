@@ -474,58 +474,39 @@ void AbstractEvaluator::initializeProgram(const Mesh& mesh)
     getLog().postMessage(new Message('I', false,
         "Initializing evaluator compute shader", "AbstractEvaluator"));
 
-    std::vector<std::string> qualityInterface = {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Quality/QualityInterface.glsl"
-    };
-
-    std::vector<std::string> shapeMeasure = {
-        mesh.meshGeometryShaderName(),
-        _shapeMeasuresShader
-    };
-
 
     // Simultenous evaluation shader
-    _simultaneousProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
-    _simultaneousProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
+    installPlugIn(mesh, _simultaneousProgram);
     _simultaneousProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Measuring/SimultaneousEvaluation.glsl"});
     _simultaneousProgram.link();
-    _simultaneousProgram.pushProgram();
-    _simultaneousProgram.popProgram();
+    uploadPlugInUniforms(mesh, _simultaneousProgram);
     mesh.uploadGeometry(_simultaneousProgram);
 
-
     // Specialized evaluation shader series
-    _tetProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
-    _tetProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
+    installPlugIn(mesh, _tetProgram);
     _tetProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Measuring/TetrahedraEvaluation.glsl"});
     _tetProgram.link();
-    _tetProgram.pushProgram();
-    _tetProgram.popProgram();
+    uploadPlugInUniforms(mesh, _tetProgram);
     mesh.uploadGeometry(_tetProgram);
 
-    _priProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
-    _priProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
+    installPlugIn(mesh, _priProgram);
     _priProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Measuring/PrismsEvaluation.glsl"});
     _priProgram.link();
-    _priProgram.pushProgram();
-    _priProgram.popProgram();
+    uploadPlugInUniforms(mesh, _priProgram);
     mesh.uploadGeometry(_priProgram);
 
-    _hexProgram.addShader(GL_COMPUTE_SHADER, qualityInterface);
-    _hexProgram.addShader(GL_COMPUTE_SHADER, shapeMeasure);
+    installPlugIn(mesh, _hexProgram);
     _hexProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Measuring/HexahedraEvaluation.glsl"});
     _hexProgram.link();
-    _hexProgram.pushProgram();
-    _hexProgram.popProgram();
+    uploadPlugInUniforms(mesh, _hexProgram);
     mesh.uploadGeometry(_hexProgram);
 
 
@@ -665,4 +646,29 @@ void AbstractEvaluator::benchmark(
 string AbstractEvaluator::shapeMeasureShader() const
 {
     return _shapeMeasuresShader;
+}
+
+void AbstractEvaluator::installPlugIn(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+    std::vector<std::string> qualityInterface = {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Quality/QualityInterface.glsl"
+    };
+
+    std::vector<std::string> shapeMeasure = {
+        mesh.meshGeometryShaderName(),
+        _shapeMeasuresShader
+    };
+
+    program.addShader(GL_COMPUTE_SHADER, qualityInterface);
+    program.addShader(GL_COMPUTE_SHADER, shapeMeasure);
+}
+
+void AbstractEvaluator::uploadPlugInUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
 }
