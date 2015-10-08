@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>620</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -212,86 +212,105 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="discretizationGroup">
+         <widget class="QGroupBox" name="AnisotropyGroup">
           <property name="title">
-           <string>Discretization</string>
+           <string>Anisotropy</string>
           </property>
-          <layout class="QFormLayout" name="formLayout_5">
-           <item row="0" column="0">
-            <widget class="QLabel" name="discretizationTypeLabel">
+          <layout class="QVBoxLayout" name="verticalLayout_9">
+           <item>
+            <widget class="QCheckBox" name="enableAnisotropyCheck">
              <property name="text">
-              <string>Type</string>
+              <string>Enable Anisotropy</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="discretizationTypeMenu"/>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="discretizetionGridXLabel">
-             <property name="text">
-              <string>Grid Size X</string>
+           <item>
+            <widget class="QGroupBox" name="discretizationGroup">
+             <property name="title">
+              <string>Discretization</string>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QSpinBox" name="discretizetionGridXSpin">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>1024</number>
-             </property>
-             <property name="value">
-              <number>32</number>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="discretizetionGridYLabel">
-             <property name="text">
-              <string>Grid Size Y</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QSpinBox" name="discretizetionGridYSpin">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>1024</number>
-             </property>
-             <property name="value">
-              <number>32</number>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="discretizetionGridZLabel">
-             <property name="text">
-              <string>Grid Size Z</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QSpinBox" name="discretizetionGridZSpin">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>1024</number>
-             </property>
-             <property name="value">
-              <number>32</number>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0" colspan="2">
-            <widget class="QCheckBox" name="discretizationDisplayCheck">
-             <property name="text">
-              <string>Display Discretization Mesh</string>
-             </property>
+             <layout class="QFormLayout" name="formLayout_5">
+              <item row="0" column="0">
+               <widget class="QLabel" name="discretizationTypeLabel">
+                <property name="text">
+                 <string>Type</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="discretizationTypeMenu"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="discretizetionGridXLabel">
+                <property name="text">
+                 <string>Grid Size X</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="discretizetionGridXSpin">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>1024</number>
+                </property>
+                <property name="value">
+                 <number>32</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="discretizetionGridYLabel">
+                <property name="text">
+                 <string>Grid Size Y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QSpinBox" name="discretizetionGridYSpin">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>1024</number>
+                </property>
+                <property name="value">
+                 <number>32</number>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="discretizetionGridZLabel">
+                <property name="text">
+                 <string>Grid Size Z</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QSpinBox" name="discretizetionGridZSpin">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>1024</number>
+                </property>
+                <property name="value">
+                 <number>32</number>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0" colspan="2">
+               <widget class="QCheckBox" name="discretizationDisplayCheck">
+                <property name="text">
+                 <string>Display Discretization</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
           </layout>

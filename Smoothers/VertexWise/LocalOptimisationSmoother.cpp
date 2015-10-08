@@ -22,9 +22,29 @@ LocalOptimisationSmoother::~LocalOptimisationSmoother()
 
 }
 
+void LocalOptimisationSmoother::setVertexProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program)
+{
+    AbstractVertexWiseSmoother::setVertexProgramUniforms(mesh, program);
+    program.setInt("SecurityCycleCount", _securityCycleCount);
+    program.setFloat("LocalSizeToNodeShift", _localSizeToNodeShift);
+}
+
+void LocalOptimisationSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        OptimizationPlot& plot) const
+{
+    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
+    plot.addSmoothingProperty("Method Name", "Local Optimization");
+    plot.addSmoothingProperty("Local Size to Node Shift", to_string(_localSizeToNodeShift));
+    plot.addSmoothingProperty("Security Cycle Count", to_string(_securityCycleCount));
+}
+
 void LocalOptimisationSmoother::smoothVertices(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         const std::vector<uint>& vIds)
 {
     std::vector<MeshVert>& verts = mesh.verts;
@@ -153,24 +173,4 @@ void LocalOptimisationSmoother::smoothVertices(
                 break;
         }
     }
-}
-
-void LocalOptimisationSmoother::printSmoothingParameters(
-        const Mesh& mesh,
-        const AbstractEvaluator& evaluator,
-        OptimizationPlot& plot) const
-{
-    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
-    plot.addSmoothingProperty("Method Name", "Local Optimization");
-    plot.addSmoothingProperty("Local Size to Node Shift", to_string(_localSizeToNodeShift));
-    plot.addSmoothingProperty("Security Cycle Count", to_string(_securityCycleCount));
-}
-
-void LocalOptimisationSmoother::setVertexProgramUniforms(
-            const Mesh& mesh,
-            cellar::GlProgram& program)
-{
-    AbstractVertexWiseSmoother::setVertexProgramUniforms(mesh, program);
-    program.setInt("SecurityCycleCount", _securityCycleCount);
-    program.setFloat("LocalSizeToNodeShift", _localSizeToNodeShift);
 }

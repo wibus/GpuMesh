@@ -6,6 +6,9 @@
 using namespace std;
 
 
+const uint PROPOSITION_COUNT = 4;
+
+
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
     AbstractVertexWiseSmoother(
         {":/shaders/compute/Smoothing/VertexWise/QualityLaplace.glsl"})
@@ -18,12 +21,20 @@ QualityLaplaceSmoother::~QualityLaplaceSmoother()
 
 }
 
-const uint PROPOSITION_COUNT = 4;
-
+void QualityLaplaceSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        OptimizationPlot& plot) const
+{
+    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
+    plot.addSmoothingProperty("Method Name", "Quality Laplace");
+    plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
+    plot.addSmoothingProperty("Line Gaps", to_string(_moveFactor));
+}
 
 void QualityLaplaceSmoother::smoothVertices(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         const std::vector<uint>& vIds)
 {
     std::vector<MeshVert>& verts = mesh.verts;
@@ -39,7 +50,10 @@ void QualityLaplaceSmoother::smoothVertices(
 
 
         // Compute patch center
-        glm::dvec3 patchCenter = SmoothingHelper::computePatchCenter(mesh, vId);
+        glm::dvec3 patchCenter =
+            SmoothingHelper::computePatchCenter(
+                mesh, discretizer, vId);
+
         glm::dvec3& pos = verts[vId].p;
         glm::dvec3 centerDist = patchCenter - pos;
 
@@ -85,15 +99,4 @@ void QualityLaplaceSmoother::smoothVertices(
         // Update vertex's position
         pos = propositions[bestProposition];
     }
-}
-
-void QualityLaplaceSmoother::printSmoothingParameters(
-        const Mesh& mesh,
-        const AbstractEvaluator& evaluator,
-        OptimizationPlot& plot) const
-{
-    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
-    plot.addSmoothingProperty("Method Name", "Quality Laplace");
-    plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
-    plot.addSmoothingProperty("Line Gaps", to_string(_moveFactor));
 }

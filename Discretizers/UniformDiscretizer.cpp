@@ -14,7 +14,7 @@ struct ElemValue
     ElemValue() :
         minBox(INT32_MAX),
         maxBox(INT32_MIN),
-        metric()
+        metric(0.0)
     {
     }
 
@@ -46,7 +46,7 @@ public:
     {
     }
 
-    inline GridCell& operator[] (const glm::ivec3& pos)
+    inline GridCell& at(const glm::ivec3& pos)
     {
         return _impl[pos];
     }
@@ -176,7 +176,7 @@ void UniformDiscretizer::discretize(
                 for(int i=ev.minBox.x; i <= ev.maxBox.x; ++i)
                 {
                     glm::ivec3 id(i, j, k);
-                    GridCell& cell = (*_grid)[id];
+                    GridCell& cell = _grid->at(id);
                     cell.metric += ev.metric;
                     cell.weight += 1.0;
                 }
@@ -192,7 +192,7 @@ void UniformDiscretizer::discretize(
             for(int i=0; i < gridSize.x; ++i)
             {
                 glm::ivec3 id(i, j, k);
-                GridCell& cell = (*_grid)[id];
+                GridCell& cell = _grid->at(id);
                 if(cell.weight > 0.0)
                 {
                     cell.metric /= cell.weight;
@@ -206,10 +206,56 @@ void UniformDiscretizer::discretize(
     }
 }
 
-Metric UniformDiscretizer::metricAt(
+Metric UniformDiscretizer::metric(
         const glm::dvec3& position) const
 {
+    glm::dvec3 cs = _grid->extents / glm::dvec3(_grid->size);
+    glm::dvec3 minB = _grid->minBounds;
+    glm::dvec3 maxB = _grid->minBounds + _grid->extents - (cs *1.5);
+    glm::dvec3 cp000 = glm::clamp(position + glm::dvec3(-cs.x, -cs.y, -cs.z)/2.0, minB, maxB);
 
+    glm::ivec3 id000 = cellId(_grid->size, _grid->minBounds, _grid->extents, cp000);
+
+    glm::ivec3 id100 = id000 + glm::ivec3(1, 0, 0);
+    glm::ivec3 id010 = id000 + glm::ivec3(0, 1, 0);
+    glm::ivec3 id110 = id000 + glm::ivec3(1, 1, 0);
+    glm::ivec3 id001 = id000 + glm::ivec3(0, 0, 1);
+    glm::ivec3 id101 = id000 + glm::ivec3(1, 0, 1);
+    glm::ivec3 id011 = id000 + glm::ivec3(0, 1, 1);
+    glm::ivec3 id111 = id000 + glm::ivec3(1, 1, 1);
+
+    Metric m000 = _grid->at(id000).metric;
+    Metric m100 = _grid->at(id100).metric;
+    Metric m010 = _grid->at(id010).metric;
+    Metric m110 = _grid->at(id110).metric;
+    Metric m001 = _grid->at(id001).metric;
+    Metric m101 = _grid->at(id101).metric;
+    Metric m011 = _grid->at(id011).metric;
+    Metric m111 = _grid->at(id111).metric;
+
+    glm::dvec3 c000Center = cs * (glm::dvec3(id000) + glm::dvec3(0.5));
+    glm::dvec3 a = (position - (_grid->minBounds + c000Center)) / cs;
+
+    Metric mx00 = interpolate(m000, m100, a.x);
+    Metric mx10 = interpolate(m010, m110, a.x);
+    Metric mx01 = interpolate(m001, m101, a.x);
+    Metric mx11 = interpolate(m011, m111, a.x);
+
+    Metric mxy0 = interpolate(mx00, mx10, a.y);
+    Metric mxy1 = interpolate(mx01, mx11, a.y);
+
+    Metric mxyz = interpolate(mxy0, mxy1, a.z);
+
+    return mxyz;
+}
+
+double UniformDiscretizer::distance(
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    glm::dvec3 d = a - b;
+    glm::dvec3 m = (a + b) / 2.0;
+    return glm::sqrt(glm::dot(d, metric(m) * d));
 }
 
 void UniformDiscretizer::installPlugIn(
@@ -283,7 +329,7 @@ void UniformDiscretizer::meshGrid(UniformGrid& grid, Mesh& mesh)
                     glm::dvec3(grid.minBounds + cellPos * grid.extents)));
 
                 if(glm::all(glm::lessThan(cellId, gridSize)) &&
-                   grid[cellId].metric != ISOTROPIC_METRIC)
+                   grid.at(cellId).metric != ISOTROPIC_METRIC)
                 {
                     int xb = i;
                     int xt = i+1;
@@ -301,7 +347,7 @@ void UniformDiscretizer::meshGrid(UniformGrid& grid, Mesh& mesh)
                         xb + yt + zt,
                         xt + yt + zt);
 
-                    hex.value = grid[cellId].metric.x;
+                    hex.value = grid.at(cellId).metric[0][0];
                     mesh.hexs.push_back(hex);
                 }
             }

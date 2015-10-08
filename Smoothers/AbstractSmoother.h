@@ -10,6 +10,7 @@
 #include "DataStructures/OptimizationPlot.h"
 
 class AbstractEvaluator;
+class AbstractDiscretizer;
 
 
 struct IndependentDispatch
@@ -37,6 +38,7 @@ public:
     virtual void smoothMesh(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             const std::string& implementationName,
             int minIteration,
             double moveFactor,
@@ -44,35 +46,39 @@ public:
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) = 0;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) = 0;
 
     virtual void smoothMeshThread(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) = 0;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) = 0;
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) = 0;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) = 0;
 
-    virtual OptimizationPlot benchmark(
+    virtual void benchmark(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             const std::map<std::string, bool>& activeImpls,
             int minIteration,
             double moveFactor,
             double gainThreshold,
             OptimizationPlot& outPlot);
 
-    virtual void printSmoothingParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationPlot& plot) const = 0;
-
 
 protected:
     virtual void initializeProgram(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) = 0;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) = 0;
+
+    virtual void printSmoothingParameters(
+            const Mesh& mesh,
+            OptimizationPlot& plot) const = 0;
 
     virtual void organizeDispatches(
             const Mesh& mesh,
@@ -97,7 +103,7 @@ private:
     std::chrono::high_resolution_clock::time_point _implBeginTimeStamp;
     OptimizationImpl _currentImplementation;
 
-    typedef std::function<void(Mesh&, AbstractEvaluator&)> ImplementationFunc;
+    typedef std::function<void(Mesh&, AbstractEvaluator&, const AbstractDiscretizer&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;
 };
 

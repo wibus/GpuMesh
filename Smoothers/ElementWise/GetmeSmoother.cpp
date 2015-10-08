@@ -22,9 +22,33 @@ GetmeSmoother::~GetmeSmoother()
 
 }
 
+void GetmeSmoother::setElementProgramUniforms(
+        const Mesh& mesh, cellar::GlProgram& program)
+{
+    AbstractElementWiseSmoother::setElementProgramUniforms(mesh, program);
+    program.setFloat("Lambda", 0.78);
+}
+
+void GetmeSmoother::setVertexProgramUniforms(
+        const Mesh& mesh, cellar::GlProgram& program)
+{
+    AbstractElementWiseSmoother::setElementProgramUniforms(mesh, program);
+    program.setFloat("Lambda", 0.78);
+}
+
+void GetmeSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        OptimizationPlot& plot) const
+{
+    AbstractElementWiseSmoother::printSmoothingParameters(mesh, plot);
+    plot.addSmoothingProperty("Method Name", "GETMe");
+    plot.addSmoothingProperty("Lambda", to_string(_lambda));
+}
+
 void GetmeSmoother::smoothTets(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         size_t first,
         size_t last)
 {
@@ -97,6 +121,7 @@ void GetmeSmoother::smoothTets(
 void GetmeSmoother::smoothPris(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         size_t first,
         size_t last)
 {
@@ -202,8 +227,10 @@ void GetmeSmoother::smoothPris(
     }
 }
 
-void GetmeSmoother::smoothHexs(Mesh& mesh,
+void GetmeSmoother::smoothHexs(
+        Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         size_t first,
         size_t last)
 {
@@ -322,14 +349,4 @@ void GetmeSmoother::smoothHexs(Mesh& mesh,
         _vertexAccums[vi[6]]->addPosition(vpp[6], weight);
         _vertexAccums[vi[7]]->addPosition(vpp[7], weight);
     }
-}
-
-void GetmeSmoother::printSmoothingParameters(
-        const Mesh& mesh,
-        const AbstractEvaluator& evaluator,
-        OptimizationPlot& plot) const
-{
-    AbstractElementWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
-    plot.addSmoothingProperty("Method Name", "GETMe");
-    plot.addSmoothingProperty("Lambda", to_string(_lambda));
 }

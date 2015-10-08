@@ -3,6 +3,7 @@
 #include <CellarWorkbench/GL/GlProgram.h>
 
 #include "DataStructures/Mesh.h"
+#include "Smoothers/SmoothingHelper.h"
 
 
 AbstractDiscretizer::AbstractDiscretizer()
@@ -29,11 +30,38 @@ void AbstractDiscretizer::uploadPlugInUniforms(
 
 }
 
+Metric AbstractDiscretizer::interpolate(
+        const Metric& m1,
+        const Metric& m2,
+        double a) const
+{
+    return glm::mix(m1, m2, a);
+}
+
 Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
 {
-    const glm::dvec3& vp = mesh.verts[vId].p;
-    double xDilat = (1.0 + sin((vp.x + vp.y) / (0.1 + vp.x*vp.x))) / 2.1 + 0.01;
-    return Metric(glm::dvec4(xDilat, 1.0, 1.0, 0.0));
+    glm::dvec3 vp = mesh.verts[vId].p * glm::dvec3(10, 1, 1.0);
+
+    double elemSize = SmoothingHelper::computeLocalElementSize(mesh, vId);
+    double elemSizeInv2 = 1.0 / (elemSize * elemSize);
+
+
+    double scaleFactor = 3.0;
+    double invScaleFactor = 1.0 / scaleFactor;
+
+    double sinScale = (glm::sin(vp.x)+1)/2;
+    double scale = (sinScale*sinScale)*(scaleFactor-invScaleFactor) + invScaleFactor;
+    double targetElemSize = elemSize * scale;
+    double targetElemSizeInv2 = 1.0 / (targetElemSize * targetElemSize);
+
+    double rx = targetElemSizeInv2;
+    double ry = elemSizeInv2;
+    double rz = elemSizeInv2;
+
+    return Metric(
+        glm::dvec3(rx, 0,  0),
+        glm::dvec3(0,  ry, 0),
+        glm::dvec3(0,  0,  rz));
 }
 
 void AbstractDiscretizer::boundingBox(

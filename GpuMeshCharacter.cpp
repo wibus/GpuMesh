@@ -90,7 +90,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault("None");
+    _availableDiscretizers.setDefault("Uniform");
     _availableDiscretizers.setContent({
         {string("None"),    shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
         {string("Uniform"), shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
@@ -554,6 +554,7 @@ void GpuMeshCharacter::smoothMesh(
             smoother->smoothMesh(
                 *_mesh,
                 *evaluator,
+                *_discretizer,
                 implementationName,
                 minIterationCount,
                 moveFactor,
@@ -591,6 +592,7 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
             smoother->benchmark(
                 *_mesh,
                 *evaluator,
+                *_discretizer,
                 activeImpls,
                 minIterationCount,
                 moveFactor,

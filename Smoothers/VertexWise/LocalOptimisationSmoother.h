@@ -11,22 +11,22 @@ public:
     LocalOptimisationSmoother();
     virtual ~LocalOptimisationSmoother();
 
-protected:
-    virtual void smoothVertices(
-            Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const std::vector<uint>& vIds) override;
-
-    virtual void printSmoothingParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationPlot& plot) const override;
-
 
 protected:
     virtual void setVertexProgramUniforms(
             const Mesh& mesh,
             cellar::GlProgram& program);
+
+    virtual void printSmoothingParameters(
+            const Mesh& mesh,
+            OptimizationPlot& plot) const override;
+
+    virtual void smoothVertices(
+            Mesh& mesh,
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
+            const std::vector<uint>& vIds) override;
+
 
 private:
     int _securityCycleCount;

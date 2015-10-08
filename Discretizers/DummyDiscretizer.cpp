@@ -21,10 +21,18 @@ void DummyDiscretizer::discretize(
 
 }
 
-Metric DummyDiscretizer::metricAt(
+Metric DummyDiscretizer::metric(
         const glm::dvec3& position) const
 {
+    // Constant isotropic metric
     return Metric(1.0);
+}
+
+double DummyDiscretizer::distance(
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    return 1.0;//glm::distance(a, b);
 }
 
 void DummyDiscretizer::installPlugIn(

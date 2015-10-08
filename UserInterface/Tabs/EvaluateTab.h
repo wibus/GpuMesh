@@ -28,6 +28,8 @@ protected slots:
     virtual void evaluateMesh();
     virtual void benchmarkImplementations();
 
+    virtual void enableAnisotropy(bool enabled);
+
     virtual void discretizationTypeChanged(const QString& type);
     virtual void discretizationSizeChanged(int unused);
     virtual void displayDicretizationToggled(bool display);

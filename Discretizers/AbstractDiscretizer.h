@@ -12,7 +12,7 @@ namespace cellar
 
 class Mesh;
 
-typedef glm::dvec4 Metric;
+typedef glm::dmat3 Metric;
 
 
 class AbstractDiscretizer
@@ -28,8 +28,12 @@ public:
             const Mesh& mesh,
             const glm::ivec3& gridSize) = 0;
 
-    virtual Metric metricAt(
+    virtual Metric metric(
             const glm::dvec3& position) const = 0;
+
+    virtual double distance(
+            const glm::dvec3& a,
+            const glm::dvec3& b) const = 0;
 
 
     virtual void installPlugIn(
@@ -45,6 +49,7 @@ public:
 
 
 protected:
+    Metric interpolate(const Metric& m1, const Metric& m2, double a) const;
     Metric vertMetric(const Mesh& mesh, uint vId) const;
     void boundingBox(const Mesh& mesh,
                      glm::dvec3& minBounds,

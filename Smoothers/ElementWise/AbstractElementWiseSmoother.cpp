@@ -35,7 +35,8 @@ AbstractElementWiseSmoother::~AbstractElementWiseSmoother()
 
 void AbstractElementWiseSmoother::smoothMeshSerial(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
     // Allocate vertex accumulators
     size_t vertCount = mesh.verts.size();
@@ -53,11 +54,11 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
     _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, evaluator))
     {
-        smoothTets(mesh, evaluator, 0, tetCount);
-        smoothPris(mesh, evaluator, 0, priCount);
-        smoothHexs(mesh, evaluator, 0, hexCount);
+        smoothTets(mesh, evaluator, discretizer, 0, tetCount);
+        smoothPris(mesh, evaluator, discretizer, 0, priCount);
+        smoothHexs(mesh, evaluator, discretizer, 0, hexCount);
 
-        updateVertexPositions(mesh, evaluator, vIds);
+        updateVertexPositions(mesh, evaluator, discretizer, vIds);
     }
 
     mesh.updateGpuVertices();
@@ -71,7 +72,8 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
 
 void AbstractElementWiseSmoother::smoothMeshThread(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
     // Allocate vertex accumulators
     size_t vertCount = mesh.verts.size();
@@ -106,21 +108,21 @@ void AbstractElementWiseSmoother::smoothMeshThread(
                 {
                     size_t tetfirst = (tetCount * t) / threadCount;
                     size_t tetLast = (tetCount * (t+1)) / threadCount;
-                    smoothTets(mesh, evaluator, tetfirst, tetLast);
+                    smoothTets(mesh, evaluator, discretizer, tetfirst, tetLast);
                 }
 
                 if(priCount > 0)
                 {
                     size_t prifirst = (priCount * t) / threadCount;
                     size_t priLast = (priCount * (t+1)) / threadCount;
-                    smoothPris(mesh, evaluator, prifirst, priLast);
+                    smoothPris(mesh, evaluator, discretizer, prifirst, priLast);
                 }
 
                 if(hexCount > 0)
                 {
                     size_t hexfirst = (hexCount * t) / threadCount;
                     size_t hexLast = (hexCount * (t+1)) / threadCount;
-                    smoothHexs(mesh, evaluator, hexfirst, hexLast);
+                    smoothHexs(mesh, evaluator, discretizer, hexfirst, hexLast);
                 }
 
                 for(size_t g=0; g < groupCount; ++g)
@@ -149,7 +151,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
                         group.begin() + (groupSize * t) / threadCount,
                         group.begin() + (groupSize * (t+1)) / threadCount);
 
-                    updateVertexPositions(mesh, evaluator, vIds);
+                    updateVertexPositions(mesh, evaluator, discretizer, vIds);
                 }
             }));
         }
@@ -171,9 +173,10 @@ void AbstractElementWiseSmoother::smoothMeshThread(
 
 void AbstractElementWiseSmoother::smoothMeshGlsl(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
-    initializeProgram(mesh, evaluator);
+    initializeProgram(mesh, evaluator, discretizer);
 
     // There's no need to upload vertices again, but absurdly
     // this makes subsequent passes much more faster...
@@ -247,17 +250,10 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     mesh.updateCpuVertices();
 }
 
-void AbstractElementWiseSmoother::printSmoothingParameters(
-         const Mesh& mesh,
-         const AbstractEvaluator& evaluator,
-         OptimizationPlot& plot) const
-{
-    plot.addSmoothingProperty("Category", "Element-Wise");
-}
-
 void AbstractElementWiseSmoother::initializeProgram(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
     if(_initialized &&
        _modelBoundsShader == mesh.modelBoundsShaderName() &&
@@ -331,19 +327,25 @@ void AbstractElementWiseSmoother::setElementProgramUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program)
 {
-    program.setFloat("Lambda", 0.78);
 }
 
 void AbstractElementWiseSmoother::setVertexProgramUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program)
 {
-    program.setFloat("Lambda", 0.78);
+}
+
+void AbstractElementWiseSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+         OptimizationPlot& plot) const
+{
+    plot.addSmoothingProperty("Category", "Element-Wise");
 }
 
 void AbstractElementWiseSmoother::updateVertexPositions(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         const std::vector<uint>& vIds)
 {
     vector<MeshVert>& verts = mesh.verts;

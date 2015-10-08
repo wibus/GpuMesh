@@ -29,7 +29,8 @@ AbstractVertexWiseSmoother::~AbstractVertexWiseSmoother()
 
 void AbstractVertexWiseSmoother::smoothMeshSerial(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
     size_t vertCount = mesh.verts.size();
     std::vector<uint> vIds(vertCount);
@@ -38,7 +39,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
     _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, evaluator))
     {
-        smoothVertices(mesh, evaluator, vIds);
+        smoothVertices(mesh, evaluator, discretizer, vIds);
     }
 
     mesh.updateGpuVertices();
@@ -46,7 +47,8 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
 
 void AbstractVertexWiseSmoother::smoothMeshThread(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
     // TODO : Use a thread pool    
     size_t groupCount = mesh.independentGroups.size();
@@ -74,7 +76,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
                         group.begin() + (groupSize * t) / threadCount,
                         group.begin() + (groupSize * (t+1)) / threadCount);
 
-                    smoothVertices(mesh, evaluator, vIds);
+                    smoothVertices(mesh, evaluator, discretizer, vIds);
 
                     if(g < groupCount-1)
                     {
@@ -105,9 +107,10 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
 
 void AbstractVertexWiseSmoother::smoothMeshGlsl(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
-    initializeProgram(mesh, evaluator);
+    initializeProgram(mesh, evaluator, discretizer);
 
     // There's no need to upload vertices again, but absurdly
     // this makes subsequent passes much more faster...
@@ -149,17 +152,10 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     mesh.updateCpuVertices();
 }
 
-void AbstractVertexWiseSmoother::printSmoothingParameters(
-        const Mesh& mesh,
-        const AbstractEvaluator& evaluator,
-        OptimizationPlot& plot) const
-{
-    plot.addSmoothingProperty("Category", "Vertex-Wise");
-}
-
 void AbstractVertexWiseSmoother::initializeProgram(
         Mesh& mesh,
-        AbstractEvaluator& evaluator)
+        AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer)
 {
     if(_initialized &&
        _modelBoundsShader == mesh.modelBoundsShaderName() &&
@@ -203,4 +199,11 @@ void AbstractVertexWiseSmoother::setVertexProgramUniforms(
         cellar::GlProgram& program)
 {
     program.setFloat("MoveCoeff", _moveFactor);
+}
+
+void AbstractVertexWiseSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        OptimizationPlot& plot) const
+{
+    plot.addSmoothingProperty("Category", "Vertex-Wise");
 }

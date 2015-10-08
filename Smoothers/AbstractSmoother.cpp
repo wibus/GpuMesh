@@ -14,11 +14,11 @@ AbstractSmoother::AbstractSmoother() :
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("Thread");
+    _implementationFuncs.setDefault("Serial");
     _implementationFuncs.setContent({
-        {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
-        {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},
-        {string("GLSL"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl, this, _1, _2))},
+        {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2, _3))},
+        {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2, _3))},
+        {string("GLSL"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl,   this, _1, _2, _3))},
     });
 }
 
@@ -35,6 +35,7 @@ OptionMapDetails AbstractSmoother::availableImplementations() const
 void AbstractSmoother::smoothMesh(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         const std::string& implementationName,
         int minIteration,
         double moveFactor,
@@ -48,7 +49,7 @@ void AbstractSmoother::smoothMesh(
         _gainThreshold = gainThreshold;
 
         auto tStart = chrono::high_resolution_clock::now();
-        implementationFunc(mesh, evaluator);
+        implementationFunc(mesh, evaluator, discretizer);
         auto tEnd = chrono::high_resolution_clock::now();
 
         auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart);
@@ -149,9 +150,10 @@ struct SmoothBenchmarkStats
     double totalSeconds;
 };
 
-OptimizationPlot AbstractSmoother::benchmark(
+void AbstractSmoother::benchmark(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         const map<string, bool>& activeImpls,
         int minIteration,
         double moveFactor,
@@ -161,12 +163,11 @@ OptimizationPlot AbstractSmoother::benchmark(
     _minIteration = minIteration;
     _moveFactor = moveFactor;
     _gainThreshold = gainThreshold;
-    initializeProgram(mesh, evaluator);
+    initializeProgram(mesh, evaluator, discretizer);
 
-
-    printSmoothingParameters(
-        mesh, evaluator,
-        outPlot);
+    printSmoothingParameters(mesh, outPlot);
+    // TODO print evaluator parameters
+    // TODO print discretizer parameters
 
     double initialMinQuality = 0.0;
     double initialQualityMean = 0.0;
@@ -211,7 +212,7 @@ OptimizationPlot AbstractSmoother::benchmark(
             _currentImplementation = OptimizationImpl();
             _currentImplementation.name = impl;
 
-            implementationFunc(mesh, evaluator);
+            implementationFunc(mesh, evaluator, discretizer);
 
             outPlot.addImplementation(_currentImplementation);
 
@@ -295,6 +296,4 @@ OptimizationPlot AbstractSmoother::benchmark(
         + gainString + "\t = "
         + normGainString,
        "AbstractSmoother"));
-
-    return outPlot;
 }

@@ -14,8 +14,12 @@ public:
             const Mesh& mesh,
             const glm::ivec3& gridSize) override;
 
-    virtual Metric metricAt(
+    virtual Metric metric(
             const glm::dvec3& position) const override;
+
+    virtual double distance(
+            const glm::dvec3& a,
+            const glm::dvec3& b) const override;
 
 
     virtual void installPlugIn(

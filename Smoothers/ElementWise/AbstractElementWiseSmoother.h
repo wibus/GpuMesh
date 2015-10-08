@@ -18,26 +18,25 @@ public:
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) override;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) override;
 
     virtual void smoothMeshThread(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) override;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) override;
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) override;
-
-    virtual void printSmoothingParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationPlot& plot) const override;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) override;
 
 
 protected:
     virtual void initializeProgram(
             Mesh& mesh,
-            AbstractEvaluator& evaluator) override;
+            AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer) override;
 
     virtual void setElementProgramUniforms(
             const Mesh& mesh,
@@ -47,26 +46,34 @@ protected:
             const Mesh& mesh,
             cellar::GlProgram& program);
 
+    virtual void printSmoothingParameters(
+            const Mesh& mesh,
+            OptimizationPlot& plot) const override;
+
     virtual void updateVertexPositions(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             const std::vector<uint>& vIds);
 
     virtual void smoothTets(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             size_t first,
             size_t last) = 0;
 
     virtual void smoothPris(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             size_t first,
             size_t last) = 0;
 
     virtual void smoothHexs(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             size_t first,
             size_t last) = 0;
 

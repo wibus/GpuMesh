@@ -34,6 +34,9 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
             this, &EvaluateTab::discretizationTypeChanged);
 
+    connect(_ui->enableAnisotropyCheck, &QCheckBox::toggled,
+            this, &EvaluateTab::enableAnisotropy);
+
     _character->useDiscretizationSize(glm::ivec3(
         _ui->discretizetionGridXSpin->value(),
         _ui->discretizetionGridYSpin->value(),
@@ -83,6 +86,15 @@ void EvaluateTab::benchmarkImplementations()
     _character->benchmarkEvaluator(
         _ui->shapeMeasureTypeMenu->currentText().toStdString(),
         _cycleCounts);
+}
+
+void EvaluateTab::enableAnisotropy(bool enabled)
+{
+    _ui->discretizationGroup->setEnabled(enabled);
+    if(!enabled)
+    {
+        _ui->discretizationDisplayCheck->setChecked(false);
+    }
 }
 
 void EvaluateTab::discretizationTypeChanged(const QString& type)

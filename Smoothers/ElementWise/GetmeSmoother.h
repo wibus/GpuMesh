@@ -13,26 +13,40 @@ public:
     virtual ~GetmeSmoother();
 
 protected:
-    virtual void smoothTets(Mesh& mesh,
+
+    virtual void setElementProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program);
+
+    virtual void setVertexProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program);
+
+    virtual void printSmoothingParameters(
+            const Mesh& mesh,
+            OptimizationPlot& plot) const override;
+
+
+    virtual void smoothTets(
+            Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             size_t first,
             size_t last) override;
 
-    virtual void smoothPris(Mesh& mesh,
+    virtual void smoothPris(
+            Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             size_t first,
             size_t last) override;
 
     virtual void smoothHexs(
             Mesh& mesh,
             AbstractEvaluator& evaluator,
+            const AbstractDiscretizer& discretizer,
             size_t first,
             size_t last) override;
-
-    virtual void printSmoothingParameters(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            OptimizationPlot& plot) const override;
 
 
 private:

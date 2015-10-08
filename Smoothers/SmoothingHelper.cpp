@@ -2,6 +2,7 @@
 
 #include "DataStructures/Mesh.h"
 #include "Evaluators/AbstractEvaluator.h"
+#include "Discretizers/AbstractDiscretizer.h"
 
 using namespace std;
 
@@ -46,8 +47,30 @@ double SmoothingHelper::computeLocalElementSize(
     return totalSize / neigVertCount;
 }
 
+
+glm::dvec3 SmoothingHelper::computeSpringForce(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3& pi,
+        const glm::dvec3& pj)
+{
+    if(pi == pj)
+        return glm::dvec3();
+
+    double d = discretizer.distance(pi, pj);
+    glm::dvec3 u = (pi - pj) / d;
+
+    double d2 = d * d;
+    double d4 = d2 * d2;
+
+    //double f = (1 - d4) * glm::exp(-d4);
+    double f = (1-d2)*glm::exp(-d2/4.0)/2.0;
+
+    return f * u;
+}
+
 glm::dvec3 SmoothingHelper::computePatchCenter(
         const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
         size_t vId)
 {
     const std::vector<MeshVert>& verts = mesh.verts;

@@ -18,9 +18,19 @@ SpringLaplaceSmoother::~SpringLaplaceSmoother()
 
 }
 
+void SpringLaplaceSmoother::printSmoothingParameters(
+        const Mesh& mesh,
+        OptimizationPlot& plot) const
+{
+    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
+    plot.addSmoothingProperty("Method Name", "Spring Laplace");
+    plot.addSmoothingProperty("Move Factor", to_string(_moveFactor));
+}
+
 void SpringLaplaceSmoother::smoothVertices(
         Mesh& mesh,
         AbstractEvaluator& evaluator,
+        const AbstractDiscretizer& discretizer,
         const std::vector<uint>& vIds)
 {
     std::vector<MeshVert>& verts = mesh.verts;
@@ -36,7 +46,7 @@ void SpringLaplaceSmoother::smoothVertices(
 
         glm::dvec3 patchCenter =
             SmoothingHelper::computePatchCenter(
-                mesh, vId);
+                mesh, discretizer, vId);
 
         glm::dvec3& pos = verts[vId].p;
         pos = glm::mix(pos, patchCenter, _moveFactor);
@@ -47,14 +57,4 @@ void SpringLaplaceSmoother::smoothVertices(
             pos = (*topo.snapToBoundary)(pos);
         }
     }
-}
-
-void SpringLaplaceSmoother::printSmoothingParameters(
-        const Mesh& mesh,
-        const AbstractEvaluator& evaluator,
-        OptimizationPlot& plot) const
-{
-    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, evaluator, plot);
-    plot.addSmoothingProperty("Method Name", "Spring Laplace");
-    plot.addSmoothingProperty("Move Factor", to_string(_moveFactor));
 }

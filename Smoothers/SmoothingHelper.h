@@ -10,6 +10,7 @@ class Mesh;
 struct MeshTopo;
 
 class AbstractEvaluator;
+class AbstractDiscretizer;
 
 
 class SmoothingHelper
@@ -28,8 +29,13 @@ public:
             const Mesh& mesh,
             size_t vId);
 
+    static glm::dvec3 computeSpringForce(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3& pi,
+            const glm::dvec3& pj);
     static glm::dvec3 computePatchCenter(
             const Mesh& mesh,
+            const AbstractDiscretizer& discretizer,
             size_t vId);
 
     static void accumulatePatchQuality(
