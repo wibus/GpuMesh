@@ -4,7 +4,7 @@ using namespace glm;
 
 
 MeanRatioEvaluator::MeanRatioEvaluator() :
-    AbstractEvaluator(":/shaders/compute/Quality/MeanRatio.glsl")
+    AbstractEvaluator(":/shaders/compute/Evaluating/MeanRatio.glsl")
 {
 }
 

@@ -34,7 +34,8 @@ struct KdNode
 };
 
 
-KdTreeDiscretizer::KdTreeDiscretizer()
+KdTreeDiscretizer::KdTreeDiscretizer() :
+    AbstractDiscretizer("Kd-Tree", "")
 {
 }
 
@@ -42,7 +43,26 @@ KdTreeDiscretizer::~KdTreeDiscretizer()
 {
 }
 
-void KdTreeDiscretizer::discretize(const Mesh& mesh, const glm::ivec3& gridSize)
+bool KdTreeDiscretizer::isMetricWise() const
+{
+    return true;
+}
+
+void KdTreeDiscretizer::installPlugIn(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+    AbstractDiscretizer::installPlugIn(mesh, program);
+}
+
+void KdTreeDiscretizer::uploadUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+    AbstractDiscretizer::uploadUniforms(mesh, program);
+}
+
+void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
 {
     _debugMesh.reset();
     if(mesh.verts.empty())
@@ -51,7 +71,7 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, const glm::ivec3& gridSize)
     }
 
     size_t vertCount = mesh.verts.size();
-    int height = glm::min((int)std::log2(vertCount), gridSize.x);
+    int height = (int)std::log2(vertCount/density);
 
     getLog().postMessage(new Message('I', false,
         "Discretizing mesh metric in a Kd-Tree",
@@ -82,6 +102,37 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, const glm::ivec3& gridSize)
           xSort, ySort, zSort);
 }
 
+double KdTreeDiscretizer::distance(
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    glm::dvec3 m = (a + b) / 2.0;
+    return glm::length((b - a) * metric(m));
+}
+
+void KdTreeDiscretizer::releaseDebugMesh()
+{
+    _debugMesh.reset();
+}
+
+const Mesh& KdTreeDiscretizer::debugMesh()
+{
+    if(_debugMesh.get() == nullptr)
+    {
+        _debugMesh.reset(new Mesh());
+
+        if(_rootNode.get() != nullptr)
+        {
+            meshTree(_rootNode.get(), *_debugMesh);
+
+            _debugMesh->modelName = "Kd-Tree Discretization Mesh";
+            _debugMesh->compileTopology();
+        }
+    }
+
+    return *_debugMesh;
+}
+
 Metric KdTreeDiscretizer::metric(
         const glm::dvec3& position) const
 {
@@ -103,51 +154,6 @@ Metric KdTreeDiscretizer::metric(
         return Metric(1.0);
     else
         return parent->metric;
-}
-
-double KdTreeDiscretizer::distance(
-        const glm::dvec3& a,
-        const glm::dvec3& b) const
-{
-    glm::dvec3 m = (a + b) / 2.0;
-    return glm::length((b - a) * metric(m));
-}
-
-void KdTreeDiscretizer::installPlugIn(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-
-}
-
-void KdTreeDiscretizer::uploadPlugInUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-
-}
-
-void KdTreeDiscretizer::releaseDebugMesh()
-{
-    _debugMesh.reset();
-}
-
-std::shared_ptr<Mesh> KdTreeDiscretizer::debugMesh()
-{
-    if(_debugMesh.get() == nullptr)
-    {
-        _debugMesh.reset(new Mesh());
-
-        if(_rootNode.get() != nullptr)
-        {
-            meshTree(_rootNode.get(), *_debugMesh);
-
-            _debugMesh->modelName = "Kd-Tree Discretization Mesh";
-            _debugMesh->compileTopology();
-        }
-    }
-
-    return _debugMesh;
 }
 
 void KdTreeDiscretizer::build(

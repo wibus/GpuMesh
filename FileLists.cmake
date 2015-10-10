@@ -4,6 +4,7 @@
 SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.h
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.h
+    ${GpuMesh_SRC_DIR}/DataStructures/MeshCrew.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptionMap.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.h
     ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedron.h
@@ -25,6 +26,11 @@ SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/MeanRatioEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
+
+SET(GpuMesh_MEASURERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Measurers/AbstractMeasurer.h
+    ${GpuMesh_SRC_DIR}/Measurers/MetricFreeMeasurer.h
+    ${GpuMesh_SRC_DIR}/Measurers/MetricWiseMeasurer.h)
 
 SET(GpuMesh_MESHERS_HEADERS
     ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.h
@@ -60,7 +66,6 @@ SET(GpuMesh_ELEMENTWISE_HEADERS
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_VERTEXWISE_HEADERS}
     ${GpuMesh_ELEMENTWISE_HEADERS}
-    ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.h
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h)
 
 SET(GpuMesh_DIALOGS_HEADERS
@@ -96,6 +101,7 @@ SET(GpuMesh_HEADERS
 SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/MeshCrew.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
@@ -114,6 +120,11 @@ SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/MeanRatioEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
+
+SET(GpuMesh_MEASURERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Measurers/AbstractMeasurer.cpp
+    ${GpuMesh_SRC_DIR}/Measurers/MetricFreeMeasurer.cpp
+    ${GpuMesh_SRC_DIR}/Measurers/MetricWiseMeasurer.cpp)
 
 SET(GpuMesh_MESHERS_SOURCES
     ${GpuMesh_SRC_DIR}/Meshers/AbstractMesher.cpp
@@ -150,7 +161,6 @@ SET(GpuMesh_ELEMENTWISE_SOURCES
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_VERTEXWISE_SOURCES}
     ${GpuMesh_ELEMENTWISE_SOURCES}
-    ${GpuMesh_SRC_DIR}/Smoothers/SmoothingHelper.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp)
 
 SET(GpuMesh_UITABS_SOURCES
@@ -172,6 +182,7 @@ SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
     ${GpuMesh_DISCRETIZERS_SOURCES}
     ${GpuMesh_EVALUATORS_SOURCES}
+    ${GpuMesh_MEASURERS_SOURCES}
     ${GpuMesh_MESHERS_SOURCES}
     ${GpuMesh_RENDERERS_SOURCES}
     ${GpuMesh_SERIALIZATION_SOURCES}
@@ -181,6 +192,7 @@ SET(GpuMesh_SOURCES
     ${GpuMesh_SRC_DIR}/main.cpp)
 
 
+
 ## UI
 SET(GpuMesh_UI_FILES
     ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.ui
@@ -188,14 +200,17 @@ SET(GpuMesh_UI_FILES
 QT5_WRAP_UI(GpuMesh_UI_SRCS ${GpuMesh_UI_FILES})
 
 
+
 ## Resrouces ##
 SET(GpuMesh_SHADER_DIR
     ${GpuMesh_SRC_DIR}/resources/shaders)
+
 
 # Genereic shaders
 SET(GpuMesh_GENERIC_SHADERS
     ${GpuMesh_SHADER_DIR}/generic/QualityLut.glsl
     ${GpuMesh_SHADER_DIR}/generic/Lighting.glsl)
+
 
 # Vertex shaders
 SET(GpuMesh_VERTEX_SHADERS
@@ -207,6 +222,7 @@ SET(GpuMesh_VERTEX_SHADERS
     ${GpuMesh_SHADER_DIR}/vertex/Wireframe.vert
     ${GpuMesh_SHADER_DIR}/vertex/Bloom.vert
     ${GpuMesh_SHADER_DIR}/vertex/Filter.vert)
+
 
 # Fragment shaders
 SET(GpuMesh_FRAGMENT_SHADERS
@@ -223,6 +239,7 @@ SET(GpuMesh_FRAGMENT_SHADERS
     ${GpuMesh_SHADER_DIR}/fragment/Brush.frag
     ${GpuMesh_SHADER_DIR}/fragment/Grain.frag)
 
+
 # Compute shaders
 SET(GpuMesh_BOUNDARY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Boundary/None.glsl
@@ -230,19 +247,18 @@ SET(GpuMesh_BOUNDARY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Boundary/Sphere.glsl
     ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
 
-SET(GpuMesh_MEASURING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/TetrahedraEvaluation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/PrismsEvaluation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/HexahedraEvaluation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/SimultaneousEvaluation.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/StatisticsReduction.glsl)
+SET(GpuMesh_EVALUATING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/Evaluate.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/EvaluationInterface.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/InsphereEdge.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/MeanRatio.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/SolidAngle.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/VolumeEdge.glsl)
 
-SET(GpuMesh_QUALITY_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Quality/QualityInterface.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Quality/InsphereEdge.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Quality/MeanRatio.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Quality/SolidAngle.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Quality/VolumeEdge.glsl)
+SET(GpuMesh_MEASURING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/Framework.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/MetricFree.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/MetricWise.glsl)
 
 SET(GpuMesh_RENDERING_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Rendering/QualityGradient.glsl)
@@ -262,16 +278,16 @@ SET(GpuMesh_VERTEXWISE_SHADERS
 SET(GpuMesh_SMOOTHING_SHADERS
     ${GpuMesh_ELEMENTWISE_SHADERS}
     ${GpuMesh_VERTEXWISE_SHADERS}
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/SmoothingHelper.glsl)
-
+    ${GpuMesh_SHADER_DIR}/compute/Smoothing/Utils.glsl)
 
 SET(GpuMesh_COMPUTE_SHADERS
     ${GpuMesh_BOUNDARY_SHADERS}
     ${GpuMesh_MEASURING_SHADERS}
+    ${GpuMesh_EVALUATING_SHADERS}
     ${GpuMesh_RENDERING_SHADERS}
-    ${GpuMesh_QUALITY_SHADERS}
     ${GpuMesh_SMOOTHING_SHADERS}
     ${GpuMesh_SHADER_DIR}/compute/Mesh.glsl)
+
 
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES

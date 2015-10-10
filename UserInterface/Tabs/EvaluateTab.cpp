@@ -34,23 +34,15 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
             this, &EvaluateTab::discretizationTypeChanged);
 
+
     connect(_ui->enableAnisotropyCheck, &QCheckBox::toggled,
             this, &EvaluateTab::enableAnisotropy);
 
-    _character->useDiscretizationSize(glm::ivec3(
-        _ui->discretizetionGridXSpin->value(),
-        _ui->discretizetionGridYSpin->value(),
-        _ui->discretizetionGridZSpin->value()));
-    connect(_ui->discretizetionGridXSpin,
+    _character->useDiscretizationDensity(
+        _ui->discretizetionDensitySpin->value());
+    connect(_ui->discretizetionDensitySpin,
             static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            this, &EvaluateTab::discretizationSizeChanged);
-    connect(_ui->discretizetionGridYSpin,
-            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            this, &EvaluateTab::discretizationSizeChanged);
-    connect(_ui->discretizetionGridZSpin,
-            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            this, &EvaluateTab::discretizationSizeChanged);
-
+            this, &EvaluateTab::discretizationDensityChanged);
 
     _character->displayDiscretizationMesh(
         _ui->discretizationDisplayCheck->isChecked());
@@ -91,9 +83,13 @@ void EvaluateTab::benchmarkImplementations()
 void EvaluateTab::enableAnisotropy(bool enabled)
 {
     _ui->discretizationGroup->setEnabled(enabled);
-    if(!enabled)
+    if(enabled)
     {
-        _ui->discretizationDisplayCheck->setChecked(false);
+
+    }
+    else
+    {
+        _character->disableAnisotropy();
     }
 }
 
@@ -102,12 +98,10 @@ void EvaluateTab::discretizationTypeChanged(const QString& type)
     _character->useDiscretizer(type.toStdString());
 }
 
-void EvaluateTab::discretizationSizeChanged(int unused)
+void EvaluateTab::discretizationDensityChanged(int unused)
 {
-    _character->useDiscretizationSize(glm::ivec3(
-        _ui->discretizetionGridXSpin->value(),
-        _ui->discretizetionGridYSpin->value(),
-        _ui->discretizetionGridZSpin->value()));
+    _character->useDiscretizationDensity(
+        _ui->discretizetionDensitySpin->value());
 }
 
 void EvaluateTab::displayDicretizationToggled(bool display)

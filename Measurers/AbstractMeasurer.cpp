@@ -1,4 +1,4 @@
-#include "SmoothingHelper.h"
+#include "AbstractMeasurer.h"
 
 #include "DataStructures/Mesh.h"
 #include "Evaluators/AbstractEvaluator.h"
@@ -7,29 +7,51 @@
 using namespace std;
 
 
-std::string SmoothingHelper::shaderName()
+AbstractMeasurer::AbstractMeasurer(
+        const string& name,
+        const string& shader) :
+    _measureName(name),
+    _measureShader(shader),
+    _frameworkShader(":/shaders/compute/Measuring/Framework.glsl")
 {
-    return ":/shaders/compute/Smoothing/SmoothingHelper.glsl";
+
 }
 
-bool SmoothingHelper::isSmoothable(
-            const Mesh& mesh,
-            size_t vId)
+AbstractMeasurer::~AbstractMeasurer()
 {
-    const MeshTopo& topo = mesh.topos[vId];
-    if(topo.isFixed)
-        return false;
 
-    size_t neigElemCount = topo.neighborElems.size();
-    if(neigElemCount == 0)
-        return false;
-
-    return true;
 }
 
-double SmoothingHelper::computeLocalElementSize(
+std::string AbstractMeasurer::measureShader() const
+{
+    return _measureShader;
+}
+
+void AbstractMeasurer::installPlugIn(
         const Mesh& mesh,
-        size_t vId)
+        cellar::GlProgram& program) const
+{
+    program.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        _frameworkShader.c_str()
+    });
+
+    program.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        _measureShader.c_str()
+    });
+}
+
+void AbstractMeasurer::uploadUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
+}
+
+double AbstractMeasurer::computeLocalElementSize(
+        const Mesh& mesh,
+        size_t vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;
 
@@ -47,31 +69,10 @@ double SmoothingHelper::computeLocalElementSize(
     return totalSize / neigVertCount;
 }
 
-
-glm::dvec3 SmoothingHelper::computeSpringForce(
-        const AbstractDiscretizer& discretizer,
-        const glm::dvec3& pi,
-        const glm::dvec3& pj)
-{
-    if(pi == pj)
-        return glm::dvec3();
-
-    double d = discretizer.distance(pi, pj);
-    glm::dvec3 u = (pi - pj) / d;
-
-    double d2 = d * d;
-    double d4 = d2 * d2;
-
-    //double f = (1 - d4) * glm::exp(-d4);
-    double f = (1-d2)*glm::exp(-d2/4.0)/2.0;
-
-    return f * u;
-}
-
-glm::dvec3 SmoothingHelper::computePatchCenter(
+glm::dvec3 AbstractMeasurer::computeVertexEquilibrium(
         const Mesh& mesh,
         const AbstractDiscretizer& discretizer,
-        size_t vId)
+        size_t vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;
     const std::vector<MeshTet>& tets = mesh.tets;
@@ -115,28 +116,10 @@ glm::dvec3 SmoothingHelper::computePatchCenter(
     return patchCenter;
 }
 
-inline void SmoothingHelper::accumulatePatchQuality(
-        double& patchQuality,
-        double& patchWeight,
-        double elemQuality)
-{
-    patchQuality = glm::min(
-        glm::min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
-        glm::min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
-                 patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
-}
-
-inline double SmoothingHelper::finalizePatchQuality(
-        double patchQuality,
-        double patchWeight)
-{
-    return patchQuality;
-}
-
-double SmoothingHelper::computePatchQuality(
+double AbstractMeasurer::computePatchQuality(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
-            size_t vId)
+            size_t vId) const
 {
     const std::vector<MeshTet>& tets = mesh.tets;
     const std::vector<MeshPri>& pris = mesh.pris;
@@ -175,4 +158,42 @@ double SmoothingHelper::computePatchQuality(
     }
 
     return finalizePatchQuality(patchQuality, patchWeight);
+}
+
+glm::dvec3 AbstractMeasurer::computeSpringForce(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3& pi,
+        const glm::dvec3& pj) const
+{
+    if(pi == pj)
+        return glm::dvec3();
+
+    double d = discretizer.distance(pi, pj);
+    glm::dvec3 u = (pi - pj) / d;
+
+    double d2 = d * d;
+    double d4 = d2 * d2;
+
+    //double f = (1 - d4) * glm::exp(-d4);
+    double f = (1-d2)*glm::exp(-d2/4.0)/2.0;
+
+    return f * u;
+}
+
+void AbstractMeasurer::accumulatePatchQuality(
+        double& patchQuality,
+        double& patchWeight,
+        double elemQuality) const
+{
+    patchQuality = glm::min(
+        glm::min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
+        glm::min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
+                 patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
+}
+
+double AbstractMeasurer::finalizePatchQuality(
+        double patchQuality,
+        double patchWeight) const
+{
+    return patchQuality;
 }

@@ -18,25 +18,21 @@ public:
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
     virtual void smoothMeshThread(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
 
 protected:
     virtual void initializeProgram(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
     virtual void setElementProgramUniforms(
             const Mesh& mesh,
@@ -52,28 +48,24 @@ protected:
 
     virtual void updateVertexPositions(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             const std::vector<uint>& vIds);
 
     virtual void smoothTets(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             size_t first,
             size_t last) = 0;
 
     virtual void smoothPris(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             size_t first,
             size_t last) = 0;
 
     virtual void smoothHexs(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             size_t first,
             size_t last) = 0;
 
@@ -82,7 +74,9 @@ protected:
 
     bool _initialized;
     std::string _modelBoundsShader;
-    std::string _shapeMeasureShader;
+    std::string _discretizationShader;
+    std::string _evaluationShader;
+    std::string _measureShader;
     std::vector<std::string> _smoothShaders;
     cellar::GlProgram _elemSmoothProgram;
     cellar::GlProgram _vertUpdateProgram;

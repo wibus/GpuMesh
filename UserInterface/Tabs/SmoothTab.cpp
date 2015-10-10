@@ -69,7 +69,6 @@ void SmoothTab::smoothMesh()
 {
     _character->smoothMesh(
         _ui->smoothingTechniqueMenu->currentText().toStdString(),
-        _ui->shapeMeasureTypeMenu->currentText().toStdString(),
         _ui->smoothingImplementationMenu->currentText().toStdString(),
         _ui->smoothMinIterationSpin->value(),
         _ui->smoothMoveFactorSpin->value(),
@@ -89,7 +88,6 @@ void SmoothTab::benchmarkImplementations()
     OptimizationPlot plot =
         _character->benchmarkSmoother(
             _ui->smoothingTechniqueMenu->currentText().toStdString(),
-            _ui->shapeMeasureTypeMenu->currentText().toStdString(),
             _activeImpls,
             _ui->smoothMinIterationSpin->value(),
             _ui->smoothMoveFactorSpin->value(),

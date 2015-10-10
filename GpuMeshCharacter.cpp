@@ -27,6 +27,8 @@
 #include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/SolidAngleEvaluator.h"
 #include "Evaluators/VolumeEdgeEvaluator.h"
+#include "Measurers/MetricFreeMeasurer.h"
+#include "Measurers/MetricWiseMeasurer.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
 #include "Meshers/DebugMesher.h"
@@ -48,7 +50,8 @@ using namespace prop2;
 using namespace scaena;
 
 
-
+const std::string METRIC_FREE = "Metric Free";
+const std::string METRIC_WISE = "Metric Wise";
 const glm::vec3 GpuMeshCharacter::nullVec = glm::vec3(0, 0, 0);
 const glm::vec3 GpuMeshCharacter::upVec = glm::vec3(0, 0, 1);
 
@@ -70,12 +73,14 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _hexVisibility(true),
     _qualityCullingMin(-INFINITY),
     _qualityCullingMax(INFINITY),
-    _discretizationSize(1, 1, 1),
+    _discretizationDensity(2),
     _displayDiscretizationMesh(false),
     _mesh(new GpuMesh()),
+    _meshCrew(new MeshCrew()),
     _availableMeshers("Available Meshers"),
     _availableDiscretizers("Available Discretizers"),
     _availableEvaluators("Available Evaluators"),
+    _availableMeasurers("Available Measurers"),
     _availableSmoothers("Available Smoothers"),
     _availableRenderers("Available Renderers"),
     _availableCameraMen("Available Camera Men"),
@@ -103,6 +108,12 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Mean Ratio"),    shared_ptr<AbstractEvaluator>(new MeanRatioEvaluator())},
         {string("Solid Angle"),   shared_ptr<AbstractEvaluator>(new SolidAngleEvaluator())},
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
+    });
+
+    _availableMeasurers.setDefault(METRIC_WISE);
+    _availableMeasurers.setContent({
+        {METRIC_FREE, shared_ptr<AbstractMeasurer>(new MetricFreeMeasurer())},
+        {METRIC_WISE, shared_ptr<AbstractMeasurer>(new MetricWiseMeasurer())}
     });
 
     _availableSmoothers.setDefault("Spring Laplace");
@@ -210,6 +221,7 @@ void GpuMeshCharacter::enterStage()
         std::shared_ptr<AbstractEvaluator> evaluator;
         if(_availableEvaluators.select(evalName, evaluator))
         {
+            evaluator->initialize(*_mesh);
             evaluator->assessMeasureValidy();
         }
     }
@@ -329,7 +341,7 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
 
     if(_displayDiscretizationMesh)
-        _renderer->display(*_discretizer->debugMesh());
+        _renderer->display(_meshCrew->discretizer().debugMesh());
     else
         _renderer->display(*_mesh);
 }
@@ -427,7 +439,7 @@ void GpuMeshCharacter::generateMesh(
     std::shared_ptr<AbstractMesher> mesher;
     if(_availableMeshers.select(mesherName, mesher))
     {
-        mesher->generateMesh( *_mesh, modelName, vertexCount);
+        mesher->generateMesh(*_mesh, modelName, vertexCount);
 
         _mesh->modelName = modelName;
         _mesh->compileTopology();
@@ -460,7 +472,7 @@ void GpuMeshCharacter::saveMesh(
     shared_ptr<AbstractSerializer> serializer;
     if(_availableSerializers.select(ext, serializer))
     {
-        if(!serializer->serialize(fileName, *_evaluator, *_mesh))
+        if(!serializer->serialize(fileName, _meshCrew->evaluator(), *_mesh))
         {
             getLog().postMessage(new Message('E', false,
                 "An error occured while saving the mesh.", "GpuMeshCharacter"));
@@ -534,7 +546,6 @@ void GpuMeshCharacter::benchmarkEvaluator(
 
 void GpuMeshCharacter::smoothMesh(
         const std::string& smootherName,
-        const std::string& evaluatorName,
         const std::string& implementationName,
         size_t minIterationCount,
         double moveFactor,
@@ -542,41 +553,33 @@ void GpuMeshCharacter::smoothMesh(
 {
     printStep("Mesh Smoothing "\
               ": smoother=" + smootherName +
-              ", quality measure=" + evaluatorName +
               ", implementation=" + implementationName);
 
     std::shared_ptr<AbstractSmoother> smoother;
     if(_availableSmoothers.select(smootherName, smoother))
     {
-        std::shared_ptr<AbstractEvaluator> evaluator;
-        if(_availableEvaluators.select(evaluatorName, evaluator))
-        {
-            smoother->smoothMesh(
-                *_mesh,
-                *evaluator,
-                *_discretizer,
-                implementationName,
-                minIterationCount,
-                moveFactor,
-                gainThreshold);
+        smoother->smoothMesh(
+            *_mesh,
+            *_meshCrew,
+            implementationName,
+            minIterationCount,
+            moveFactor,
+            gainThreshold);
 
-            updateMeshMeasures();
-            updateDiscretization();
-        }
+        updateMeshMeasures();
+        updateDiscretization();
     }
 }
 
 OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
         const std::string& smootherName,
-        const string& evaluatorName,
         const map<string, bool>& activeImpls,
         size_t minIterationCount,
         double moveFactor,
         double gainThreshold)
 {
     printStep("Smoothing benchmark "\
-              ": smoother=" + smootherName +
-              ", quality measure=" + evaluatorName);
+              ": smoother=" + smootherName);
 
     OptimizationPlot plot;
     _mesh->printPropperties(plot);
@@ -586,25 +589,26 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
     std::shared_ptr<AbstractSmoother> smoother;
     if(_availableSmoothers.select(smootherName, smoother))
     {
-        std::shared_ptr<AbstractEvaluator> evaluator;
-        if(_availableEvaluators.select(evaluatorName, evaluator))
-        {
-            smoother->benchmark(
-                *_mesh,
-                *evaluator,
-                *_discretizer,
-                activeImpls,
-                minIterationCount,
-                moveFactor,
-                gainThreshold,
-                plot);
+        smoother->benchmark(
+            *_mesh,
+            *_meshCrew,
+            activeImpls,
+            minIterationCount,
+            moveFactor,
+            gainThreshold,
+            plot);
 
-            updateMeshMeasures();
-            updateDiscretization();
-        }
+        updateMeshMeasures();
+        updateDiscretization();
     }
 
     return plot;
+}
+
+void GpuMeshCharacter::disableAnisotropy()
+{
+    displayDiscretizationMesh(false);
+    useDiscretizer("Dummy");
 }
 
 void GpuMeshCharacter::displayDiscretizationMesh(bool display)
@@ -614,27 +618,48 @@ void GpuMeshCharacter::displayDiscretizationMesh(bool display)
         _renderer->notifyMeshUpdate();
 
     if(!_displayDiscretizationMesh)
-        _discretizer->releaseDebugMesh();
+        _meshCrew->discretizer().releaseDebugMesh();
 }
 
-void GpuMeshCharacter::useDiscretizationSize(const glm::ivec3& gridSize)
+void GpuMeshCharacter::useDiscretizationDensity(int density)
 {
-    _discretizationSize = gridSize;
+    _discretizationDensity = density;
     updateDiscretization();
 }
 
 void GpuMeshCharacter::useDiscretizer(const std::string& discretizerName)
 {
-    if(_availableDiscretizers.select(discretizerName, _discretizer))
+    std::shared_ptr<AbstractDiscretizer> discretizer;
+    if(_availableDiscretizers.select(discretizerName, discretizer))
     {
-        updateDiscretization();
+        std::string measurerName;
+        if(discretizer->isMetricWise())
+            measurerName = METRIC_WISE;
+        else
+            measurerName = METRIC_FREE;
+
+        std::shared_ptr<AbstractMeasurer> measurer;
+        if(_availableMeasurers.select(measurerName, measurer))
+        {
+            _meshCrew->setMeasurer(measurer);
+            _meshCrew->setDiscretizer(discretizer);
+            updateDiscretization();
+        }
+        else
+        {
+            getLog().postMessage(new Message('W', false,
+                "Discretizer did not change since its associated measurer was not found",
+                "GpuMeshCharacter"));
+        }
     }
 }
 
 void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)
 {
-    if(_availableEvaluators.select(evaluatorName, _evaluator))
+    std::shared_ptr<AbstractEvaluator> evaluator;
+    if(_availableEvaluators.select(evaluatorName, evaluator))
     {
+        _meshCrew->setEvaluator(evaluator);
         updateMeshMeasures();
     }
 }
@@ -716,21 +741,21 @@ void GpuMeshCharacter::updateMeshMeasures()
         for(size_t e=0; e < tetCount; ++e)
         {
             MeshTet& elem = _mesh->tets[e];
-            elem.value = _evaluator->tetQuality(*_mesh, elem);
+            elem.value = _meshCrew->evaluator().tetQuality(*_mesh, elem);
         }
 
         size_t priCount = _mesh->pris.size();
         for(size_t e=0; e < priCount; ++e)
         {
             MeshPri& elem = _mesh->pris[e];
-            elem.value = _evaluator->priQuality(*_mesh, elem);
+            elem.value = _meshCrew->evaluator().priQuality(*_mesh, elem);
         }
 
         size_t hexCount = _mesh->hexs.size();
         for(size_t e=0; e < hexCount; ++e)
         {
             MeshHex& elem = _mesh->hexs[e];
-            elem.value = _evaluator->hexQuality(*_mesh, elem);
+            elem.value = _meshCrew->evaluator().hexQuality(*_mesh, elem);
         }
 
         if(_renderer.get() != nullptr)
@@ -742,7 +767,7 @@ void GpuMeshCharacter::updateDiscretization()
 {
     if(_isEntered)
     {
-        _discretizer->discretize(*_mesh, _discretizationSize);
+        _meshCrew->discretizer().discretize(*_mesh, _discretizationDensity);
 
         if(_displayDiscretizationMesh)
             if(_renderer.get() != nullptr)

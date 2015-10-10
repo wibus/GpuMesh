@@ -9,8 +9,7 @@
 #include "DataStructures/OptionMap.h"
 #include "DataStructures/OptimizationPlot.h"
 
-class AbstractEvaluator;
-class AbstractDiscretizer;
+class MeshCrew;
 
 
 struct IndependentDispatch
@@ -37,8 +36,7 @@ public:
 
     virtual void smoothMesh(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             const std::string& implementationName,
             int minIteration,
             double moveFactor,
@@ -46,23 +44,19 @@ public:
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) = 0;
+            const MeshCrew& crew) = 0;
 
     virtual void smoothMeshThread(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) = 0;
+            const MeshCrew& crew) = 0;
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) = 0;
+            const MeshCrew& crew) = 0;
 
     virtual void benchmark(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             const std::map<std::string, bool>& activeImpls,
             int minIteration,
             double moveFactor,
@@ -73,8 +67,7 @@ public:
 protected:
     virtual void initializeProgram(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) = 0;
+            const MeshCrew& crew) = 0;
 
     virtual void printSmoothingParameters(
             const Mesh& mesh,
@@ -85,10 +78,18 @@ protected:
             size_t workgroupSize,
             std::vector<IndependentDispatch>& dispatches) const;
 
-    bool evaluateMeshQualitySerial(Mesh& mesh, AbstractEvaluator& evaluator);
-    bool evaluateMeshQualityThread(Mesh& mesh, AbstractEvaluator& evaluator);
-    bool evaluateMeshQualityGlsl(Mesh& mesh, AbstractEvaluator& evaluator);
-    bool evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, int impl);
+    virtual bool isSmoothable(
+            const Mesh& mesh,
+            size_t vId) const;
+
+    bool evaluateMeshQualitySerial(Mesh& mesh, const MeshCrew& crew);
+    bool evaluateMeshQualityThread(Mesh& mesh, const MeshCrew& crew);
+    bool evaluateMeshQualityGlsl(Mesh& mesh, const MeshCrew& crew);
+    bool evaluateMeshQuality(Mesh& mesh, const MeshCrew& crew, int impl);
+
+
+
+    std::string smoothingUtilsShader() const;
 
 
     int _minIteration;
@@ -100,10 +101,12 @@ protected:
     double _lastMinQuality;
 
 private:
+    std::string _smoothingUtilsShader;
+
     std::chrono::high_resolution_clock::time_point _implBeginTimeStamp;
     OptimizationImpl _currentImplementation;
 
-    typedef std::function<void(Mesh&, AbstractEvaluator&, const AbstractDiscretizer&)> ImplementationFunc;
+    typedef std::function<void(Mesh&, const MeshCrew&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;
 };
 

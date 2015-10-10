@@ -1,82 +1,15 @@
-// Independent group range
-uniform int GroupBase;
-uniform int GroupSize;
-
 // Element quality interface
 float tetQuality(in Tet tet);
 float priQuality(in Pri pri);
 float hexQuality(in Hex hex);
 
-uint getInvocationVertexId()
-{
-    // Default value is invalid
-    // See isSmoothableVertex()
-    uint vId = verts.length();
 
-    // Assign real index only if this
-    // invocation does not overflow
-    if(gl_GlobalInvocationID.x < GroupSize)
-        vId = groupMembers[GroupBase + gl_GlobalInvocationID.x];
-
-    return vId;
-}
-
-uint getInvocationTetId()
-{
-    return gl_GlobalInvocationID.x;
-}
-
-uint getInvocationPriId()
-{
-    return gl_GlobalInvocationID.x;
-}
-
-uint getInvocationHexId()
-{
-    return gl_GlobalInvocationID.x;
-}
+// Subroutine declarations
+void accumulatePatchQuality(inout float patchQuality, inout float patchWeight, in float elemQuality);
+float finalizePatchQuality(in float patchQuality, in float patchWeight);
 
 
-bool isSmoothableVertex(uint vId)
-{
-    if(vId >= verts.length())
-        return false;
-
-    Topo topo = topos[vId];
-    if(topo.type == TOPO_FIXED)
-        return false;
-
-    if(topo.neigElemCount == 0)
-        return false;
-
-    return true;
-}
-
-bool isSmoothableTet(uint eId)
-{
-    if(eId >= tets.length())
-        return false;
-
-    return true;
-}
-
-bool isSmoothablePri(uint eId)
-{
-    if(eId >= pris.length())
-        return false;
-
-    return true;
-}
-
-bool isSmoothableHex(uint eId)
-{
-    if(eId >= hexs.length())
-        return false;
-
-    return true;
-}
-
-
+// Measuring Framework
 float computeLocalElementSize(in uint vId)
 {
     vec3 pos = vec3(verts[vId].p);
@@ -92,7 +25,7 @@ float computeLocalElementSize(in uint vId)
     return totalSize / neigVertCount;
 }
 
-vec3 computePatchCenter(in uint vId)
+vec3 computeVertexEquilibrium(in uint vId)
 {
     Topo topo = topos[vId];
 
@@ -130,23 +63,6 @@ vec3 computePatchCenter(in uint vId)
     return patchCenter;
 }
 
-
-void accumulatePatchQuality(
-        inout float patchQuality,
-        inout float patchWeight,
-        in float elemQuality)
-{
-    patchQuality = min(
-        min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
-        min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
-            patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
-}
-
-float finalizePatchQuality(in float patchQuality, in float patchWeight)
-{
-    return patchQuality;
-}
-
 float computePatchQuality(in uint vId)
 {
     Topo topo = topos[vId];
@@ -180,4 +96,22 @@ float computePatchQuality(in uint vId)
     }
 
     return finalizePatchQuality(patchQuality, patchWeight);
+}
+
+
+// Subroutine definitions
+void accumulatePatchQuality(
+        inout float patchQuality,
+        inout float patchWeight,
+        in float elemQuality)
+{
+    patchQuality = min(
+        min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
+        min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
+            patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
+}
+
+float finalizePatchQuality(in float patchQuality, in float patchWeight)
+{
+    return patchQuality;
 }

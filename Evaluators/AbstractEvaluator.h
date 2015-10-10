@@ -13,6 +13,25 @@ public:
     AbstractEvaluator(const std::string& shapeMeasuresShader);
     virtual ~AbstractEvaluator();
 
+
+    virtual std::string evaluationShader() const;
+
+    virtual OptionMapDetails availableImplementations() const;
+
+
+    virtual void initialize(const Mesh& mesh);
+
+
+    // GLSL Plug-in interface
+    virtual void installPlugIn(
+            const Mesh& mesh,
+            cellar::GlProgram& program) const;
+
+    virtual void uploadUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program) const;
+
+
     virtual double tetVolume(const Mesh& mesh, const MeshTet& tet) const;
     virtual double tetVolume(const glm::dvec3 vp[]) const;
 
@@ -21,9 +40,6 @@ public:
 
     virtual double hexVolume(const Mesh& mesh, const MeshHex& hex) const;
     virtual double hexVolume(const glm::dvec3 vp[]) const;
-
-
-    virtual OptionMapDetails availableImplementations() const;
 
     virtual double tetQuality(const Mesh& mesh, const MeshTet& tet) const;
     virtual double tetQuality(const glm::dvec3 vp[]) const = 0;
@@ -34,51 +50,36 @@ public:
     virtual double hexQuality(const Mesh& mesh, const MeshHex& hex) const;
     virtual double hexQuality(const glm::dvec3 vp[]) const = 0;
 
+
     virtual bool assessMeasureValidy();
 
     virtual void evaluateMesh(
             const Mesh& mesh,
             double& minQuality,
             double& qualityMean,
-            const std::string& implementationName);
+            const std::string& implementationName) const;
 
     virtual void evaluateMeshQualitySerial(
             const Mesh& mesh,
             double& minQuality,
-            double& qualityMean);
+            double& qualityMean) const;
 
     virtual void evaluateMeshQualityThread(
             const Mesh& mesh,
             double& minQuality,
-            double& qualityMean);
+            double& qualityMean) const;
 
     virtual void evaluateMeshQualityGlsl(
             const Mesh& mesh,
             double& minQuality,
-            double& qualityMean);
+            double& qualityMean) const;
 
     virtual void benchmark(
             const Mesh& mesh,
             const std::map<std::string, int>& cycleCounts);
 
-    virtual std::string shapeMeasureShader() const;
-    virtual void installPlugIn(const Mesh& mesh, cellar::GlProgram& program) const;
-    virtual void uploadPlugInUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
-
 
 protected:
-    virtual void initializeProgram(const Mesh& mesh);
-
-
-    bool _initialized;
-    bool _computeSimultaneously;
-    std::string _shapeMeasuresShader;
-    cellar::GlProgram _simultaneousProgram;
-    cellar::GlProgram _tetProgram;
-    cellar::GlProgram _priProgram;
-    cellar::GlProgram _hexProgram;
-    GLuint _qualSsbo;
-
     static const size_t WORKGROUP_SIZE;
     static const size_t POLYHEDRON_TYPE_COUNT;
     static const size_t MAX_GROUP_PARTICIPANTS;
@@ -87,6 +88,10 @@ protected:
     static const double MAX_INTEGER_VALUE;
     static const double MIN_QUALITY_PRECISION_DENOM;
     static const double MAX_QUALITY_VALUE;
+
+    GLuint _qualSsbo;
+    std::string _evaluationShader;
+    cellar::GlProgram _evaluationProgram;
 
     typedef std::function<void(const Mesh&, double&, double&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;

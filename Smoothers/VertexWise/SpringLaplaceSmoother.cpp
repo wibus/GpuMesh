@@ -1,7 +1,8 @@
 #include "SpringLaplaceSmoother.h"
 
-#include "../SmoothingHelper.h"
+#include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
+#include "Measurers/AbstractMeasurer.h"
 
 using namespace std;
 
@@ -29,8 +30,7 @@ void SpringLaplaceSmoother::printSmoothingParameters(
 
 void SpringLaplaceSmoother::smoothVertices(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer,
+        const MeshCrew& crew,
         const std::vector<uint>& vIds)
 {
     std::vector<MeshVert>& verts = mesh.verts;
@@ -41,12 +41,12 @@ void SpringLaplaceSmoother::smoothVertices(
     {
         uint vId = vIds[v];
 
-        if(!SmoothingHelper::isSmoothable(mesh, vId))
+        if(!isSmoothable(mesh, vId))
             continue;
 
         glm::dvec3 patchCenter =
-            SmoothingHelper::computePatchCenter(
-                mesh, discretizer, vId);
+            crew.measurer().computeVertexEquilibrium(
+                mesh, crew.discretizer(), vId);
 
         glm::dvec3& pos = verts[vId].p;
         pos = glm::mix(pos, patchCenter, _moveFactor);

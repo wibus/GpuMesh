@@ -23,8 +23,7 @@ protected:
 
     virtual void smoothVertices(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             const std::vector<uint>& vIds) override;
 
 

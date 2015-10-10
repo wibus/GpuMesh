@@ -16,25 +16,21 @@ public:
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
     virtual void smoothMeshThread(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
 
 protected:
     virtual void initializeProgram(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer) override;
+            const MeshCrew& crew) override;
 
     virtual void setVertexProgramUniforms(
             const Mesh& mesh,
@@ -46,8 +42,7 @@ protected:
 
     virtual void smoothVertices(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             const std::vector<uint>& vIds) = 0;
 
 
@@ -56,7 +51,9 @@ private:
 
     bool _initialized;
     std::string _modelBoundsShader;
-    std::string _shapeMeasureShader;
+    std::string _discretizationShader;
+    std::string _evaluationShader;
+    std::string _measureShader;
     std::vector<std::string> _smoothShaders;
     cellar::GlProgram _vertSmoothProgram;
 };

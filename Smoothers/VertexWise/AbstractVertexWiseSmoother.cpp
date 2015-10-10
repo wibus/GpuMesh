@@ -5,8 +5,10 @@
 #include <condition_variable>
 #include <algorithm>
 
-#include "../SmoothingHelper.h"
+#include "DataStructures/MeshCrew.h"
+#include "Discretizers/AbstractDiscretizer.h"
 #include "Evaluators/AbstractEvaluator.h"
+#include "Measurers/AbstractMeasurer.h"
 
 using namespace std;
 using namespace cellar;
@@ -29,17 +31,16 @@ AbstractVertexWiseSmoother::~AbstractVertexWiseSmoother()
 
 void AbstractVertexWiseSmoother::smoothMeshSerial(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
     size_t vertCount = mesh.verts.size();
     std::vector<uint> vIds(vertCount);
     std::iota(std::begin(vIds), std::end(vIds), 0);
 
     _smoothPassId = 0;
-    while(evaluateMeshQualitySerial(mesh, evaluator))
+    while(evaluateMeshQualitySerial(mesh, crew))
     {
-        smoothVertices(mesh, evaluator, discretizer, vIds);
+        smoothVertices(mesh, crew, vIds);
     }
 
     mesh.updateGpuVertices();
@@ -47,8 +48,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
 
 void AbstractVertexWiseSmoother::smoothMeshThread(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
     // TODO : Use a thread pool    
     size_t groupCount = mesh.independentGroups.size();
@@ -60,7 +60,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
     std::atomic_int step( 0 );
 
     _smoothPassId = 0;
-    while(evaluateMeshQualityThread(mesh, evaluator))
+    while(evaluateMeshQualityThread(mesh, crew))
     {
         vector<thread> workers;
         for(uint t=0; t < threadCount; ++t)
@@ -76,7 +76,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
                         group.begin() + (groupSize * t) / threadCount,
                         group.begin() + (groupSize * (t+1)) / threadCount);
 
-                    smoothVertices(mesh, evaluator, discretizer, vIds);
+                    smoothVertices(mesh, crew, vIds);
 
                     if(g < groupCount-1)
                     {
@@ -107,10 +107,9 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
 
 void AbstractVertexWiseSmoother::smoothMeshGlsl(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
-    initializeProgram(mesh, evaluator, discretizer);
+    initializeProgram(mesh, crew);
 
     // There's no need to upload vertices again, but absurdly
     // this makes subsequent passes much more faster...
@@ -128,7 +127,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     _vertSmoothProgram.popProgram();
 
     _smoothPassId = 0;
-    while(evaluateMeshQualityGlsl(mesh, evaluator))
+    while(evaluateMeshQualityGlsl(mesh, crew))
     {
         mesh.bindShaderStorageBuffers();
 
@@ -154,28 +153,29 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
 
 void AbstractVertexWiseSmoother::initializeProgram(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
     if(_initialized &&
        _modelBoundsShader == mesh.modelBoundsShaderName() &&
-       _shapeMeasureShader == evaluator.shapeMeasureShader())
-        return;
+       _discretizationShader == crew.discretizer().discretizationShader() &&
+       _evaluationShader == crew.evaluator().evaluationShader() &&
+       _measureShader == crew.measurer().measureShader())
+            return;
 
 
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractVertexWiseSmoother"));
 
     _modelBoundsShader = mesh.modelBoundsShaderName();
-    _shapeMeasureShader = evaluator.shapeMeasureShader();
+    _discretizationShader = crew.discretizer().discretizationShader();
+    _evaluationShader = crew.evaluator().evaluationShader();
+    _measureShader = crew.measurer().measureShader();
 
     _vertSmoothProgram.clearShaders();
-    evaluator.installPlugIn(mesh, _vertSmoothProgram);
-    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER,
-        _modelBoundsShader);
+    crew.installPlugIns(mesh, _vertSmoothProgram);
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        SmoothingHelper::shaderName().c_str()});
+        smoothingUtilsShader().c_str()});
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/VertexWise/SmoothVertices.glsl"});
@@ -187,8 +187,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
     }
 
     _vertSmoothProgram.link();
-    mesh.uploadGeometry(_vertSmoothProgram);
-    evaluator.uploadPlugInUniforms(mesh, _vertSmoothProgram);
+    crew.uploadUniforms(mesh, _vertSmoothProgram);
 
 
     _initialized = true;

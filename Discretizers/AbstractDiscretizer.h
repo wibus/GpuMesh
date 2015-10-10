@@ -18,42 +18,60 @@ typedef glm::dmat3 Metric;
 class AbstractDiscretizer
 {
 protected:
-    AbstractDiscretizer();
+    AbstractDiscretizer(const std::string& name,
+                        const std::string& shader);
 
 public:
     virtual ~AbstractDiscretizer();
 
 
+    virtual bool isMetricWise() const = 0;
+
+
+    // GLSL Plug-in interface
+    virtual std::string discretizationShader() const;
+
+    virtual void installPlugIn(
+            const Mesh& mesh,
+            cellar::GlProgram& program) const = 0;
+
+    virtual void uploadUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program) const = 0;
+
+
     virtual void discretize(
             const Mesh& mesh,
-            const glm::ivec3& gridSize) = 0;
-
-    virtual Metric metric(
-            const glm::dvec3& position) const = 0;
+            int density) = 0;
 
     virtual double distance(
             const glm::dvec3& a,
             const glm::dvec3& b) const = 0;
 
 
-    virtual void installPlugIn(
-            const Mesh& mesh,
-            cellar::GlProgram& program) const = 0;
-
-    virtual void uploadPlugInUniforms(
-            const Mesh& mesh,
-            cellar::GlProgram& program) const = 0;
-
+    // Debug mesh
     virtual void releaseDebugMesh() = 0;
-    virtual std::shared_ptr<Mesh> debugMesh() = 0;
+    virtual const Mesh& debugMesh() = 0;
 
 
 protected:
-    Metric interpolate(const Metric& m1, const Metric& m2, double a) const;
+    // Give mesh's provided metric
     Metric vertMetric(const Mesh& mesh, uint vId) const;
+
+    // Compute metric at given position
+    virtual Metric metric(const glm::dvec3& position) const = 0;
+
+    // Interpolate the metric given two samples and a mix ratio
+    Metric interpolate(const Metric& m1, const Metric& m2, double a) const;
+
+    // Classic bounding box computation
     void boundingBox(const Mesh& mesh,
                      glm::dvec3& minBounds,
                      glm::dvec3& maxBounds) const;
+
+private:
+    std::string _discretizationName;
+    std::string _discretizationShader;
 };
 
 #endif // GPUMESH_ABSTRACTDISCRETIZER

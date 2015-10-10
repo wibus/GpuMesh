@@ -7,7 +7,7 @@ const uint PROPOSITION_COUNT = 4;
 vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Smoothing helper
-vec3 computePatchCenter(in uint vId);
+vec3 computeVertexEquilibrium(in uint vId);
 float computePatchQuality(in uint vId);
 
 
@@ -15,7 +15,7 @@ float computePatchQuality(in uint vId);
 void smoothVertex(uint vId)
 {
     // Compute patch center
-    vec3 patchCenter = computePatchCenter(vId);
+    vec3 patchCenter = computeVertexEquilibrium(vId);
     vec3 pos = vec3(verts[vId].p);
     vec3 centerDist = patchCenter - pos;
 

@@ -6,9 +6,11 @@
 #include <iostream>
 #include <algorithm>
 
-#include "../SmoothingHelper.h"
-#include "Evaluators/AbstractEvaluator.h"
+#include "DataStructures/MeshCrew.h"
 #include "DataStructures/VertexAccum.h"
+#include "Discretizers/AbstractDiscretizer.h"
+#include "Evaluators/AbstractEvaluator.h"
+#include "Measurers/AbstractMeasurer.h"
 
 using namespace std;
 using namespace cellar;
@@ -35,8 +37,7 @@ AbstractElementWiseSmoother::~AbstractElementWiseSmoother()
 
 void AbstractElementWiseSmoother::smoothMeshSerial(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
     // Allocate vertex accumulators
     size_t vertCount = mesh.verts.size();
@@ -52,13 +53,13 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
     std::iota(std::begin(vIds), std::end(vIds), 0);
 
     _smoothPassId = 0;
-    while(evaluateMeshQualitySerial(mesh, evaluator))
+    while(evaluateMeshQualitySerial(mesh, crew))
     {
-        smoothTets(mesh, evaluator, discretizer, 0, tetCount);
-        smoothPris(mesh, evaluator, discretizer, 0, priCount);
-        smoothHexs(mesh, evaluator, discretizer, 0, hexCount);
+        smoothTets(mesh, crew, 0, tetCount);
+        smoothPris(mesh, crew, 0, priCount);
+        smoothHexs(mesh, crew, 0, hexCount);
 
-        updateVertexPositions(mesh, evaluator, discretizer, vIds);
+        updateVertexPositions(mesh, crew, vIds);
     }
 
     mesh.updateGpuVertices();
@@ -72,8 +73,7 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
 
 void AbstractElementWiseSmoother::smoothMeshThread(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
     // Allocate vertex accumulators
     size_t vertCount = mesh.verts.size();
@@ -91,7 +91,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
     size_t hexCount = mesh.hexs.size();
-    while(evaluateMeshQualityThread(mesh, evaluator))
+    while(evaluateMeshQualityThread(mesh, crew))
     {
         std::mutex mutex;
         std::condition_variable cv;
@@ -108,21 +108,21 @@ void AbstractElementWiseSmoother::smoothMeshThread(
                 {
                     size_t tetfirst = (tetCount * t) / threadCount;
                     size_t tetLast = (tetCount * (t+1)) / threadCount;
-                    smoothTets(mesh, evaluator, discretizer, tetfirst, tetLast);
+                    smoothTets(mesh, crew, tetfirst, tetLast);
                 }
 
                 if(priCount > 0)
                 {
                     size_t prifirst = (priCount * t) / threadCount;
                     size_t priLast = (priCount * (t+1)) / threadCount;
-                    smoothPris(mesh, evaluator, discretizer, prifirst, priLast);
+                    smoothPris(mesh, crew, prifirst, priLast);
                 }
 
                 if(hexCount > 0)
                 {
                     size_t hexfirst = (hexCount * t) / threadCount;
                     size_t hexLast = (hexCount * (t+1)) / threadCount;
-                    smoothHexs(mesh, evaluator, discretizer, hexfirst, hexLast);
+                    smoothHexs(mesh, crew, hexfirst, hexLast);
                 }
 
                 for(size_t g=0; g < groupCount; ++g)
@@ -151,7 +151,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
                         group.begin() + (groupSize * t) / threadCount,
                         group.begin() + (groupSize * (t+1)) / threadCount);
 
-                    updateVertexPositions(mesh, evaluator, discretizer, vIds);
+                    updateVertexPositions(mesh, crew, vIds);
                 }
             }));
         }
@@ -173,10 +173,9 @@ void AbstractElementWiseSmoother::smoothMeshThread(
 
 void AbstractElementWiseSmoother::smoothMeshGlsl(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
-    initializeProgram(mesh, evaluator, discretizer);
+    initializeProgram(mesh, crew);
 
     // There's no need to upload vertices again, but absurdly
     // this makes subsequent passes much more faster...
@@ -216,7 +215,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     _vertUpdateProgram.popProgram();
 
     _smoothPassId = 0;
-    while(evaluateMeshQualityGlsl(mesh, evaluator))
+    while(evaluateMeshQualityGlsl(mesh, crew))
     {
         mesh.bindShaderStorageBuffers();        
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
@@ -252,30 +251,31 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
 
 void AbstractElementWiseSmoother::initializeProgram(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer)
+        const MeshCrew& crew)
 {
     if(_initialized &&
        _modelBoundsShader == mesh.modelBoundsShaderName() &&
-       _shapeMeasureShader == evaluator.shapeMeasureShader())
-        return;
+       _discretizationShader == crew.discretizer().discretizationShader() &&
+       _evaluationShader == crew.evaluator().evaluationShader() &&
+       _measureShader == crew.measurer().measureShader())
+            return;
 
 
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractElementWiseSmoother"));
 
     _modelBoundsShader = mesh.modelBoundsShaderName();
-    _shapeMeasureShader = evaluator.shapeMeasureShader();
+    _discretizationShader = crew.discretizer().discretizationShader();
+    _evaluationShader = crew.evaluator().evaluationShader();
+    _measureShader = crew.measurer().measureShader();
 
 
     // Element Smoothing Program
     _elemSmoothProgram.clearShaders();
-    evaluator.installPlugIn(mesh, _elemSmoothProgram);
-    _elemSmoothProgram.addShader(GL_COMPUTE_SHADER,
-        _modelBoundsShader);
+    crew.installPlugIns(mesh, _elemSmoothProgram);
     _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        SmoothingHelper::shaderName().c_str()});
+        smoothingUtilsShader().c_str()});
     _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/ElementWise/VertexAccum.glsl"});
@@ -290,18 +290,15 @@ void AbstractElementWiseSmoother::initializeProgram(
     }
 
     _elemSmoothProgram.link();
-    mesh.uploadGeometry(_elemSmoothProgram);
-    evaluator.uploadPlugInUniforms(mesh, _elemSmoothProgram);
+    crew.uploadUniforms(mesh, _elemSmoothProgram);
 
 
     // Update Vertex Positions Program
     _vertUpdateProgram.clearShaders();
-    evaluator.installPlugIn(mesh, _vertUpdateProgram);
-    _vertUpdateProgram.addShader(GL_COMPUTE_SHADER,
-        _modelBoundsShader);
+    crew.installPlugIns(mesh, _vertUpdateProgram);
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        SmoothingHelper::shaderName().c_str()});
+        smoothingUtilsShader().c_str()});
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Smoothing/ElementWise/VertexAccum.glsl"});
@@ -310,8 +307,7 @@ void AbstractElementWiseSmoother::initializeProgram(
         ":/shaders/compute/Smoothing/ElementWise/UpdateVertices.glsl"});
 
     _vertUpdateProgram.link();
-    mesh.uploadGeometry(_vertUpdateProgram);
-    evaluator.uploadPlugInUniforms(mesh, _vertUpdateProgram);
+    crew.uploadUniforms(mesh, _vertUpdateProgram);
 
 
     // Shader storage vertex accum blocks
@@ -344,8 +340,7 @@ void AbstractElementWiseSmoother::printSmoothingParameters(
 
 void AbstractElementWiseSmoother::updateVertexPositions(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer,
+        const MeshCrew& crew,
         const std::vector<uint>& vIds)
 {
     vector<MeshVert>& verts = mesh.verts;
@@ -356,6 +351,10 @@ void AbstractElementWiseSmoother::updateVertexPositions(
     {
         uint vId = vIds[v];
 
+        if(!isSmoothable(mesh, vId))
+            continue;
+
+
         glm::dvec3 pos = verts[vId].p;
         glm::dvec3 posPrim = pos;
         if(_vertexAccums[vId]->assignAverage(posPrim))
@@ -365,14 +364,14 @@ void AbstractElementWiseSmoother::updateVertexPositions(
                 posPrim = (*topo.snapToBoundary)(posPrim);
 
             double patchQuality =
-                SmoothingHelper::computePatchQuality(
-                    mesh, evaluator, vId);
+                crew.measurer().computePatchQuality(
+                    mesh, crew.evaluator(), vId);
 
             verts[vId].p = posPrim;
 
             double patchQualityPrime =
-                SmoothingHelper::computePatchQuality(
-                    mesh, evaluator, vId);
+                crew.measurer().computePatchQuality(
+                    mesh, crew.evaluator(), vId);
 
             if(patchQualityPrime < patchQuality)
                 verts[vId].p = pos;

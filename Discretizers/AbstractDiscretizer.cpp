@@ -3,10 +3,13 @@
 #include <CellarWorkbench/GL/GlProgram.h>
 
 #include "DataStructures/Mesh.h"
-#include "Smoothers/SmoothingHelper.h"
 
 
-AbstractDiscretizer::AbstractDiscretizer()
+AbstractDiscretizer::AbstractDiscretizer(
+        const std::string& name,
+        const std::string& shader) :
+    _discretizationName(name),
+    _discretizationShader(shader)
 {
 
 }
@@ -16,14 +19,25 @@ AbstractDiscretizer::~AbstractDiscretizer()
 
 }
 
+std::string AbstractDiscretizer::discretizationShader() const
+{
+    return _discretizationShader;
+}
+
 void AbstractDiscretizer::installPlugIn(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-
+    if(!_discretizationShader.empty())
+    {
+        program.addShader(GL_COMPUTE_SHADER, {
+            mesh.meshGeometryShaderName(),
+            _discretizationShader.c_str()
+        });
+    }
 }
 
-void AbstractDiscretizer::uploadPlugInUniforms(
+void AbstractDiscretizer::uploadUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
@@ -42,7 +56,7 @@ Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
 {
     glm::dvec3 vp = mesh.verts[vId].p * glm::dvec3(10, 1, 1.0);
 
-    double elemSize = SmoothingHelper::computeLocalElementSize(mesh, vId);
+    double elemSize = 3.0 / glm::pow((double)mesh.verts.size(), 1/3.0);
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
 

@@ -2,8 +2,9 @@
 
 #include <limits>
 
-#include "../SmoothingHelper.h"
+#include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
+#include "Measurers/AbstractMeasurer.h"
 
 using namespace std;
 
@@ -43,8 +44,7 @@ void LocalOptimisationSmoother::printSmoothingParameters(
 
 void LocalOptimisationSmoother::smoothVertices(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer,
+        const MeshCrew& crew,
         const std::vector<uint>& vIds)
 {
     std::vector<MeshVert>& verts = mesh.verts;
@@ -55,14 +55,14 @@ void LocalOptimisationSmoother::smoothVertices(
     {
         uint vId = vIds[v];
 
-        if(!SmoothingHelper::isSmoothable(mesh, vId))
+        if(!isSmoothable(mesh, vId))
             continue;
 
 
         // Compute local element size
         double localSize =
-                SmoothingHelper::computeLocalElementSize(
-                    mesh, vId);
+            crew.measurer().computeLocalElementSize(
+                mesh, vId);
 
         // Initialize node shift distance
         double nodeShift = localSize * _localSizeToNodeShift;
@@ -100,8 +100,8 @@ void LocalOptimisationSmoother::smoothVertices(
 
                 // Compute patch quality
                 sampleQualities[p] =
-                        SmoothingHelper::computePatchQuality(
-                            mesh, evaluator, vId);
+                    crew.measurer().computePatchQuality(
+                        mesh, crew.evaluator(), vId);
             }
             pos = originalPos;
 
@@ -153,8 +153,8 @@ void LocalOptimisationSmoother::smoothVertices(
 
                 // Compute patch quality
                 double patchQuality =
-                        SmoothingHelper::computePatchQuality(
-                            mesh, evaluator, vId);
+                    crew.measurer().computePatchQuality(
+                        mesh, crew.evaluator(), vId);
 
                 if(patchQuality > bestQualityMean)
                 {

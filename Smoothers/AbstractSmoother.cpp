@@ -5,20 +5,23 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
 using namespace cellar;
 
+
 AbstractSmoother::AbstractSmoother() :
+    _smoothingUtilsShader(":/shaders/compute/Smoothing/Utils.glsl"),
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
     _implementationFuncs.setDefault("Serial");
     _implementationFuncs.setContent({
-        {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2, _3))},
-        {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2, _3))},
-        {string("GLSL"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl,   this, _1, _2, _3))},
+        {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
+        {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},
+        {string("GLSL"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl,   this, _1, _2))},
     });
 }
 
@@ -34,8 +37,7 @@ OptionMapDetails AbstractSmoother::availableImplementations() const
 
 void AbstractSmoother::smoothMesh(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer,
+        const MeshCrew& crew,
         const std::string& implementationName,
         int minIteration,
         double moveFactor,
@@ -49,7 +51,7 @@ void AbstractSmoother::smoothMesh(
         _gainThreshold = gainThreshold;
 
         auto tStart = chrono::high_resolution_clock::now();
-        implementationFunc(mesh, evaluator, discretizer);
+        implementationFunc(mesh, crew);
         auto tEnd = chrono::high_resolution_clock::now();
 
         auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart);
@@ -76,36 +78,51 @@ void AbstractSmoother::organizeDispatches(
     }
 }
 
-bool AbstractSmoother::evaluateMeshQualitySerial(Mesh& mesh, AbstractEvaluator& evaluator)
+bool AbstractSmoother::isSmoothable(
+        const Mesh& mesh,
+        size_t vId) const
 {
-    return evaluateMeshQuality(mesh, evaluator, 0);
+    const MeshTopo& topo = mesh.topos[vId];
+    if(topo.isFixed)
+        return false;
+
+    size_t neigElemCount = topo.neighborElems.size();
+    if(neigElemCount == 0)
+        return false;
+
+    return true;
 }
 
-bool AbstractSmoother::evaluateMeshQualityThread(Mesh& mesh, AbstractEvaluator& evaluator)
+bool AbstractSmoother::evaluateMeshQualitySerial(Mesh& mesh,  const MeshCrew& crew)
 {
-    return evaluateMeshQuality(mesh, evaluator, 1);
+    return evaluateMeshQuality(mesh, crew, 0);
 }
 
-bool AbstractSmoother::evaluateMeshQualityGlsl(Mesh& mesh, AbstractEvaluator& evaluator)
+bool AbstractSmoother::evaluateMeshQualityThread(Mesh& mesh,  const MeshCrew& crew)
 {
-    return evaluateMeshQuality(mesh, evaluator, 2);
+    return evaluateMeshQuality(mesh, crew, 1);
 }
 
-bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh, AbstractEvaluator& evaluator, int impl)
+bool AbstractSmoother::evaluateMeshQualityGlsl(Mesh& mesh,  const MeshCrew& crew)
+{
+    return evaluateMeshQuality(mesh, crew, 2);
+}
+
+bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, int impl)
 {
     double qualMean, qualMin;
     switch(impl)
     {
     case 0 :
-        evaluator.evaluateMeshQualitySerial(
+        crew.evaluator().evaluateMeshQualitySerial(
             mesh, qualMin, qualMean);
         break;
     case 1 :
-        evaluator.evaluateMeshQualityThread(
+        crew.evaluator().evaluateMeshQualityThread(
             mesh, qualMin, qualMean);
         break;
     case 2 :
-        evaluator.evaluateMeshQualityGlsl(
+        crew.evaluator().evaluateMeshQualityGlsl(
             mesh, qualMin, qualMean);
         break;
     }
@@ -152,8 +169,7 @@ struct SmoothBenchmarkStats
 
 void AbstractSmoother::benchmark(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer,
+        const MeshCrew& crew,
         const map<string, bool>& activeImpls,
         int minIteration,
         double moveFactor,
@@ -163,7 +179,7 @@ void AbstractSmoother::benchmark(
     _minIteration = minIteration;
     _moveFactor = moveFactor;
     _gainThreshold = gainThreshold;
-    initializeProgram(mesh, evaluator, discretizer);
+    initializeProgram(mesh, crew);
 
     printSmoothingParameters(mesh, outPlot);
     // TODO print evaluator parameters
@@ -171,7 +187,7 @@ void AbstractSmoother::benchmark(
 
     double initialMinQuality = 0.0;
     double initialQualityMean = 0.0;
-    evaluator.evaluateMeshQualityThread(
+    crew.evaluator().evaluateMeshQualityThread(
         mesh, initialMinQuality, initialQualityMean);
 
     // We must make a copy of the vertices in order to
@@ -212,21 +228,22 @@ void AbstractSmoother::benchmark(
             _currentImplementation = OptimizationImpl();
             _currentImplementation.name = impl;
 
-            implementationFunc(mesh, evaluator, discretizer);
+            implementationFunc(mesh, crew);
 
             outPlot.addImplementation(_currentImplementation);
 
 
             SmoothBenchmarkStats stats;
+            crew.evaluator().evaluateMeshQualityThread(
+                mesh, stats.minQuality, stats.qualityMean);
+
             stats.impl = impl;
             stats.totalSeconds = _currentImplementation.passes.back().timeStamp -
                                  _currentImplementation.passes.front().timeStamp;
-            evaluator.evaluateMeshQualityThread(
-                mesh, stats.minQuality, stats.qualityMean);
             stats.qualityMeanGain = (stats.qualityMean - initialQualityMean) /
                                         initialQualityMean;
-
             statsVec.push_back(stats);
+
 
             // Keep a copy of the smoothed vertices
             if(smoothedVertices.empty())
@@ -296,4 +313,9 @@ void AbstractSmoother::benchmark(
         + gainString + "\t = "
         + normGainString,
        "AbstractSmoother"));
+}
+
+std::string AbstractSmoother::smoothingUtilsShader() const
+{
+    return _smoothingUtilsShader;
 }

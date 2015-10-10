@@ -60,7 +60,8 @@ private:
 };
 
 
-UniformDiscretizer::UniformDiscretizer()
+UniformDiscretizer::UniformDiscretizer() :
+    AbstractDiscretizer("Uniform", "")
 {
 }
 
@@ -69,15 +70,43 @@ UniformDiscretizer::~UniformDiscretizer()
 
 }
 
-void UniformDiscretizer::discretize(
+bool UniformDiscretizer::isMetricWise() const
+{
+    return true;
+}
+
+void UniformDiscretizer::installPlugIn(
         const Mesh& mesh,
-        const glm::ivec3& gridSize)
+        cellar::GlProgram& program) const
+{
+    AbstractDiscretizer::installPlugIn(mesh, program);
+}
+
+void UniformDiscretizer::uploadUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+    AbstractDiscretizer::uploadUniforms(mesh, program);
+}
+
+void UniformDiscretizer::discretize(const Mesh& mesh, int density)
 {
     _debugMesh.reset();
     if(mesh.verts.empty())
     {
         _grid.reset();
     }
+
+
+    // Find grid bounds
+    glm::dvec3 minBounds, maxBounds;
+    boundingBox(mesh, minBounds, maxBounds);
+    glm::dvec3 extents = maxBounds - minBounds;
+
+    // Compute grid size
+    size_t vertCount = mesh.verts.size();
+    double alpha = glm::pow(vertCount / (density * extents.x*extents.y*extents.z), 1/3.0);
+    glm::ivec3 gridSize(alpha * extents);
 
     getLog().postMessage(new Message('I', false,
         "Discretizing mesh metric in a Uniform grid",
@@ -87,11 +116,6 @@ void UniformDiscretizer::discretize(
                          std::to_string(gridSize.y) + ", " +
                          std::to_string(gridSize.z) + ")",
         "UniformDiscretizer"));
-
-    // Find grid bounds
-    glm::dvec3 minBounds, maxBounds;
-    boundingBox(mesh, minBounds, maxBounds);
-    glm::dvec3 extents = maxBounds - minBounds;
 
 
     std::vector<ElemValue> elemValues;
@@ -206,6 +230,38 @@ void UniformDiscretizer::discretize(
     }
 }
 
+double UniformDiscretizer::distance(
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    glm::dvec3 d = a - b;
+    glm::dvec3 m = (a + b) / 2.0;
+    return glm::sqrt(glm::dot(d, metric(m) * d));
+}
+
+void UniformDiscretizer::releaseDebugMesh()
+{
+    _debugMesh.reset();
+}
+
+const Mesh& UniformDiscretizer::debugMesh()
+{
+    if(_debugMesh.get() == nullptr)
+    {
+        _debugMesh.reset(new Mesh());
+
+        if(_grid.get() != nullptr)
+        {
+            meshGrid(*_grid.get(), *_debugMesh);
+
+            _debugMesh->modelName = "Uniform Discretization Mesh";
+            _debugMesh->compileTopology();
+        }
+    }
+
+    return *_debugMesh;
+}
+
 Metric UniformDiscretizer::metric(
         const glm::dvec3& position) const
 {
@@ -247,52 +303,6 @@ Metric UniformDiscretizer::metric(
     Metric mxyz = interpolate(mxy0, mxy1, a.z);
 
     return mxyz;
-}
-
-double UniformDiscretizer::distance(
-        const glm::dvec3& a,
-        const glm::dvec3& b) const
-{
-    glm::dvec3 d = a - b;
-    glm::dvec3 m = (a + b) / 2.0;
-    return glm::sqrt(glm::dot(d, metric(m) * d));
-}
-
-void UniformDiscretizer::installPlugIn(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-
-}
-
-void UniformDiscretizer::uploadPlugInUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-
-}
-
-void UniformDiscretizer::releaseDebugMesh()
-{
-    _debugMesh.reset();
-}
-
-std::shared_ptr<Mesh> UniformDiscretizer::debugMesh()
-{
-    if(_debugMesh.get() == nullptr)
-    {
-        _debugMesh.reset(new Mesh());
-
-        if(_grid.get() != nullptr)
-        {
-            meshGrid(*_grid.get(), *_debugMesh);
-
-            _debugMesh->modelName = "Uniform Discretization Mesh";
-            _debugMesh->compileTopology();
-        }
-    }
-
-    return _debugMesh;
 }
 
 inline glm::ivec3 UniformDiscretizer::cellId(

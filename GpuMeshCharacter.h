@@ -10,6 +10,7 @@
 
 #include <Scaena/Play/Character.h>
 
+#include "DataStructures/MeshCrew.h"
 #include "DataStructures/OptionMap.h"
 #include "DataStructures/OptimizationPlot.h"
 
@@ -82,7 +83,6 @@ public:
     // Smooth
     virtual void smoothMesh(
             const std::string& smootherName,
-            const std::string& evaluatorName,
             const std::string& implementationName,
             size_t minIterationCount,
             double moveFactor,
@@ -90,15 +90,15 @@ public:
 
     virtual OptimizationPlot benchmarkSmoother(
             const std::string& smootherName,
-            const std::string& evaluatorName,
             const std::map<std::string, bool>& activeImpls,
             size_t minIterationCount,
             double moveFactor,
             double gainThreshold);
 
     // Render
+    virtual void disableAnisotropy();
     virtual void displayDiscretizationMesh(bool display);
-    virtual void useDiscretizationSize(const glm::ivec3& gridSize);
+    virtual void useDiscretizationDensity(int density);
     virtual void useDiscretizer(const std::string& discretizerName);
     virtual void useEvaluator(const std::string& evaluatorName);
     virtual void useRenderer(const std::string& rendererName);
@@ -145,14 +145,13 @@ protected:
     double _qualityCullingMin;
     double _qualityCullingMax;
 
-    glm::ivec3 _discretizationSize;
+    int  _discretizationDensity;
     bool _displayDiscretizationMesh;
 
 private:
     std::unique_ptr<Mesh> _mesh;
+    std::unique_ptr<MeshCrew> _meshCrew;
     std::shared_ptr<AbstractRenderer> _renderer;
-    std::shared_ptr<AbstractEvaluator> _evaluator;
-    std::shared_ptr<AbstractDiscretizer> _discretizer;
     std::shared_ptr<cellar::CameraManFree> _cameraManFree;
 
     static const glm::vec3 nullVec;
@@ -169,6 +168,7 @@ private:
     OptionMap<std::shared_ptr<AbstractMesher>>          _availableMeshers;
     OptionMap<std::shared_ptr<AbstractDiscretizer>>     _availableDiscretizers;
     OptionMap<std::shared_ptr<AbstractEvaluator>>       _availableEvaluators;
+    OptionMap<std::shared_ptr<AbstractMeasurer>>        _availableMeasurers;
     OptionMap<std::shared_ptr<AbstractSmoother>>        _availableSmoothers;
     OptionMap<std::shared_ptr<AbstractRenderer>>        _availableRenderers;
     OptionMap<std::shared_ptr<AbstractSerializer>>      _availableSerializers;

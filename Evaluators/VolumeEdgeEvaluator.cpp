@@ -6,7 +6,7 @@ using namespace glm;
 
 
 VolumeEdgeEvaluator::VolumeEdgeEvaluator() :
-    AbstractEvaluator(":/shaders/compute/Quality/VolumeEdge.glsl")
+    AbstractEvaluator(":/shaders/compute/Evaluating/VolumeEdge.glsl")
 {
 }
 

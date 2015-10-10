@@ -1,7 +1,8 @@
 #include "QualityLaplaceSmoother.h"
 
-#include "../SmoothingHelper.h"
+#include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
+#include "Measurers/AbstractMeasurer.h"
 
 using namespace std;
 
@@ -33,8 +34,7 @@ void QualityLaplaceSmoother::printSmoothingParameters(
 
 void QualityLaplaceSmoother::smoothVertices(
         Mesh& mesh,
-        AbstractEvaluator& evaluator,
-        const AbstractDiscretizer& discretizer,
+        const MeshCrew& crew,
         const std::vector<uint>& vIds)
 {
     std::vector<MeshVert>& verts = mesh.verts;
@@ -45,14 +45,14 @@ void QualityLaplaceSmoother::smoothVertices(
     {
         uint vId = vIds[v];
 
-        if(!SmoothingHelper::isSmoothable(mesh, vId))
+        if(!isSmoothable(mesh, vId))
             continue;
 
 
         // Compute patch center
         glm::dvec3 patchCenter =
-            SmoothingHelper::computePatchCenter(
-                mesh, discretizer, vId);
+            crew.measurer().computeVertexEquilibrium(
+                mesh, crew.discretizer(), vId);
 
         glm::dvec3& pos = verts[vId].p;
         glm::dvec3 centerDist = patchCenter - pos;
@@ -85,8 +85,8 @@ void QualityLaplaceSmoother::smoothVertices(
 
             // Compute patch quality
             double patchQuality =
-                SmoothingHelper::computePatchQuality(
-                    mesh, evaluator, vId);
+                crew.measurer().computePatchQuality(
+                    mesh, crew.evaluator(), vId);
 
             if(patchQuality > bestQualityMean)
             {

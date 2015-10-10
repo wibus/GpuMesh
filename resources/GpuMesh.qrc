@@ -23,21 +23,10 @@
         <file>shaders/vertex/Wireframe.vert</file>
         <file>shaders/fragment/Wireframe.frag</file>
         <file>shaders/compute/Boundary/ElbowPipe.glsl</file>
-        <file>shaders/compute/Measuring/SimultaneousEvaluation.glsl</file>
-        <file>shaders/compute/Measuring/TetrahedraEvaluation.glsl</file>
-        <file>shaders/compute/Measuring/PrismsEvaluation.glsl</file>
-        <file>shaders/compute/Measuring/HexahedraEvaluation.glsl</file>
-        <file>shaders/compute/Quality/SolidAngle.glsl</file>
-        <file>shaders/compute/Quality/VolumeEdge.glsl</file>
-        <file>shaders/compute/Quality/InsphereEdge.glsl</file>
         <file>shaders/compute/Mesh.glsl</file>
-        <file>shaders/compute/Quality/MeanRatio.glsl</file>
-        <file>shaders/compute/Quality/QualityInterface.glsl</file>
-        <file>shaders/compute/Measuring/StatisticsReduction.glsl</file>
         <file>shaders/compute/Boundary/Sphere.glsl</file>
         <file>shaders/compute/Boundary/None.glsl</file>
         <file>shaders/compute/Boundary/Box.glsl</file>
-        <file>shaders/compute/Smoothing/SmoothingHelper.glsl</file>
         <file>shaders/compute/Rendering/QualityGradient.glsl</file>
         <file>shaders/compute/Smoothing/VertexWise/SpringLaplace.glsl</file>
         <file>shaders/compute/Smoothing/VertexWise/QualityLaplace.glsl</file>
@@ -47,5 +36,15 @@
         <file>shaders/compute/Smoothing/ElementWise/SmoothElements.glsl</file>
         <file>shaders/compute/Smoothing/ElementWise/UpdateVertices.glsl</file>
         <file>shaders/compute/Smoothing/ElementWise/VertexAccum.glsl</file>
+        <file>shaders/compute/Smoothing/Utils.glsl</file>
+        <file>shaders/compute/Evaluating/Evaluate.glsl</file>
+        <file>shaders/compute/Evaluating/InsphereEdge.glsl</file>
+        <file>shaders/compute/Evaluating/MeanRatio.glsl</file>
+        <file>shaders/compute/Evaluating/SolidAngle.glsl</file>
+        <file>shaders/compute/Evaluating/VolumeEdge.glsl</file>
+        <file>shaders/compute/Evaluating/EvaluationInterface.glsl</file>
+        <file>shaders/compute/Measuring/MetricFree.glsl</file>
+        <file>shaders/compute/Measuring/MetricWise.glsl</file>
+        <file>shaders/compute/Measuring/Framework.glsl</file>
     </qresource>
 </RCC>

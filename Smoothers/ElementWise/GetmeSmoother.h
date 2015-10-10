@@ -29,22 +29,19 @@ protected:
 
     virtual void smoothTets(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             size_t first,
             size_t last) override;
 
     virtual void smoothPris(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             size_t first,
             size_t last) override;
 
     virtual void smoothHexs(
             Mesh& mesh,
-            AbstractEvaluator& evaluator,
-            const AbstractDiscretizer& discretizer,
+            const MeshCrew& crew,
             size_t first,
             size_t last) override;
 

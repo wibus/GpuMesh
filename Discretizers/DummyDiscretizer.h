@@ -10,28 +10,34 @@ public:
     DummyDiscretizer();
     virtual ~DummyDiscretizer();
 
-    virtual void discretize(
-            const Mesh& mesh,
-            const glm::ivec3& gridSize) override;
 
-    virtual Metric metric(
-            const glm::dvec3& position) const override;
-
-    virtual double distance(
-            const glm::dvec3& a,
-            const glm::dvec3& b) const override;
+    virtual bool isMetricWise() const;
 
 
     virtual void installPlugIn(
             const Mesh& mesh,
             cellar::GlProgram& program) const override;
 
-    virtual void uploadPlugInUniforms(
+    virtual void uploadUniforms(
             const Mesh& mesh,
             cellar::GlProgram& program) const override;
 
+
+    virtual void discretize(
+            const Mesh& mesh,
+            int density) override;
+
+    virtual double distance(
+            const glm::dvec3& a,
+            const glm::dvec3& b) const override;
+
+
     virtual void releaseDebugMesh() override;
-    virtual std::shared_ptr<Mesh> debugMesh() override;
+    virtual const Mesh& debugMesh() override;
+
+
+protected:
+    virtual Metric metric(const glm::dvec3& position) const override;
 
 
 private:

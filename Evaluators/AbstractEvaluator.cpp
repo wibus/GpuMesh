@@ -28,10 +28,8 @@ const double AbstractEvaluator::MAX_QUALITY_VALUE =
         (double) AbstractEvaluator::MAX_GROUP_PARTICIPANTS;
 
 AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
-    _initialized(false),
-    _computeSimultaneously(true),
-    _shapeMeasuresShader(shapeMeasuresShader),
     _qualSsbo(0),
+    _evaluationShader(shapeMeasuresShader),
     _implementationFuncs("Shape Measure Implementations")
 {
     static_assert(AbstractEvaluator::MAX_QUALITY_VALUE >=
@@ -53,9 +51,62 @@ AbstractEvaluator::~AbstractEvaluator()
     glDeleteBuffers(1, &_qualSsbo);
 }
 
+string AbstractEvaluator::evaluationShader() const
+{
+    return _evaluationShader;
+}
+
 OptionMapDetails AbstractEvaluator::availableImplementations() const
 {
     return _implementationFuncs.details();
+}
+
+void AbstractEvaluator::initialize(const Mesh& mesh)
+{
+    getLog().postMessage(new Message('I', false,
+        "Initializing evaluator compute shader", "AbstractEvaluator"));
+
+
+    // Simultenous evaluation shader
+    installPlugIn(mesh, _evaluationProgram);
+    _evaluationProgram.addShader(GL_COMPUTE_SHADER, {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Evaluating/Evaluate.glsl"});
+    _evaluationProgram.link();
+
+    uploadUniforms(mesh, _evaluationProgram);
+    mesh.uploadGeometry(_evaluationProgram);
+
+
+    // Shader storage quality blocks
+    glDeleteBuffers(1, &_qualSsbo);
+    _qualSsbo = 0;
+    glGenBuffers(1, &_qualSsbo);
+}
+
+void AbstractEvaluator::installPlugIn(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+    std::vector<std::string> qualityInterface = {
+        mesh.meshGeometryShaderName(),
+        ":/shaders/compute/Evaluating/EvaluationInterface.glsl"
+    };
+
+    std::vector<std::string> shapeMeasure = {
+        mesh.meshGeometryShaderName(),
+        _evaluationShader
+    };
+
+    program.addShader(GL_COMPUTE_SHADER, qualityInterface);
+    program.addShader(GL_COMPUTE_SHADER, shapeMeasure);
+}
+
+void AbstractEvaluator::uploadUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+
 }
 
 double AbstractEvaluator::tetVolume(const Mesh& mesh, const MeshTet& tet) const
@@ -259,7 +310,7 @@ void AbstractEvaluator::evaluateMesh(
         const Mesh& mesh,
         double& minQuality,
         double& qualityMean,
-        const std::string& implementationName)
+        const std::string& implementationName) const
 {
     ImplementationFunc implementationFunc;
     if(_implementationFuncs.select(implementationName, implementationFunc))
@@ -276,7 +327,7 @@ void AbstractEvaluator::evaluateMesh(
 void AbstractEvaluator::evaluateMeshQualitySerial(
         const Mesh& mesh,
         double& minQuality,
-        double& qualityMean)
+        double& qualityMean) const
 {
     int tetCount = mesh.tets.size();
     int priCount = mesh.pris.size();
@@ -310,7 +361,7 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
 void AbstractEvaluator::evaluateMeshQualityThread(
             const Mesh& mesh,
             double& minQuality,
-            double& qualityMean)
+            double& qualityMean) const
 {
     int tetCount = mesh.tets.size();
     int priCount = mesh.pris.size();
@@ -375,10 +426,15 @@ void AbstractEvaluator::evaluateMeshQualityThread(
 void AbstractEvaluator::evaluateMeshQualityGlsl(
         const Mesh& mesh,
         double& minQuality,
-        double& qualityMean)
+        double& qualityMean) const
 {
-    initializeProgram(mesh);
-
+    if(_qualSsbo == 0)
+    {
+        getLog().postMessage(new Message('E', false,
+            "Evalator needs to be initialized before calling"\
+            " evaluateMeshQualityGlsl().", "AbstractEvaluator"));
+        return;
+    }
 
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
@@ -408,38 +464,13 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
                      mesh.firstFreeBufferBinding(), _qualSsbo);
 
 
-    // Simulataneous and specialized series gives about the same performance
-    // Specialized series gives a tiny, not stable speed boost.
+    // Simulatenous and separate elem evaluation deliver the same performance
+    // Separate program series gives a tiny, not stable speed boost.
     // (tested on a parametric pri/hex mesh)
-    if(_computeSimultaneously)
-    {
-        _simultaneousProgram.pushProgram();
-        glDispatchCompute(workgroupCount, 1, 1);
-        _simultaneousProgram.popProgram();
-    }
-    else
-    {
-        if(tetCount > 0)
-        {
-            _tetProgram.pushProgram();
-            glDispatchCompute(ceil(tetCount / (double)WORKGROUP_SIZE), 1, 1);
-            _tetProgram.popProgram();
-        }
+    _evaluationProgram.pushProgram();
+    glDispatchCompute(workgroupCount, 1, 1);
+    _evaluationProgram.popProgram();
 
-        if(priCount > 0)
-        {
-            _priProgram.pushProgram();
-            glDispatchCompute(ceil(priCount / (double)WORKGROUP_SIZE), 1, 1);
-            _priProgram.popProgram();
-        }
-
-        if(hexCount > 0)
-        {
-            _hexProgram.pushProgram();
-            glDispatchCompute(ceil(hexCount / (double)WORKGROUP_SIZE), 1, 1);
-            _hexProgram.popProgram();
-        }
-    }
 
     // Fetch workgroup's statistics from GPU
     // We are using glMapBuffer since glGetBufferData seems to update the output
@@ -465,61 +496,6 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void AbstractEvaluator::initializeProgram(const Mesh& mesh)
-{
-    if(_initialized)
-        return;
-
-
-    getLog().postMessage(new Message('I', false,
-        "Initializing evaluator compute shader", "AbstractEvaluator"));
-
-
-    // Simultenous evaluation shader
-    installPlugIn(mesh, _simultaneousProgram);
-    _simultaneousProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Measuring/SimultaneousEvaluation.glsl"});
-    _simultaneousProgram.link();
-    uploadPlugInUniforms(mesh, _simultaneousProgram);
-    mesh.uploadGeometry(_simultaneousProgram);
-
-    // Specialized evaluation shader series
-    installPlugIn(mesh, _tetProgram);
-    _tetProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Measuring/TetrahedraEvaluation.glsl"});
-    _tetProgram.link();
-    uploadPlugInUniforms(mesh, _tetProgram);
-    mesh.uploadGeometry(_tetProgram);
-
-    installPlugIn(mesh, _priProgram);
-    _priProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Measuring/PrismsEvaluation.glsl"});
-    _priProgram.link();
-    uploadPlugInUniforms(mesh, _priProgram);
-    mesh.uploadGeometry(_priProgram);
-
-    installPlugIn(mesh, _hexProgram);
-    _hexProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Measuring/HexahedraEvaluation.glsl"});
-    _hexProgram.link();
-    uploadPlugInUniforms(mesh, _hexProgram);
-    mesh.uploadGeometry(_hexProgram);
-
-
-    // Shader storage quality blocks
-    glDeleteBuffers(1, &_qualSsbo);
-    _qualSsbo = 0;
-    glGenBuffers(1, &_qualSsbo);
-
-
-    _initialized = true;
-}
-
-
 struct EvalBenchmarkStats
 {
     string impl;
@@ -532,8 +508,6 @@ void AbstractEvaluator::benchmark(
         const Mesh& mesh,
         const map<string, int>& cycleCounts)
 {
-    initializeProgram(mesh);
-
     int markCount = 100 / cycleCounts.size();
     using std::chrono::high_resolution_clock;
     high_resolution_clock::time_point tStart;
@@ -641,34 +615,4 @@ void AbstractEvaluator::benchmark(
          + timeString + "\t = "
          + normTimeString,
         "AbstractEvaluator"));
-}
-
-string AbstractEvaluator::shapeMeasureShader() const
-{
-    return _shapeMeasuresShader;
-}
-
-void AbstractEvaluator::installPlugIn(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    std::vector<std::string> qualityInterface = {
-        mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Quality/QualityInterface.glsl"
-    };
-
-    std::vector<std::string> shapeMeasure = {
-        mesh.meshGeometryShaderName(),
-        _shapeMeasuresShader
-    };
-
-    program.addShader(GL_COMPUTE_SHADER, qualityInterface);
-    program.addShader(GL_COMPUTE_SHADER, shapeMeasure);
-}
-
-void AbstractEvaluator::uploadPlugInUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-
 }

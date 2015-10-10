@@ -4,6 +4,7 @@
 
 
 DummyDiscretizer::DummyDiscretizer() :
+    AbstractDiscretizer("Dummy", ""),
     _debugMesh(new Mesh())
 {
     _debugMesh->modelName = "Dummy discretization mesh";
@@ -14,39 +15,37 @@ DummyDiscretizer::~DummyDiscretizer()
 
 }
 
-void DummyDiscretizer::discretize(
-        const Mesh& mesh,
-        const glm::ivec3& gridSize)
+bool DummyDiscretizer::isMetricWise() const
 {
-
-}
-
-Metric DummyDiscretizer::metric(
-        const glm::dvec3& position) const
-{
-    // Constant isotropic metric
-    return Metric(1.0);
-}
-
-double DummyDiscretizer::distance(
-        const glm::dvec3& a,
-        const glm::dvec3& b) const
-{
-    return 1.0;//glm::distance(a, b);
+    return false;
 }
 
 void DummyDiscretizer::installPlugIn(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-
+    AbstractDiscretizer::installPlugIn(mesh, program);
 }
 
-void DummyDiscretizer::uploadPlugInUniforms(
+void DummyDiscretizer::uploadUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
+    AbstractDiscretizer::uploadUniforms(mesh, program);
+}
 
+void DummyDiscretizer::discretize(
+        const Mesh& mesh,
+        int density)
+{
+
+}
+
+double DummyDiscretizer::distance(
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    return 1.0;
 }
 
 void DummyDiscretizer::releaseDebugMesh()
@@ -55,7 +54,14 @@ void DummyDiscretizer::releaseDebugMesh()
     // Never release it
 }
 
-std::shared_ptr<Mesh> DummyDiscretizer::debugMesh()
+const Mesh& DummyDiscretizer::debugMesh()
 {
-    return _debugMesh;
+    return *_debugMesh;
+}
+
+Metric DummyDiscretizer::metric(
+        const glm::dvec3& position) const
+{
+    // Constant isotropic metric
+    return Metric(1.0);
 }
