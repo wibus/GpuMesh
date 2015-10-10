@@ -40,25 +40,20 @@ public:
 
     virtual double computeLocalElementSize(
             const Mesh& mesh,
-            size_t vId) const;
+            size_t vId) const = 0;
 
     virtual glm::dvec3 computeVertexEquilibrium(
             const Mesh& mesh,
             const AbstractDiscretizer& discretizer,
-            size_t vId) const;
+            size_t vId) const = 0;
 
     virtual double computePatchQuality(
             const Mesh& mesh,
             const AbstractEvaluator& evaluator,
-            size_t vId) const;
+            size_t vId) const = 0;
 
 
 protected:
-    virtual glm::dvec3 computeSpringForce(
-            const AbstractDiscretizer& discretizer,
-            const glm::dvec3& pi,
-            const glm::dvec3& pj) const;
-
     virtual void accumulatePatchQuality(
             double& patchQuality,
             double& patchWeight,

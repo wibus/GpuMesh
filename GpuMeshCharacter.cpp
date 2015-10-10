@@ -50,6 +50,7 @@ using namespace prop2;
 using namespace scaena;
 
 
+const std::string NO_DISCRETIZATION = "None";
 const std::string METRIC_FREE = "Metric Free";
 const std::string METRIC_WISE = "Metric Wise";
 const glm::vec3 GpuMeshCharacter::nullVec = glm::vec3(0, 0, 0);
@@ -97,7 +98,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableDiscretizers.setDefault("Uniform");
     _availableDiscretizers.setContent({
-        {string("None"),    shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
+        {NO_DISCRETIZATION, shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
         {string("Uniform"), shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
         {string("Kd-Tree"), shared_ptr<AbstractDiscretizer>(new KdTreeDiscretizer())},
     });
@@ -608,7 +609,7 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
 void GpuMeshCharacter::disableAnisotropy()
 {
     displayDiscretizationMesh(false);
-    useDiscretizer("Dummy");
+    useDiscretizer(NO_DISCRETIZATION);
 }
 
 void GpuMeshCharacter::displayDiscretizationMesh(bool display)
