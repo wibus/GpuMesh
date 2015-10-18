@@ -89,7 +89,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSerializers("Available Mesh Serializers"),
     _availableDeserializers("Available Mesh Deserializers")
 {
-    _availableMeshers.setDefault("Parametric");
+    _availableMeshers.setDefault("Debug");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},

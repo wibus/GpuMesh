@@ -31,17 +31,12 @@ public:
             const Mesh& mesh,
             int density) override;
 
-    virtual double distance(
-            const glm::dvec3& a,
-            const glm::dvec3& b) const override;
+    virtual Metric metric(
+            const glm::dvec3& position) const override;
 
 
     virtual void releaseDebugMesh() override;
     virtual const Mesh& debugMesh() override;
-
-
-protected:
-    virtual Metric metric(const glm::dvec3& position) const override;
 
 
 private:

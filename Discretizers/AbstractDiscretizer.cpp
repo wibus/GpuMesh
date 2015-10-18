@@ -54,9 +54,20 @@ Metric AbstractDiscretizer::interpolate(
 
 Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
 {
-    glm::dvec3 vp = mesh.verts[vId].p * glm::dvec3(10, 1, 1.0);
+    glm::dvec3 vp = mesh.verts[vId].p * glm::dvec3(24, 1, 1.0);
 
-    double elemSize = 3.0 / glm::pow((double)mesh.verts.size(), 1/3.0);
+    int localElemWeight = 0;
+    double localElemSize = 0.0;
+    for(const MeshNeigVert& n : mesh.topos[vId].neighborVerts)
+    {
+        localElemSize += glm::distance(mesh.verts[n.v].p, mesh.verts[vId].p);
+        ++localElemWeight;
+    }
+    localElemSize /= localElemWeight;
+
+    localElemSize = 1.0 / glm::pow(double(mesh.verts.size()), 1/3.0);
+
+    double elemSize = localElemSize;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
 

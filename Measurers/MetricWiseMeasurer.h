@@ -11,6 +11,11 @@ public:
     virtual ~MetricWiseMeasurer();
 
 
+    virtual double measuredDistance(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3& a,
+            const glm::dvec3& b) const override;
+
     virtual double computeLocalElementSize(
             const Mesh& mesh,
             size_t vId) const override;

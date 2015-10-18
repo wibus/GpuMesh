@@ -44,9 +44,8 @@ public:
             const Mesh& mesh,
             int density) = 0;
 
-    virtual double distance(
-            const glm::dvec3& a,
-            const glm::dvec3& b) const = 0;
+    virtual Metric metric(
+            const glm::dvec3& position) const = 0;
 
 
     // Debug mesh
@@ -57,9 +56,6 @@ public:
 protected:
     // Give mesh's provided metric
     Metric vertMetric(const Mesh& mesh, uint vId) const;
-
-    // Compute metric at given position
-    virtual Metric metric(const glm::dvec3& position) const = 0;
 
     // Interpolate the metric given two samples and a mix ratio
     Metric interpolate(const Metric& m1, const Metric& m2, double a) const;

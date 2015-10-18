@@ -16,6 +16,7 @@ public:
 protected:
     virtual void genSingles(Mesh& mesh, size_t vertexCount);
     virtual void genSquish(Mesh& mesh, size_t vertexCount);
+    virtual void genGrid(Mesh& mesh, size_t vertexCount);
 };
 
 #endif // GPUMESH_DEBUGMESHER

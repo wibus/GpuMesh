@@ -85,7 +85,10 @@ void EvaluateTab::enableAnisotropy(bool enabled)
     _ui->discretizationGroup->setEnabled(enabled);
     if(enabled)
     {
-
+        _character->useDiscretizer(
+            _ui->discretizationTypeMenu->currentText().toStdString());
+        _character->displayDiscretizationMesh(
+            _ui->discretizationDisplayCheck->isChecked());
     }
     else
     {

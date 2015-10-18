@@ -38,6 +38,11 @@ public:
             cellar::GlProgram& program) const;
 
 
+    virtual double measuredDistance(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3& a,
+            const glm::dvec3& b) const = 0;
+
     virtual double computeLocalElementSize(
             const Mesh& mesh,
             size_t vId) const = 0;

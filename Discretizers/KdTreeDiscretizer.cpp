@@ -102,12 +102,27 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
           xSort, ySort, zSort);
 }
 
-double KdTreeDiscretizer::distance(
-        const glm::dvec3& a,
-        const glm::dvec3& b) const
+Metric KdTreeDiscretizer::metric(
+        const glm::dvec3& position) const
 {
-    glm::dvec3 m = (a + b) / 2.0;
-    return glm::length((b - a) * metric(m));
+    KdNode* parent = nullptr;
+    KdNode* child = _rootNode.get();
+
+    while(child != nullptr)
+    {
+        parent = child;
+        double dist = child->separator.w;
+        glm::dvec3 axis(child->separator);
+        if(glm::dot(position, axis) - dist < 0.0)
+            child = parent->left;
+        else
+            child = parent->right;
+    }
+
+    if(parent == nullptr)
+        return Metric(1.0);
+    else
+        return parent->metric;
 }
 
 void KdTreeDiscretizer::releaseDebugMesh()
@@ -131,29 +146,6 @@ const Mesh& KdTreeDiscretizer::debugMesh()
     }
 
     return *_debugMesh;
-}
-
-Metric KdTreeDiscretizer::metric(
-        const glm::dvec3& position) const
-{
-    KdNode* parent = nullptr;
-    KdNode* child = _rootNode.get();
-
-    while(child != nullptr)
-    {
-        parent = child;
-        double dist = child->separator.w;
-        glm::dvec3 axis(child->separator);
-        if(glm::dot(position, axis) - dist < 0.0)
-            child = parent->left;
-        else
-            child = parent->right;
-    }
-
-    if(parent == nullptr)
-        return Metric(1.0);
-    else
-        return parent->metric;
 }
 
 void KdTreeDiscretizer::build(

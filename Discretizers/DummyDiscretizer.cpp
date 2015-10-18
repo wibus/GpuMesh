@@ -41,11 +41,11 @@ void DummyDiscretizer::discretize(
 
 }
 
-double DummyDiscretizer::distance(
-        const glm::dvec3& a,
-        const glm::dvec3& b) const
+Metric DummyDiscretizer::metric(
+        const glm::dvec3& position) const
 {
-    return 1.0;
+    // Constant isotropic metric
+    return Metric(1.0);
 }
 
 void DummyDiscretizer::releaseDebugMesh()
@@ -57,11 +57,4 @@ void DummyDiscretizer::releaseDebugMesh()
 const Mesh& DummyDiscretizer::debugMesh()
 {
     return *_debugMesh;
-}
-
-Metric DummyDiscretizer::metric(
-        const glm::dvec3& position) const
-{
-    // Constant isotropic metric
-    return Metric(1.0);
 }

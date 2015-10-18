@@ -8,10 +8,11 @@ using namespace std;
 DebugMesher::DebugMesher()
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Singles");
+    _modelFuncs.setDefault("Grid");
     _modelFuncs.setContent({
-        {string("Singles"), ModelFunc(bind(&DebugMesher::genSingles,   this, _1, _2))},
-        {string("Squish"),  ModelFunc(bind(&DebugMesher::genSquish, this, _1, _2))},
+        {string("Singles"), ModelFunc(bind(&DebugMesher::genSingles, this, _1, _2))},
+        {string("Squish"),  ModelFunc(bind(&DebugMesher::genSquish,  this, _1, _2))},
+        {string("Grid"),    ModelFunc(bind(&DebugMesher::genGrid,    this, _1, _2))},
     });
 }
 
@@ -92,8 +93,8 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
 
 void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
 {
-    double squishRadius = 0.3;
-    double squishHeight = 0.6;
+    double squishRadius = 0.5;
+    double squishHeight = 1.0;
 
     const int pow1_3 =  glm::pow((double)vertexCount, 1.0/3.0);
     const int pow1_3_pair = ((pow1_3 + 1) / 2) * 2;
@@ -124,6 +125,48 @@ void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
         for(int y=0; y< Y_COUNT; ++y)
         {
             for(int x=0; x< X_COUNT; ++x)
+            {
+                MeshHex hex(
+                    (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH);
+                mesh.hexs.push_back(hex);
+            }
+        }
+    }
+}
+
+void DebugMesher::genGrid(Mesh& mesh, size_t vertexCount)
+{
+    glm::dvec3 gridMin(-0.5);
+    glm::dvec3 gridMax( 0.5);
+
+    const int SECTION_COUNT =  glm::pow((double)vertexCount, 1.0/3.0);
+    for(int z=0; z <= SECTION_COUNT; ++z)
+    {
+        for(int y=0; y <= SECTION_COUNT; ++y)
+        {
+            for(int x=0; x <= SECTION_COUNT; ++x)
+            {
+                glm::dvec3 a = glm::dvec3(x, y, z) / glm::dvec3(SECTION_COUNT);
+                mesh.verts.push_back(glm::mix(gridMin, gridMax, a));
+            }
+        }
+    }
+
+    const int X_WIDTH = 1;
+    const int Y_WIDTH = SECTION_COUNT + 1;
+    const int Z_WIDTH = (SECTION_COUNT+1) * Y_WIDTH;
+    for(int z=0; z < SECTION_COUNT; ++z)
+    {
+        for(int y=0; y< SECTION_COUNT; ++y)
+        {
+            for(int x=0; x< SECTION_COUNT; ++x)
             {
                 MeshHex hex(
                     (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,

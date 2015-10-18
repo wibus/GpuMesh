@@ -25,13 +25,14 @@ struct ElemValue
 
 const Metric ISOTROPIC_METRIC(1.0);
 
-struct GridCell
+struct MetricCell
 {
-    GridCell() : metric(0), weight(0) {}
+    MetricCell() : metric(0), weight(0) {}
 
     Metric metric;
     double weight;
 };
+
 
 class UniformGrid
 {
@@ -46,7 +47,7 @@ public:
     {
     }
 
-    inline GridCell& at(const glm::ivec3& pos)
+    inline MetricCell& at(const glm::ivec3& pos)
     {
         return _impl[pos];
     }
@@ -56,7 +57,7 @@ public:
     const glm::dvec3 minBounds;
 
 private:
-    Grid3D<GridCell> _impl;
+    Grid3D<MetricCell> _impl;
 };
 
 
@@ -200,7 +201,7 @@ void UniformDiscretizer::discretize(const Mesh& mesh, int density)
                 for(int i=ev.minBox.x; i <= ev.maxBox.x; ++i)
                 {
                     glm::ivec3 id(i, j, k);
-                    GridCell& cell = _grid->at(id);
+                    MetricCell& cell = _grid->at(id);
                     cell.metric += ev.metric;
                     cell.weight += 1.0;
                 }
@@ -216,7 +217,7 @@ void UniformDiscretizer::discretize(const Mesh& mesh, int density)
             for(int i=0; i < gridSize.x; ++i)
             {
                 glm::ivec3 id(i, j, k);
-                GridCell& cell = _grid->at(id);
+                MetricCell& cell = _grid->at(id);
                 if(cell.weight > 0.0)
                 {
                     cell.metric /= cell.weight;
@@ -228,38 +229,6 @@ void UniformDiscretizer::discretize(const Mesh& mesh, int density)
             }
         }
     }
-}
-
-double UniformDiscretizer::distance(
-        const glm::dvec3& a,
-        const glm::dvec3& b) const
-{
-    glm::dvec3 d = a - b;
-    glm::dvec3 m = (a + b) / 2.0;
-    return glm::sqrt(glm::dot(d, metric(m) * d));
-}
-
-void UniformDiscretizer::releaseDebugMesh()
-{
-    _debugMesh.reset();
-}
-
-const Mesh& UniformDiscretizer::debugMesh()
-{
-    if(_debugMesh.get() == nullptr)
-    {
-        _debugMesh.reset(new Mesh());
-
-        if(_grid.get() != nullptr)
-        {
-            meshGrid(*_grid.get(), *_debugMesh);
-
-            _debugMesh->modelName = "Uniform Discretization Mesh";
-            _debugMesh->compileTopology();
-        }
-    }
-
-    return *_debugMesh;
 }
 
 Metric UniformDiscretizer::metric(
@@ -291,6 +260,7 @@ Metric UniformDiscretizer::metric(
 
     glm::dvec3 c000Center = cs * (glm::dvec3(id000) + glm::dvec3(0.5));
     glm::dvec3 a = (position - (_grid->minBounds + c000Center)) / cs;
+    a = glm::clamp(a, glm::dvec3(0), glm::dvec3(1));
 
     Metric mx00 = interpolate(m000, m100, a.x);
     Metric mx10 = interpolate(m010, m110, a.x);
@@ -303,6 +273,29 @@ Metric UniformDiscretizer::metric(
     Metric mxyz = interpolate(mxy0, mxy1, a.z);
 
     return mxyz;
+}
+
+void UniformDiscretizer::releaseDebugMesh()
+{
+    _debugMesh.reset();
+}
+
+const Mesh& UniformDiscretizer::debugMesh()
+{
+    if(_debugMesh.get() == nullptr)
+    {
+        _debugMesh.reset(new Mesh());
+
+        if(_grid.get() != nullptr)
+        {
+            meshGrid(*_grid.get(), *_debugMesh);
+
+            _debugMesh->modelName = "Uniform Discretization Mesh";
+            _debugMesh->compileTopology();
+        }
+    }
+
+    return *_debugMesh;
 }
 
 inline glm::ivec3 UniformDiscretizer::cellId(

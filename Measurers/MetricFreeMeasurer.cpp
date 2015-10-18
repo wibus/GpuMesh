@@ -17,6 +17,14 @@ MetricFreeMeasurer::~MetricFreeMeasurer()
 
 }
 
+double MetricFreeMeasurer::measuredDistance(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    return glm::distance(a, b);
+}
+
 double MetricFreeMeasurer::computeLocalElementSize(
         const Mesh& mesh,
         size_t vId) const
