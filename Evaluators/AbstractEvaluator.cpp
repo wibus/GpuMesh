@@ -8,6 +8,8 @@
 #include <CellarWorkbench/Misc/Log.h>
 
 #include "DataStructures/GpuMesh.h"
+#include "Discretizers/DummyDiscretizer.h"
+#include "Measurers/MetricFreeMeasurer.h"
 
 using namespace cellar;
 using namespace std;
@@ -40,9 +42,9 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
     using namespace std::placeholders;
     _implementationFuncs.setDefault("Thread");
     _implementationFuncs.setContent({
-      {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3))},
-      {string("Thread"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3))},
-      {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl, this, _1, _2, _3))},
+      {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4, _5))},
+      {string("Thread"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3, _4, _5))},
+      {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl,   this, _1, _2, _3, _4, _5))},
     });
 }
 
@@ -61,13 +63,27 @@ OptionMapDetails AbstractEvaluator::availableImplementations() const
     return _implementationFuncs.details();
 }
 
-void AbstractEvaluator::initialize(const Mesh& mesh)
+void AbstractEvaluator::initialize(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer)
 {
+    if(_discretizationShader == discretizer.discretizationShader() &&
+       _measureShader == measurer.measureShader() &&
+       _qualSsbo != 0)
+        return;
+
+
     getLog().postMessage(new Message('I', false,
         "Initializing evaluator compute shader", "AbstractEvaluator"));
 
+    _discretizationShader == discretizer.discretizationShader();
+    _measureShader == measurer.measureShader();
 
     // Simultenous evaluation shader
+    _evaluationProgram.clearShaders();
+    discretizer.installPlugIn(mesh, _evaluationProgram);
+    measurer.installPlugIn(mesh, _evaluationProgram);
     installPlugIn(mesh, _evaluationProgram);
     _evaluationProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
@@ -90,7 +106,7 @@ void AbstractEvaluator::installPlugIn(
 {
     std::vector<std::string> qualityInterface = {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Evaluating/EvaluationInterface.glsl"
+        ":/shaders/compute/Evaluating/Base.glsl"
     };
 
     std::vector<std::string> shapeMeasure = {
@@ -109,7 +125,11 @@ void AbstractEvaluator::uploadUniforms(
 
 }
 
-double AbstractEvaluator::tetVolume(const Mesh& mesh, const MeshTet& tet) const
+double AbstractEvaluator::tetQuality(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const MeshTet& tet) const
 {
     const glm::dvec3 vp[] = {
         mesh.verts[tet.v[0]],
@@ -118,20 +138,14 @@ double AbstractEvaluator::tetVolume(const Mesh& mesh, const MeshTet& tet) const
         mesh.verts[tet.v[3]],
     };
 
-    return tetVolume(vp);
+    return tetQuality(discretizer, measurer, vp);
 }
 
-double AbstractEvaluator::tetVolume(const glm::dvec3 vp[]) const
-{
-    double detSum = glm::determinant(glm::dmat3(
-        vp[0] - vp[3],
-        vp[1] - vp[3],
-        vp[2] - vp[3]));
-
-    return detSum / 6.0;
-}
-
-double AbstractEvaluator::priVolume(const Mesh& mesh, const MeshPri& pri) const
+double AbstractEvaluator::priQuality(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const MeshPri& pri) const
 {
     const glm::dvec3 vp[] = {
         mesh.verts[pri.v[0]],
@@ -142,29 +156,14 @@ double AbstractEvaluator::priVolume(const Mesh& mesh, const MeshPri& pri) const
         mesh.verts[pri.v[5]]
     };
 
-    return priVolume(vp);
+    return priQuality(discretizer, measurer, vp);
 }
 
-double AbstractEvaluator::priVolume(const glm::dvec3 vp[]) const
-{
-    double detSum = 0.0;
-    detSum += glm::determinant(glm::dmat3(
-        vp[4] - vp[2],
-        vp[0] - vp[2],
-        vp[1] - vp[2]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[5] - vp[2],
-        vp[1] - vp[2],
-        vp[3] - vp[2]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[4] - vp[2],
-        vp[1] - vp[2],
-        vp[5] - vp[2]));
-
-    return detSum / 6.0;
-}
-
-double AbstractEvaluator::hexVolume(const Mesh& mesh, const MeshHex& hex) const
+double AbstractEvaluator::hexQuality(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const MeshHex& hex) const
 {
     const glm::dvec3 vp[] = {
         mesh.verts[hex.v[0]],
@@ -177,77 +176,52 @@ double AbstractEvaluator::hexVolume(const Mesh& mesh, const MeshHex& hex) const
         mesh.verts[hex.v[7]]
     };
 
-    return hexVolume(vp);
+    return hexQuality(discretizer, measurer, vp);
 }
 
-double AbstractEvaluator::hexVolume(const glm::dvec3 vp[]) const
+double AbstractEvaluator::patchQuality(
+            const Mesh& mesh,
+            const AbstractDiscretizer& discretizer,
+            const AbstractMeasurer& measurer,
+            size_t vId) const
 {
-    double detSum = 0.0;
-    detSum += glm::determinant(glm::dmat3(
-        vp[0] - vp[2],
-        vp[1] - vp[2],
-        vp[4] - vp[2]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[3] - vp[1],
-        vp[2] - vp[1],
-        vp[7] - vp[1]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[5] - vp[4],
-        vp[1] - vp[4],
-        vp[7] - vp[4]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[6] - vp[7],
-        vp[2] - vp[7],
-        vp[4] - vp[7]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[1] - vp[2],
-        vp[7] - vp[2],
-        vp[4] - vp[2]));
+    const std::vector<MeshTet>& tets = mesh.tets;
+    const std::vector<MeshPri>& pris = mesh.pris;
+    const std::vector<MeshHex>& hexs = mesh.hexs;
 
-    return detSum / 6.0;
-}
+    const MeshTopo& topo = mesh.topos[vId];
 
+    size_t neigElemCount = topo.neighborElems.size();
 
-double AbstractEvaluator::tetQuality(const Mesh& mesh, const MeshTet& tet) const
-{
-    const glm::dvec3 vp[] = {
-        mesh.verts[tet.v[0]],
-        mesh.verts[tet.v[1]],
-        mesh.verts[tet.v[2]],
-        mesh.verts[tet.v[3]],
-    };
+    double patchWeight = 0.0;
+    double patchQuality = 1.0;
+    for(size_t n=0; n < neigElemCount; ++n)
+    {
+        const MeshNeigElem& neigElem = topo.neighborElems[n];
 
-    return tetQuality(vp);
-}
+        switch(neigElem.type)
+        {
+        case MeshTet::ELEMENT_TYPE:
+            accumulatePatchQuality(
+                patchQuality, patchWeight,
+                tetQuality(mesh, discretizer, measurer, tets[neigElem.id]));
+            break;
 
-double AbstractEvaluator::priQuality(const Mesh& mesh, const MeshPri& pri) const
-{
-    const glm::dvec3 vp[] = {
-        mesh.verts[pri.v[0]],
-        mesh.verts[pri.v[1]],
-        mesh.verts[pri.v[2]],
-        mesh.verts[pri.v[3]],
-        mesh.verts[pri.v[4]],
-        mesh.verts[pri.v[5]]
-    };
+        case MeshPri::ELEMENT_TYPE:
+            accumulatePatchQuality(
+                patchQuality, patchWeight,
+                priQuality(mesh, discretizer, measurer, pris[neigElem.id]));
+            break;
 
-    return priQuality(vp);
-}
+        case MeshHex::ELEMENT_TYPE:
+            accumulatePatchQuality(
+                patchQuality, patchWeight,
+                hexQuality(mesh, discretizer, measurer, hexs[neigElem.id]));
+            break;
+        }
+    }
 
-double AbstractEvaluator::hexQuality(const Mesh& mesh, const MeshHex& hex) const
-{
-    const glm::dvec3 vp[] = {
-        mesh.verts[hex.v[0]],
-        mesh.verts[hex.v[1]],
-        mesh.verts[hex.v[2]],
-        mesh.verts[hex.v[3]],
-        mesh.verts[hex.v[4]],
-        mesh.verts[hex.v[5]],
-        mesh.verts[hex.v[6]],
-        mesh.verts[hex.v[7]]
-    };
-
-    return hexQuality(vp);
+    return finalizePatchQuality(patchQuality, patchWeight);
 }
 
 bool AbstractEvaluator::assessMeasureValidy()
@@ -277,9 +251,13 @@ bool AbstractEvaluator::assessMeasureValidy()
     const MeshTet tet = MeshTet(0, 1, 2, 3);
     const MeshPri pri = MeshPri(4, 5, 6, 7, 8, 9);
     const MeshHex hex = MeshHex(10, 11, 12, 13, 14, 15, 16, 17);
-    double regularTet = tetQuality(mesh, tet);
-    double regularPri = priQuality(mesh, pri);
-    double regularHex = hexQuality(mesh, hex);
+
+    DummyDiscretizer discretizer;
+    MetricFreeMeasurer measurer;
+
+    double regularTet = tetQuality(mesh, discretizer, measurer, tet);
+    double regularPri = priQuality(mesh, discretizer, measurer, pri);
+    double regularHex = hexQuality(mesh, discretizer, measurer, hex);
 
     if(glm::abs(regularTet - 1.0) < VALIDITY_EPSILON &&
        glm::abs(regularPri - 1.0) < VALIDITY_EPSILON &&
@@ -308,6 +286,8 @@ bool AbstractEvaluator::assessMeasureValidy()
 
 void AbstractEvaluator::evaluateMesh(
         const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
         double& minQuality,
         double& qualityMean,
         const std::string& implementationName) const
@@ -315,7 +295,7 @@ void AbstractEvaluator::evaluateMesh(
     ImplementationFunc implementationFunc;
     if(_implementationFuncs.select(implementationName, implementationFunc))
     {
-        implementationFunc(mesh, minQuality, qualityMean);
+        implementationFunc(mesh, discretizer, measurer, minQuality, qualityMean);
     }
     else
     {
@@ -326,6 +306,8 @@ void AbstractEvaluator::evaluateMesh(
 
 void AbstractEvaluator::evaluateMeshQualitySerial(
         const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
         double& minQuality,
         double& qualityMean) const
 {
@@ -338,13 +320,13 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
     int idx = 0;
 
     for(int i=0; i < tetCount; ++i, ++idx)
-        qualities[idx] = tetQuality(mesh, mesh.tets[i]);
+        qualities[idx] = tetQuality(mesh, discretizer, measurer, mesh.tets[i]);
 
     for(int i=0; i < priCount; ++i, ++idx)
-        qualities[idx] = priQuality(mesh, mesh.pris[i]);
+        qualities[idx] = priQuality(mesh, discretizer, measurer, mesh.pris[i]);
 
     for(int i=0; i < hexCount; ++i, ++idx)
-        qualities[idx] = hexQuality(mesh, mesh.hexs[i]);
+        qualities[idx] = hexQuality(mesh, discretizer, measurer, mesh.hexs[i]);
 
 
     minQuality = 1.0;
@@ -359,9 +341,11 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
 }
 
 void AbstractEvaluator::evaluateMeshQualityThread(
-            const Mesh& mesh,
-            double& minQuality,
-            double& qualityMean) const
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        double& minQuality,
+        double& qualityMean) const
 {
     int tetCount = mesh.tets.size();
     int priCount = mesh.pris.size();
@@ -389,13 +373,13 @@ void AbstractEvaluator::evaluateMeshQualityThread(
             int idx = 0;
 
             for(int i=tetBeg; i < tetEnd; ++i, ++idx)
-                qualities[idx] = tetQuality(mesh, mesh.tets[i]);
+                qualities[idx] = tetQuality(mesh, discretizer, measurer, mesh.tets[i]);
 
             for(int i=priBeg; i < priEnd; ++i, ++idx)
-                qualities[idx] = priQuality(mesh, mesh.pris[i]);
+                qualities[idx] = priQuality(mesh, discretizer, measurer, mesh.pris[i]);
 
             for(int i=hexBeg; i < hexEnd; ++i, ++idx)
-                qualities[idx] = hexQuality(mesh, mesh.hexs[i]);
+                qualities[idx] = hexQuality(mesh, discretizer, measurer, mesh.hexs[i]);
 
             double futureMinQuality = 1.0;
             double futureQualityMean = 0.0;
@@ -425,6 +409,8 @@ void AbstractEvaluator::evaluateMeshQualityThread(
 
 void AbstractEvaluator::evaluateMeshQualityGlsl(
         const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
         double& minQuality,
         double& qualityMean) const
 {
@@ -506,6 +492,8 @@ struct EvalBenchmarkStats
 
 void AbstractEvaluator::benchmark(
         const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
         const map<string, int>& cycleCounts)
 {
     int markCount = 100 / cycleCounts.size();
@@ -554,7 +542,7 @@ void AbstractEvaluator::benchmark(
                 double minQual, qualMean;
 
                 tStart = high_resolution_clock::now();
-                implementationFunc(mesh, minQual, qualMean);
+                implementationFunc(mesh, discretizer, measurer, minQual, qualMean);
                 tEnd = high_resolution_clock::now();
 
                 totalTime += (tEnd - tStart);
@@ -615,4 +603,22 @@ void AbstractEvaluator::benchmark(
          + timeString + "\t = "
          + normTimeString,
         "AbstractEvaluator"));
+}
+
+void AbstractEvaluator::accumulatePatchQuality(
+        double& patchQuality,
+        double& patchWeight,
+        double elemQuality) const
+{
+    patchQuality = glm::min(
+        glm::min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
+        glm::min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
+                 patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
+}
+
+double AbstractEvaluator::finalizePatchQuality(
+        double patchQuality,
+        double patchWeight) const
+{
+    return patchQuality;
 }

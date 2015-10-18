@@ -4,7 +4,7 @@
 #include <string>
 
 class Mesh;
-class AbstractEvaluator;
+class MeshCrew;
 
 
 class AbstractSerializer
@@ -17,7 +17,7 @@ public:
 
     virtual bool serialize(
             const std::string& fileName,
-            const AbstractEvaluator& evaluator,
+            const MeshCrew& crew,
             const Mesh& mesh) const = 0;
 };
 

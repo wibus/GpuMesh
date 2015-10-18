@@ -85,8 +85,8 @@ void QualityLaplaceSmoother::smoothVertices(
 
             // Compute patch quality
             double patchQuality =
-                crew.measurer().computePatchQuality(
-                    mesh, crew.evaluator(), vId);
+                crew.evaluator().patchQuality(
+                    mesh, crew.discretizer(), crew.measurer(), vId);
 
             if(patchQuality > bestQualityMean)
             {

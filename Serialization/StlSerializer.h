@@ -16,7 +16,7 @@ public:
 
     virtual bool serialize(
             const std::string& fileName,
-            const AbstractEvaluator& evaluator,
+            const MeshCrew& crew,
             const Mesh& mesh) const override;
 
 protected:

@@ -50,8 +50,30 @@ double MetricWiseMeasurer::measuredDistance(
     return dist;
 }
 
+double MetricWiseMeasurer::tetVolume(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3 vp[]) const
+{
+    return 1.0;
+}
+
+double MetricWiseMeasurer::priVolume(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3 vp[]) const
+{
+    return 1.0;
+}
+
+double MetricWiseMeasurer::hexVolume(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3 vp[]) const
+{
+    return 1.0;
+}
+
 double MetricWiseMeasurer::computeLocalElementSize(
         const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
         size_t vId) const
 {
     return 1.0;
@@ -79,14 +101,6 @@ glm::dvec3 MetricWiseMeasurer::computeVertexEquilibrium(
 
     glm::dvec3 equilibrium = pos + forceTotal;
     return equilibrium;
-}
-
-double MetricWiseMeasurer::computePatchQuality(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            size_t vId) const
-{
-    return 1.0;
 }
 
 glm::dvec3 MetricWiseMeasurer::computeSpringForce(

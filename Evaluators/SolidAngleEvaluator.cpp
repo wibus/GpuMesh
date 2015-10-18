@@ -29,7 +29,10 @@ inline double SolidAngleEvaluator::solidAngle(
                         (cl*al + dot(c, a)));
 }
 
-double SolidAngleEvaluator::tetQuality(const dvec3 vp[]) const
+double SolidAngleEvaluator::tetQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     double q0 = solidAngle(vp[1] - vp[0], vp[3] - vp[0], vp[2] - vp[0]);
     double q1 = solidAngle(vp[0] - vp[1], vp[2] - vp[1], vp[3] - vp[1]);
@@ -42,7 +45,10 @@ double SolidAngleEvaluator::tetQuality(const dvec3 vp[]) const
     return minQ * 3.67423461417; // 9 / sqrt(6)
 }
 
-double SolidAngleEvaluator::priQuality(const dvec3 vp[]) const
+double SolidAngleEvaluator::priQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     double q0 = solidAngle(vp[1] - vp[0], vp[2] - vp[0], vp[4] - vp[0]);
     double q1 = solidAngle(vp[0] - vp[1], vp[5] - vp[1], vp[3] - vp[1]);
@@ -58,7 +64,10 @@ double SolidAngleEvaluator::priQuality(const dvec3 vp[]) const
     return minQ * 2.0; // 1.0 / <max val for regular prism>
 }
 
-double SolidAngleEvaluator::hexQuality(const dvec3 vp[]) const
+double SolidAngleEvaluator::hexQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     double q0 = solidAngle(vp[1] - vp[0], vp[2] - vp[0], vp[4] - vp[0]);
     double q1 = solidAngle(vp[0] - vp[5], vp[3] - vp[1], vp[1] - vp[1]);

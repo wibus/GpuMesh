@@ -12,6 +12,9 @@ namespace cellar
 }
 
 class Mesh;
+class MeshTet;
+class MeshPri;
+class MeshHex;
 class AbstractEvaluator;
 class AbstractDiscretizer;
 
@@ -38,39 +41,53 @@ public:
             cellar::GlProgram& program) const;
 
 
+    // Distances
     virtual double measuredDistance(
             const AbstractDiscretizer& discretizer,
             const glm::dvec3& a,
             const glm::dvec3& b) const = 0;
 
+
+    // Volumes
+    virtual double tetVolume(
+            const Mesh& mesh,
+            const AbstractDiscretizer& discretizer,
+            const MeshTet& tet) const;
+    virtual double tetVolume(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3 vp[]) const = 0;
+
+    virtual double priVolume(
+            const Mesh& mesh,
+            const AbstractDiscretizer& discretizer,
+            const MeshPri& pri) const;
+    virtual double priVolume(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3 vp[]) const = 0;
+
+    virtual double hexVolume(
+            const Mesh& mesh,
+            const AbstractDiscretizer& discretizer,
+            const MeshHex& hex) const;
+    virtual double hexVolume(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3 vp[]) const = 0;
+
+
+
     virtual double computeLocalElementSize(
             const Mesh& mesh,
+            const AbstractDiscretizer& discretizer,
             size_t vId) const = 0;
+
 
     virtual glm::dvec3 computeVertexEquilibrium(
             const Mesh& mesh,
             const AbstractDiscretizer& discretizer,
             size_t vId) const = 0;
 
-    virtual double computePatchQuality(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            size_t vId) const = 0;
-
-
-protected:
-    virtual void accumulatePatchQuality(
-            double& patchQuality,
-            double& patchWeight,
-            double elemQuality) const;
-
-    virtual double finalizePatchQuality(
-            double patchQuality,
-            double patchWeight) const;
-
 private:
     std::string _measureName;
-    std::string _frameworkShader;
     std::string _measureShader;
 };
 

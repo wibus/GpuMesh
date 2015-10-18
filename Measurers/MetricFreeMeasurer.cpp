@@ -25,8 +25,71 @@ double MetricFreeMeasurer::measuredDistance(
     return glm::distance(a, b);
 }
 
+double MetricFreeMeasurer::tetVolume(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3 vp[]) const
+{
+    double detSum = glm::determinant(glm::dmat3(
+        vp[0] - vp[3],
+        vp[1] - vp[3],
+        vp[2] - vp[3]));
+
+    return detSum / 6.0;
+}
+
+double MetricFreeMeasurer::priVolume(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3 vp[]) const
+{
+    double detSum = 0.0;
+    detSum += glm::determinant(glm::dmat3(
+        vp[4] - vp[2],
+        vp[0] - vp[2],
+        vp[1] - vp[2]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[5] - vp[2],
+        vp[1] - vp[2],
+        vp[3] - vp[2]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[4] - vp[2],
+        vp[1] - vp[2],
+        vp[5] - vp[2]));
+
+    return detSum / 6.0;
+}
+
+double MetricFreeMeasurer::hexVolume(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3 vp[]) const
+{
+    double detSum = 0.0;
+    detSum += glm::determinant(glm::dmat3(
+        vp[0] - vp[2],
+        vp[1] - vp[2],
+        vp[4] - vp[2]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[3] - vp[1],
+        vp[2] - vp[1],
+        vp[7] - vp[1]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[5] - vp[4],
+        vp[1] - vp[4],
+        vp[7] - vp[4]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[6] - vp[7],
+        vp[2] - vp[7],
+        vp[4] - vp[7]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[1] - vp[2],
+        vp[7] - vp[2],
+        vp[4] - vp[2]));
+
+    return detSum / 6.0;
+}
+
 double MetricFreeMeasurer::computeLocalElementSize(
         const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
         size_t vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;
@@ -90,48 +153,4 @@ glm::dvec3 MetricFreeMeasurer::computeVertexEquilibrium(
                     / double(totalVertCount);
 
     return patchCenter;
-}
-
-double MetricFreeMeasurer::computePatchQuality(
-            const Mesh& mesh,
-            const AbstractEvaluator& evaluator,
-            size_t vId) const
-{
-    const std::vector<MeshTet>& tets = mesh.tets;
-    const std::vector<MeshPri>& pris = mesh.pris;
-    const std::vector<MeshHex>& hexs = mesh.hexs;
-
-    const MeshTopo& topo = mesh.topos[vId];
-
-    size_t neigElemCount = topo.neighborElems.size();
-
-    double patchWeight = 0.0;
-    double patchQuality = 1.0;
-    for(size_t n=0; n < neigElemCount; ++n)
-    {
-        const MeshNeigElem& neigElem = topo.neighborElems[n];
-
-        switch(neigElem.type)
-        {
-        case MeshTet::ELEMENT_TYPE:
-            accumulatePatchQuality(
-                patchQuality, patchWeight,
-                evaluator.tetQuality(mesh, tets[neigElem.id]));
-            break;
-
-        case MeshPri::ELEMENT_TYPE:
-            accumulatePatchQuality(
-                patchQuality, patchWeight,
-                evaluator.priQuality(mesh, pris[neigElem.id]));
-            break;
-
-        case MeshHex::ELEMENT_TYPE:
-            accumulatePatchQuality(
-                patchQuality, patchWeight,
-                evaluator.hexQuality(mesh, hexs[neigElem.id]));
-            break;
-        }
-    }
-
-    return finalizePatchQuality(patchQuality, patchWeight);
 }

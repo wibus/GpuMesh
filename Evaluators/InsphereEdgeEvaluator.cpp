@@ -14,7 +14,10 @@ InsphereEdgeEvaluator::~InsphereEdgeEvaluator()
 
 }
 
-double InsphereEdgeEvaluator::tetQuality(const dvec3 vp[]) const
+double InsphereEdgeEvaluator::tetQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     double u = distance(vp[0], vp[1]);
     double v = distance(vp[0], vp[2]);
@@ -49,7 +52,10 @@ double InsphereEdgeEvaluator::tetQuality(const dvec3 vp[]) const
     return (4.89897948557) * R / maxLen;
 }
 
-double InsphereEdgeEvaluator::priQuality(const dvec3 vp[]) const
+double InsphereEdgeEvaluator::priQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     // Prism quality ~= mean of 6 possible tetrahedrons from prism triangular faces
     const dvec3 tetA[] = {vp[4], vp[1], vp[5], vp[3]};
@@ -59,23 +65,26 @@ double InsphereEdgeEvaluator::priQuality(const dvec3 vp[]) const
     const dvec3 tetE[] = {vp[0], vp[1], vp[5], vp[3]};
     const dvec3 tetF[] = {vp[1], vp[2], vp[4], vp[0]};
 
-    double tetAq = tetQuality(tetA);
-    double tetBq = tetQuality(tetB);
-    double tetCq = tetQuality(tetC);
-    double tetDq = tetQuality(tetD);
-    double tetEq = tetQuality(tetE);
-    double tetFq = tetQuality(tetF);
+    double tetAq = tetQuality(discretizer, measurer, tetA);
+    double tetBq = tetQuality(discretizer, measurer, tetB);
+    double tetCq = tetQuality(discretizer, measurer, tetC);
+    double tetDq = tetQuality(discretizer, measurer, tetD);
+    double tetEq = tetQuality(discretizer, measurer, tetE);
+    double tetFq = tetQuality(discretizer, measurer, tetF);
     return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq)
                 / 4.2970697433826288147;
 }
 
-double InsphereEdgeEvaluator::hexQuality(const dvec3 vp[]) const
+double InsphereEdgeEvaluator::hexQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     // Hexahedron quality ~= mean of two possible internal tetrahedrons
     const dvec3 tetA[] = {vp[0], vp[3], vp[5], vp[6]};
     const dvec3 tetB[] = {vp[1], vp[2], vp[7], vp[4]};
-    double tetAQuality = tetQuality(tetA);
-    double tetBQuality = tetQuality(tetB);
+    double tetAQuality = tetQuality(discretizer, measurer, tetA);
+    double tetBQuality = tetQuality(discretizer, measurer, tetB);
     return (tetAQuality + tetBQuality)
                 / 2.0;
 }

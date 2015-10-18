@@ -11,7 +11,7 @@ void reinitAccum(in uint vId);
 // Smoothing Helper
 uint getInvocationVertexId();
 bool isSmoothableVertex(uint vId);
-float computePatchQuality(in uint vId);
+float patchQuality(in uint vId);
 
 
 void main()
@@ -29,15 +29,15 @@ void main()
             if(topo.type > 0)
                 posPrim = snapToBoundary(topo.type, posPrim);
 
-            float patchQuality =
-                computePatchQuality(vId);
+            float prePatchQuality =
+                patchQuality(vId);
 
             verts[vId].p = vec4(posPrim, 0.0);
 
             float patchQualityPrime =
-                computePatchQuality(vId);
+                patchQuality(vId);
 
-            if(patchQualityPrime < patchQuality)
+            if(patchQualityPrime < prePatchQuality)
                 verts[vId].p = vec4(pos, 0.0);
         }
 

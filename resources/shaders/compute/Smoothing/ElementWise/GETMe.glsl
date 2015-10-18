@@ -16,7 +16,7 @@ vec3 snapToBoundary(int boundaryID, vec3 pos);
 void addPosition(in uint vId, in vec3 pos, in float weight);
 
 // Smoothing helper
-float computePatchQuality(in uint vId);
+float patchQuality(in uint vId);
 
 
 // ENTRY POINTS //

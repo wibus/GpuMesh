@@ -248,15 +248,15 @@ SET(GpuMesh_BOUNDARY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
 
 SET(GpuMesh_EVALUATING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/Base.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/Evaluate.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/EvaluationInterface.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/InsphereEdge.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/MeanRatio.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/SolidAngle.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/VolumeEdge.glsl)
 
 SET(GpuMesh_MEASURING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/Framework.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Measuring/Base.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/MetricFree.glsl
     ${GpuMesh_SHADER_DIR}/compute/Measuring/MetricWise.glsl)
 

@@ -42,9 +42,9 @@
         <file>shaders/compute/Evaluating/MeanRatio.glsl</file>
         <file>shaders/compute/Evaluating/SolidAngle.glsl</file>
         <file>shaders/compute/Evaluating/VolumeEdge.glsl</file>
-        <file>shaders/compute/Evaluating/EvaluationInterface.glsl</file>
         <file>shaders/compute/Measuring/MetricFree.glsl</file>
         <file>shaders/compute/Measuring/MetricWise.glsl</file>
-        <file>shaders/compute/Measuring/Framework.glsl</file>
+        <file>shaders/compute/Evaluating/Base.glsl</file>
+        <file>shaders/compute/Measuring/Base.glsl</file>
     </qresource>
 </RCC>

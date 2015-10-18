@@ -115,15 +115,15 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
     {
     case 0 :
         crew.evaluator().evaluateMeshQualitySerial(
-            mesh, qualMin, qualMean);
+            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
         break;
     case 1 :
         crew.evaluator().evaluateMeshQualityThread(
-            mesh, qualMin, qualMean);
+            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
         break;
     case 2 :
         crew.evaluator().evaluateMeshQualityGlsl(
-            mesh, qualMin, qualMean);
+            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
         break;
     }
 
@@ -188,7 +188,8 @@ void AbstractSmoother::benchmark(
     double initialMinQuality = 0.0;
     double initialQualityMean = 0.0;
     crew.evaluator().evaluateMeshQualityThread(
-        mesh, initialMinQuality, initialQualityMean);
+        mesh, crew.discretizer(), crew.measurer(),
+        initialMinQuality, initialQualityMean);
 
     // We must make a copy of the vertices in order to
     // restore mesh's vertices after each implementation.
@@ -235,7 +236,8 @@ void AbstractSmoother::benchmark(
 
             SmoothBenchmarkStats stats;
             crew.evaluator().evaluateMeshQualityThread(
-                mesh, stats.minQuality, stats.qualityMean);
+                mesh, crew.discretizer(), crew.measurer(),
+                stats.minQuality, stats.qualityMean);
 
             stats.impl = impl;
             stats.totalSeconds = _currentImplementation.passes.back().timeStamp -

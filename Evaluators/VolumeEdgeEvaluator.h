@@ -16,14 +16,22 @@ public:
     VolumeEdgeEvaluator();
     virtual ~VolumeEdgeEvaluator();
 
-    // Gives good results
-    virtual double tetQuality(const glm::dvec3 vp[]) const override;
+    virtual double tetQuality(
+            const AbstractDiscretizer& discretizer,
+            const AbstractMeasurer& measurer,
+            const glm::dvec3 vp[]) const override;
 
     // !Gives wrong results!
-    virtual double priQuality(const glm::dvec3 vp[]) const override;
+    virtual double priQuality(
+            const AbstractDiscretizer& discretizer,
+            const AbstractMeasurer& measurer,
+            const glm::dvec3 vp[]) const override;
 
     // !Gives wrong results!
-    virtual double hexQuality(const glm::dvec3 vp[]) const override;
+    virtual double hexQuality(
+            const AbstractDiscretizer& discretizer,
+            const AbstractMeasurer& measurer,
+            const glm::dvec3 vp[]) const override;
 };
 
 #endif // GPUMESH_VOLUMEEDGEEVALUATOR

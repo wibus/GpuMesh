@@ -8,7 +8,7 @@ vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Smoothing helper
 vec3 computeVertexEquilibrium(in uint vId);
-float computePatchQuality(in uint vId);
+float patchQuality(in uint vId);
 
 
 // ENTRY POINT //
@@ -47,7 +47,7 @@ void smoothVertex(uint vId)
         // to compute element shape measures.
         verts[vId].p = vec4(propositions[p], 0.0);
 
-        float patchQuality = computePatchQuality(vId);
+        float patchQuality = patchQuality(vId);
 
         if(patchQuality > bestQualityMean)
         {

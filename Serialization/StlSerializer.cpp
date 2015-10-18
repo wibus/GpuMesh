@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "DataStructures/Mesh.h"
+#include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "UserInterface/Dialogs/StlSerializerDialog.h"
 
@@ -22,7 +23,7 @@ StlSerializer::~StlSerializer()
 
 bool StlSerializer::serialize(
         const std::string& fileName,
-        const AbstractEvaluator& evaluator,
+        const MeshCrew& crew,
         const Mesh& mesh) const
 {
     StlSerializerDialog dialog;
@@ -71,7 +72,8 @@ bool StlSerializer::serialize(
                 glm::vec3(mesh.verts[elem.v[MeshTet::tris[t][0]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshTet::tris[t][1]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshTet::tris[t][2]]].p)};
-            double qual = computeQuality ? evaluator.tetQuality(mesh, elem) : 0;
+            double qual = computeQuality ? crew.evaluator().tetQuality(
+                mesh, crew.discretizer(), crew.measurer(), elem) : 0;
             printFunc(stlFile, v, qual);
         }
     }
@@ -86,7 +88,8 @@ bool StlSerializer::serialize(
                 glm::vec3(mesh.verts[elem.v[MeshPri::tris[t][0]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshPri::tris[t][1]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshPri::tris[t][2]]].p)};
-            double qual = computeQuality ? evaluator.priQuality(mesh, elem) : 0;
+            double qual = computeQuality ? crew.evaluator().priQuality(
+                mesh, crew.discretizer(), crew.measurer(), elem) : 0;
             printFunc(stlFile, v, qual);
         }
     }
@@ -101,7 +104,8 @@ bool StlSerializer::serialize(
                 glm::vec3(mesh.verts[elem.v[MeshHex::tris[t][0]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshHex::tris[t][1]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshHex::tris[t][2]]].p)};
-            double qual = computeQuality ? evaluator.hexQuality(mesh, elem) : 0;
+            double qual = computeQuality ? crew.evaluator().hexQuality(
+                mesh, crew.discretizer(), crew.measurer(), elem) : 0;
             printFunc(stlFile, v, qual);
         }
     }

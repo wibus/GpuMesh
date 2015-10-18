@@ -2,6 +2,8 @@
 
 #include <GLM/gtx/norm.hpp>
 
+#include "Measurers/AbstractMeasurer.h"
+
 using namespace glm;
 
 
@@ -15,9 +17,12 @@ VolumeEdgeEvaluator::~VolumeEdgeEvaluator()
 
 }
 
-double VolumeEdgeEvaluator::tetQuality(const dvec3 vp[]) const
+double VolumeEdgeEvaluator::tetQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
-    double volume = tetVolume(vp);
+    double volume = measurer.tetVolume(discretizer, vp);
 
     double edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);
@@ -31,9 +36,12 @@ double VolumeEdgeEvaluator::tetQuality(const dvec3 vp[]) const
             / 0.0080187537387448014348; // Normalization constant
 }
 
-double VolumeEdgeEvaluator::priQuality(const dvec3 vp[]) const
+double VolumeEdgeEvaluator::priQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
-    double volume = priVolume(vp);
+    double volume = measurer.priVolume(discretizer, vp);
 
     double edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);
@@ -51,9 +59,12 @@ double VolumeEdgeEvaluator::priQuality(const dvec3 vp[]) const
             / 0.016037507477489606339, 1.0); // Normalization constant
 }
 
-double VolumeEdgeEvaluator::hexQuality(const dvec3 vp[]) const
+double VolumeEdgeEvaluator::hexQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
-    double volume = hexVolume(vp);
+    double volume = measurer.hexVolume(discretizer, vp);
 
     double edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);

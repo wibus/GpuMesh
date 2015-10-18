@@ -75,8 +75,8 @@ protected:
     bool _initialized;
     std::string _modelBoundsShader;
     std::string _discretizationShader;
-    std::string _evaluationShader;
     std::string _measureShader;
+    std::string _evaluationShader;
     std::vector<std::string> _smoothShaders;
     cellar::GlProgram _elemSmoothProgram;
     cellar::GlProgram _vertUpdateProgram;

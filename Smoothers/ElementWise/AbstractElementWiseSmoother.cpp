@@ -364,14 +364,14 @@ void AbstractElementWiseSmoother::updateVertexPositions(
                 posPrim = (*topo.snapToBoundary)(posPrim);
 
             double patchQuality =
-                crew.measurer().computePatchQuality(
-                    mesh, crew.evaluator(), vId);
+                crew.evaluator().patchQuality(
+                    mesh, crew.discretizer(), crew.measurer(), vId);
 
             verts[vId].p = posPrim;
 
             double patchQualityPrime =
-                crew.measurer().computePatchQuality(
-                    mesh, crew.evaluator(), vId);
+                crew.evaluator().patchQuality(
+                    mesh, crew.discretizer(), crew.measurer(), vId);
 
             if(patchQualityPrime < patchQuality)
                 verts[vId].p = pos;

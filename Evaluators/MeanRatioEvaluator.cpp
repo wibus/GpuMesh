@@ -25,7 +25,10 @@ double MeanRatioEvaluator::cornerQuality(const dmat3& Fk) const
     return sign(Fk_det) * 3.0 * pow(abs(Fk_det), 2.0/3.0) / Fk_frobenius2;
 }
 
-double MeanRatioEvaluator::tetQuality(const dvec3 vp[]) const
+double MeanRatioEvaluator::tetQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     const dmat3 Fr_INV(
         dvec3(1, 0, 0),
@@ -41,7 +44,10 @@ double MeanRatioEvaluator::tetQuality(const dvec3 vp[]) const
     return qual0;
 }
 
-double MeanRatioEvaluator::priQuality(const dvec3 vp[]) const
+double MeanRatioEvaluator::priQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     const dmat3 Fr_INV(
         dvec3(1.0, 0.0, 0.0),
@@ -68,7 +74,10 @@ double MeanRatioEvaluator::priQuality(const dvec3 vp[]) const
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
 
-double MeanRatioEvaluator::hexQuality(const dvec3 vp[]) const
+double MeanRatioEvaluator::hexQuality(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        const glm::dvec3 vp[]) const
 {
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_INV.

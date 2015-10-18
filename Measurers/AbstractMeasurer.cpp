@@ -11,8 +11,7 @@ AbstractMeasurer::AbstractMeasurer(
         const string& name,
         const string& shader) :
     _measureName(name),
-    _measureShader(shader),
-    _frameworkShader(":/shaders/compute/Measuring/Framework.glsl")
+    _measureShader(shader)
 {
 
 }
@@ -33,7 +32,7 @@ void AbstractMeasurer::installPlugIn(
 {
     program.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        _frameworkShader.c_str()
+        ":/shaders/compute/Measuring/Base.glsl"
     });
 
     program.addShader(GL_COMPUTE_SHADER, {
@@ -49,20 +48,53 @@ void AbstractMeasurer::uploadUniforms(
 
 }
 
-void AbstractMeasurer::accumulatePatchQuality(
-        double& patchQuality,
-        double& patchWeight,
-        double elemQuality) const
+double AbstractMeasurer::tetVolume(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const MeshTet& tet) const
 {
-    patchQuality = glm::min(
-        glm::min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
-        glm::min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
-                 patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
+    const glm::dvec3 vp[] = {
+        mesh.verts[tet.v[0]],
+        mesh.verts[tet.v[1]],
+        mesh.verts[tet.v[2]],
+        mesh.verts[tet.v[3]],
+    };
+
+    return tetVolume(discretizer, vp);
 }
 
-double AbstractMeasurer::finalizePatchQuality(
-        double patchQuality,
-        double patchWeight) const
+double AbstractMeasurer::priVolume(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const MeshPri& pri) const
 {
-    return patchQuality;
+    const glm::dvec3 vp[] = {
+        mesh.verts[pri.v[0]],
+        mesh.verts[pri.v[1]],
+        mesh.verts[pri.v[2]],
+        mesh.verts[pri.v[3]],
+        mesh.verts[pri.v[4]],
+        mesh.verts[pri.v[5]]
+    };
+
+    return priVolume(discretizer, vp);
+}
+
+double AbstractMeasurer::hexVolume(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const MeshHex& hex) const
+{
+    const glm::dvec3 vp[] = {
+        mesh.verts[hex.v[0]],
+        mesh.verts[hex.v[1]],
+        mesh.verts[hex.v[2]],
+        mesh.verts[hex.v[3]],
+        mesh.verts[hex.v[4]],
+        mesh.verts[hex.v[5]],
+        mesh.verts[hex.v[6]],
+        mesh.verts[hex.v[7]]
+    };
+
+    return hexVolume(discretizer, vp);
 }

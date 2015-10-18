@@ -1,14 +1,21 @@
-// Element quality interface
-float tetQuality(in Tet tet);
-float priQuality(in Pri pri);
-float hexQuality(in Hex hex);
+// Element Volume
+float tetVolume(in vec3 vp[TET_VERTEX_COUNT])
+{
+    return 1.0;
+}
 
-// Subroutine declarations
-void accumulatePatchQuality(inout float patchQuality, inout float patchWeight, in float elemQuality);
-float finalizePatchQuality(in float patchQuality, in float patchWeight);
+float priVolume(in vec3 vp[PRI_VERTEX_COUNT])
+{
+    return 1.0;
+}
+
+float hexVolume(in vec3 vp[HEX_VERTEX_COUNT])
+{
+    return 1.0;
+}
 
 
-// Measuring Framework
+// High level measurement
 float computeLocalElementSize(in uint vId)
 {
     return 1.0;
@@ -17,9 +24,4 @@ float computeLocalElementSize(in uint vId)
 vec3 computeVertexEquilibrium(in uint vId)
 {
     return vec3(verts[vId].p);
-}
-
-float computePatchQuality(in uint vId)
-{
-    return 1.0;
 }

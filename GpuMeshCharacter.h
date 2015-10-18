@@ -122,8 +122,6 @@ protected:
     virtual void moveCutPlane(double azimuth, double altitude, double distance);
 
 protected:
-    bool _isEntered;
-
     float _camAzimuth;
     float _camAltitude;
     float _camDistance;
@@ -168,7 +166,6 @@ private:
     OptionMap<std::shared_ptr<AbstractMesher>>          _availableMeshers;
     OptionMap<std::shared_ptr<AbstractDiscretizer>>     _availableDiscretizers;
     OptionMap<std::shared_ptr<AbstractEvaluator>>       _availableEvaluators;
-    OptionMap<std::shared_ptr<AbstractMeasurer>>        _availableMeasurers;
     OptionMap<std::shared_ptr<AbstractSmoother>>        _availableSmoothers;
     OptionMap<std::shared_ptr<AbstractRenderer>>        _availableRenderers;
     OptionMap<std::shared_ptr<AbstractSerializer>>      _availableSerializers;
