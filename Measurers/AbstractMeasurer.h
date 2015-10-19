@@ -47,10 +47,10 @@ public:
             const glm::dvec3& a,
             const glm::dvec3& b) const = 0;
 
-    virtual glm::dvec3 normalizedDistance(
+    virtual glm::dvec3 riemannianDistance(
             const AbstractDiscretizer& discretizer,
             const glm::dvec3& a,
-            const glm::dvec3& b) const;
+            const glm::dvec3& b) const = 0;
 
 
     // Volumes

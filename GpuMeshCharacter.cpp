@@ -85,14 +85,14 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSerializers("Available Mesh Serializers"),
     _availableDeserializers("Available Mesh Deserializers")
 {
-    _availableMeshers.setDefault("Parametric");
+    _availableMeshers.setDefault("Debug");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault(NO_DISCRETIZATION);
+    _availableDiscretizers.setDefault("Uniform");
     _availableDiscretizers.setContent({
         {NO_DISCRETIZATION, shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
         {string("Uniform"), shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
@@ -107,7 +107,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
     });
 
-    _availableSmoothers.setDefault("GETMe");
+    _availableSmoothers.setDefault("Local Optimisation");
     _availableSmoothers.setContent({
         {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
@@ -437,8 +437,8 @@ void GpuMeshCharacter::generateMesh(
 
         _mesh->modelName = modelName;
         _mesh->compileTopology();
-        updateMeshMeasures();
         updateDiscretization();
+        updateMeshMeasures();
     }
 }
 
@@ -446,8 +446,8 @@ void GpuMeshCharacter::clearMesh()
 {
     _mesh->clear();
     _mesh->modelName = "";
-    updateMeshMeasures();
     updateDiscretization();
+    updateMeshMeasures();
 }
 
 string fileExt(const std::string& fileName)
@@ -488,8 +488,8 @@ void GpuMeshCharacter::loadMesh(
         if(deserializer->deserialize(fileName, *_mesh))
         {
             _mesh->compileTopology();
-            updateMeshMeasures();
             updateDiscretization();
+            updateMeshMeasures();
         }
         else
         {
@@ -566,8 +566,8 @@ void GpuMeshCharacter::smoothMesh(
             moveFactor,
             gainThreshold);
 
-        updateMeshMeasures();
         updateDiscretization();
+        updateMeshMeasures();
     }
 }
 
@@ -598,8 +598,8 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
             gainThreshold,
             plot);
 
-        updateMeshMeasures();
         updateDiscretization();
+        updateMeshMeasures();
     }
 
     return plot;
@@ -625,6 +625,7 @@ void GpuMeshCharacter::useDiscretizationDensity(int density)
 {
     _discretizationDensity = density;
     updateDiscretization();
+    updateMeshMeasures();
 }
 
 void GpuMeshCharacter::useDiscretizer(const std::string& discretizerName)

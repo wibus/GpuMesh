@@ -1,5 +1,7 @@
 #include "MeanRatioEvaluator.h"
 
+#include "Measurers/AbstractMeasurer.h"
+
 using namespace glm;
 
 
@@ -36,7 +38,10 @@ double MeanRatioEvaluator::tetQuality(
         dvec3(-0.4082482904638630163662, -0.4082482904638630163662, 1.224744871391589049099)
     );
 
-    dmat3 Tk0 = dmat3(vp[0]-vp[1], vp[0]-vp[2], vp[0]-vp[3]);
+    dmat3 Tk0 = dmat3(
+        measurer.riemannianDistance(discretizer, vp[1], vp[0]),
+        measurer.riemannianDistance(discretizer, vp[2], vp[0]),
+        measurer.riemannianDistance(discretizer, vp[3], vp[0]));
 
     double qual0 = cornerQuality(Tk0 * Fr_INV);
 
@@ -55,14 +60,24 @@ double MeanRatioEvaluator::priQuality(
         dvec3(0.0, 0.0, 1.0)
     );
 
+    glm::dvec3 e01 = measurer.riemannianDistance(discretizer, vp[0], vp[1]);
+    glm::dvec3 e02 = measurer.riemannianDistance(discretizer, vp[0], vp[2]);
+    glm::dvec3 e04 = measurer.riemannianDistance(discretizer, vp[0], vp[4]);
+    glm::dvec3 e13 = measurer.riemannianDistance(discretizer, vp[1], vp[3]);
+    glm::dvec3 e15 = measurer.riemannianDistance(discretizer, vp[1], vp[5]);
+    glm::dvec3 e23 = measurer.riemannianDistance(discretizer, vp[2], vp[3]);
+    glm::dvec3 e42 = measurer.riemannianDistance(discretizer, vp[4], vp[2]);
+    glm::dvec3 e35 = measurer.riemannianDistance(discretizer, vp[3], vp[5]);
+    glm::dvec3 e45 = measurer.riemannianDistance(discretizer, vp[4], vp[5]);
+
     // Prism corner quality is not invariant under edge swap
-    // Third edge is the expected to be colinear with the two firsts' cross product
-    dmat3 Tk0(vp[0]-vp[4], vp[0]-vp[2], vp[0]-vp[1]);
-    dmat3 Tk1(vp[1]-vp[3], vp[1]-vp[5], vp[1]-vp[0]);
-    dmat3 Tk2(vp[2]-vp[0], vp[2]-vp[4], vp[2]-vp[3]);
-    dmat3 Tk3(vp[3]-vp[5], vp[3]-vp[1], vp[3]-vp[2]);
-    dmat3 Tk4(vp[4]-vp[2], vp[4]-vp[0], vp[4]-vp[5]);
-    dmat3 Tk5(vp[5]-vp[1], vp[5]-vp[3], vp[5]-vp[4]);
+    // Third edge is the expected to be colinear with the first two cross product
+    dmat3 Tk0( e02,  e04,  e01);
+    dmat3 Tk1( e13,  e15,  e01);
+    dmat3 Tk2( e02,  e42, -e23);
+    dmat3 Tk3( e35, -e13,  e23);
+    dmat3 Tk4( e42, -e04, -e45);
+    dmat3 Tk5( e15,  e35,  e45);
 
     double qual0 = cornerQuality(Tk0 * Fr_INV);
     double qual1 = cornerQuality(Tk1 * Fr_INV);
@@ -81,15 +96,27 @@ double MeanRatioEvaluator::hexQuality(
 {
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_INV.
+    glm::dvec3 e01 = measurer.riemannianDistance(discretizer, vp[0], vp[1]);
+    glm::dvec3 e02 = measurer.riemannianDistance(discretizer, vp[0], vp[2]);
+    glm::dvec3 e04 = measurer.riemannianDistance(discretizer, vp[0], vp[4]);
+    glm::dvec3 e13 = measurer.riemannianDistance(discretizer, vp[1], vp[3]);
+    glm::dvec3 e15 = measurer.riemannianDistance(discretizer, vp[1], vp[5]);
+    glm::dvec3 e23 = measurer.riemannianDistance(discretizer, vp[2], vp[3]);
+    glm::dvec3 e26 = measurer.riemannianDistance(discretizer, vp[2], vp[6]);
+    glm::dvec3 e37 = measurer.riemannianDistance(discretizer, vp[3], vp[7]);
+    glm::dvec3 e45 = measurer.riemannianDistance(discretizer, vp[4], vp[5]);
+    glm::dvec3 e46 = measurer.riemannianDistance(discretizer, vp[4], vp[6]);
+    glm::dvec3 e57 = measurer.riemannianDistance(discretizer, vp[5], vp[7]);
+    glm::dvec3 e67 = measurer.riemannianDistance(discretizer, vp[6], vp[7]);
 
-    dmat3 Tk0(vp[0]-vp[1], vp[0]-vp[4], vp[0]-vp[2]);
-    dmat3 Tk1(vp[1]-vp[0], vp[1]-vp[3], vp[1]-vp[5]);
-    dmat3 Tk2(vp[2]-vp[0], vp[2]-vp[6], vp[2]-vp[3]);
-    dmat3 Tk3(vp[3]-vp[1], vp[3]-vp[2], vp[3]-vp[7]);
-    dmat3 Tk4(vp[4]-vp[0], vp[4]-vp[5], vp[4]-vp[6]);
-    dmat3 Tk5(vp[5]-vp[1], vp[5]-vp[7], vp[5]-vp[4]);
-    dmat3 Tk6(vp[6]-vp[2], vp[6]-vp[4], vp[6]-vp[7]);
-    dmat3 Tk7(vp[7]-vp[3], vp[7]-vp[6], vp[7]-vp[5]);
+    dmat3 Tk0( e01,  e04, -e02);
+    dmat3 Tk1( e01,  e13,  e15);
+    dmat3 Tk2( e02,  e26,  e23);
+    dmat3 Tk3( e13,  e23, -e37);
+    dmat3 Tk4( e04,  e45,  e46);
+    dmat3 Tk5( e15, -e57,  e45);
+    dmat3 Tk6( e26,  e46, -e67);
+    dmat3 Tk7( e37,  e67,  e57);
 
     double qual0 = cornerQuality(Tk0);
     double qual1 = cornerQuality(Tk1);

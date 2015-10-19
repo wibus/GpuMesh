@@ -50,14 +50,23 @@ double MetricWiseMeasurer::measuredDistance(
     return dist;
 }
 
+glm::dvec3 MetricWiseMeasurer::riemannianDistance(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    glm::dvec3 vec = b - a;
+    return vec * measuredDistance(discretizer, a, b) / glm::length(vec);
+}
+
 double MetricWiseMeasurer::tetVolume(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3 vp[]) const
 {
     double detSum = glm::determinant(glm::dmat3(
-        normalizedDistance(discretizer, vp[3], vp[0]),
-        normalizedDistance(discretizer, vp[3], vp[1]),
-        normalizedDistance(discretizer, vp[3], vp[2])));
+        riemannianDistance(discretizer, vp[3], vp[0]),
+        riemannianDistance(discretizer, vp[3], vp[1]),
+        riemannianDistance(discretizer, vp[3], vp[2])));
 
     return detSum / 6.0;
 }
@@ -66,11 +75,11 @@ double MetricWiseMeasurer::priVolume(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3 vp[]) const
 {
-    glm::dvec3 e20 = normalizedDistance(discretizer, vp[2], vp[0]);
-    glm::dvec3 e21 = normalizedDistance(discretizer, vp[2], vp[1]);
-    glm::dvec3 e23 = normalizedDistance(discretizer, vp[2], vp[3]);
-    glm::dvec3 e24 = normalizedDistance(discretizer, vp[2], vp[4]);
-    glm::dvec3 e25 = normalizedDistance(discretizer, vp[2], vp[5]);
+    glm::dvec3 e20 = riemannianDistance(discretizer, vp[2], vp[0]);
+    glm::dvec3 e21 = riemannianDistance(discretizer, vp[2], vp[1]);
+    glm::dvec3 e23 = riemannianDistance(discretizer, vp[2], vp[3]);
+    glm::dvec3 e24 = riemannianDistance(discretizer, vp[2], vp[4]);
+    glm::dvec3 e25 = riemannianDistance(discretizer, vp[2], vp[5]);
 
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(
@@ -95,25 +104,25 @@ double MetricWiseMeasurer::hexVolume(
 {
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(
-        normalizedDistance(discretizer, vp[0], vp[1]),
-        normalizedDistance(discretizer, vp[0], vp[2]),
-        normalizedDistance(discretizer, vp[0], vp[4])));
+        riemannianDistance(discretizer, vp[0], vp[1]),
+        riemannianDistance(discretizer, vp[0], vp[2]),
+        riemannianDistance(discretizer, vp[0], vp[4])));
     detSum += glm::determinant(glm::dmat3(
-        normalizedDistance(discretizer, vp[3], vp[1]),
-        normalizedDistance(discretizer, vp[3], vp[7]),
-        normalizedDistance(discretizer, vp[3], vp[2])));
+        riemannianDistance(discretizer, vp[3], vp[1]),
+        riemannianDistance(discretizer, vp[3], vp[7]),
+        riemannianDistance(discretizer, vp[3], vp[2])));
     detSum += glm::determinant(glm::dmat3(
-        normalizedDistance(discretizer, vp[5], vp[1]),
-        normalizedDistance(discretizer, vp[5], vp[4]),
-        normalizedDistance(discretizer, vp[5], vp[7])));
+        riemannianDistance(discretizer, vp[5], vp[1]),
+        riemannianDistance(discretizer, vp[5], vp[4]),
+        riemannianDistance(discretizer, vp[5], vp[7])));
     detSum += glm::determinant(glm::dmat3(
-        normalizedDistance(discretizer, vp[6], vp[2]),
-        normalizedDistance(discretizer, vp[6], vp[7]),
-        normalizedDistance(discretizer, vp[6], vp[4])));
+        riemannianDistance(discretizer, vp[6], vp[2]),
+        riemannianDistance(discretizer, vp[6], vp[7]),
+        riemannianDistance(discretizer, vp[6], vp[4])));
     detSum += glm::determinant(glm::dmat3(
-        normalizedDistance(discretizer, vp[1], vp[2]),
-        normalizedDistance(discretizer, vp[1], vp[4]),
-        normalizedDistance(discretizer, vp[1], vp[7])));
+        riemannianDistance(discretizer, vp[1], vp[2]),
+        riemannianDistance(discretizer, vp[1], vp[4]),
+        riemannianDistance(discretizer, vp[1], vp[7])));
 
     return detSum / 6.0;
 }

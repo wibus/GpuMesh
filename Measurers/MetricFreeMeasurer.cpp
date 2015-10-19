@@ -25,6 +25,14 @@ double MetricFreeMeasurer::measuredDistance(
     return glm::distance(a, b);
 }
 
+glm::dvec3 MetricFreeMeasurer::riemannianDistance(
+        const AbstractDiscretizer& discretizer,
+        const glm::dvec3& a,
+        const glm::dvec3& b) const
+{
+    return b - a;
+}
+
 double MetricFreeMeasurer::tetVolume(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3 vp[]) const

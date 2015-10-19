@@ -17,6 +17,11 @@ public:
             const glm::dvec3& a,
             const glm::dvec3& b) const override;
 
+    virtual glm::dvec3 riemannianDistance(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3& a,
+            const glm::dvec3& b) const override;
+
 
     // Volumes
     using AbstractMeasurer::tetVolume;

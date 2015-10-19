@@ -48,15 +48,6 @@ void AbstractMeasurer::uploadUniforms(
 
 }
 
-glm::dvec3 AbstractMeasurer::normalizedDistance(
-        const AbstractDiscretizer& discretizer,
-        const glm::dvec3& a,
-        const glm::dvec3& b) const
-{
-    glm::dvec3 vec = b - a;
-    return vec * measuredDistance(discretizer, a, b) / glm::length(vec);
-}
-
 double AbstractMeasurer::tetVolume(
         const Mesh& mesh,
         const AbstractDiscretizer& discretizer,
