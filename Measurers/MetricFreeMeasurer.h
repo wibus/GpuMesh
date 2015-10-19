@@ -19,6 +19,10 @@ public:
 
 
     // Volumes
+    using AbstractMeasurer::tetVolume;
+    using AbstractMeasurer::priVolume;
+    using AbstractMeasurer::hexVolume;
+
     virtual double tetVolume(
             const AbstractDiscretizer& discretizer,
             const glm::dvec3 vp[]) const override;

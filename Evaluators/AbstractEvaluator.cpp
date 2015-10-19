@@ -8,8 +8,8 @@
 #include <CellarWorkbench/Misc/Log.h>
 
 #include "DataStructures/GpuMesh.h"
-#include "Discretizers/DummyDiscretizer.h"
-#include "Measurers/MetricFreeMeasurer.h"
+#include "Discretizers/AbstractDiscretizer.h"
+#include "Measurers/AbstractMeasurer.h"
 
 using namespace cellar;
 using namespace std;
@@ -224,7 +224,9 @@ double AbstractEvaluator::patchQuality(
     return finalizePatchQuality(patchQuality, patchWeight);
 }
 
-bool AbstractEvaluator::assessMeasureValidy()
+bool AbstractEvaluator::assessMeasureValidy(
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer)
 {
     Mesh mesh;
     mesh.verts.push_back(glm::dvec3(0, 0, 0));
@@ -251,9 +253,6 @@ bool AbstractEvaluator::assessMeasureValidy()
     const MeshTet tet = MeshTet(0, 1, 2, 3);
     const MeshPri pri = MeshPri(4, 5, 6, 7, 8, 9);
     const MeshHex hex = MeshHex(10, 11, 12, 13, 14, 15, 16, 17);
-
-    DummyDiscretizer discretizer;
-    MetricFreeMeasurer measurer;
 
     double regularTet = tetQuality(mesh, discretizer, measurer, tet);
     double regularPri = priQuality(mesh, discretizer, measurer, pri);

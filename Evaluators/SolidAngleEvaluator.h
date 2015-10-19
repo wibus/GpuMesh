@@ -10,6 +10,10 @@ public:
     SolidAngleEvaluator();
     virtual ~SolidAngleEvaluator();
 
+    using AbstractEvaluator::tetQuality;
+    using AbstractEvaluator::priQuality;
+    using AbstractEvaluator::hexQuality;
+
     virtual double tetQuality(
             const AbstractDiscretizer& discretizer,
             const AbstractMeasurer& measurer,

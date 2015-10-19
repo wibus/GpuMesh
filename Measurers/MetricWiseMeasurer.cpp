@@ -54,21 +54,68 @@ double MetricWiseMeasurer::tetVolume(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3 vp[]) const
 {
-    return 1.0;
+    double detSum = glm::determinant(glm::dmat3(
+        normalizedDistance(discretizer, vp[3], vp[0]),
+        normalizedDistance(discretizer, vp[3], vp[1]),
+        normalizedDistance(discretizer, vp[3], vp[2])));
+
+    return detSum / 6.0;
 }
 
 double MetricWiseMeasurer::priVolume(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3 vp[]) const
 {
-    return 1.0;
+    glm::dvec3 e20 = normalizedDistance(discretizer, vp[2], vp[0]);
+    glm::dvec3 e21 = normalizedDistance(discretizer, vp[2], vp[1]);
+    glm::dvec3 e23 = normalizedDistance(discretizer, vp[2], vp[3]);
+    glm::dvec3 e24 = normalizedDistance(discretizer, vp[2], vp[4]);
+    glm::dvec3 e25 = normalizedDistance(discretizer, vp[2], vp[5]);
+
+    double detSum = 0.0;
+    detSum += glm::determinant(glm::dmat3(
+        e24,
+        e20,
+        e21));
+    detSum += glm::determinant(glm::dmat3(
+        e25,
+        e21,
+        e23));
+    detSum += glm::determinant(glm::dmat3(
+        e24,
+        e21,
+        e25));
+
+    return detSum / 6.0;
 }
 
 double MetricWiseMeasurer::hexVolume(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3 vp[]) const
 {
-    return 1.0;
+    double detSum = 0.0;
+    detSum += glm::determinant(glm::dmat3(
+        normalizedDistance(discretizer, vp[0], vp[1]),
+        normalizedDistance(discretizer, vp[0], vp[2]),
+        normalizedDistance(discretizer, vp[0], vp[4])));
+    detSum += glm::determinant(glm::dmat3(
+        normalizedDistance(discretizer, vp[3], vp[1]),
+        normalizedDistance(discretizer, vp[3], vp[7]),
+        normalizedDistance(discretizer, vp[3], vp[2])));
+    detSum += glm::determinant(glm::dmat3(
+        normalizedDistance(discretizer, vp[5], vp[1]),
+        normalizedDistance(discretizer, vp[5], vp[4]),
+        normalizedDistance(discretizer, vp[5], vp[7])));
+    detSum += glm::determinant(glm::dmat3(
+        normalizedDistance(discretizer, vp[6], vp[2]),
+        normalizedDistance(discretizer, vp[6], vp[7]),
+        normalizedDistance(discretizer, vp[6], vp[4])));
+    detSum += glm::determinant(glm::dmat3(
+        normalizedDistance(discretizer, vp[1], vp[2]),
+        normalizedDistance(discretizer, vp[1], vp[4]),
+        normalizedDistance(discretizer, vp[1], vp[7])));
+
+    return detSum / 6.0;
 }
 
 double MetricWiseMeasurer::computeLocalElementSize(

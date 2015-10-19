@@ -147,6 +147,7 @@ void SmoothTab::deployImplementations()
     }
     else
     {
+        _lastImpl = implementations.defaultOption.c_str();
         _ui->smoothingImplementationMenu->setCurrentText(
                     implementations.defaultOption.c_str());
     }

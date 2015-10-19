@@ -47,6 +47,11 @@ public:
             const glm::dvec3& a,
             const glm::dvec3& b) const = 0;
 
+    virtual glm::dvec3 normalizedDistance(
+            const AbstractDiscretizer& discretizer,
+            const glm::dvec3& a,
+            const glm::dvec3& b) const;
+
 
     // Volumes
     virtual double tetVolume(

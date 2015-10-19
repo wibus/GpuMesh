@@ -28,6 +28,7 @@
 #include "Evaluators/SolidAngleEvaluator.h"
 #include "Evaluators/VolumeEdgeEvaluator.h"
 #include "Measurers/MetricFreeMeasurer.h"
+#include "Measurers/MetricWiseMeasurer.h"
 #include "Meshers/CpuDelaunayMesher.h"
 #include "Meshers/CpuParametricMesher.h"
 #include "Meshers/DebugMesher.h"
@@ -84,14 +85,14 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSerializers("Available Mesh Serializers"),
     _availableDeserializers("Available Mesh Deserializers")
 {
-    _availableMeshers.setDefault("Debug");
+    _availableMeshers.setDefault("Parametric");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault("Uniform");
+    _availableDiscretizers.setDefault(NO_DISCRETIZATION);
     _availableDiscretizers.setContent({
         {NO_DISCRETIZATION, shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
         {string("Uniform"), shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
@@ -106,7 +107,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Volume Edge"),   shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
     });
 
-    _availableSmoothers.setDefault("Spring Laplace");
+    _availableSmoothers.setDefault("GETMe");
     _availableSmoothers.setContent({
         {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
@@ -207,15 +208,15 @@ void GpuMeshCharacter::enterStage()
 
 
     // Assess evaluators validy
-    DummyDiscretizer dummyDiscretizer;
-    MetricFreeMeasurer dummyMeasurer;
+    DummyDiscretizer verifDiscretizer;
+    MetricWiseMeasurer verifMeasurer;
     for(auto evalName : _availableEvaluators.details().options)
     {
         std::shared_ptr<AbstractEvaluator> evaluator;
         if(_availableEvaluators.select(evalName, evaluator))
         {
-            evaluator->initialize(*_mesh, dummyDiscretizer, dummyMeasurer);
-            evaluator->assessMeasureValidy();
+            evaluator->initialize(*_mesh, verifDiscretizer, verifMeasurer);
+            evaluator->assessMeasureValidy(verifDiscretizer, verifMeasurer);
         }
     }
 
@@ -633,6 +634,7 @@ void GpuMeshCharacter::useDiscretizer(const std::string& discretizerName)
     {
         _meshCrew->setDiscretizer(*_mesh, discretizer);
         updateDiscretization();
+        updateMeshMeasures();
     }
 }
 

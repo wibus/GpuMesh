@@ -74,7 +74,9 @@ public:
             size_t vId) const;
 
 
-    virtual bool assessMeasureValidy();
+    virtual bool assessMeasureValidy(
+            const AbstractDiscretizer& discretizer,
+            const AbstractMeasurer& measurer);
 
     virtual void evaluateMesh(
             const Mesh& mesh,
