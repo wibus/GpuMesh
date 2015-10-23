@@ -98,3 +98,24 @@ double AbstractMeasurer::hexVolume(
 
     return hexVolume(discretizer, vp);
 }
+
+double AbstractMeasurer::computeLocalElementSize(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        size_t vId) const
+{
+    const std::vector<MeshVert>& verts = mesh.verts;
+
+    const glm::dvec3& pos = verts[vId].p;
+    const MeshTopo& topo = mesh.topos[vId];
+    const vector<MeshNeigVert>& neigVerts = topo.neighborVerts;
+
+    double totalSize = 0.0;
+    size_t neigVertCount = neigVerts.size();
+    for(size_t n=0; n < neigVertCount; ++n)
+    {
+        totalSize += glm::length(pos - verts[neigVerts[n].v].p);
+    }
+
+    return totalSize / neigVertCount;
+}

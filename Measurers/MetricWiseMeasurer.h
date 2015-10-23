@@ -12,12 +12,12 @@ public:
 
 
     // Distances
-    virtual double measuredDistance(
+    virtual double riemannianDistance(
             const AbstractDiscretizer& discretizer,
             const glm::dvec3& a,
             const glm::dvec3& b) const override;
 
-    virtual glm::dvec3 riemannianDistance(
+    virtual glm::dvec3 riemannianSegment(
             const AbstractDiscretizer& discretizer,
             const glm::dvec3& a,
             const glm::dvec3& b) const override;
@@ -42,11 +42,6 @@ public:
 
 
     // High level measurements
-    virtual double computeLocalElementSize(
-            const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
-            size_t vId) const override;
-
     virtual glm::dvec3 computeVertexEquilibrium(
             const Mesh& mesh,
             const AbstractDiscretizer& discretizer,

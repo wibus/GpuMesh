@@ -20,6 +20,7 @@
 #include <Scaena/StageManagement/Event/StageTime.h>
 
 #include "DataStructures/GpuMesh.h"
+#include "Discretizers/AnalyticDiscretizer.h"
 #include "Discretizers/DummyDiscretizer.h"
 #include "Discretizers/UniformDiscretizer.h"
 #include "Discretizers/KdTreeDiscretizer.h"
@@ -92,11 +93,12 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault("Uniform");
+    _availableDiscretizers.setDefault("Analytic");
     _availableDiscretizers.setContent({
-        {NO_DISCRETIZATION, shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
-        {string("Uniform"), shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
-        {string("Kd-Tree"), shared_ptr<AbstractDiscretizer>(new KdTreeDiscretizer())},
+        {NO_DISCRETIZATION,  shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
+        {string("Analytic"), shared_ptr<AbstractDiscretizer>(new AnalyticDiscretizer())},
+        {string("Uniform"),  shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
+        {string("Kd-Tree"),  shared_ptr<AbstractDiscretizer>(new KdTreeDiscretizer())},
     });
 
     _availableEvaluators.setDefault("Mean Ratio");
@@ -769,6 +771,29 @@ void GpuMeshCharacter::updateDiscretization()
         if(_displayDiscretizationMesh)
             if(_renderer.get() != nullptr)
                 _renderer->notifyMeshUpdate();
+
+        std::ofstream file("metric.csv");
+        if(file.is_open())
+        {
+            double nbs = 100;
+            const glm::dvec3 one(1.0/nbs, 0, 0);
+            for(int j=0; j < nbs; ++j)
+            {
+                for(int i=0; i < nbs; ++i)
+                {
+                    glm::dvec3 pos(i/(nbs-1.0) - 0.5, j/(nbs-1.0) - 0.5, 0);
+                    double dist = _meshCrew->measurer().riemannianDistance(
+                                    _meshCrew->discretizer(), pos, pos+one);
+                    file << dist;
+
+                    if(i< nbs-1)
+                        file << ",";
+                }
+                file << endl;
+            }
+
+            file.close();
+        }
     }
 }
 

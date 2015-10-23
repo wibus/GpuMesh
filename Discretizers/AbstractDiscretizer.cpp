@@ -1,5 +1,7 @@
 #include "AbstractDiscretizer.h"
 
+#include <GLM/gtc/constants.hpp>
+
 #include <CellarWorkbench/GL/GlProgram.h>
 
 #include "DataStructures/Mesh.h"
@@ -54,7 +56,12 @@ Metric AbstractDiscretizer::interpolate(
 
 Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
 {
-    glm::dvec3 vp = mesh.verts[vId].p * glm::dvec3(5, 1, 1.0);
+    return vertMetric(mesh.verts[vId].p);
+}
+
+Metric AbstractDiscretizer::vertMetric(const glm::dvec3& pos) const
+{
+    glm::dvec3 vp = pos * glm::dvec3(7);
 
     int localElemWeight = 0;
     double localElemSize = 0.0;
@@ -66,17 +73,15 @@ Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
     }
     localElemSize /= localElemWeight;
 //*/
-    localElemSize = 1.0 / glm::pow(double(mesh.verts.size()), 1/3.0);
+    localElemSize = 1.0 / glm::pow(1000, 1/3.0);
 
     double elemSize = localElemSize;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
 
-    double scaleFactor = 3.0;
-    double invScaleFactor = 1.0 / scaleFactor;
-
-    double sinScale = (glm::sin(vp.x)+1)/2;
-    double scale = (sinScale*sinScale)*(scaleFactor-invScaleFactor) + invScaleFactor;
+    double size = 3;
+    double sinx = (glm::sin(vp.x)+1.0) / 2.0;
+    double scale = sinx*sinx * (size - 1.0/size) + 1/size;
     double targetElemSize = elemSize * scale;
     double targetElemSizeInv2 = 1.0 / (targetElemSize * targetElemSize);
 

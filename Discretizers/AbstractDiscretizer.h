@@ -56,6 +56,7 @@ public:
 protected:
     // Give mesh's provided metric
     Metric vertMetric(const Mesh& mesh, uint vId) const;
+    Metric vertMetric(const glm::dvec3& pos) const;
 
     // Interpolate the metric given two samples and a mix ratio
     Metric interpolate(const Metric& m1, const Metric& m2, double a) const;

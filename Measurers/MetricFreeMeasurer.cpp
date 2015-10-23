@@ -17,7 +17,7 @@ MetricFreeMeasurer::~MetricFreeMeasurer()
 
 }
 
-double MetricFreeMeasurer::measuredDistance(
+double MetricFreeMeasurer::riemannianDistance(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3& a,
         const glm::dvec3& b) const
@@ -25,7 +25,7 @@ double MetricFreeMeasurer::measuredDistance(
     return glm::distance(a, b);
 }
 
-glm::dvec3 MetricFreeMeasurer::riemannianDistance(
+glm::dvec3 MetricFreeMeasurer::riemannianSegment(
         const AbstractDiscretizer& discretizer,
         const glm::dvec3& a,
         const glm::dvec3& b) const
@@ -99,27 +99,6 @@ double MetricFreeMeasurer::hexVolume(
         vp[7] - vp[1]));
 
     return detSum / 6.0;
-}
-
-double MetricFreeMeasurer::computeLocalElementSize(
-        const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
-        size_t vId) const
-{
-    const std::vector<MeshVert>& verts = mesh.verts;
-
-    const glm::dvec3& pos = verts[vId].p;
-    const MeshTopo& topo = mesh.topos[vId];
-    const vector<MeshNeigVert>& neigVerts = topo.neighborVerts;
-
-    double totalSize = 0.0;
-    size_t neigVertCount = neigVerts.size();
-    for(size_t n=0; n < neigVertCount; ++n)
-    {
-        totalSize += glm::length(pos - verts[neigVerts[n].v].p);
-    }
-
-    return totalSize / neigVertCount;
 }
 
 glm::dvec3 MetricFreeMeasurer::computeVertexEquilibrium(
