@@ -32,18 +32,13 @@ double MeanRatioEvaluator::tetQuality(
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
-    const dmat3 Fr_INV(
-        dvec3(1, 0, 0),
-        dvec3(-0.5773502691896257645091, 1.154700538379251529018, 0),
-        dvec3(-0.4082482904638630163662, -0.4082482904638630163662, 1.224744871391589049099)
-    );
+    glm::dvec3 e10 = measurer.riemannianSegment(discretizer, vp[1], vp[0]);
+    glm::dvec3 e20 = measurer.riemannianSegment(discretizer, vp[2], vp[0]);
+    glm::dvec3 e30 = measurer.riemannianSegment(discretizer, vp[3], vp[0]);
 
-    dmat3 Tk0 = dmat3(
-        measurer.riemannianSegment(discretizer, vp[1], vp[0]),
-        measurer.riemannianSegment(discretizer, vp[2], vp[0]),
-        measurer.riemannianSegment(discretizer, vp[3], vp[0]));
+    dmat3 Tk0 = dmat3(e10, e20, e30);
 
-    double qual0 = cornerQuality(Tk0 * Fr_INV);
+    double qual0 = cornerQuality(Tk0 * Fr_TET_INV);
 
     // Shape measure is independent of chosen corner
     return qual0;
@@ -54,12 +49,6 @@ double MeanRatioEvaluator::priQuality(
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
-    const dmat3 Fr_INV(
-        dvec3(1.0, 0.0, 0.0),
-        dvec3(-0.5773502691896257645091, 1.154700538379251529018, 0.0),
-        dvec3(0.0, 0.0, 1.0)
-    );
-
     glm::dvec3 e01 = measurer.riemannianSegment(discretizer, vp[0], vp[1]);
     glm::dvec3 e02 = measurer.riemannianSegment(discretizer, vp[0], vp[2]);
     glm::dvec3 e04 = measurer.riemannianSegment(discretizer, vp[0], vp[4]);
@@ -72,19 +61,19 @@ double MeanRatioEvaluator::priQuality(
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two cross product
-    dmat3 Tk0( e02,  e04,  e01);
-    dmat3 Tk1( e13,  e15,  e01);
-    dmat3 Tk2( e02,  e42, -e23);
-    dmat3 Tk3( e35, -e13,  e23);
-    dmat3 Tk4( e42, -e04, -e45);
-    dmat3 Tk5( e15,  e35,  e45);
+    dmat3 Tk0(e02,  e04,  e01);
+    dmat3 Tk1(e13,  e15,  e01);
+    dmat3 Tk2(e02,  e42, -e23);
+    dmat3 Tk3(e35, -e13,  e23);
+    dmat3 Tk4(e42, -e04, -e45);
+    dmat3 Tk5(e15,  e35,  e45);
 
-    double qual0 = cornerQuality(Tk0 * Fr_INV);
-    double qual1 = cornerQuality(Tk1 * Fr_INV);
-    double qual2 = cornerQuality(Tk2 * Fr_INV);
-    double qual3 = cornerQuality(Tk3 * Fr_INV);
-    double qual4 = cornerQuality(Tk4 * Fr_INV);
-    double qual5 = cornerQuality(Tk5 * Fr_INV);
+    double qual0 = cornerQuality(Tk0 * Fr_PRI_INV);
+    double qual1 = cornerQuality(Tk1 * Fr_PRI_INV);
+    double qual2 = cornerQuality(Tk2 * Fr_PRI_INV);
+    double qual3 = cornerQuality(Tk3 * Fr_PRI_INV);
+    double qual4 = cornerQuality(Tk4 * Fr_PRI_INV);
+    double qual5 = cornerQuality(Tk5 * Fr_PRI_INV);
 
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
@@ -109,14 +98,14 @@ double MeanRatioEvaluator::hexQuality(
     glm::dvec3 e57 = measurer.riemannianSegment(discretizer, vp[5], vp[7]);
     glm::dvec3 e67 = measurer.riemannianSegment(discretizer, vp[6], vp[7]);
 
-    dmat3 Tk0( e01,  e04, -e02);
-    dmat3 Tk1( e01,  e13,  e15);
-    dmat3 Tk2( e02,  e26,  e23);
-    dmat3 Tk3( e13,  e23, -e37);
-    dmat3 Tk4( e04,  e45,  e46);
-    dmat3 Tk5( e15, -e57,  e45);
-    dmat3 Tk6( e26,  e46, -e67);
-    dmat3 Tk7( e37,  e67,  e57);
+    dmat3 Tk0(e01,  e04, -e02);
+    dmat3 Tk1(e01,  e13,  e15);
+    dmat3 Tk2(e02,  e26,  e23);
+    dmat3 Tk3(e13,  e23, -e37);
+    dmat3 Tk4(e04,  e45,  e46);
+    dmat3 Tk5(e15, -e57,  e45);
+    dmat3 Tk6(e26,  e46, -e67);
+    dmat3 Tk7(e37,  e67,  e57);
 
     double qual0 = cornerQuality(Tk0);
     double qual1 = cornerQuality(Tk1);

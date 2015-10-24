@@ -25,8 +25,9 @@ SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/InsphereEdgeEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/MeanRatioEvaluator.h
+    ${GpuMesh_SRC_DIR}/Evaluators/MetricConformityEvaluator.h
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.h
-    ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
+    ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.h)
 
 SET(GpuMesh_MEASURERS_HEADERS
     ${GpuMesh_SRC_DIR}/Measurers/AbstractMeasurer.h
@@ -120,6 +121,7 @@ SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/InsphereEdgeEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/MeanRatioEvaluator.cpp
+    ${GpuMesh_SRC_DIR}/Evaluators/MetricConformityEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/SolidAngleEvaluator.cpp
     ${GpuMesh_SRC_DIR}/Evaluators/VolumeEdgeEvaluator.cpp)
 
@@ -254,6 +256,7 @@ SET(GpuMesh_EVALUATING_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/Evaluate.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/InsphereEdge.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/MeanRatio.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Evaluating/MetricConformity.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/SolidAngle.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/VolumeEdge.glsl)
 

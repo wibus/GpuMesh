@@ -46,5 +46,6 @@
         <file>shaders/compute/Measuring/MetricWise.glsl</file>
         <file>shaders/compute/Evaluating/Base.glsl</file>
         <file>shaders/compute/Measuring/Base.glsl</file>
+        <file>shaders/compute/Evaluating/MetricConformity.glsl</file>
     </qresource>
 </RCC>

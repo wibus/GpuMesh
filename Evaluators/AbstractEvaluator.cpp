@@ -29,6 +29,17 @@ const double AbstractEvaluator::MAX_QUALITY_VALUE =
         AbstractEvaluator::MAX_INTEGER_VALUE /
         (double) AbstractEvaluator::MAX_GROUP_PARTICIPANTS;
 
+const glm::dmat3 AbstractEvaluator::Fr_TET_INV = glm::dmat3(
+    glm::dvec3(1, 0, 0),
+    glm::dvec3(-0.5773502691896257645091, 1.154700538379251529018, 0),
+    glm::dvec3(-0.4082482904638630163662, -0.4082482904638630163662, 1.224744871391589049099));
+const glm::dmat3 AbstractEvaluator::Fr_PRI_INV = glm::dmat3(
+    glm::dvec3(1.0, 0.0, 0.0),
+    glm::dvec3(-0.5773502691896257645091, 1.154700538379251529018, 0.0),
+    glm::dvec3(0.0, 0.0, 1.0));
+const glm::dmat3 AbstractEvaluator::Fr_HEX_INV = glm::dmat3(1.0);
+
+
 AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
     _qualSsbo(0),
     _evaluationShader(shapeMeasuresShader),

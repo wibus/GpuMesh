@@ -133,6 +133,10 @@ protected:
     static const double MIN_QUALITY_PRECISION_DENOM;
     static const double MAX_QUALITY_VALUE;
 
+    static const glm::dmat3 Fr_TET_INV;
+    static const glm::dmat3 Fr_PRI_INV;
+    static const glm::dmat3 Fr_HEX_INV;
+
     GLuint _qualSsbo;
     std::string _discretizationShader;
     std::string _measureShader;
