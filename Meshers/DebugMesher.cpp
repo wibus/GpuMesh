@@ -1,6 +1,7 @@
 #include "DebugMesher.h"
 
 #include <GLM/gtc/random.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
 
 using namespace std;
 
@@ -29,6 +30,11 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
     double scale = 0.4 / glm::pow(double(vertexCount), 1.0/3.0);
     for(size_t vId=0; vId < vertexCount; ++vId)
     {
+        double rotXY = glm::linearRand(0.0, glm::pi<double>() * 2.0);
+        double rotXZ = glm::linearRand(0.0, glm::pi<double>() * 2.0);
+        glm::dmat4 matRotXY = glm::rotate(glm::dmat4(), rotXY, glm::dvec3(0, 0, 1));
+        glm::dmat3 matRot = glm::dmat3(glm::rotate(matRotXY, rotXZ, glm::dvec3(0, 1, 0)));
+
         //*
         // Tetrahedron
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
@@ -40,7 +46,8 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         offset = glm::linearRand(glm::dvec3(-1.0), glm::dvec3(1.0));
         for(int i=eBase; i<eBase+4; ++i)
         {
-            mesh.verts[i].p += 0.75* glm::linearRand(-jitter, jitter);
+            mesh.verts[i].p += 0.75 * glm::linearRand(-jitter, jitter);
+            mesh.verts[i].p = matRot * mesh.verts[i].p;
             mesh.verts[i].p *= scale;
             mesh.verts[i].p += offset;
         }
@@ -61,6 +68,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         for(int i=eBase; i<eBase+6; ++i)
         {
             mesh.verts[i].p += glm::linearRand(-jitter, jitter);
+            mesh.verts[i].p = matRot * mesh.verts[i].p;
             mesh.verts[i].p *= scale;
             mesh.verts[i].p += offset;
         }
@@ -83,6 +91,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         for(int i=eBase; i<eBase+8; ++i)
         {
             mesh.verts[i].p += glm::linearRand(-jitter, jitter);
+            mesh.verts[i].p = matRot * mesh.verts[i].p;
             mesh.verts[i].p *= scale;
             mesh.verts[i].p += offset;
         }

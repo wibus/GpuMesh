@@ -64,20 +64,20 @@ Metric AbstractDiscretizer::vertMetric(const glm::dvec3& pos) const
     glm::dvec3 vp = pos * glm::dvec3(7);
 
     double localElemSize = 0.0;
-    localElemSize = 1.0 / glm::pow(1000, 1.0/3.0);
+    localElemSize = 1.0 / glm::pow(10000, 1.0/3.0);
 
     double elemSize = localElemSize;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
-    double scale = glm::pow(4, glm::sin(vp.x));
+    double scale = glm::pow(3, glm::sin(vp.x));
     double targetElemSizeX = elemSize * scale;
     double targetElemSizeXInv2 = 1.0 / (targetElemSizeX * targetElemSizeX);
     double targetElemSizeZ = elemSize / scale;
     double targetElemSizeZInv2 = 1.0 / (targetElemSizeZ * targetElemSizeZ);
 
     double rx = targetElemSizeXInv2;
-    double ry = targetElemSizeXInv2;
-    double rz = targetElemSizeXInv2;
+    double ry = elemSizeInv2;
+    double rz = elemSizeInv2;
 
     return Metric(
         glm::dvec3(rx, 0,  0),

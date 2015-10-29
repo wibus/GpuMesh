@@ -297,6 +297,9 @@ void SurfacicRenderer::compileFacesAttributes(
 
                 for(int f=0; f < MeshTet::TRI_COUNT; ++f)
                 {
+                    if(f == MeshTet::TRI_COUNT-1)
+                        quality = 0;
+
                     const MeshTri& tri = MeshTet::tris[f];
                     glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
                     glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
