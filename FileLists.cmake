@@ -251,6 +251,13 @@ SET(GpuMesh_BOUNDARY_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Boundary/Sphere.glsl
     ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
 
+SET(GpuMesh_DISCRETIZING_SHADERS
+    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Base.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Dummy.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Analytic.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Discretizing/KdTree.glsl
+    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Uniform.glsl)
+
 SET(GpuMesh_EVALUATING_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/Base.glsl
     ${GpuMesh_SHADER_DIR}/compute/Evaluating/Evaluate.glsl
@@ -287,6 +294,7 @@ SET(GpuMesh_SMOOTHING_SHADERS
 
 SET(GpuMesh_COMPUTE_SHADERS
     ${GpuMesh_BOUNDARY_SHADERS}
+    ${GpuMesh_DISCRETIZING_SHADERS}
     ${GpuMesh_MEASURING_SHADERS}
     ${GpuMesh_EVALUATING_SHADERS}
     ${GpuMesh_RENDERING_SHADERS}

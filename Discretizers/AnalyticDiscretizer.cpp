@@ -4,7 +4,7 @@
 
 
 AnalyticDiscretizer::AnalyticDiscretizer() :
-    AbstractDiscretizer("Analytic", ""),
+    AbstractDiscretizer("Analytic", ":/shaders/compute/Discretizing/Analytic.glsl"),
     _debugMesh(new Mesh())
 {
     _debugMesh->modelName = "Analytic discretization mesh";
@@ -41,7 +41,7 @@ void AnalyticDiscretizer::discretize(
 
 }
 
-Metric AnalyticDiscretizer::metric(
+Metric AnalyticDiscretizer::metricAt(
         const glm::dvec3& position) const
 {
     return vertMetric(position);

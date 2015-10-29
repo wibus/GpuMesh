@@ -11,7 +11,8 @@ AbstractDiscretizer::AbstractDiscretizer(
         const std::string& name,
         const std::string& shader) :
     _discretizationName(name),
-    _discretizationShader(shader)
+    _discretizationShader(shader),
+    _baseShader(":/shaders/compute/Discretizing/Base.glsl")
 {
 
 }
@@ -34,6 +35,11 @@ void AbstractDiscretizer::installPlugIn(
     {
         program.addShader(GL_COMPUTE_SHADER, {
             mesh.meshGeometryShaderName(),
+            _baseShader.c_str()
+        });
+
+        program.addShader(GL_COMPUTE_SHADER, {
+            mesh.meshGeometryShaderName(),
             _discretizationShader.c_str()
         });
     }
@@ -46,7 +52,7 @@ void AbstractDiscretizer::uploadUniforms(
 
 }
 
-Metric AbstractDiscretizer::interpolate(
+Metric AbstractDiscretizer::interpolateMetrics(
         const Metric& m1,
         const Metric& m2,
         double a) const
@@ -64,7 +70,7 @@ Metric AbstractDiscretizer::vertMetric(const glm::dvec3& pos) const
     glm::dvec3 vp = pos * glm::dvec3(7);
 
     double localElemSize = 0.0;
-    localElemSize = 1.0 / glm::pow(10000, 1.0/3.0);
+    localElemSize = 1.0 / glm::pow(4000, 1.0/3.0);
 
     double elemSize = localElemSize;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);

@@ -24,7 +24,7 @@ double MetricWiseMeasurer::riemannianDistance(
 {
     glm::dvec3 abDiff = b - a;
     glm::dvec3 middle = (a + b) / 2.0;
-    double dist = glm::sqrt(glm::dot(abDiff, discretizer.metric(middle) * abDiff));
+    double dist = glm::sqrt(glm::dot(abDiff, discretizer.metricAt(middle) * abDiff));
 
     int segmentCount = 1;
     double err = 1.0;
@@ -38,7 +38,7 @@ double MetricWiseMeasurer::riemannianDistance(
         double newDist = 0.0;
         for(int i=0; i < segmentCount; ++i)
         {
-            Metric metric = discretizer.metric(segBeg + half_ds);
+            Metric metric = discretizer.metricAt(segBeg + half_ds);
             newDist += glm::sqrt(glm::dot(ds, metric * ds));
             segBeg += ds;
         }

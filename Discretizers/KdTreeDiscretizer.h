@@ -31,7 +31,7 @@ public:
             const Mesh& mesh,
             int density) override;
 
-    virtual Metric metric(
+    virtual Metric metricAt(
             const glm::dvec3& position) const override;
 
 

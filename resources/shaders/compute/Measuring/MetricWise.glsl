@@ -16,11 +16,6 @@ float hexVolume(in vec3 vp[HEX_VERTEX_COUNT])
 
 
 // High level measurement
-float computeLocalElementSize(in uint vId)
-{
-    return 1.0;
-}
-
 vec3 computeVertexEquilibrium(in uint vId)
 {
     return vec3(verts[vId].p);

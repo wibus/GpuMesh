@@ -4,7 +4,7 @@
 
 
 DummyDiscretizer::DummyDiscretizer() :
-    AbstractDiscretizer("Dummy", ""),
+    AbstractDiscretizer("Dummy", ":/shaders/compute/Discretizing/Dummy.glsl"),
     _debugMesh(new Mesh())
 {
     _debugMesh->modelName = "Dummy discretization mesh";
@@ -41,7 +41,7 @@ void DummyDiscretizer::discretize(
 
 }
 
-Metric DummyDiscretizer::metric(
+Metric DummyDiscretizer::metricAt(
         const glm::dvec3& position) const
 {
     // Constant isotropic metric

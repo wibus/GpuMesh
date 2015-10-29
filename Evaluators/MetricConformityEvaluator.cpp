@@ -32,11 +32,11 @@ Metric MetricConformityEvaluator::specifiedMetric(
 
     const double H = 0.5;
     const double Q = (1.0 - H) / 3.0;
-    return (discretizer.metric((v0 + v1 + v2 + v3)/4.0) * (-0.8) +
-            discretizer.metric(v0*H + v1*Q + v2*Q + v3*Q) * 0.45 +
-            discretizer.metric(v0*Q + v1*H + v2*Q + v3*Q) * 0.45 +
-            discretizer.metric(v0*Q + v1*Q + v2*H + v3*Q) * 0.45 +
-            discretizer.metric(v0*Q + v1*Q + v2*Q + v3*H) * 0.45);
+    return (discretizer.metricAt((v0 + v1 + v2 + v3)/4.0) * (-0.8) +
+            discretizer.metricAt(v0*H + v1*Q + v2*Q + v3*Q) * 0.45 +
+            discretizer.metricAt(v0*Q + v1*H + v2*Q + v3*Q) * 0.45 +
+            discretizer.metricAt(v0*Q + v1*Q + v2*H + v3*Q) * 0.45 +
+            discretizer.metricAt(v0*Q + v1*Q + v2*Q + v3*H) * 0.45);
 }
 
 double MetricConformityEvaluator::metricConformity(

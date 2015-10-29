@@ -35,7 +35,7 @@ struct KdNode
 
 
 KdTreeDiscretizer::KdTreeDiscretizer() :
-    AbstractDiscretizer("Kd-Tree", "")
+    AbstractDiscretizer("Kd-Tree", ":/shaders/compute/Discretizing/KdTree.glsl")
 {
 }
 
@@ -102,7 +102,7 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
           xSort, ySort, zSort);
 }
 
-Metric KdTreeDiscretizer::metric(
+Metric KdTreeDiscretizer::metricAt(
         const glm::dvec3& position) const
 {
     KdNode* parent = nullptr;

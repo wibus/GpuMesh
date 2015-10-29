@@ -88,6 +88,7 @@ float patchQuality(in uint vId)
     for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
     {
         NeigElem neigElem = neigElems[n];
+
         switch(neigElem.type)
         {
         case TET_ELEMENT_TYPE:

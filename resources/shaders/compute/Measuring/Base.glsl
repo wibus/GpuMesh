@@ -12,6 +12,8 @@ float tetVolume(in Tet tet);
 float priVolume(in Pri pri);
 float hexVolume(in Hex hex);
 
+float computeLocalElementSize(in uint vId);
+
 
 //////////////////////////////
 //   Function definitions   //
@@ -56,4 +58,19 @@ float hexVolume(in Hex hex)
     );
 
     return hexVolume(vp);
+}
+
+float computeLocalElementSize(in uint vId)
+{
+    vec3 pos = vec3(verts[vId].p);
+    Topo topo = topos[vId];
+
+    float totalSize = 0.0;
+    uint neigVertCount = topo.neigVertCount;
+    for(uint i=0, n = topo.neigVertBase; i < neigVertCount; ++i, ++n)
+    {
+        totalSize += length(pos - vec3(verts[neigVerts[n].v].p));
+    }
+
+    return totalSize / neigVertCount;
 }

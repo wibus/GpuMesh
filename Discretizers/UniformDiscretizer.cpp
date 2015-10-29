@@ -62,7 +62,7 @@ private:
 
 
 UniformDiscretizer::UniformDiscretizer() :
-    AbstractDiscretizer("Uniform", "")
+    AbstractDiscretizer("Uniform", ":/shaders/compute/Discretizing/Uniform.glsl")
 {
 }
 
@@ -231,7 +231,7 @@ void UniformDiscretizer::discretize(const Mesh& mesh, int density)
     }
 }
 
-Metric UniformDiscretizer::metric(
+Metric UniformDiscretizer::metricAt(
         const glm::dvec3& position) const
 {
     glm::dvec3 cs = _grid->extents / glm::dvec3(_grid->size);
@@ -262,15 +262,15 @@ Metric UniformDiscretizer::metric(
     glm::dvec3 a = (position - (_grid->minBounds + c000Center)) / cs;
     a = glm::clamp(a, glm::dvec3(0), glm::dvec3(1));
 
-    Metric mx00 = interpolate(m000, m100, a.x);
-    Metric mx10 = interpolate(m010, m110, a.x);
-    Metric mx01 = interpolate(m001, m101, a.x);
-    Metric mx11 = interpolate(m011, m111, a.x);
+    Metric mx00 = interpolateMetrics(m000, m100, a.x);
+    Metric mx10 = interpolateMetrics(m010, m110, a.x);
+    Metric mx01 = interpolateMetrics(m001, m101, a.x);
+    Metric mx11 = interpolateMetrics(m011, m111, a.x);
 
-    Metric mxy0 = interpolate(mx00, mx10, a.y);
-    Metric mxy1 = interpolate(mx01, mx11, a.y);
+    Metric mxy0 = interpolateMetrics(mx00, mx10, a.y);
+    Metric mxy1 = interpolateMetrics(mx01, mx11, a.y);
 
-    Metric mxyz = interpolate(mxy0, mxy1, a.z);
+    Metric mxyz = interpolateMetrics(mxy0, mxy1, a.z);
 
     return mxyz;
 }

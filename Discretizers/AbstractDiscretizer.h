@@ -44,7 +44,7 @@ public:
             const Mesh& mesh,
             int density) = 0;
 
-    virtual Metric metric(
+    virtual Metric metricAt(
             const glm::dvec3& position) const = 0;
 
 
@@ -59,7 +59,7 @@ protected:
     Metric vertMetric(const glm::dvec3& pos) const;
 
     // Interpolate the metric given two samples and a mix ratio
-    Metric interpolate(const Metric& m1, const Metric& m2, double a) const;
+    Metric interpolateMetrics(const Metric& m1, const Metric& m2, double a) const;
 
     // Classic bounding box computation
     void boundingBox(const Mesh& mesh,
@@ -69,6 +69,7 @@ protected:
 private:
     std::string _discretizationName;
     std::string _discretizationShader;
+    std::string _baseShader;
 };
 
 #endif // GPUMESH_ABSTRACTDISCRETIZER

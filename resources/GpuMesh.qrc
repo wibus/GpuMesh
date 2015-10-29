@@ -47,5 +47,10 @@
         <file>shaders/compute/Evaluating/Base.glsl</file>
         <file>shaders/compute/Measuring/Base.glsl</file>
         <file>shaders/compute/Evaluating/MetricConformity.glsl</file>
+        <file>shaders/compute/Discretizing/Analytic.glsl</file>
+        <file>shaders/compute/Discretizing/Base.glsl</file>
+        <file>shaders/compute/Discretizing/Dummy.glsl</file>
+        <file>shaders/compute/Discretizing/KdTree.glsl</file>
+        <file>shaders/compute/Discretizing/Uniform.glsl</file>
     </qresource>
 </RCC>
