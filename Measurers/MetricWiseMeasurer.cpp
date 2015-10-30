@@ -55,8 +55,8 @@ glm::dvec3 MetricWiseMeasurer::riemannianSegment(
         const glm::dvec3& a,
         const glm::dvec3& b) const
 {
-    glm::dvec3 vec = b - a;
-    return vec * riemannianDistance(discretizer, a, b) / glm::length(vec);
+    return glm::normalize(b - a) *
+            riemannianDistance(discretizer, a, b);
 }
 
 double MetricWiseMeasurer::tetVolume(
@@ -82,18 +82,9 @@ double MetricWiseMeasurer::priVolume(
     glm::dvec3 e25 = riemannianSegment(discretizer, vp[2], vp[5]);
 
     double detSum = 0.0;
-    detSum += glm::determinant(glm::dmat3(
-        e24,
-        e20,
-        e21));
-    detSum += glm::determinant(glm::dmat3(
-        e25,
-        e21,
-        e23));
-    detSum += glm::determinant(glm::dmat3(
-        e24,
-        e21,
-        e25));
+    detSum += glm::determinant(glm::dmat3(e24, e20, e21));
+    detSum += glm::determinant(glm::dmat3(e25, e21, e23));
+    detSum += glm::determinant(glm::dmat3(e24, e21, e25));
 
     return detSum / 6.0;
 }

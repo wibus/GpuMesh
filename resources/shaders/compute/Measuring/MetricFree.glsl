@@ -1,4 +1,14 @@
 // Element Volume
+float riemannianDistance(in vec3 a, in vec3 b)
+{
+    return distance(a, b);
+}
+
+vec3 riemannianSegment(in vec3 a, in vec3 b)
+{
+    return b - a;
+}
+
 float tetVolume(in vec3 vp[TET_VERTEX_COUNT])
 {
     float detSum = 0.0;
@@ -68,6 +78,7 @@ vec3 computeVertexEquilibrium(in uint vId)
     for(uint i=0, n = topo.neigElemBase; i<neigElemCount; ++i, ++n)
     {
         NeigElem neigElem = neigElems[n];
+
         switch(neigElem.type)
         {
         case TET_ELEMENT_TYPE:

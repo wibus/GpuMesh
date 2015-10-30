@@ -61,12 +61,12 @@ double MeanRatioEvaluator::priQuality(
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two cross product
-    dmat3 Tk0(e02,  e04,  e01);
-    dmat3 Tk1(e13,  e15,  e01);
-    dmat3 Tk2(e02,  e42, -e23);
-    dmat3 Tk3(e35, -e13,  e23);
-    dmat3 Tk4(e42, -e04, -e45);
-    dmat3 Tk5(e15,  e35,  e45);
+    dmat3 Tk0 = dmat3(e02,  e04,  e01);
+    dmat3 Tk1 = dmat3(e13,  e15,  e01);
+    dmat3 Tk2 = dmat3(e02,  e42, -e23);
+    dmat3 Tk3 = dmat3(e35, -e13,  e23);
+    dmat3 Tk4 = dmat3(e42, -e04, -e45);
+    dmat3 Tk5 = dmat3(e15,  e35,  e45);
 
     double qual0 = cornerQuality(Tk0 * Fr_PRI_INV);
     double qual1 = cornerQuality(Tk1 * Fr_PRI_INV);
@@ -98,14 +98,14 @@ double MeanRatioEvaluator::hexQuality(
     glm::dvec3 e57 = measurer.riemannianSegment(discretizer, vp[5], vp[7]);
     glm::dvec3 e67 = measurer.riemannianSegment(discretizer, vp[6], vp[7]);
 
-    dmat3 Tk0(e01,  e04, -e02);
-    dmat3 Tk1(e01,  e13,  e15);
-    dmat3 Tk2(e02,  e26,  e23);
-    dmat3 Tk3(e13,  e23, -e37);
-    dmat3 Tk4(e04,  e45,  e46);
-    dmat3 Tk5(e15, -e57,  e45);
-    dmat3 Tk6(e26,  e46, -e67);
-    dmat3 Tk7(e37,  e67,  e57);
+    dmat3 Tk0 = dmat3(e01,  e04, -e02);
+    dmat3 Tk1 = dmat3(e01,  e13,  e15);
+    dmat3 Tk2 = dmat3(e02,  e26,  e23);
+    dmat3 Tk3 = dmat3(e13,  e23, -e37);
+    dmat3 Tk4 = dmat3(e04,  e45,  e46);
+    dmat3 Tk5 = dmat3(e15, -e57,  e45);
+    dmat3 Tk6 = dmat3(e26,  e46, -e67);
+    dmat3 Tk7 = dmat3(e37,  e67,  e57);
 
     double qual0 = cornerQuality(Tk0);
     double qual1 = cornerQuality(Tk1);

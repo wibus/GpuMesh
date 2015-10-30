@@ -25,6 +25,7 @@ float tetQuality(in vec3 vp[4])
             / 0.0080187537387448014348;
 }
 
+// !Gives wrong results!
 float priQuality(in vec3 vp[6])
 {
     float volume = priVolume(vp);
@@ -45,6 +46,7 @@ float priQuality(in vec3 vp[6])
             / 0.016037507477489606339, 1.0);
 }
 
+// !Gives wrong results!
 float hexQuality(in vec3 vp[8])
 {
     float volume = hexVolume(vp);
