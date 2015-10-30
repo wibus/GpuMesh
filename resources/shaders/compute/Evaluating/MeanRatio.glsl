@@ -1,5 +1,6 @@
 vec3 riemannianSegment(in vec3 a, in vec3 b);
 
+
 const mat3 Fr_TET_INV = mat3(
     vec3(1, 0, 0),
     vec3(-0.5773502691896257645091, 1.154700538379251529018, 0),

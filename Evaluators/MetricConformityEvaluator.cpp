@@ -5,7 +5,7 @@
 using namespace glm;
 
 
-const dmat3 TWO_I = 2.0 * dmat3(1.0);
+const dmat3 TWO_I = dmat3(2.0);
 
 
 MetricConformityEvaluator::MetricConformityEvaluator() :
@@ -20,10 +20,10 @@ MetricConformityEvaluator::~MetricConformityEvaluator()
 
 Metric MetricConformityEvaluator::specifiedMetric(
         const AbstractDiscretizer& discretizer,
-        const dvec3 v0,
-        const dvec3 v1,
-        const dvec3 v2,
-        const dvec3 v3) const
+        const dvec3& v0,
+        const dvec3& v1,
+        const dvec3& v2,
+        const dvec3& v3) const
 {
     // Refs :
     //  P Keast, Moderate degree tetrahedral quadrature formulas, CMAME 55: 339-348 (1986)
