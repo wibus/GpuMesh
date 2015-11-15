@@ -6,6 +6,7 @@
 #include "AbstractDiscretizer.h"
 
 struct KdNode;
+class MeshVert;
 
 
 class KdTreeDiscretizer : public AbstractDiscretizer
@@ -48,12 +49,17 @@ private:
             const glm::dvec3& maxBox,
             std::vector<uint>& xSort,
             std::vector<uint>& ySort,
-            std::vector<uint>& zSort);
+            std::vector<uint>& zSort,
+            std::vector<MeshTet>& tets);
 
     void meshTree(KdNode* node, Mesh& mesh);
 
+    static bool tetParams(const std::vector<MeshVert>& verts, const MeshTet& tet,
+                          const glm::dvec3& p, double pOut[4]);
+
     std::unique_ptr<KdNode> _rootNode;
     std::shared_ptr<Mesh> _debugMesh;
+    std::vector<Metric> _vertMetrics;
 };
 
 #endif // GPUMESH_KDTREEDISCRETIZER

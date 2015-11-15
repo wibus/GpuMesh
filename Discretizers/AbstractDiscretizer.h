@@ -2,6 +2,7 @@
 #define GPUMESH_ABSTRACTDISCRETIZER
 
 #include <memory>
+#include <vector>
 
 #include <GLM/glm.hpp>
 
@@ -11,6 +12,9 @@ namespace cellar
 }
 
 class Mesh;
+class MeshTet;
+class MeshPri;
+class MeshHex;
 
 typedef glm::dmat3 Metric;
 
@@ -65,6 +69,8 @@ protected:
     void boundingBox(const Mesh& mesh,
                      glm::dvec3& minBounds,
                      glm::dvec3& maxBounds) const;
+
+    static void tetrahedrizeMesh(const Mesh& mesh, std::vector<MeshTet>& tets);
 
 private:
     std::string _discretizationName;

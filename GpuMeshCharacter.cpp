@@ -774,6 +774,7 @@ void GpuMeshCharacter::updateDiscretization()
             if(_renderer.get() != nullptr)
                 _renderer->notifyMeshUpdate();
 
+        /*
         std::ofstream file("metric.csv");
         if(file.is_open())
         {
@@ -796,6 +797,7 @@ void GpuMeshCharacter::updateDiscretization()
 
             file.close();
         }
+        */
     }
 }
 

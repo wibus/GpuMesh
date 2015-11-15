@@ -70,7 +70,7 @@ Metric AbstractDiscretizer::vertMetric(const glm::dvec3& pos) const
     glm::dvec3 vp = pos * glm::dvec3(7);
 
     double localElemSize = 0.0;
-    localElemSize = 1.0 / glm::pow(4000, 1.0/3.0);
+    localElemSize = 1.0 / glm::pow(1000, 1.0/3.0);
 
     double elemSize = localElemSize;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);
@@ -104,5 +104,34 @@ void AbstractDiscretizer::boundingBox(
         const glm::dvec3& vertPos = mesh.verts[v].p;
         minBounds = glm::min(minBounds, vertPos);
         maxBounds = glm::max(maxBounds, vertPos);
+    }
+}
+
+void AbstractDiscretizer::tetrahedrizeMesh(const Mesh& mesh, std::vector<MeshTet>& tets)
+{
+    tets = mesh.tets;
+
+    size_t priCount = mesh.pris.size();
+    for(size_t p=0; p < priCount; ++p)
+    {
+        const MeshPri& pri = mesh.pris[p];
+        for(uint t=0; t < MeshPri::TET_COUNT; ++t)
+            tets.push_back(MeshTet(
+                pri.v[MeshPri::tets[t][0]],
+                pri.v[MeshPri::tets[t][1]],
+                pri.v[MeshPri::tets[t][2]],
+                pri.v[MeshPri::tets[t][3]]));
+    }
+
+    size_t hexCount = mesh.hexs.size();
+    for(size_t h=0; h < hexCount; ++h)
+    {
+        const MeshHex& hex = mesh.hexs[h];
+        for(uint t=0; t < MeshHex::TET_COUNT; ++t)
+            tets.push_back(MeshTet(
+                hex.v[MeshHex::tets[t][0]],
+                hex.v[MeshHex::tets[t][1]],
+                hex.v[MeshHex::tets[t][2]],
+                hex.v[MeshHex::tets[t][3]]));
     }
 }
