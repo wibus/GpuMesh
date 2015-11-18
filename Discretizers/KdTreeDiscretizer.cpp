@@ -4,7 +4,7 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
-#include "DataStructures/Mesh.h"
+#include "DataStructures/GpuMesh.h"
 
 using namespace cellar;
 
@@ -25,17 +25,34 @@ struct KdNode
     KdNode* left;
     KdNode* right;
 
+    std::vector<MeshTet> tets;
+
+    glm::dvec4 separator;
     glm::dvec3 minBox;
     glm::dvec3 maxBox;
-    glm::dvec4 separator;
+};
 
-    std::vector<MeshTet> tets;
+struct GpuKdNode
+{
+    GLuint left;
+    GLuint right;
+
+    GLuint tetBeg;
+    GLuint tetEnd;
+
+    glm::vec4 separator;
+    glm::vec4 minBox;
+    glm::vec4 maxBox;
 };
 
 
 KdTreeDiscretizer::KdTreeDiscretizer() :
     AbstractDiscretizer("Kd-Tree", ":/shaders/compute/Discretizing/KdTree.glsl"),
-    _debugMesh(new Mesh())
+    _debugMesh(new Mesh()),
+    _kdNodesSsbo(0),
+    _kdTetsSsbo(0),
+    _kdMetricsSsbo(0),
+    _metricAtSub(0)
 {
 }
 
@@ -48,36 +65,61 @@ bool KdTreeDiscretizer::isMetricWise() const
     return true;
 }
 
-void KdTreeDiscretizer::installPlugIn(
+void KdTreeDiscretizer::installPlugin(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-    AbstractDiscretizer::installPlugIn(mesh, program);
+    AbstractDiscretizer::installPlugin(mesh, program);
 }
 
-void KdTreeDiscretizer::uploadUniforms(
+void KdTreeDiscretizer::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-    AbstractDiscretizer::uploadUniforms(mesh, program);
+    AbstractDiscretizer::setPluginUniforms(mesh, program);
+}
+
+void KdTreeDiscretizer::setupPluginExecution(
+        const Mesh& mesh,
+        const cellar::GlProgram& program) const
+{
+    AbstractDiscretizer::setupPluginExecution(mesh, program);
+
+    GLuint kdNodes   = mesh.bufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
+    GLuint kdTets    = mesh.bufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
+    GLuint kdMetrics = mesh.bufferBinding(EBufferBinding::KD_METRICS_BUFFER_BINDING);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdNodes,   _kdNodesSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdTets,    _kdTetsSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdMetrics, _kdMetricsSsbo);
+
+    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &_metricAtSub);
 }
 
 void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
 {
+    // Clear resources
     _debugMesh->clear();
     _debugMesh->verts = mesh.verts;
 
     _vertMetrics.clear();
     _vertMetrics.shrink_to_fit();
 
-    if(mesh.verts.empty())
-    {
-        _rootNode.reset();
-    }
+    glDeleteBuffers(1, &_kdNodesSsbo);
+    _kdNodesSsbo = 0;
+    glDeleteBuffers(1, &_kdTetsSsbo);
+    _kdTetsSsbo = 0;
+    glDeleteBuffers(1, &_kdMetricsSsbo);
+    _kdMetricsSsbo = 0;
 
+    _rootNode.reset();
+
+
+    // Break prisms and hex into tetrahedra
     std::vector<MeshTet> tets;
     tetrahedrizeMesh(mesh, tets);
 
+    // Compute Kd Tree depth
     size_t vertCount = mesh.verts.size();
     int height = (int)std::log2(vertCount/density);
 
@@ -100,9 +142,10 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
     std::sort(zSort.begin(), zSort.end(), [&mesh](uint a, uint b){
         return mesh.verts[a].p.z < mesh.verts[b].p.z;});
 
+
+    // Fill Discretizer's data strucutres
     glm::dvec3 minBounds, maxBounds;
     boundingBox(mesh, minBounds, maxBounds);
-
 
     _rootNode.reset(new KdNode());
     build(_rootNode.get(), height, mesh,
@@ -114,6 +157,38 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
     _vertMetrics.reserve(vertCount);
     for(size_t v=0; v < vertCount; ++v)
         _vertMetrics.push_back(vertMetric(mesh.verts[v]));
+
+
+    // Update SSBOs
+    std::vector<GpuTet> gpuKdTets;
+    std::vector<GpuKdNode> gpuKdNodes;
+    buildGpuBuffers(_rootNode.get(), gpuKdNodes, gpuKdTets);
+
+    glGenBuffers(1, &_kdNodesSsbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
+    size_t kdNodesSize = sizeof(decltype(gpuKdNodes.front())) * gpuKdNodes.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, kdNodesSize, gpuKdNodes.data(), GL_STATIC_DRAW);
+    gpuKdNodes.clear();
+    gpuKdNodes.shrink_to_fit();
+
+    glGenBuffers(1, &_kdTetsSsbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdTetsSsbo);
+    size_t kdTetsSize = sizeof(decltype(gpuKdTets.front())) * gpuKdTets.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, kdTetsSize, gpuKdTets.data(), GL_STATIC_DRAW);
+    gpuKdTets.clear();
+    gpuKdTets.shrink_to_fit();
+
+
+    std::vector<glm::mat4> gpuKdMetrics;
+    gpuKdMetrics.reserve(_vertMetrics.size());
+    for(const auto& metric : _vertMetrics)
+        gpuKdMetrics.push_back(glm::mat4(metric));
+
+    glGenBuffers(1, &_kdMetricsSsbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdMetricsSsbo);
+    size_t kdMetricsSize = sizeof(decltype(gpuKdMetrics.front())) * gpuKdMetrics.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, kdMetricsSize, gpuKdMetrics.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 Metric KdTreeDiscretizer::metricAt(
@@ -152,9 +227,9 @@ Metric KdTreeDiscretizer::metricAt(
         }
 
         // Outside of node's tets
-        return Metric(1.0);
+        return Metric(0.0);
     }
-    else return Metric(1.0);
+    else return Metric(0.0);
 }
 
 void KdTreeDiscretizer::releaseDebugMesh()
@@ -334,6 +409,42 @@ void KdTreeDiscretizer::build(
     }
 }
 
+void KdTreeDiscretizer::buildGpuBuffers(
+        KdNode* node,
+        std::vector<GpuKdNode>& kdNodes,
+        std::vector<GpuTet>& kdTets)
+{
+    GpuKdNode kdNode;
+
+    kdNode.left = 0;
+    kdNode.right = 0;
+    kdNode.separator = node->separator;
+    kdNode.minBox = glm::dvec4(node->minBox, 0.0);
+    kdNode.maxBox = glm::dvec4(node->maxBox, 0.0);
+
+    kdNode.tetBeg = kdTets.size();
+    size_t tetCount = node->tets.size();
+    for(size_t t=0; t < tetCount; ++t)
+        kdTets.push_back(node->tets[t]);
+    kdNode.tetEnd = kdTets.size();
+
+
+    size_t kdNodeId = kdNodes.size();
+    kdNodes.push_back(kdNode);
+
+    if(node->left != nullptr)
+    {
+        kdNodes[kdNodeId].left = kdNodes.size();
+        buildGpuBuffers(node->left, kdNodes, kdTets);
+    }
+
+    if(node->right != nullptr)
+    {
+        kdNodes[kdNodeId].right = kdNodes.size();
+        buildGpuBuffers(node->right, kdNodes, kdTets);
+    }
+}
+
 void KdTreeDiscretizer::meshTree(KdNode* node, Mesh& mesh)
 {
     static int cellId = 0;
@@ -372,7 +483,7 @@ inline bool KdTreeDiscretizer::tetParams(
         const std::vector<MeshVert>& verts,
         const MeshTet& tet,
         const glm::dvec3& p,
-        double pOut[4])
+        double coor[4])
 {
     // ref : https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Barycentric_coordinates_on_tetrahedra
 
@@ -384,11 +495,12 @@ inline bool KdTreeDiscretizer::tetParams(
     glm::dmat3 T(vp0 - vp3, vp1 - vp3, vp2 - vp3);
 
     glm::dvec3 y = glm::inverse(T) * (p - vp3);
-    pOut[0] = y[0];
-    pOut[1] = y[1];
-    pOut[2] = y[2];
-    pOut[3] = 1.0 - pOut[0] - pOut[1] - pOut[2];
+    coor[0] = y[0];
+    coor[1] = y[1];
+    coor[2] = y[2];
+    coor[3] = 1.0 - coor[0] - coor[1] - coor[2];
 
-    bool isIn = (pOut[0] >= 0.0 && pOut[1] >= 0.0 && pOut[2] >= 0.0 && pOut[3] >= 0.0);
+    bool isIn = (coor[0] >= 0.0 && coor[1] >= 0.0 &&
+                 coor[2] >= 0.0 && coor[3] >= 0.0);
     return isIn;
 }

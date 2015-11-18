@@ -132,6 +132,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
         mesh.bindShaderStorageBuffers();
 
         _vertSmoothProgram.pushProgram();
+        crew.setupPluginExecution(mesh, _vertSmoothProgram);
 
         for(size_t d=0; d < dispatchCount; ++d)
         {
@@ -172,7 +173,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _measureShader = crew.measurer().measureShader();
 
     _vertSmoothProgram.clearShaders();
-    crew.installPlugIns(mesh, _vertSmoothProgram);
+    crew.installPlugins(mesh, _vertSmoothProgram);
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         smoothingUtilsShader().c_str()});
@@ -187,7 +188,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
     }
 
     _vertSmoothProgram.link();
-    crew.uploadUniforms(mesh, _vertSmoothProgram);
+    crew.setPluginUniforms(mesh, _vertSmoothProgram);
 
 
     _initialized = true;

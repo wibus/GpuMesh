@@ -115,7 +115,7 @@ CpuDelaunayMesher::CpuDelaunayMesher() :
     _sphereBoundary(new SphereBoudary())
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Box");
+    _modelFuncs.setDefault("Sphere");
     _modelFuncs.setContent({
         {string("Box"),    ModelFunc(bind(&CpuDelaunayMesher::genBox,    this, _1, _2))},
         {string("Sphere"), ModelFunc(bind(&CpuDelaunayMesher::genSphere, this, _1, _2))},

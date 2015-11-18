@@ -269,14 +269,14 @@ unsigned int Mesh::glBuffer(const EMeshBuffer&) const
     return 0;
 }
 
+unsigned int Mesh::bufferBinding(EBufferBinding binding) const
+{
+    return 0;
+}
+
 void Mesh::bindShaderStorageBuffers() const
 {
 
-}
-
-size_t Mesh::firstFreeBufferBinding() const
-{
-    return 0;
 }
 
 std::string Mesh::modelBoundsShaderName() const

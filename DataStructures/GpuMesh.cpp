@@ -299,6 +299,20 @@ void GpuMesh::uploadElement(
     }
 }
 
+unsigned int GpuMesh::bufferBinding(EBufferBinding binding) const
+{
+    switch(binding)
+    {
+    case EBufferBinding::EVALUATE_QUALS_BUFFER_BINDING :    return 8;
+    case EBufferBinding::VERTEX_ACCUMS_BUFFER_BINDING :     return 9;
+    case EBufferBinding::KD_NODES_BUFFER_BINDING :          return 10;
+    case EBufferBinding::KD_TETS_BUFFER_BINDING :           return 11;
+    case EBufferBinding::KD_METRICS_BUFFER_BINDING:         return 12;
+    }
+
+    return 0;
+}
+
 void GpuMesh::bindShaderStorageBuffers() const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _vertSsbo);
@@ -309,9 +323,4 @@ void GpuMesh::bindShaderStorageBuffers() const
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, _neigVertSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, _neigElemSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, _groupMembersSsbo);
-}
-
-size_t GpuMesh::firstFreeBufferBinding() const
-{
-    return 8;
 }

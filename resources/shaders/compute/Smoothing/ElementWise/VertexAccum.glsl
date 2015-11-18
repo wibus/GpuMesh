@@ -4,7 +4,7 @@ struct VertexAccum
     float weightAccum;
 };
 
-layout(shared, binding = FIRST_FREE_BUFFER_BINDING) buffer VertexAccums
+layout(shared, binding = VERTEX_ACCUMS_BUFFER_BINDING) buffer VertexAccums
 {
     VertexAccum vertexAccums[];
 };

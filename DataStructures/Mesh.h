@@ -177,6 +177,15 @@ enum class EMeshBuffer
     GROUP_MEMBERS
 };
 
+enum class EBufferBinding
+{
+    EVALUATE_QUALS_BUFFER_BINDING,
+    VERTEX_ACCUMS_BUFFER_BINDING,
+    KD_NODES_BUFFER_BINDING,
+    KD_TETS_BUFFER_BINDING,
+    KD_METRICS_BUFFER_BINDING
+};
+
 enum class ECutType
 {
     None,
@@ -204,8 +213,8 @@ public:
     virtual std::string meshGeometryShaderName() const;
     virtual void uploadGeometry(cellar::GlProgram& program) const;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
+    virtual unsigned int bufferBinding(EBufferBinding binding) const;
     virtual void bindShaderStorageBuffers() const;
-    virtual size_t firstFreeBufferBinding() const;
 
     virtual std::string modelBoundsShaderName() const;
     virtual void setmodelBoundariesShaderName(const std::string& name);

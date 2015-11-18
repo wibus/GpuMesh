@@ -76,20 +76,6 @@ bool UniformDiscretizer::isMetricWise() const
     return true;
 }
 
-void UniformDiscretizer::installPlugIn(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::installPlugIn(mesh, program);
-}
-
-void UniformDiscretizer::uploadUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::uploadUniforms(mesh, program);
-}
-
 void UniformDiscretizer::discretize(const Mesh& mesh, int density)
 {
     _debugMesh.reset();

@@ -26,7 +26,7 @@ std::string AbstractMeasurer::measureShader() const
     return _measureShader;
 }
 
-void AbstractMeasurer::installPlugIn(
+void AbstractMeasurer::installPlugin(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
@@ -41,9 +41,16 @@ void AbstractMeasurer::installPlugIn(
     });
 }
 
-void AbstractMeasurer::uploadUniforms(
+void AbstractMeasurer::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
+{
+
+}
+
+void AbstractMeasurer::setupPluginExecution(
+        const Mesh& mesh,
+        const cellar::GlProgram& program) const
 {
 
 }

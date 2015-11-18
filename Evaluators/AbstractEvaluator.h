@@ -8,6 +8,7 @@
 
 class AbstractDiscretizer;
 class AbstractMeasurer;
+class MeshCrew;
 
 
 class AbstractEvaluator
@@ -23,18 +24,22 @@ public:
 
     virtual void initialize(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
-            const AbstractMeasurer& measurer);
+            const MeshCrew& crew);
 
 
     // GLSL Plug-in interface
-    virtual void installPlugIn(
+    virtual void installPlugin(
             const Mesh& mesh,
             cellar::GlProgram& program) const;
 
-    virtual void uploadUniforms(
+    virtual void setPluginUniforms(
             const Mesh& mesh,
             cellar::GlProgram& program) const;
+
+    virtual void setupPluginExecution(
+            const Mesh& mesh,
+            const cellar::GlProgram& program) const;
+
 
 
     virtual double tetQuality(

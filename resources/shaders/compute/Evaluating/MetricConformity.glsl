@@ -1,5 +1,4 @@
-mat3 metricAt(in vec3 pos);
-
+mat3 metricAt(in vec3 position);
 
 const mat3 TWO_I = mat3(2.0);
 

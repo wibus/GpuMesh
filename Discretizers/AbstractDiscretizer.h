@@ -35,13 +35,17 @@ public:
     // GLSL Plug-in interface
     virtual std::string discretizationShader() const;
 
-    virtual void installPlugIn(
+    virtual void installPlugin(
             const Mesh& mesh,
-            cellar::GlProgram& program) const = 0;
+            cellar::GlProgram& program) const;
 
-    virtual void uploadUniforms(
+    virtual void setPluginUniforms(
             const Mesh& mesh,
-            cellar::GlProgram& program) const = 0;
+            cellar::GlProgram& program) const;
+
+    virtual void setupPluginExecution(
+            const Mesh& mesh,
+            const cellar::GlProgram& program) const;
 
 
     virtual void discretize(
@@ -60,7 +64,7 @@ public:
 protected:
     // Give mesh's provided metric
     Metric vertMetric(const Mesh& mesh, uint vId) const;
-    Metric vertMetric(const glm::dvec3& pos) const;
+    Metric vertMetric(const glm::dvec3& position) const;
 
     // Interpolate the metric given two samples and a mix ratio
     Metric interpolateMetrics(const Metric& m1, const Metric& m2, double a) const;

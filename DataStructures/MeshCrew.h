@@ -41,8 +41,9 @@ public:
     void setDiscretizer(const Mesh& mesh, const std::shared_ptr<AbstractDiscretizer>& discretizer);
     void setEvaluator(const Mesh& mesh, const std::shared_ptr<AbstractEvaluator>& evaluator);
 
-    void installPlugIns(const Mesh& mesh, cellar::GlProgram& program) const;
-    void uploadUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
+    void installPlugins(const Mesh& mesh, cellar::GlProgram& program) const;
+    void setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
+    void setupPluginExecution(const Mesh& mesh, const cellar::GlProgram& program) const;
 
 
 private:

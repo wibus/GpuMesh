@@ -8,6 +8,7 @@
 #include <CellarWorkbench/Misc/Log.h>
 
 #include "DataStructures/GpuMesh.h"
+#include "DataStructures/MeshCrew.h"
 #include "Discretizers/AbstractDiscretizer.h"
 #include "Measurers/AbstractMeasurer.h"
 
@@ -76,11 +77,10 @@ OptionMapDetails AbstractEvaluator::availableImplementations() const
 
 void AbstractEvaluator::initialize(
         const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
-        const AbstractMeasurer& measurer)
+        const MeshCrew& crew)
 {
-    if(_discretizationShader == discretizer.discretizationShader() &&
-       _measureShader == measurer.measureShader() &&
+    if(_discretizationShader == crew.discretizer().discretizationShader() &&
+       _measureShader == crew.measurer().measureShader() &&
        _qualSsbo != 0)
         return;
 
@@ -88,21 +88,20 @@ void AbstractEvaluator::initialize(
     getLog().postMessage(new Message('I', false,
         "Initializing evaluator compute shader", "AbstractEvaluator"));
 
-    _discretizationShader == discretizer.discretizationShader();
-    _measureShader == measurer.measureShader();
+    _discretizationShader == crew.discretizer().discretizationShader();
+    _measureShader == crew.measurer().measureShader();
 
-    // Simultenous evaluation shader
+
+    // Shader setup
     _evaluationProgram.clearShaders();
-    discretizer.installPlugIn(mesh, _evaluationProgram);
-    measurer.installPlugIn(mesh, _evaluationProgram);
-    installPlugIn(mesh, _evaluationProgram);
+    crew.installPlugins(mesh, _evaluationProgram);
+
     _evaluationProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
         ":/shaders/compute/Evaluating/Evaluate.glsl"});
-    _evaluationProgram.link();
 
-    uploadUniforms(mesh, _evaluationProgram);
-    mesh.uploadGeometry(_evaluationProgram);
+    _evaluationProgram.link();
+    crew.setPluginUniforms(mesh, _evaluationProgram);
 
 
     // Shader storage quality blocks
@@ -111,7 +110,7 @@ void AbstractEvaluator::initialize(
     glGenBuffers(1, &_qualSsbo);
 }
 
-void AbstractEvaluator::installPlugIn(
+void AbstractEvaluator::installPlugin(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
@@ -129,11 +128,17 @@ void AbstractEvaluator::installPlugIn(
     program.addShader(GL_COMPUTE_SHADER, shapeMeasure);
 }
 
-void AbstractEvaluator::uploadUniforms(
+void AbstractEvaluator::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
 
+}
+
+void AbstractEvaluator::setupPluginExecution(
+        const Mesh& mesh,
+        const GlProgram& program) const
+{
 }
 
 double AbstractEvaluator::tetQuality(
@@ -455,15 +460,20 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+
+    _evaluationProgram.pushProgram();
+
     mesh.bindShaderStorageBuffers();
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
-                     mesh.firstFreeBufferBinding(), _qualSsbo);
+    discretizer.setupPluginExecution(mesh, _evaluationProgram);
+    measurer.setupPluginExecution(mesh, _evaluationProgram);
+    GLuint qualsBinding = mesh.bufferBinding(
+        EBufferBinding::EVALUATE_QUALS_BUFFER_BINDING);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, qualsBinding, _qualSsbo);
 
 
     // Simulatenous and separate elem evaluation deliver the same performance
     // Separate program series gives a tiny, not stable speed boost.
     // (tested on a parametric pri/hex mesh)
-    _evaluationProgram.pushProgram();
     glDispatchCompute(workgroupCount, 1, 1);
     _evaluationProgram.popProgram();
 
@@ -473,7 +483,7 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // concurently while were are computing mesh quality mean. glMemoryBarrier
     // looks like having no effect on this (tried with GL_ALL_BARRIER_BITS
     // before and after the call to glGetBufferSubData).
-    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
     GLint* data = (GLint*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, qualSize, GL_MAP_READ_BIT);

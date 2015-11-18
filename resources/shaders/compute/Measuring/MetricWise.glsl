@@ -1,4 +1,4 @@
-mat3 metricAt(in vec3 pos);
+mat3 metricAt(in vec3 position);
 
 // Distances
 float riemannianDistance(in vec3 a, in vec3 b)

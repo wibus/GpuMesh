@@ -89,7 +89,7 @@ void MeshCrew::setEvaluator(const Mesh& mesh, const std::shared_ptr<AbstractEval
     reinitCrew(mesh);
 }
 
-void MeshCrew::installPlugIns(const Mesh& mesh, cellar::GlProgram& program) const
+void MeshCrew::installPlugins(const Mesh& mesh, cellar::GlProgram& program) const
 {
     // Mesh's plugin
     program.addShader(GL_COMPUTE_SHADER, {
@@ -97,20 +97,31 @@ void MeshCrew::installPlugIns(const Mesh& mesh, cellar::GlProgram& program) cons
         mesh.modelBoundsShaderName().c_str()});
 
     // Crew members' plugin
-    _discretizer->installPlugIn(mesh, program);
-    _evaluator->installPlugIn(mesh, program);
-    _measurer->installPlugIn(mesh, program);
+    _discretizer->installPlugin(mesh, program);
+    _evaluator->installPlugin(mesh, program);
+    _measurer->installPlugin(mesh, program);
 }
 
-void MeshCrew::uploadUniforms(const Mesh& mesh, cellar::GlProgram& program) const
+void MeshCrew::setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) const
 {
     // Mesh's uniforms
     mesh.uploadGeometry(program);
 
     // Crew members' uniforms
-    _discretizer->uploadUniforms(mesh, program);
-    _evaluator->uploadUniforms(mesh, program);
-    _measurer->uploadUniforms(mesh, program);
+    _discretizer->setPluginUniforms(mesh, program);
+    _evaluator->setPluginUniforms(mesh, program);
+    _measurer->setPluginUniforms(mesh, program);
+}
+
+void MeshCrew::setupPluginExecution(const Mesh& mesh, const cellar::GlProgram& program) const
+{
+    // Mesh's uniforms
+    mesh.bindShaderStorageBuffers();
+
+    // Crew members' buffers
+    _discretizer->setupPluginExecution(mesh, program);
+    _evaluator->setupPluginExecution(mesh, program);
+    _measurer->setupPluginExecution(mesh, program);
 }
 
 void MeshCrew::reinitCrew(const Mesh& mesh)
@@ -121,7 +132,7 @@ void MeshCrew::reinitCrew(const Mesh& mesh)
            _measurer.get()    != nullptr &&
            _evaluator.get()   != nullptr)
         {
-            _evaluator->initialize(mesh, discretizer(), measurer());
+            _evaluator->initialize(mesh, *this);
         }
     }
 }

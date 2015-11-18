@@ -20,20 +20,6 @@ bool DummyDiscretizer::isMetricWise() const
     return false;
 }
 
-void DummyDiscretizer::installPlugIn(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::installPlugIn(mesh, program);
-}
-
-void DummyDiscretizer::uploadUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::uploadUniforms(mesh, program);
-}
-
 void DummyDiscretizer::discretize(
         const Mesh& mesh,
         int density)

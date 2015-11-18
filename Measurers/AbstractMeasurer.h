@@ -32,13 +32,17 @@ public:
     // GLSL Plug-in interface
     virtual std::string measureShader() const;
 
-    virtual void installPlugIn(
+    virtual void installPlugin(
             const Mesh& mesh,
             cellar::GlProgram& program) const;
 
-    virtual void uploadUniforms(
+    virtual void setPluginUniforms(
             const Mesh& mesh,
             cellar::GlProgram& program) const;
+
+    virtual void setupPluginExecution(
+            const Mesh& mesh,
+            const cellar::GlProgram& program) const;
 
 
     // Distances

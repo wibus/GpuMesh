@@ -27,7 +27,7 @@ std::string AbstractDiscretizer::discretizationShader() const
     return _discretizationShader;
 }
 
-void AbstractDiscretizer::installPlugIn(
+void AbstractDiscretizer::installPlugin(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
@@ -45,11 +45,17 @@ void AbstractDiscretizer::installPlugIn(
     }
 }
 
-void AbstractDiscretizer::uploadUniforms(
+void AbstractDiscretizer::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
 
+}
+
+void AbstractDiscretizer::setupPluginExecution(
+        const Mesh& mesh,
+        const cellar::GlProgram& program) const
+{
 }
 
 Metric AbstractDiscretizer::interpolateMetrics(
@@ -65,9 +71,9 @@ Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
     return vertMetric(mesh.verts[vId].p);
 }
 
-Metric AbstractDiscretizer::vertMetric(const glm::dvec3& pos) const
+Metric AbstractDiscretizer::vertMetric(const glm::dvec3& position) const
 {
-    glm::dvec3 vp = pos * glm::dvec3(7);
+    glm::dvec3 vp = position * glm::dvec3(7);
 
     double localElemSize = 0.0;
     localElemSize = 1.0 / glm::pow(1000, 1.0/3.0);

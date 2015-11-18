@@ -1,6 +1,6 @@
-mat3 vertMetric(in vec3 pos);
+mat3 vertMetric(in vec3 position);
 
-mat3 metricAt(in vec3 pos)
+mat3 metricAt(in vec3 position)
 {
-    return vertMetric(pos);
+    return vertMetric(position);
 }

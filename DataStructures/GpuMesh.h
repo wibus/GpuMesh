@@ -133,8 +133,9 @@ public:
     virtual std::string meshGeometryShaderName() const override;
     virtual void uploadGeometry(cellar::GlProgram& program) const override;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const override;
+    virtual unsigned int bufferBinding(EBufferBinding binding) const override;
     virtual void bindShaderStorageBuffers() const override;
-    virtual size_t firstFreeBufferBinding() const override;
+
 
 protected:
     virtual void uploadElement(

@@ -87,14 +87,14 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSerializers("Available Mesh Serializers"),
     _availableDeserializers("Available Mesh Deserializers")
 {
-    _availableMeshers.setDefault("Debug");
+    _availableMeshers.setDefault("Delaunay");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault("Analytic");
+    _availableDiscretizers.setDefault("Kd-Tree");
     _availableDiscretizers.setContent({
         {NO_DISCRETIZATION,  shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
         {string("Analytic"), shared_ptr<AbstractDiscretizer>(new AnalyticDiscretizer())},
@@ -219,7 +219,6 @@ void GpuMeshCharacter::enterStage()
         std::shared_ptr<AbstractEvaluator> evaluator;
         if(_availableEvaluators.select(evalName, evaluator))
         {
-            evaluator->initialize(*_mesh, verifDiscretizer, verifMeasurer);
             evaluator->assessMeasureValidy(verifDiscretizer, verifMeasurer);
         }
     }

@@ -20,20 +20,6 @@ bool AnalyticDiscretizer::isMetricWise() const
     return true;
 }
 
-void AnalyticDiscretizer::installPlugIn(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::installPlugIn(mesh, program);
-}
-
-void AnalyticDiscretizer::uploadUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::uploadUniforms(mesh, program);
-}
-
 void AnalyticDiscretizer::discretize(
         const Mesh& mesh,
         int density)

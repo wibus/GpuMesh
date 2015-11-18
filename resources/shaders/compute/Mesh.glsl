@@ -111,7 +111,12 @@ layout(shared, binding = 7) buffer GroupMembers
     uint groupMembers[];
 };
 
-const uint FIRST_FREE_BUFFER_BINDING = 8;
+
+const uint EVALUATE_QUALS_BUFFER_BINDING    = 8;
+const uint VERTEX_ACCUMS_BUFFER_BINDING     = 9;
+const uint KD_NODES_BUFFER_BINDING          = 10;
+const uint KD_TETS_BUFFER_BINDING           = 11;
+const uint KD_METRICS_BUFFER_BINDING        = 12;
 
 
 //////////////////////////////////
