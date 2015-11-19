@@ -31,7 +31,7 @@ struct MeshEdge
 {
     uint v[2];
 
-#if _MSC_VER <= 1800
+#if defined(_MSC_VER) && _MSC_VER <= 1800
 	inline MeshEdge() {}
 	inline MeshEdge(uint v0, uint v1) 
 		{ v[0] = v0; v[1] = v1; }
@@ -48,7 +48,7 @@ struct MeshTri
 {
     uint v[3];
 
-#if _MSC_VER <= 1800
+#if defined(_MSC_VER) && _MSC_VER <= 1800
 	inline MeshTri() {}
 	inline MeshTri(uint v0, uint v1, uint v2) 
 		{ v[0] = v0; v[1] = v1; v[2] = v2; }
@@ -68,7 +68,7 @@ struct MeshTet
     double value;
 
 
-#if _MSC_VER <= 1800
+#if defined(_MSC_VER) && _MSC_VER <= 1800
 	inline MeshTet() {}
 	inline MeshTet(uint v0, uint v1, uint v2, uint v3) 
 		{ v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3; }
@@ -97,7 +97,7 @@ struct MeshPri
     double value;
 
 
-#if _MSC_VER <= 1800
+#if defined(_MSC_VER) && _MSC_VER <= 1800
 	inline MeshPri() {}
 	inline MeshPri(uint v0, uint v1, uint v2,
 				   uint v3, uint v4, uint v5) 
@@ -129,7 +129,7 @@ struct MeshHex
     double value;
 
 
-#if _MSC_VER <= 1800
+#if defined(_MSC_VER) && _MSC_VER <= 1800
 	inline MeshHex() {}
 	inline MeshHex(uint v0, uint v1, uint v2, uint v3,
 		           uint v4, uint v5, uint v6, uint v7) 
