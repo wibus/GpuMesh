@@ -163,7 +163,7 @@ void AbstractRenderer::setQualityCullingBounds(double min, double max)
     notifyMeshUpdate();
 }
 
-void AbstractRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
+bool AbstractRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
     if(event.getAscii() == 'C')
     {
@@ -191,7 +191,11 @@ void AbstractRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 
         getLog().postMessage(new Message('I', false,
             std::string("Physical cut : ") + rep, "AbstractRenderer"));
+
+		return true;
     }
+
+	return false;
 }
 
 void AbstractRenderer::drawBackdrop()

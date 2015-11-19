@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 
 #include "DataStructures/MeshCrew.h"
 #include "DataStructures/VertexAccum.h"
@@ -95,8 +96,8 @@ void AbstractElementWiseSmoother::smoothMeshThread(
     {
         std::mutex mutex;
         std::condition_variable cv;
-        std::atomic_int done( 0 );
-        std::atomic_int step( 0 );
+        std::atomic<int> done( 0 );
+        std::atomic<int> step( 0 );
 
         // Accumulated vertex positions
         vector<thread> workers;

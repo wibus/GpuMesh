@@ -87,7 +87,7 @@ void ScaffoldRenderer::updateCutPlane(const glm::dvec4& cutEq)
     }
 }
 
-void ScaffoldRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
+bool ScaffoldRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
     AbstractRenderer::handleKeyPress(event);
 
@@ -113,7 +113,11 @@ void ScaffoldRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 
         getLog().postMessage(new Message('I', false,
             shadingDescr, "ScaffoldRenderer"));
+
+		return true;
     }
+
+	return false;
 }
 
 void ScaffoldRenderer::handleInputs(

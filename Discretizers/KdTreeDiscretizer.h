@@ -8,7 +8,7 @@
 #include "AbstractDiscretizer.h"
 
 struct KdNode;
-class MeshVert;
+struct MeshVert;
 struct GpuKdNode;
 struct GpuTet;
 
@@ -55,9 +55,9 @@ private:
             const Mesh& mesh,
             const glm::dvec3& minBox,
             const glm::dvec3& maxBox,
-            std::vector<uint>& xSort,
-            std::vector<uint>& ySort,
-            std::vector<uint>& zSort,
+            std::vector<unsigned int>& xSort,
+            std::vector<unsigned int>& ySort,
+            std::vector<unsigned int>& zSort,
             std::vector<MeshTet>& tets);
 
     void buildGpuBuffers(

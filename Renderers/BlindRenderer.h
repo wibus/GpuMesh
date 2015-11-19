@@ -15,7 +15,7 @@ public:
     virtual void updateLight(const glm::mat4& view,
                              const glm::vec3& pos) override;
     virtual void updateCutPlane(const glm::dvec4& cutEq) override;
-    virtual void handleKeyPress(const scaena::KeyboardEvent& event) override;
+    virtual bool handleKeyPress(const scaena::KeyboardEvent& event) override;
     virtual void handleInputs(const scaena::SynchronousKeyboard& keyboard,
                               const scaena::SynchronousMouse& mouse) override;
 

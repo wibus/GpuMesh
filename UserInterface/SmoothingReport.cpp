@@ -55,6 +55,7 @@ bool SmoothingReport::save(const std::string& fileName) const
     document.setTextWidth(textWidth);
     print(document, true);
     document.print(&writer);
+	return true;
 }
 
 void SmoothingReport::display(QTextEdit& textEdit) const

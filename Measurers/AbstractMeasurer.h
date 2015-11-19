@@ -12,9 +12,9 @@ namespace cellar
 }
 
 class Mesh;
-class MeshTet;
-class MeshPri;
-class MeshHex;
+struct MeshTet;
+struct MeshPri;
+struct MeshHex;
 class AbstractEvaluator;
 class AbstractDiscretizer;
 

@@ -42,7 +42,7 @@ public:
                              const glm::vec3& pos) = 0;
     virtual void updateCutPlane(const glm::dvec4& cutEq) = 0;
 
-    virtual void handleKeyPress(const scaena::KeyboardEvent& event);
+    virtual bool handleKeyPress(const scaena::KeyboardEvent& event);
     virtual void handleInputs(const scaena::SynchronousKeyboard& keyboard,
                               const scaena::SynchronousMouse& mouse) = 0;
 

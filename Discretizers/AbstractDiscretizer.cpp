@@ -66,7 +66,7 @@ Metric AbstractDiscretizer::interpolateMetrics(
     return glm::mix(m1, m2, a);
 }
 
-Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, uint vId) const
+Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, unsigned int vId) const
 {
     return vertMetric(mesh.verts[vId].p);
 }

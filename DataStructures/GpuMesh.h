@@ -21,8 +21,13 @@ struct GpuEdge
 {
     GLuint v[2];
 
-    inline GpuEdge() {}
-    inline GpuEdge(const MeshEdge& e) : v{e.v[0], e.v[1]} {}
+	inline GpuEdge() {}
+#if _MSC_VER <= 1800
+	inline GpuEdge(const MeshEdge& e) 
+		{v[0] = e.v[0]; v[1] = e.v[1]; }
+#else
+	inline GpuEdge(const MeshEdge& e) : v{ e.v[0], e.v[1] } {}
+#endif
     inline operator MeshEdge() const { return MeshEdge(v[0], v[1]); }
     inline operator glm::ivec2() const { return glm::ivec2(v[0], v[1]); }
 };
@@ -31,8 +36,13 @@ struct GpuTri
 {
     GLuint v[3];
 
-    inline GpuTri() {}
-    inline GpuTri(const MeshTri& t) : v{t.v[0], t.v[1], t.v[2]} {}
+	inline GpuTri() {}
+#if _MSC_VER <= 1800
+	inline GpuTri(const MeshTri& t)
+		{v[0] = t.v[0]; v[1] = t.v[1]; v[2] = t.v[2];}
+#else
+	inline GpuTri(const MeshTri& t) : v{t.v[0], t.v[1], t.v[2]} {}
+#endif
     inline operator MeshTri() const { return MeshTri(v[0], v[1], v[2]); }
     inline operator glm::ivec3() const { return glm::ivec3(v[0], v[1], v[2]); }
 };
@@ -41,8 +51,13 @@ struct GpuTet
 {
     GLuint v[4];
 
-    inline GpuTet() {}
-    inline GpuTet(const MeshTet& t) : v{t.v[0], t.v[1], t.v[2], t.v[3]} {}
+	inline GpuTet() {}
+#if _MSC_VER <= 1800
+	inline GpuTet(const MeshTet& t)
+		{v[0] = t.v[0]; v[1] = t.v[1]; v[2] = t.v[2]; v[3] = t.v[3];}
+#else
+	inline GpuTet(const MeshTet& t) : v{t.v[0], t.v[1], t.v[2], t.v[3]} {}
+#endif
     inline operator MeshTet() const { return MeshTet(v[0], v[1], v[2], v[3]); }
     inline operator glm::ivec4() const { return glm::ivec4(v[0], v[1], v[2], v[3]); }
 };
@@ -51,8 +66,14 @@ struct GpuPri
 {
     GLuint v[6];
 
-    inline GpuPri() {}
-    inline GpuPri(const MeshPri& p) : v{p.v[0], p.v[1], p.v[2], p.v[3], p.v[4], p.v[5]} {}
+	inline GpuPri() {}
+#if _MSC_VER <= 1800
+	inline GpuPri(const MeshPri& p)
+		{v[0] = p.v[0]; v[1] = p.v[1]; v[2] = p.v[2]; 
+		 v[3] = p.v[3]; v[4] = p.v[4]; v[5] = p.v[5];}
+#else
+	inline GpuPri(const MeshPri& p) : v{p.v[0], p.v[1], p.v[2], p.v[3], p.v[4], p.v[5]} {}
+#endif
     inline operator MeshPri() const { return MeshPri(v[0], v[1], v[2], v[3], v[4], v[5]); }
 };
 
@@ -60,8 +81,14 @@ struct GpuHex
 {
     GLuint v[8];
 
-    inline GpuHex() {}
-    inline GpuHex(const MeshHex& h) : v{h.v[0], h.v[1], h.v[2], h.v[3], h.v[4], h.v[5], h.v[6], h.v[7]} {}
+	inline GpuHex() {}
+#if _MSC_VER <= 1800
+	inline GpuHex(const MeshHex& h)
+		{v[0] = h.v[0]; v[1] = h.v[1]; v[2] = h.v[2]; v[3] = h.v[3]; 
+		 v[4] = h.v[4]; v[5] = h.v[5]; v[6] = h.v[6]; v[7] = h.v[7];}
+#else
+	inline GpuHex(const MeshHex& h) : v{h.v[0], h.v[1], h.v[2], h.v[3], h.v[4], h.v[5], h.v[6], h.v[7]} {}
+#endif
     inline operator MeshHex() const { return MeshHex(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]); }
 };
 

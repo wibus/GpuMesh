@@ -25,10 +25,10 @@ SmoothTab::SmoothTab(Ui::MainWindow* ui,
     _character(character),
     _reportWidget(nullptr)
 {
-    _activeImpls = {
-      {"Serial", false},
-      {"Thread", true},
-      {"GLSL", true}
+    _activeImpls = std::map<string, bool>{
+      {std::string("Serial"), false},
+	  {std::string("Thread"), true },
+	  {std::string("GLSL"),   true }
     };
 
     deployTechniques();

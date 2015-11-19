@@ -4,6 +4,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <algorithm>
+#include <numeric>
 
 #include "DataStructures/MeshCrew.h"
 #include "Discretizers/AbstractDiscretizer.h"
@@ -56,8 +57,8 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
 
     std::mutex mutex;
     std::condition_variable cv;
-    std::atomic_int done( 0 );
-    std::atomic_int step( 0 );
+    std::atomic<int> done( 0 );
+    std::atomic<int> step( 0 );
 
     _smoothPassId = 0;
     while(evaluateMeshQualityThread(mesh, crew))

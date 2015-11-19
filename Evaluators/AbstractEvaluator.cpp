@@ -46,11 +46,12 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
     _evaluationShader(shapeMeasuresShader),
     _implementationFuncs("Shape Measure Implementations")
 {
+/*
     static_assert(AbstractEvaluator::MAX_QUALITY_VALUE >=
                   AbstractEvaluator::MIN_QUALITY_PRECISION_DENOM,
                   "Shape measure on GPU may not be suffciently precise \
                    given this workgroup size.");
-
+*/
     using namespace std::placeholders;
     _implementationFuncs.setDefault("Thread");
     _implementationFuncs.setContent({

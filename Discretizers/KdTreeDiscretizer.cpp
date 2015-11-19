@@ -1,6 +1,7 @@
 #include "KdTreeDiscretizer.h"
 
 #include <algorithm>
+#include <numeric>
 
 #include <CellarWorkbench/Misc/Log.h>
 

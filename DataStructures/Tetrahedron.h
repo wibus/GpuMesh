@@ -8,9 +8,9 @@
 
 struct Tetrahedron
 {
-    Tetrahedron(int v0, int v1, int v2, int v3) :
-        v{v0, v1, v2, v3}
+    Tetrahedron(int v0, int v1, int v2, int v3)
     {
+		v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3;
     }
 
     inline int t0v0() const {return v[0];}

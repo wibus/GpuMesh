@@ -36,10 +36,10 @@ void BlindRenderer::updateCutPlane(
 
 }
 
-void BlindRenderer::handleKeyPress(
+bool BlindRenderer::handleKeyPress(
         const scaena::KeyboardEvent& event)
 {
-
+	return false;
 }
 
 void BlindRenderer::handleInputs(

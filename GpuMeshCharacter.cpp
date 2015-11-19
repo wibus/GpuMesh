@@ -351,7 +351,7 @@ void GpuMeshCharacter::exitStage()
 
 bool GpuMeshCharacter::keyPressEvent(const scaena::KeyboardEvent &event)
 {
-    _renderer->handleKeyPress(event);
+    return _renderer->handleKeyPress(event);
 }
 
 OptionMapDetails GpuMeshCharacter::availableMeshers() const

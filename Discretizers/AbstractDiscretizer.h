@@ -12,9 +12,9 @@ namespace cellar
 }
 
 class Mesh;
-class MeshTet;
-class MeshPri;
-class MeshHex;
+struct MeshTet;
+struct MeshPri;
+struct MeshHex;
 
 typedef glm::dmat3 Metric;
 
@@ -63,7 +63,7 @@ public:
 
 protected:
     // Give mesh's provided metric
-    Metric vertMetric(const Mesh& mesh, uint vId) const;
+    Metric vertMetric(const Mesh& mesh, unsigned int vId) const;
     Metric vertMetric(const glm::dvec3& position) const;
 
     // Interpolate the metric given two samples and a mix ratio

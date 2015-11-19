@@ -101,7 +101,7 @@ void SurfacicRenderer::updateCutPlane(const glm::dvec4& cutEq)
     _updateShadow = true;
 }
 
-void SurfacicRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
+bool SurfacicRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 {
     AbstractRenderer::handleKeyPress(event);
 
@@ -115,11 +115,14 @@ void SurfacicRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
         const char* rep = (_lightingEnabled ? "true" : "false");
         getLog().postMessage(new Message('I', false,
             string("Lighting enabled : ") + rep, "ScaffoldRenderer"));
+		return true;
     }
+
+	return false;
 }
 
 void SurfacicRenderer::handleInputs(const scaena::SynchronousKeyboard& keyboard,
-                                  const scaena::SynchronousMouse& mouse)
+                                    const scaena::SynchronousMouse& mouse)
 {
 
 }

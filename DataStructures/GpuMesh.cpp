@@ -97,8 +97,8 @@ void GpuMesh::updateGpuTopology()
     for(int i=0; i < vertCount; ++i)
     {
         const MeshTopo& meshTopo = topos[i];
-        int neigVertCount = meshTopo.neighborVerts.size();
-        int neigElemCount = meshTopo.neighborElems.size();
+        uint neigVertCount = (uint)meshTopo.neighborVerts.size();
+        uint neigElemCount = (uint)meshTopo.neighborElems.size();
         int type = meshTopo.isFixed ? -1 :
                 meshTopo.snapToBoundary->id();
 
@@ -106,10 +106,10 @@ void GpuMesh::updateGpuTopology()
                               neigVertBase, neigVertCount,
                               neigElemBase, neigElemCount);
 
-        for(int n=0; n < neigVertCount; ++n)
+		for (uint n = 0; n < neigVertCount; ++n)
             neigVertBuff.push_back(GpuNeigVert(meshTopo.neighborVerts[n]));
 
-        for(int n=0; n < neigElemCount; ++n)
+		for (uint n = 0; n < neigElemCount; ++n)
             neigElemBuff.push_back(GpuNeigElem(meshTopo.neighborElems[n]));
 
         neigVertBase += neigVertCount;
