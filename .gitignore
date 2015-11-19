@@ -1,6 +1,6 @@
 *.user
 Log.txt
-resources/textures
+resources/textures/Backdrop*.png
 Reports/
 Meshes/
 doc/html
