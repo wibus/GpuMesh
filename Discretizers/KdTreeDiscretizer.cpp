@@ -35,15 +35,20 @@ struct KdNode
 
 struct GpuKdNode
 {
-    GLuint left;
-    GLuint right;
+    GpuKdNode() :
+        left(-1),
+        right(-1),
+        tetBeg(0),
+        tetEnd(0)
+    {}
+
+    GLint left;
+    GLint right;
 
     GLuint tetBeg;
     GLuint tetEnd;
 
     glm::vec4 separator;
-    glm::vec4 minBox;
-    glm::vec4 maxBox;
 };
 
 
@@ -192,15 +197,44 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
+inline bool KdTreeDiscretizer::tetParams(
+        const std::vector<MeshVert>& verts,
+        const MeshTet& tet,
+        const glm::dvec3& p,
+        double coor[4])
+{
+    // ref : https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Barycentric_coordinates_on_tetrahedra
+
+    const glm::dvec3& vp0 = verts[tet.v[0]].p;
+    const glm::dvec3& vp1 = verts[tet.v[1]].p;
+    const glm::dvec3& vp2 = verts[tet.v[2]].p;
+    const glm::dvec3& vp3 = verts[tet.v[3]].p;
+
+    glm::dmat3 T(vp0 - vp3, vp1 - vp3, vp2 - vp3);
+
+    glm::dvec3 y = glm::inverse(T) * (p - vp3);
+    coor[0] = y[0];
+    coor[1] = y[1];
+    coor[2] = y[2];
+    coor[3] = 1.0 - coor[0] - coor[1] - coor[2];
+
+    bool isIn = (coor[0] >= 0.0 && coor[1] >= 0.0 &&
+                 coor[2] >= 0.0 && coor[3] >= 0.0);
+    return isIn;
+}
+
 Metric KdTreeDiscretizer::metricAt(
         const glm::dvec3& position) const
 {
+    const Metric METRIC_ERROR(0.0);
+
     KdNode* node = nullptr;
     KdNode* child = _rootNode.get();
 
     while(child != nullptr)
     {
         node = child;
+
         double dist = child->separator.w;
         glm::dvec3 axis(child->separator);
         if(glm::dot(position, axis) - dist < 0.0)
@@ -228,9 +262,9 @@ Metric KdTreeDiscretizer::metricAt(
         }
 
         // Outside of node's tets
-        return Metric(0.0);
+        return METRIC_ERROR;
     }
-    else return Metric(0.0);
+    else return METRIC_ERROR;
 }
 
 void KdTreeDiscretizer::releaseDebugMesh()
@@ -417,11 +451,9 @@ void KdTreeDiscretizer::buildGpuBuffers(
 {
     GpuKdNode kdNode;
 
-    kdNode.left = 0;
-    kdNode.right = 0;
+    kdNode.left = -1;
+    kdNode.right = -1;
     kdNode.separator = node->separator;
-    kdNode.minBox = glm::dvec4(node->minBox, 0.0);
-    kdNode.maxBox = glm::dvec4(node->maxBox, 0.0);
 
     kdNode.tetBeg = kdTets.size();
     size_t tetCount = node->tets.size();
@@ -478,30 +510,4 @@ void KdTreeDiscretizer::meshTree(KdNode* node, Mesh& mesh)
         meshTree(node->left, mesh);
         meshTree(node->right, mesh);
     }
-}
-
-inline bool KdTreeDiscretizer::tetParams(
-        const std::vector<MeshVert>& verts,
-        const MeshTet& tet,
-        const glm::dvec3& p,
-        double coor[4])
-{
-    // ref : https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Barycentric_coordinates_on_tetrahedra
-
-    const glm::dvec3& vp0 = verts[tet.v[0]].p;
-    const glm::dvec3& vp1 = verts[tet.v[1]].p;
-    const glm::dvec3& vp2 = verts[tet.v[2]].p;
-    const glm::dvec3& vp3 = verts[tet.v[3]].p;
-
-    glm::dmat3 T(vp0 - vp3, vp1 - vp3, vp2 - vp3);
-
-    glm::dvec3 y = glm::inverse(T) * (p - vp3);
-    coor[0] = y[0];
-    coor[1] = y[1];
-    coor[2] = y[2];
-    coor[3] = 1.0 - coor[0] - coor[1] - coor[2];
-
-    bool isIn = (coor[0] >= 0.0 && coor[1] >= 0.0 &&
-                 coor[2] >= 0.0 && coor[3] >= 0.0);
-    return isIn;
 }

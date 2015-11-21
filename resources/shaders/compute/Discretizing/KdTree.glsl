@@ -1,14 +1,12 @@
 struct KdNode
 {
-    uint left;
-    uint right;
+    int left;
+    int right;
 
     uint tetBeg;
     uint tetEnd;
 
     vec4 separator;
-    vec4 minBox;
-    vec4 maxBox;
 };
 
 
@@ -22,12 +20,10 @@ layout(shared, binding = KD_TETS_BUFFER_BINDING) buffer KdTets
     Tet kdTets[];
 };
 
-layout(shared, binding = KD_METRICS_BUFFER_BINDING) buffer KdMetrics
+layout(std140, binding = KD_METRICS_BUFFER_BINDING) buffer KdMetrics
 {
     mat4 kdMetrics[];
 };
-
-const mat3 METRIC_ERROR = mat3(0.0);
 
 
 subroutine mat3 metricAtSub(in vec3 position);
@@ -62,20 +58,23 @@ bool tetParams(in Tet tet, in vec3 p, out float coor[4])
 layout(index=0) subroutine(metricAtSub)
 mat3 metricAtImpl(in vec3 position)
 {
-    if(kdNodes.length() == 0)
-        return METRIC_ERROR;
+    const mat3 METRIC_ERROR = mat3(0.0);
 
-    KdNode node = kdNodes[0];
-    while(node.left  != 0 &&
-          node.right != 0)
+    int nodeId = 0;
+    int childId = 0;
+    while(childId != -1)
     {
+        nodeId = childId;
+        KdNode node = kdNodes[nodeId];
+
         float dist = node.separator.w;
         vec3 axis = vec3(node.separator);
-        if(dot(position, axis) - dist < 0.0)
-            node = kdNodes[node.left];
-        else
-            node = kdNodes[node.right];
+        bool side = dot(position, axis) - dist >= 0.0;
+        childId = int(mix(node.left, node.right, side));
     }
+
+
+    KdNode node = kdNodes[nodeId];
 
     float coor[4];
     uint tetEnd = node.tetEnd;
@@ -84,7 +83,6 @@ mat3 metricAtImpl(in vec3 position)
         Tet tet = kdTets[t];
         if(tetParams(tet, position, coor))
         {
-            return METRIC_ERROR;
             mat3 m = coor[0] * mat3(kdMetrics[tet.v[0]]) +
                      coor[1] * mat3(kdMetrics[tet.v[1]]) +
                      coor[2] * mat3(kdMetrics[tet.v[2]]) +
@@ -93,5 +91,6 @@ mat3 metricAtImpl(in vec3 position)
         }
     }
 
-    return mat3(1.0);
+    // Outside of node's tets
+    return METRIC_ERROR;
 }

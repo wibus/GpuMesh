@@ -772,31 +772,6 @@ void GpuMeshCharacter::updateDiscretization()
         if(_displayDiscretizationMesh)
             if(_renderer.get() != nullptr)
                 _renderer->notifyMeshUpdate();
-
-        /*
-        std::ofstream file("metric.csv");
-        if(file.is_open())
-        {
-            double nbs = 100;
-            const glm::dvec3 one(1.0/nbs, 0, 0);
-            for(int j=0; j < nbs; ++j)
-            {
-                for(int i=0; i < nbs; ++i)
-                {
-                    glm::dvec3 pos(i/(nbs-1.0) - 0.5, j/(nbs-1.0) - 0.5, 0);
-                    double dist = _meshCrew->measurer().riemannianDistance(
-                                    _meshCrew->discretizer(), pos, pos+one);
-                    file << dist;
-
-                    if(i< nbs-1)
-                        file << ",";
-                }
-                file << endl;
-            }
-
-            file.close();
-        }
-        */
     }
 }
 
