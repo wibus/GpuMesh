@@ -302,6 +302,15 @@ SET(GpuMesh_COMPUTE_SHADERS
     ${GpuMesh_SHADER_DIR}/compute/Mesh.glsl)
 
 
+# Textures
+SET(GpuMesh_TEXTURE_DIR
+    ${GpuMesh_SRC_DIR}/resources/textures)
+
+# Background
+SET(GpuMesh_BACKGROUND_TEX
+    ${GpuMesh_TEXTURE_DIR}/Filter.png)
+
+
 # Qrc File
 QT5_ADD_RESOURCES(GpuMesh_RESOURCES
     ${GpuMesh_SRC_DIR}/resources/GpuMesh.qrc)
@@ -321,6 +330,7 @@ SET(GpuMesh_SRC_FILES
     ${GpuMesh_VERTEX_SHADERS}
     ${GpuMesh_FRAGMENT_SHADERS}
     ${GpuMesh_COMPUTE_SHADERS}
+    ${GpuMesh_BACKGROUND_TEX}
     ${GpuMesh_RESOURCES}
     ${GpuMesh_CONFIG_FILES}
     ${GpuMesh_MOC_CPP_FILES})

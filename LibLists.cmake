@@ -12,7 +12,8 @@ FIND_PACKAGE(ExperimentalTheatre REQUIRED)
 
 # Global
 SET(GpuMesh_LIBRARIES
-    ${ExTh_LIBRARIES})
+    ${ExTh_LIBRARIES}
+    pthread)
 SET(GpuMesh_INCLUDE_DIRS
     ${GpuMesh_SRC_DIR}
     ${ExTh_INCLUDE_DIRS})
