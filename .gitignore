@@ -1,4 +1,5 @@
 *.user
+*_binary.txt
 Log.txt
 resources/textures/Backdrop*.png
 Reports/

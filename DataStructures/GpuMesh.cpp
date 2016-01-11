@@ -192,10 +192,6 @@ void GpuMesh::updateGpuTopology()
 
 void GpuMesh::updateGpuVertices()
 {
-#ifndef NDEBUG
-    return;
-#endif
-
     size_t nbVert = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * nbVert;
 

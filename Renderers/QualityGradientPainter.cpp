@@ -24,7 +24,6 @@ std::string QualityGradientPainter::generate(int width, int height, int minHeigh
 {
     const string IMAGE_NAME = "QualityGradient";
 
-#if NDEBUG
     Image lutImage(width, height);
 
     GlProgram lutProg;
@@ -55,7 +54,6 @@ std::string QualityGradientPainter::generate(int width, int height, int minHeigh
     glDeleteBuffers(1, &lutBuff);
 
     getImageBank().addImage(IMAGE_NAME, lutImage);
-#endif // if Release
 
     return IMAGE_NAME;
 }
