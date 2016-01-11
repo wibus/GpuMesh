@@ -3,6 +3,7 @@
 #include <future>
 #include <chrono>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 
 #include <CellarWorkbench/Misc/Log.h>
@@ -104,6 +105,16 @@ void AbstractEvaluator::initialize(
     _evaluationProgram.link();
     crew.setPluginUniforms(mesh, _evaluationProgram);
 
+    const GlProgramBinary& binary = _evaluationProgram.getBinary();
+    std::ofstream file("Evaluator_binary.txt", std::ios_base::trunc);
+    if(file.is_open())
+    {
+        file << "Length: " << binary.length << endl;
+        file << "Format: " << binary.format << endl;
+        file << "Binary ->" << endl;
+        file.write(binary.binary.data(), binary.length);
+        file.close();
+    }
 
     // Shader storage quality blocks
     glDeleteBuffers(1, &_qualSsbo);
