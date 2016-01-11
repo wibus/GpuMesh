@@ -191,7 +191,6 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _vertSmoothProgram.link();
     crew.setPluginUniforms(mesh, _vertSmoothProgram);
 
-
     _initialized = true;
 }
 
