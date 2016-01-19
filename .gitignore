@@ -1,5 +1,6 @@
 *.user
 *_binary.txt
+nvcompatlog.txt
 Log.txt
 resources/textures/Backdrop*.png
 Reports/

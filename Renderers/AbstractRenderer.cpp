@@ -86,8 +86,8 @@ void AbstractRenderer::setup()
 
     glBindVertexArray(0);
 
-    _gradientShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Filter.vert");
-    _gradientShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Gradient.frag");
+    _gradientShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Filter.vert");
+    _gradientShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/Gradient.frag");
     _gradientShader.link();
     _gradientShader.pushProgram();
     _gradientShader.setInt("Filter", 1);

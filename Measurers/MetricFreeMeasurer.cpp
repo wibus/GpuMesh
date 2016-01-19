@@ -7,7 +7,7 @@ using namespace std;
 
 
 MetricFreeMeasurer::MetricFreeMeasurer() :
-    AbstractMeasurer("Metric Free", ":/shaders/compute/Measuring/MetricFree.glsl")
+    AbstractMeasurer("Metric Free", ":/glsl/compute/Measuring/MetricFree.glsl")
 {
 
 }

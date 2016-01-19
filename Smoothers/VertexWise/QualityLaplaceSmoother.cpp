@@ -12,7 +12,7 @@ const uint PROPOSITION_COUNT = 4;
 
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
     AbstractVertexWiseSmoother(
-        {":/shaders/compute/Smoothing/VertexWise/QualityLaplace.glsl"})
+        {":/glsl/compute/Smoothing/VertexWise/QualityLaplace.glsl"})
 {
 
 }

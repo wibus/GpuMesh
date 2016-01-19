@@ -4,7 +4,7 @@ using namespace glm;
 
 
 SolidAngleEvaluator::SolidAngleEvaluator() :
-    AbstractEvaluator(":/shaders/compute/Evaluating/SolidAngle.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/SolidAngle.glsl")
 {
 
 }

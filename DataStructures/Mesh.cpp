@@ -147,7 +147,7 @@ MeshTopo::MeshTopo(const MeshBound* boundaryCallback) :
 
 
 Mesh::Mesh() :
-    _modelBoundsShaderName(":/shaders/compute/Boundary/None.glsl")
+    _modelBoundsShaderName(":/glsl/compute/Boundary/None.glsl")
 {
 
 }

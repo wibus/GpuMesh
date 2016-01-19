@@ -643,46 +643,46 @@ void SurfacicRenderer::resetResources()
 void SurfacicRenderer::setupShaders()
 {
     // Compile shaders
-    _shadowShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Shadow.vert");
-    _shadowShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Shadow.frag");
+    _shadowShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Shadow.vert");
+    _shadowShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/Shadow.frag");
     _shadowShader.link();
     _shadowShader.pushProgram();
     _shadowShader.popProgram();
 
-    _litShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/LitMesh.vert");
-    _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/LitMesh.frag");
-    _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
-    _litShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
+    _litShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/LitMesh.vert");
+    _litShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/LitMesh.frag");
+    _litShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/QualityLut.glsl");
+    _litShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/Lighting.glsl");
     _litShader.link();
     _litShader.pushProgram();
     _litShader.setInt("DepthTex", 0);
     _litShader.popProgram();
 
-    _unlitShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/UnlitMesh.vert");
-    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/UnlitMesh.frag");
-    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
-    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
+    _unlitShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/UnlitMesh.vert");
+    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/UnlitMesh.frag");
+    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/QualityLut.glsl");
+    _unlitShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/Lighting.glsl");
     _unlitShader.link();
     _unlitShader.pushProgram();
     _unlitShader.popProgram();
 
-    _bloomBlurShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Bloom.vert");
-    _bloomBlurShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/BloomBlur.frag");
+    _bloomBlurShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Bloom.vert");
+    _bloomBlurShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/BloomBlur.frag");
     _bloomBlurShader.link();
     _bloomBlurShader.pushProgram();
     _bloomBlurShader.setInt("BloomBase", 2);
     _bloomBlurShader.popProgram();
 
-    _bloomBlendShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Bloom.vert");
-    _bloomBlendShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/BloomBlend.frag");
+    _bloomBlendShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Bloom.vert");
+    _bloomBlendShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/BloomBlend.frag");
     _bloomBlendShader.link();
     _bloomBlendShader.pushProgram();
     _bloomBlendShader.setInt("BloomBase", 2);
     _bloomBlendShader.setInt("BloomBlur", 3);
     _bloomBlendShader.popProgram();
 
-    _screenShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Filter.vert");
-    _screenShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Screen.frag");
+    _screenShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Filter.vert");
+    _screenShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/Screen.frag");
     _screenShader.link();
     _screenShader.pushProgram();
     _screenShader.setInt("Base", 2);
@@ -690,8 +690,8 @@ void SurfacicRenderer::setupShaders()
     _screenShader.setVec2f("TexScale", glm::vec2(1.0f));
     _screenShader.popProgram();
 
-    _brushShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Filter.vert");
-    _brushShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Brush.frag");
+    _brushShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Filter.vert");
+    _brushShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/Brush.frag");
     _brushShader.link();
     _brushShader.pushProgram();
     _brushShader.setInt("Base", 3);
@@ -699,8 +699,8 @@ void SurfacicRenderer::setupShaders()
     _brushShader.setVec2f("TexScale", glm::vec2(1.0f));
     _brushShader.popProgram();
 
-    _grainShader.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Filter.vert");
-    _grainShader.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Grain.frag");
+    _grainShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Filter.vert");
+    _grainShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/Grain.frag");
     _grainShader.link();
     _grainShader.pushProgram();
     _grainShader.setInt("Base", 2);

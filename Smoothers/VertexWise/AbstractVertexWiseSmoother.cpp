@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <algorithm>
 #include <numeric>
+#include <fstream>
 
 #include "DataStructures/MeshCrew.h"
 #include "Discretizers/AbstractDiscretizer.h"
@@ -180,7 +181,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
         smoothingUtilsShader().c_str()});
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Smoothing/VertexWise/SmoothVertices.glsl"});
+        ":/glsl/compute/Smoothing/VertexWise/SmoothVertices.glsl"});
     for(const string& shader : _smoothShaders)
     {
         _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
@@ -190,6 +191,17 @@ void AbstractVertexWiseSmoother::initializeProgram(
 
     _vertSmoothProgram.link();
     crew.setPluginUniforms(mesh, _vertSmoothProgram);
+
+    const GlProgramBinary& binary = _vertSmoothProgram.getBinary();
+    std::ofstream file("Smoother_binary.txt", std::ios_base::trunc);
+    if(file.is_open())
+    {
+        file << "Length: " << binary.length << endl;
+        file << "Format: " << binary.format << endl;
+        file << "Binary ->" << endl;
+        file.write(binary.binary, binary.length);
+        file.close();
+    }
 
     _initialized = true;
 }

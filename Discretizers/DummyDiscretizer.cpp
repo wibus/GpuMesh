@@ -4,7 +4,7 @@
 
 
 DummyDiscretizer::DummyDiscretizer() :
-    AbstractDiscretizer("Dummy", ":/shaders/compute/Discretizing/Dummy.glsl"),
+    AbstractDiscretizer("Dummy", ":/glsl/compute/Discretizing/Dummy.glsl"),
     _debugMesh(new Mesh())
 {
     _debugMesh->modelName = "Dummy discretization mesh";

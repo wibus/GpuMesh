@@ -13,11 +13,11 @@ using namespace cellar;
 
 
 AbstractSmoother::AbstractSmoother() :
-    _smoothingUtilsShader(":/shaders/compute/Smoothing/Utils.glsl"),
+    _smoothingUtilsShader(":/glsl/compute/Smoothing/Utils.glsl"),
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("Thread");
+    _implementationFuncs.setDefault("GLSL");
     _implementationFuncs.setContent({
         {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
         {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},

@@ -9,7 +9,7 @@ const dmat3 TWO_I = dmat3(2.0);
 
 
 MetricConformityEvaluator::MetricConformityEvaluator() :
-    AbstractEvaluator(":/shaders/compute/Evaluating/MetricConformity.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/MetricConformity.glsl")
 {
 }
 

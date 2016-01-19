@@ -280,10 +280,10 @@ void AbstractElementWiseSmoother::initializeProgram(
         smoothingUtilsShader().c_str()});
     _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Smoothing/ElementWise/VertexAccum.glsl"});
+        ":/glsl/compute/Smoothing/ElementWise/VertexAccum.glsl"});
     _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Smoothing/ElementWise/SmoothElements.glsl"});
+        ":/glsl/compute/Smoothing/ElementWise/SmoothElements.glsl"});
     for(const string& shader : _smoothShaders)
     {
         _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
@@ -303,10 +303,10 @@ void AbstractElementWiseSmoother::initializeProgram(
         smoothingUtilsShader().c_str()});
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Smoothing/ElementWise/VertexAccum.glsl"});
+        ":/glsl/compute/Smoothing/ElementWise/VertexAccum.glsl"});
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Smoothing/ElementWise/UpdateVertices.glsl"});
+        ":/glsl/compute/Smoothing/ElementWise/UpdateVertices.glsl"});
 
     _vertUpdateProgram.link();
     crew.setPluginUniforms(mesh, _vertUpdateProgram);

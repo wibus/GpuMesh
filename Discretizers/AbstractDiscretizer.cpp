@@ -12,7 +12,7 @@ AbstractDiscretizer::AbstractDiscretizer(
         const std::string& shader) :
     _discretizationName(name),
     _discretizationShader(shader),
-    _baseShader(":/shaders/compute/Discretizing/Base.glsl")
+    _baseShader(":/glsl/compute/Discretizing/Base.glsl")
 {
 
 }

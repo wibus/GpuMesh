@@ -29,14 +29,14 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &EvaluateTab::benchmarkImplementations);
 
+
+    connect(_ui->enableAnisotropyCheck, &QCheckBox::toggled,
+            this, &EvaluateTab::enableAnisotropy);
+
     deployDiscretizations();
     connect(_ui->discretizationTypeMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
             this, &EvaluateTab::discretizationTypeChanged);
-
-
-    connect(_ui->enableAnisotropyCheck, &QCheckBox::toggled,
-            this, &EvaluateTab::enableAnisotropy);
 
     _character->useDiscretizationDensity(
         _ui->discretizetionDensitySpin->value());
@@ -48,6 +48,8 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
         _ui->discretizationDisplayCheck->isChecked());
     connect(_ui->discretizationDisplayCheck, &QCheckBox::toggled,
             this, &EvaluateTab::displayDicretizationToggled);
+
+    enableAnisotropy(_ui->enableAnisotropyCheck->isChecked());
 }
 
 EvaluateTab::~EvaluateTab()

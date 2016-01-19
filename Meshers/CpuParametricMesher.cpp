@@ -157,7 +157,7 @@ void CpuParametricMesher::genPipe(Mesh& mesh, size_t vertexCount)
     meshPipe(mesh, totalStackCount, sliceCount, layerCount);
 
     mesh.setmodelBoundariesShaderName(
-        ":/shaders/compute/Boundary/ElbowPipe.glsl");
+        ":/glsl/compute/Boundary/ElbowPipe.glsl");
 }
 
 void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)

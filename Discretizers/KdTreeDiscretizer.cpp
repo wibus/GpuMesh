@@ -53,7 +53,7 @@ struct GpuKdNode
 
 
 KdTreeDiscretizer::KdTreeDiscretizer() :
-    AbstractDiscretizer("Kd-Tree", ":/shaders/compute/Discretizing/KdTree.glsl"),
+    AbstractDiscretizer("Kd-Tree", ":/glsl/compute/Discretizing/KdTree.glsl"),
     _debugMesh(new Mesh()),
     _kdNodesSsbo(0),
     _kdTetsSsbo(0),
@@ -216,10 +216,11 @@ inline bool KdTreeDiscretizer::tetParams(
     coor[0] = y[0];
     coor[1] = y[1];
     coor[2] = y[2];
-    coor[3] = 1.0 - coor[0] - coor[1] - coor[2];
+    coor[3] = 1.0 - (y[0] + y[1] + y[2]);
 
-    bool isIn = (coor[0] >= 0.0 && coor[1] >= 0.0 &&
-                 coor[2] >= 0.0 && coor[3] >= 0.0);
+    const double EPSILON_IN = -1e-8;
+    bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
+                 coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
     return isIn;
 }
 
@@ -262,7 +263,23 @@ Metric KdTreeDiscretizer::metricAt(
         }
 
         // Outside of node's tets
-        return METRIC_ERROR;
+        uint nearestVert = 0;
+        double nearestDist = INFINITY;
+        for(size_t t=0; t < tetCount; ++t)
+        {
+            double distance;
+            const MeshTet& tet = node->tets[t];
+            if((distance = glm::distance(position, verts[tet.v[0]].p)) < nearestDist)
+                { nearestVert = tet.v[0]; nearestDist = distance; }
+            if((distance = glm::distance(position, verts[tet.v[1]].p)) < nearestDist)
+                { nearestVert = tet.v[1]; nearestDist = distance; }
+            if((distance = glm::distance(position, verts[tet.v[2]].p)) < nearestDist)
+                { nearestVert = tet.v[2]; nearestDist = distance; }
+            if((distance = glm::distance(position, verts[tet.v[3]].p)) < nearestDist)
+                { nearestVert = tet.v[3]; nearestDist = distance; }
+        }
+
+        return _vertMetrics[nearestVert];
     }
     else return METRIC_ERROR;
 }
@@ -441,6 +458,8 @@ void KdTreeDiscretizer::build(
     {
         assert(vertCount > 0);
         node->tets = tets;
+
+        node->separator.w = 0.0;
     }
 }
 

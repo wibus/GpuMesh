@@ -171,7 +171,7 @@ void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
     }
 
     mesh.setmodelBoundariesShaderName(
-        ":/shaders/compute/Boundary/Box.glsl");
+        ":/glsl/compute/Boundary/Box.glsl");
 }
 
 void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
@@ -205,7 +205,7 @@ void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
     }
 
     mesh.setmodelBoundariesShaderName(
-        ":/shaders/compute/Boundary/Sphere.glsl");
+        ":/glsl/compute/Boundary/Sphere.glsl");
 }
 
 void CpuDelaunayMesher::insertBoundingMesh()

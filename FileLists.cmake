@@ -206,91 +206,89 @@ QT5_WRAP_UI(GpuMesh_UI_SRCS ${GpuMesh_UI_FILES})
 
 
 ## Resrouces ##
-SET(GpuMesh_SHADER_DIR
-    ${GpuMesh_SRC_DIR}/resources/shaders)
 
+# GLSL directory
+SET(GpuMesh_GLSL_DIR
+    ${GpuMesh_SRC_DIR}/resources/glsl)
 
 # Genereic shaders
 SET(GpuMesh_GENERIC_SHADERS
-    ${GpuMesh_SHADER_DIR}/generic/QualityLut.glsl
-    ${GpuMesh_SHADER_DIR}/generic/Lighting.glsl)
-
+    ${GpuMesh_GLSL_DIR}/generic/QualityLut.glsl
+    ${GpuMesh_GLSL_DIR}/generic/Lighting.glsl)
 
 # Vertex shaders
 SET(GpuMesh_VERTEX_SHADERS
-    ${GpuMesh_SHADER_DIR}/vertex/Shadow.vert
-    ${GpuMesh_SHADER_DIR}/vertex/LitMesh.vert
-    ${GpuMesh_SHADER_DIR}/vertex/UnlitMesh.vert
-    ${GpuMesh_SHADER_DIR}/vertex/ScaffoldJoint.vert
-    ${GpuMesh_SHADER_DIR}/vertex/ScaffoldTube.vert
-    ${GpuMesh_SHADER_DIR}/vertex/Wireframe.vert
-    ${GpuMesh_SHADER_DIR}/vertex/Bloom.vert
-    ${GpuMesh_SHADER_DIR}/vertex/Filter.vert)
-
+    ${GpuMesh_GLSL_DIR}/vertex/Shadow.vert
+    ${GpuMesh_GLSL_DIR}/vertex/LitMesh.vert
+    ${GpuMesh_GLSL_DIR}/vertex/UnlitMesh.vert
+    ${GpuMesh_GLSL_DIR}/vertex/ScaffoldJoint.vert
+    ${GpuMesh_GLSL_DIR}/vertex/ScaffoldTube.vert
+    ${GpuMesh_GLSL_DIR}/vertex/Wireframe.vert
+    ${GpuMesh_GLSL_DIR}/vertex/Bloom.vert
+    ${GpuMesh_GLSL_DIR}/vertex/Filter.vert)
 
 # Fragment shaders
 SET(GpuMesh_FRAGMENT_SHADERS
-    ${GpuMesh_SHADER_DIR}/fragment/Shadow.frag
-    ${GpuMesh_SHADER_DIR}/fragment/LitMesh.frag
-    ${GpuMesh_SHADER_DIR}/fragment/UnlitMesh.frag
-    ${GpuMesh_SHADER_DIR}/fragment/ScaffoldJoint.frag
-    ${GpuMesh_SHADER_DIR}/fragment/ScaffoldTube.frag
-    ${GpuMesh_SHADER_DIR}/fragment/Wireframe.frag
-    ${GpuMesh_SHADER_DIR}/fragment/BloomBlur.frag
-    ${GpuMesh_SHADER_DIR}/fragment/BloomBlend.frag
-    ${GpuMesh_SHADER_DIR}/fragment/Gradient.frag
-    ${GpuMesh_SHADER_DIR}/fragment/Screen.frag
-    ${GpuMesh_SHADER_DIR}/fragment/Brush.frag
-    ${GpuMesh_SHADER_DIR}/fragment/Grain.frag)
-
+    ${GpuMesh_GLSL_DIR}/fragment/Shadow.frag
+    ${GpuMesh_GLSL_DIR}/fragment/LitMesh.frag
+    ${GpuMesh_GLSL_DIR}/fragment/UnlitMesh.frag
+    ${GpuMesh_GLSL_DIR}/fragment/ScaffoldJoint.frag
+    ${GpuMesh_GLSL_DIR}/fragment/ScaffoldTube.frag
+    ${GpuMesh_GLSL_DIR}/fragment/Wireframe.frag
+    ${GpuMesh_GLSL_DIR}/fragment/BloomBlur.frag
+    ${GpuMesh_GLSL_DIR}/fragment/BloomBlend.frag
+    ${GpuMesh_GLSL_DIR}/fragment/Gradient.frag
+    ${GpuMesh_GLSL_DIR}/fragment/Screen.frag
+    ${GpuMesh_GLSL_DIR}/fragment/Brush.frag
+    ${GpuMesh_GLSL_DIR}/fragment/Grain.frag)
 
 # Compute shaders
 SET(GpuMesh_BOUNDARY_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Boundary/None.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Boundary/Box.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Boundary/Sphere.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Boundary/ElbowPipe.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Boundary/None.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Boundary/Box.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Boundary/Sphere.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Boundary/ElbowPipe.glsl)
 
 SET(GpuMesh_DISCRETIZING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Base.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Dummy.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Analytic.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Discretizing/KdTree.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Discretizing/Uniform.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Base.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Dummy.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Analytic.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Discretizing/KdTree.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Uniform.glsl)
 
 SET(GpuMesh_EVALUATING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/Base.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/Evaluate.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/InsphereEdge.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/MeanRatio.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/MetricConformity.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/SolidAngle.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Evaluating/VolumeEdge.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Evaluating/Base.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Evaluating/Evaluate.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Evaluating/InsphereEdge.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Evaluating/MeanRatio.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Evaluating/MetricConformity.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Evaluating/SolidAngle.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Evaluating/VolumeEdge.glsl)
 
 SET(GpuMesh_MEASURING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/Base.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/MetricFree.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Measuring/MetricWise.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Measuring/Base.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Measuring/MetricFree.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Measuring/MetricWise.glsl)
 
 SET(GpuMesh_RENDERING_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Rendering/QualityGradient.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Rendering/QualityGradient.glsl)
 
 SET(GpuMesh_ELEMENTWISE_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/SmoothElements.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/UpdateVertices.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/VertexAccum.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/ElementWise/GETMe.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/ElementWise/SmoothElements.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/ElementWise/UpdateVertices.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/ElementWise/VertexAccum.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/ElementWise/GETMe.glsl)
 
 SET(GpuMesh_VERTEXWISE_SHADERS
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/SmoothVertices.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/SpringLaplace.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/QualityLaplace.glsl
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/VertexWise/LocalOptimisation.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/SmoothVertices.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/SpringLaplace.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/QualityLaplace.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/LocalOptimisation.glsl)
 
 SET(GpuMesh_SMOOTHING_SHADERS
     ${GpuMesh_ELEMENTWISE_SHADERS}
     ${GpuMesh_VERTEXWISE_SHADERS}
-    ${GpuMesh_SHADER_DIR}/compute/Smoothing/Utils.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/Utils.glsl)
 
 SET(GpuMesh_COMPUTE_SHADERS
     ${GpuMesh_BOUNDARY_SHADERS}
@@ -299,7 +297,25 @@ SET(GpuMesh_COMPUTE_SHADERS
     ${GpuMesh_EVALUATING_SHADERS}
     ${GpuMesh_RENDERING_SHADERS}
     ${GpuMesh_SMOOTHING_SHADERS}
-    ${GpuMesh_SHADER_DIR}/compute/Mesh.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Mesh.glsl)
+
+# GLSL sources
+SET(GpuMesh_GLSL_SOURCES
+    ${GpuMesh_GENERIC_SHADERS}
+    ${GpuMesh_VERTEX_SHADERS}
+    ${GpuMesh_FRAGMENT_SHADERS}
+    ${GpuMesh_COMPUTE_SHADERS})
+
+
+# CUDA directory
+SET(GpuMesh_CUDA_DIR
+    ${GpuMesh_SRC_DIR}/resources/cuda)
+
+# CUDA sources
+SET(GpuMesh_CUDA_SOURCES
+    ${GpuMesh_CUDA_DIR}/Mesh.cuh
+    ${GpuMesh_CUDA_DIR}/Mesh.cu)
+
 
 
 # Textures
@@ -326,10 +342,8 @@ SET(GpuMesh_SRC_FILES
     ${GpuMesh_HEADERS}
     ${GpuMesh_SOURCES}
     ${GpuMesh_UI_SRCS}
-    ${GpuMesh_GENERIC_SHADERS}
-    ${GpuMesh_VERTEX_SHADERS}
-    ${GpuMesh_FRAGMENT_SHADERS}
-    ${GpuMesh_COMPUTE_SHADERS}
+    ${GpuMesh_GLSL_SOURCES}
+    ${GpuMesh_CUDA_SOURCES}
     ${GpuMesh_BACKGROUND_TEX}
     ${GpuMesh_RESOURCES}
     ${GpuMesh_CONFIG_FILES}

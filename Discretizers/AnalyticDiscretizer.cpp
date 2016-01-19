@@ -4,7 +4,7 @@
 
 
 AnalyticDiscretizer::AnalyticDiscretizer() :
-    AbstractDiscretizer("Analytic", ":/shaders/compute/Discretizing/Analytic.glsl"),
+    AbstractDiscretizer("Analytic", ":/glsl/compute/Discretizing/Analytic.glsl"),
     _debugMesh(new Mesh())
 {
     _debugMesh->modelName = "Analytic discretization mesh";

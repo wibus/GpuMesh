@@ -10,7 +10,7 @@ ELSEIF(MSVC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251") # dll interface
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244") # int to float
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4351") # array init new behavior
-	ADD_DEFINITIONS(-DNOMINMAX)						  # for abusive min max defines
+    ADD_DEFINITIONS(-DNOMINMAX)                       # for abusive min max defines
 ENDIF()
 
 SET(GpuMesh_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -26,7 +26,8 @@ MESSAGE(STATUS "${GpuMesh_PROJECT} libraires: ${GpuMesh_LIBRARIES}")
 MESSAGE(STATUS "${GpuMesh_PROJECT} Qt modules: ${GpuMesh_QT_MODULES}")
 MESSAGE(STATUS "${GpuMesh_PROJECT} include dirs: ${GpuMesh_INCLUDE_DIRS}")
 
-ADD_EXECUTABLE(${GpuMesh_PROJECT} ${GpuMesh_SRC_FILES})
+CUDA_INCLUDE_DIRECTORIES(${GpuMesh_INCLUDE_DIRS})
+CUDA_ADD_EXECUTABLE(${GpuMesh_PROJECT} ${GpuMesh_SRC_FILES})
 TARGET_LINK_LIBRARIES(${GpuMesh_PROJECT} ${GpuMesh_LIBRARIES})
 QT5_USE_MODULES(${GpuMesh_PROJECT} ${GpuMesh_QT_MODULES})
 INCLUDE_DIRECTORIES(${GpuMesh_INCLUDE_DIRS})

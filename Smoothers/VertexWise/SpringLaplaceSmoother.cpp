@@ -9,7 +9,7 @@ using namespace std;
 
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
     AbstractVertexWiseSmoother(
-        {":/shaders/compute/Smoothing/VertexWise/SpringLaplace.glsl"})
+        {":/glsl/compute/Smoothing/VertexWise/SpringLaplace.glsl"})
 {
 
 }

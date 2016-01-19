@@ -62,7 +62,7 @@ private:
 
 
 UniformDiscretizer::UniformDiscretizer() :
-    AbstractDiscretizer("Uniform", ":/shaders/compute/Discretizing/Uniform.glsl")
+    AbstractDiscretizer("Uniform", ":/glsl/compute/Discretizing/Uniform.glsl")
 {
 }
 

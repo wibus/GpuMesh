@@ -100,7 +100,7 @@ void AbstractEvaluator::initialize(
 
     _evaluationProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Evaluating/Evaluate.glsl"});
+        ":/glsl/compute/Evaluating/Evaluate.glsl"});
 
     _evaluationProgram.link();
     crew.setPluginUniforms(mesh, _evaluationProgram);
@@ -112,7 +112,7 @@ void AbstractEvaluator::initialize(
         file << "Length: " << binary.length << endl;
         file << "Format: " << binary.format << endl;
         file << "Binary ->" << endl;
-        file.write(binary.binary.data(), binary.length);
+        file.write(binary.binary, binary.length);
         file.close();
     }
 
@@ -128,7 +128,7 @@ void AbstractEvaluator::installPlugin(
 {
     std::vector<std::string> qualityInterface = {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Evaluating/Base.glsl"
+        ":/glsl/compute/Evaluating/Base.glsl"
     };
 
     std::vector<std::string> shapeMeasure = {

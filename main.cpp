@@ -30,8 +30,8 @@ int main(int argc, char** argv) try
     std::shared_ptr<Play> play(new Play("GpuMesh"));
     play->appendAct(act);
 
-    std::shared_ptr<MainWindow> window(new MainWindow(play, character));
-    window->showMaximized();
+    MainWindow window(play, character);
+    window.show();
 
     getApplication().setPlay(play);
     return getApplication().execute();    

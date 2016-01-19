@@ -11,7 +11,7 @@ using namespace std;
 
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
     AbstractVertexWiseSmoother(
-        {":/shaders/compute/Smoothing/VertexWise/LocalOptimisation.glsl"}),
+        {":/glsl/compute/Smoothing/VertexWise/LocalOptimisation.glsl"}),
     _securityCycleCount(5),
     _localSizeToNodeShift(1.0 / 25.0)
 {

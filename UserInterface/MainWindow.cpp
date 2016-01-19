@@ -28,9 +28,8 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
     _smoothTab.reset(new SmoothTab(_ui, character));
     _renderTab.reset(new RenderTab(_ui, character));
 
-    resize(1200, 720);
-    QPoint center = QApplication::desktop()->availableGeometry(this).center();
-    move(center.x()-width()*0.5, center.y()-height()*0.5);
+    resize(1920, 1080);
+    move(0, 0);
 }
 
 MainWindow::~MainWindow()

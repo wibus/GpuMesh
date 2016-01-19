@@ -28,9 +28,9 @@ std::string QualityGradientPainter::generate(int width, int height, int minHeigh
 
     GlProgram lutProg;
     lutProg.addShader(GL_COMPUTE_SHADER,
-        ":/shaders/compute/Rendering/QualityGradient.glsl");
+        ":/glsl/compute/Rendering/QualityGradient.glsl");
     lutProg.addShader(GL_COMPUTE_SHADER,
-        ":/shaders/generic/QualityLut.glsl");
+        ":/glsl/generic/QualityLut.glsl");
     lutProg.link();
     lutProg.pushProgram();
     lutProg.setFloat("MinHeight", float(minHeight) / height);

@@ -32,7 +32,7 @@ void AbstractMeasurer::installPlugin(
 {
     program.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        ":/shaders/compute/Measuring/Base.glsl"
+        ":/glsl/compute/Measuring/Base.glsl"
     });
 
     program.addShader(GL_COMPUTE_SHADER, {

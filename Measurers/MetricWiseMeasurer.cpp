@@ -7,7 +7,7 @@
 
 
 MetricWiseMeasurer::MetricWiseMeasurer() :
-    AbstractMeasurer("Metric Wise", ":/shaders/compute/Measuring/MetricWise.glsl")
+    AbstractMeasurer("Metric Wise", ":/glsl/compute/Measuring/MetricWise.glsl")
 {
 
 }

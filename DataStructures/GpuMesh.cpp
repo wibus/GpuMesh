@@ -243,7 +243,7 @@ unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const
 
 std::string GpuMesh::meshGeometryShaderName() const
 {
-    return ":/shaders/compute/Mesh.glsl";
+    return ":/glsl/compute/Mesh.glsl";
 }
 
 void GpuMesh::uploadGeometry(cellar::GlProgram& program) const

@@ -4,7 +4,7 @@ using namespace glm;
 
 
 InsphereEdgeEvaluator::InsphereEdgeEvaluator() :
-    AbstractEvaluator(":/shaders/compute/Evaluating/InsphereEdge.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/InsphereEdge.glsl")
 {
 
 }

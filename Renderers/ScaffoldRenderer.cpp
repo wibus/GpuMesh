@@ -423,10 +423,10 @@ void ScaffoldRenderer::setupShaders()
         getLog().postMessage(new Message('W', false, log, "ScaffoldRenderer"));
     }
 
-    _scaffoldJointProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/ScaffoldJoint.vert");
-    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/ScaffoldJoint.frag");
-    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
-    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
+    _scaffoldJointProgram.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/ScaffoldJoint.vert");
+    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/ScaffoldJoint.frag");
+    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/QualityLut.glsl");
+    _scaffoldJointProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/Lighting.glsl");
     _scaffoldJointProgram.link();
     _scaffoldJointProgram.pushProgram();
     _scaffoldJointProgram.setFloat("JointTubeMinRatio", _jointTubeMinRatio);
@@ -436,10 +436,10 @@ void ScaffoldRenderer::setupShaders()
     _scaffoldJointProgram.setInt("DiffuseLightMode", 1);
     _scaffoldJointProgram.popProgram();
 
-    _scaffoldTubeProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/ScaffoldTube.vert");
-    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/ScaffoldTube.frag");
-    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
-    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/Lighting.glsl");
+    _scaffoldTubeProgram.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/ScaffoldTube.vert");
+    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/ScaffoldTube.frag");
+    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/QualityLut.glsl");
+    _scaffoldTubeProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/Lighting.glsl");
     _scaffoldTubeProgram.link();
     _scaffoldTubeProgram.pushProgram();
     _scaffoldTubeProgram.setFloat("JointTubeMinRatio", _jointTubeMinRatio);
@@ -448,9 +448,9 @@ void ScaffoldRenderer::setupShaders()
     _scaffoldTubeProgram.setInt("DiffuseLightMode", 1);
     _scaffoldTubeProgram.popProgram();
 
-    _wireframeProgram.addShader(GL_VERTEX_SHADER, ":/shaders/vertex/Wireframe.vert");
-    _wireframeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/fragment/Wireframe.frag");
-    _wireframeProgram.addShader(GL_FRAGMENT_SHADER, ":/shaders/generic/QualityLut.glsl");
+    _wireframeProgram.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Wireframe.vert");
+    _wireframeProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/Wireframe.frag");
+    _wireframeProgram.addShader(GL_FRAGMENT_SHADER, ":/glsl/generic/QualityLut.glsl");
     _wireframeProgram.link();
 }
 
