@@ -7,6 +7,18 @@ using namespace std;
 using namespace cellar;
 
 
+// CUDA Interface
+void updateCudaTets(const std::vector<GpuTet>& tetBuff);
+void updateCudaPris(const std::vector<GpuPri>& priBuff);
+void updateCudaHexs(const std::vector<GpuHex>& hexBuff);
+void updateCudaTopo(
+        const std::vector<GpuTopo>& topoBuff,
+        const std::vector<GpuNeigVert>& neigVertBuff,
+        const std::vector<GpuNeigElem>& neigElemBuff);
+void updateCudaGroupMembers(
+        const std::vector<GLuint>& groupMembersBuff);
+
+
 GpuMesh::GpuMesh() :
     _vertSsbo(0),
     _topoSsbo(0),
@@ -84,9 +96,50 @@ void GpuMesh::compileTopology()
     updateGpuTopology();
 }
 
+
 void GpuMesh::updateGpuTopology()
 {
-    // Send mesh topology
+    // Send individual elements
+    size_t tetCount = tets.size();
+    std::vector<GpuTet> tetBuff(tetCount);
+    for(int i=0; i < tetCount; ++i)
+        tetBuff[i] = tets[i];
+
+    updateCudaTets(tetBuff);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
+    size_t tetSize = sizeof(decltype(tetBuff.front())) * tetBuff.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, tetSize, tetBuff.data(), GL_STATIC_DRAW);
+    tetBuff.clear();
+    tetBuff.shrink_to_fit();
+
+
+    size_t priCount = pris.size();
+    std::vector<GpuPri> priBuff(priCount);
+    for(int i=0; i < priCount; ++i)
+        priBuff[i] = pris[i];
+
+    updateCudaPris(priBuff);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _priSsbo);
+    size_t priSize = sizeof(decltype(priBuff.front())) * priBuff.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, priSize, priBuff.data(), GL_STATIC_DRAW);
+    priBuff.clear();
+    priBuff.shrink_to_fit();
+
+
+    size_t hexCount = hexs.size();
+    std::vector<GpuHex> hexBuff(hexCount);
+    for(int i=0; i < hexCount; ++i)
+        hexBuff[i] = hexs[i];
+
+    updateCudaHexs(hexBuff);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _hexSsbo);
+    size_t hexSize = sizeof(decltype(hexBuff.front())) * hexBuff.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, hexSize, hexBuff.data(), GL_STATIC_DRAW);
+    hexBuff.clear();
+    hexBuff.shrink_to_fit();
+
+
+    // Topo descriptors
     size_t vertCount = verts.size();
     std::vector<GpuTopo> topoBuff(vertCount);
     std::vector<GpuNeigVert> neigVertBuff;
@@ -116,6 +169,8 @@ void GpuMesh::updateGpuTopology()
         neigElemBase += neigElemCount;
     }
 
+    updateCudaTopo(topoBuff, neigVertBuff, neigElemBuff);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
     size_t topoSize = sizeof(decltype(topoBuff.front())) * topoBuff.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, topoSize, topoBuff.data(), GL_STATIC_DRAW);
@@ -135,57 +190,22 @@ void GpuMesh::updateGpuTopology()
     neigElemBuff.shrink_to_fit();
 
 
-    // Send individual elements
-    size_t tetCount = tets.size();
-    std::vector<GpuTet> tetBuff(tetCount);
-    for(int i=0; i < tetCount; ++i)
-        tetBuff[i] = tets[i];
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
-    size_t tetSize = sizeof(decltype(tetBuff.front())) * tetBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, tetSize, tetBuff.data(), GL_STATIC_DRAW);
-    tetBuff.clear();
-    tetBuff.shrink_to_fit();
-
-
-    size_t priCount = pris.size();
-    std::vector<GpuPri> priBuff(priCount);
-    for(int i=0; i < priCount; ++i)
-        priBuff[i] = pris[i];
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _priSsbo);
-    size_t priSize = sizeof(decltype(priBuff.front())) * priBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, priSize, priBuff.data(), GL_STATIC_DRAW);
-    priBuff.clear();
-    priBuff.shrink_to_fit();
-
-
-    size_t hexCount = hexs.size();
-    std::vector<GpuHex> hexBuff(hexCount);
-    for(int i=0; i < hexCount; ++i)
-        hexBuff[i] = hexs[i];
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _hexSsbo);
-    size_t hexSize = sizeof(decltype(hexBuff.front())) * hexBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, hexSize, hexBuff.data(), GL_STATIC_DRAW);
-    hexBuff.clear();
-    hexBuff.shrink_to_fit();
-
-
+    // Independent group members
     size_t groupCount = independentGroups.size();
-    std::vector<GLuint> groupMembers;
-    groupMembers.reserve(vertCount);
+    std::vector<GLuint> groupMemberBuff;
+    groupMemberBuff.reserve(vertCount);
     for(size_t g=0; g < groupCount; ++g)
     {
         size_t memberCount = independentGroups[g].size();
         for(size_t m=0; m < memberCount; ++m)
-            groupMembers.push_back(independentGroups[g][m]);
+            groupMemberBuff.push_back(independentGroups[g][m]);
     }
+    updateCudaGroupMembers(groupMemberBuff);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
-    size_t membersSize = sizeof(decltype(groupMembers.front())) * groupMembers.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMembers.data(), GL_STATIC_DRAW);
-    groupMembers.clear();
-    groupMembers.shrink_to_fit();
+    size_t membersSize = sizeof(decltype(groupMemberBuff.front())) * groupMemberBuff.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMemberBuff.data(), GL_STATIC_DRAW);
+    groupMemberBuff.clear();
+    groupMemberBuff.shrink_to_fit();
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }

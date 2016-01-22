@@ -125,44 +125,14 @@ const uint KD_METRICS_BUFFER_BINDING        = 12;
 
 // Tetrahedron
 const int TET_ELEMENT_TYPE = 0;
-
 const uint TET_VERTEX_COUNT = 4;
-
-const uint TET_EDGE_COUNT = 6;
-uniform Edge TET_EDGES[TET_EDGE_COUNT];
-
-const uint TET_TRI_COUNT = 4;
-uniform Tri TET_TRIS[TET_TRI_COUNT];
-
-const uint TET_TET_COUNT = 1;
-uniform Tet TET_TETS[TET_TET_COUNT];
 
 
 // Prism
 const int PRI_ELEMENT_TYPE = 1;
-
 const uint PRI_VERTEX_COUNT = 6;
-
-const uint PRI_EDGE_COUNT = 9;
-uniform Edge PRI_EDGES[PRI_EDGE_COUNT];
-
-const uint PRI_TRI_COUNT = 8;
-uniform Tri PRI_TRIS[PRI_TRI_COUNT];
-
-const uint PRI_TET_COUNT = 3;
-uniform Tet PRI_TETS[PRI_TET_COUNT];
 
 
 // Hexahedron
 const int HEX_ELEMENT_TYPE = 2;
-
 const uint HEX_VERTEX_COUNT = 8;
-
-const uint HEX_EDGE_COUNT = 12;
-uniform Edge HEX_EDGES[HEX_EDGE_COUNT];
-
-const uint HEX_TRI_COUNT = 12;
-uniform Tri HEX_TRIS[HEX_TRI_COUNT];
-
-const uint HEX_TET_COUNT = 5;
-uniform Tet HEX_TETS[HEX_TET_COUNT];

@@ -1,7 +1,7 @@
 #include <cuda.h>
 
-#define GLM_FORCE_CUDA
 #include <GLM/glm.hpp>
+using namespace glm;
 
 
 ////////////////////
@@ -10,7 +10,7 @@
 
 struct Vert
 {
-    glm::vec4 p;
+    vec4 p;
 };
 
 struct Edge
@@ -54,8 +54,8 @@ struct NeigElem
 // type ==  0 : free vertex
 // type  >  0 : boundary vertex
 // When type > 0, type is boundary's ID
-const int TOPO_FIXED = -1;
-const int TOPO_FREE = 0;
+#define TOPO_FIXED -1
+#define TOPO_FREE   0
 
 struct Topo
 {
@@ -69,21 +69,30 @@ struct Topo
 ///////////////////////
 // Mesh data buffers //
 ///////////////////////
-__device__ Vert* verts;
-__device__ Tet* tets;
-__device__ Pri* pris;
-__device__ Hex* hexs;
-__device__ Topo* topos;
-__device__ NeigVert* neigVerts;
-__device__ NeigElem* neigElems;
-__device__ uint* groupMembers;
+extern __device__ uint verts_length;
+extern __device__ Vert* verts;
 
+extern __device__ uint tets_length;
+extern __device__ Tet* tets;
 
-const uint EVALUATE_QUALS_BUFFER_BINDING    = 8;
-const uint VERTEX_ACCUMS_BUFFER_BINDING     = 9;
-const uint KD_NODES_BUFFER_BINDING          = 10;
-const uint KD_TETS_BUFFER_BINDING           = 11;
-const uint KD_METRICS_BUFFER_BINDING        = 12;
+extern __device__ uint pris_length;
+extern __device__ Pri* pris;
+
+extern __device__ uint hexs_length;
+extern __device__ Hex* hexs;
+
+extern __device__ uint topos_length;
+extern __device__ Topo* topos;
+
+extern __device__ uint neigVerts_length;
+extern __device__ NeigVert* neigVerts;
+
+extern __device__ uint neigElems_length;
+extern __device__ NeigElem* neigElems;
+
+extern __device__ uint groupMembers_length;
+extern __device__ uint* groupMembers;
+
 
 
 //////////////////////////////////
@@ -91,45 +100,15 @@ const uint KD_METRICS_BUFFER_BINDING        = 12;
 //////////////////////////////////
 
 // Tetrahedron
-const int TET_ELEMENT_TYPE = 0;
-
-const uint TET_VERTEX_COUNT = 4;
-
-const uint TET_EDGE_COUNT = 6;
-__constant__ Edge TET_EDGES[TET_EDGE_COUNT];
-
-const uint TET_TRI_COUNT = 4;
-__constant__ Tri TET_TRIS[TET_TRI_COUNT];
-
-const uint TET_TET_COUNT = 1;
-__constant__ Tet TET_TETS[TET_TET_COUNT];
+#define TET_ELEMENT_TYPE int(0)
+#define TET_VERTEX_COUNT uint(4)
 
 
 // Prism
-const int PRI_ELEMENT_TYPE = 1;
-
-const uint PRI_VERTEX_COUNT = 6;
-
-const uint PRI_EDGE_COUNT = 9;
-__constant__ Edge PRI_EDGES[PRI_EDGE_COUNT];
-
-const uint PRI_TRI_COUNT = 8;
-__constant__ Tri PRI_TRIS[PRI_TRI_COUNT];
-
-const uint PRI_TET_COUNT = 3;
-__constant__ Tet PRI_TETS[PRI_TET_COUNT];
+#define PRI_ELEMENT_TYPE int(1)
+#define PRI_VERTEX_COUNT uint(6)
 
 
 // Hexahedron
-const int HEX_ELEMENT_TYPE = 2;
-
-const uint HEX_VERTEX_COUNT = 8;
-
-const uint HEX_EDGE_COUNT = 12;
-__constant__ Edge HEX_EDGES[HEX_EDGE_COUNT];
-
-const uint HEX_TRI_COUNT = 12;
-__constant__ Tri HEX_TRIS[HEX_TRI_COUNT];
-
-const uint HEX_TET_COUNT = 5;
-__constant__ Tet HEX_TETS[HEX_TET_COUNT];
+#define HEX_ELEMENT_TYPE int(2)
+#define HEX_VERTEX_COUNT uint(8)

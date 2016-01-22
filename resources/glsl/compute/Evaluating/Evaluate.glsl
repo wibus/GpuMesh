@@ -10,6 +10,7 @@ float tetQuality(Tet tet);
 float priQuality(Pri pri);
 float hexQuality(Hex hex);
 
+
 const int MIN_MAX = 2147483647;
 const float MEAN_MAX = MIN_MAX / (gl_WorkGroupSize.x * 3);
 

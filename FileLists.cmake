@@ -311,8 +311,31 @@ SET(GpuMesh_GLSL_SOURCES
 SET(GpuMesh_CUDA_DIR
     ${GpuMesh_SRC_DIR}/resources/cuda)
 
+# Compute shaders
+SET(GpuMesh_BOUNDARY_CUDA
+    ${GpuMesh_CUDA_DIR}/Boundary/None.cu
+    ${GpuMesh_CUDA_DIR}/Boundary/Box.cu
+    ${GpuMesh_CUDA_DIR}/Boundary/Sphere.cu
+    ${GpuMesh_CUDA_DIR}/Boundary/ElbowPipe.cu)
+
+SET(GpuMesh_DISCRETIZING_CUDA
+    ${GpuMesh_CUDA_DIR}/Discretizing/Base.cu
+    ${GpuMesh_CUDA_DIR}/Discretizing/Dummy.cu
+    ${GpuMesh_CUDA_DIR}/Discretizing/Analytic.cu
+    ${GpuMesh_CUDA_DIR}/Discretizing/KdTree.cu
+    ${GpuMesh_CUDA_DIR}/Discretizing/Uniform.cu)
+
+SET(GpuMesh_EVALUATING_CUDA
+    ${GpuMesh_CUDA_DIR}/Evaluating/Base.cu
+    ${GpuMesh_CUDA_DIR}/Evaluating/Evaluate.cu
+    ${GpuMesh_CUDA_DIR}/Evaluating/MeanRatio.cu
+    ${GpuMesh_CUDA_DIR}/Evaluating/MetricConformity.cu)
+
 # CUDA sources
 SET(GpuMesh_CUDA_SOURCES
+    ${GpuMesh_BOUNDARY_CUDA}
+    ${GpuMesh_DISCRETIZING_CUDA}
+    ${GpuMesh_EVALUATING_CUDA}
     ${GpuMesh_CUDA_DIR}/Mesh.cuh
     ${GpuMesh_CUDA_DIR}/Mesh.cu)
 
