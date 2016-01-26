@@ -52,8 +52,12 @@ struct GpuKdNode
 };
 
 
+// CUDA Drivers Interface
+void installCudaKdTreeDiscretizer();
+
+
 KdTreeDiscretizer::KdTreeDiscretizer() :
-    AbstractDiscretizer("Kd-Tree", ":/glsl/compute/Discretizing/KdTree.glsl"),
+    AbstractDiscretizer("Kd-Tree", ":/glsl/compute/Discretizing/KdTree.glsl", installCudaKdTreeDiscretizer),
     _debugMesh(new Mesh()),
     _kdNodesSsbo(0),
     _kdTetsSsbo(0),
@@ -69,20 +73,6 @@ KdTreeDiscretizer::~KdTreeDiscretizer()
 bool KdTreeDiscretizer::isMetricWise() const
 {
     return true;
-}
-
-void KdTreeDiscretizer::installPlugin(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::installPlugin(mesh, program);
-}
-
-void KdTreeDiscretizer::setPluginUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractDiscretizer::setPluginUniforms(mesh, program);
 }
 
 void KdTreeDiscretizer::setupPluginExecution(

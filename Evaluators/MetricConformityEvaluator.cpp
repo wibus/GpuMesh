@@ -8,8 +8,12 @@ using namespace glm;
 const dmat3 TWO_I = dmat3(2.0);
 
 
+// CUDA Drivers Interface
+void installCudaMetricConformityEvaluator();
+
+
 MetricConformityEvaluator::MetricConformityEvaluator() :
-    AbstractEvaluator(":/glsl/compute/Evaluating/MetricConformity.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/MetricConformity.glsl", installCudaMetricConformityEvaluator)
 {
 }
 

@@ -247,8 +247,9 @@ public:
 
     virtual void compileTopology();
     virtual void updateGpuTopology();
-    virtual void updateGpuVertices();
-    virtual void updateCpuVertices();
+    virtual void updateVerticesFromCpu();
+    virtual void updateVerticesFromGlsl();
+    virtual void updateVerticesFromCuda();
 
     virtual std::string meshGeometryShaderName() const;
     virtual void uploadGeometry(cellar::GlProgram& program) const;

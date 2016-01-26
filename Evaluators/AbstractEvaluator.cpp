@@ -42,9 +42,20 @@ const glm::dmat3 AbstractEvaluator::Fr_PRI_INV = glm::dmat3(
 const glm::dmat3 AbstractEvaluator::Fr_HEX_INV = glm::dmat3(1.0);
 
 
-AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
+// CUDA Drivers Interface
+void evaluateCudaMeshQuality(
+        double meanScaleFactor,
+        size_t workgroupSize,
+        size_t workgroupCount,
+        double& minQuality,
+        double& qualityMean);
+
+
+AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
+                                     const installCudaFct installCuda) :
     _qualSsbo(0),
     _evaluationShader(shapeMeasuresShader),
+    _installCuda(installCuda),
     _implementationFuncs("Shape Measure Implementations")
 {
 /*
@@ -54,11 +65,12 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader) :
                    given this workgroup size.");
 */
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("Thread");
+    _implementationFuncs.setDefault("CUDA");
     _implementationFuncs.setContent({
       {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4, _5))},
       {string("Thread"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3, _4, _5))},
       {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl,   this, _1, _2, _3, _4, _5))},
+      {string("CUDA"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityCuda,   this, _1, _2, _3, _4, _5))},
     });
 }
 
@@ -92,7 +104,6 @@ void AbstractEvaluator::initialize(
 
     _discretizationShader == crew.discretizer().discretizationShader();
     _measureShader == crew.measurer().measureShader();
-
 
     // Shader setup
     _evaluationProgram.clearShaders();
@@ -138,6 +149,8 @@ void AbstractEvaluator::installPlugin(
 
     program.addShader(GL_COMPUTE_SHADER, qualityInterface);
     program.addShader(GL_COMPUTE_SHADER, shapeMeasure);
+
+    _installCuda();
 }
 
 void AbstractEvaluator::setPluginUniforms(
@@ -444,7 +457,7 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     if(_qualSsbo == 0)
     {
         getLog().postMessage(new Message('E', false,
-            "Evalator needs to be initialized before calling"\
+            "Evalator needs to be initialized first"\
             " evaluateMeshQualityGlsl().", "AbstractEvaluator"));
         return;
     }
@@ -512,6 +525,37 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void AbstractEvaluator::evaluateMeshQualityCuda(
+        const Mesh& mesh,
+        const AbstractDiscretizer& discretizer,
+        const AbstractMeasurer& measurer,
+        double& minQuality,
+        double& qualityMean) const
+{
+    if(_qualSsbo == 0)
+    {
+        getLog().postMessage(new Message('E', false,
+            "Evalator needs to be initialized first"\
+            " evaluateMeshQualityGlsl().", "AbstractEvaluator"));
+        return;
+    }
+
+
+    discretizer.setupPluginExecution(mesh, _evaluationProgram);
+    measurer.setupPluginExecution(mesh, _evaluationProgram);
+
+    size_t tetCount = mesh.tets.size();
+    size_t priCount = mesh.pris.size();
+    size_t hexCount = mesh.hexs.size();
+    size_t elemCount = tetCount + priCount + hexCount;
+    size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
+    size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
+
+    evaluateCudaMeshQuality(MAX_QUALITY_VALUE * elemCount,
+                            WORKGROUP_SIZE, workgroupCount,
+                            minQuality, qualityMean);
 }
 
 struct EvalBenchmarkStats

@@ -61,8 +61,12 @@ private:
 };
 
 
+// CUDA Drivers Interface
+void installCudaUniformDiscretizer();
+
+
 UniformDiscretizer::UniformDiscretizer() :
-    AbstractDiscretizer("Uniform", ":/glsl/compute/Discretizing/Uniform.glsl")
+    AbstractDiscretizer("Uniform", ":/glsl/compute/Discretizing/Uniform.glsl", installCudaUniformDiscretizer)
 {
 }
 

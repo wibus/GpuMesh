@@ -319,6 +319,7 @@ SET(GpuMesh_BOUNDARY_CUDA
     ${GpuMesh_CUDA_DIR}/Boundary/ElbowPipe.cu)
 
 SET(GpuMesh_DISCRETIZING_CUDA
+    ${GpuMesh_CUDA_DIR}/Discretizing/Base.cuh
     ${GpuMesh_CUDA_DIR}/Discretizing/Base.cu
     ${GpuMesh_CUDA_DIR}/Discretizing/Dummy.cu
     ${GpuMesh_CUDA_DIR}/Discretizing/Analytic.cu
@@ -326,6 +327,7 @@ SET(GpuMesh_DISCRETIZING_CUDA
     ${GpuMesh_CUDA_DIR}/Discretizing/Uniform.cu)
 
 SET(GpuMesh_EVALUATING_CUDA
+    ${GpuMesh_CUDA_DIR}/Evaluating/Base.cuh
     ${GpuMesh_CUDA_DIR}/Evaluating/Base.cu
     ${GpuMesh_CUDA_DIR}/Evaluating/Evaluate.cu
     ${GpuMesh_CUDA_DIR}/Evaluating/MeanRatio.cu

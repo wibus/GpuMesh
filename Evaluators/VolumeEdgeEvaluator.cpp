@@ -5,10 +5,19 @@
 #include "Measurers/AbstractMeasurer.h"
 
 using namespace glm;
+using namespace cellar;
 
+
+// CUDA Drivers Interface
+void installCudaVolumeEdgeEvaluator()
+{
+    getLog().postMessage(new Message('W', false,
+        "No CUDA implementation of VolumeEdge evaluator",
+        "VolumeEdgeEvaluator"));
+}
 
 VolumeEdgeEvaluator::VolumeEdgeEvaluator() :
-    AbstractEvaluator(":/glsl/compute/Evaluating/VolumeEdge.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/VolumeEdge.glsl", installCudaVolumeEdgeEvaluator)
 {
 }
 

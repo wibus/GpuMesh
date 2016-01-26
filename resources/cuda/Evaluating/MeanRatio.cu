@@ -1,7 +1,10 @@
-/*
-#include "../Mesh.cuh"
+#include "Base.cuh"
 
-__device__ vec3 riemannianSegment(const vec3& a, const vec3& b);
+// TODO wbussiere 2016-01-26 : Plug measurer function pointer
+__device__ vec3 riemannianSegment(const vec3& a, const vec3& b)
+{
+    return b - a;
+}
 
 
 #define Fr_TET_INV mat3( \
@@ -26,7 +29,7 @@ __device__ float cornerQuality(const mat3& Fk)
     return sign(Fk_det) * 3.0 * pow(abs(Fk_det), 2.0/3.0) / Fk_frobenius2;
 }
 
-__device__ float tetQuality(const vec3 vp[TET_VERTEX_COUNT])
+__device__ float meanRatioTetQuality(const vec3 vp[TET_VERTEX_COUNT])
 {
     vec3 e10 = riemannianSegment(vp[1], vp[0]);
     vec3 e20 = riemannianSegment(vp[2], vp[0]);
@@ -40,7 +43,7 @@ __device__ float tetQuality(const vec3 vp[TET_VERTEX_COUNT])
     return qual0;
 }
 
-__device__ float priQuality(const vec3 vp[PRI_VERTEX_COUNT])
+__device__ float meanRatioPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
 {
     vec3 e01 = riemannianSegment(vp[0], vp[1]);
     vec3 e02 = riemannianSegment(vp[0], vp[2]);
@@ -71,7 +74,7 @@ __device__ float priQuality(const vec3 vp[PRI_VERTEX_COUNT])
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
 
-__device__ float hexQuality(const vec3 vp[HEX_VERTEX_COUNT])
+__device__ float meanRatioHexQuality(const vec3 vp[HEX_VERTEX_COUNT])
 {
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_INV.
@@ -108,4 +111,26 @@ __device__ float hexQuality(const vec3 vp[HEX_VERTEX_COUNT])
 
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5 + qual6 + qual7) / 8.0;
 }
-*/
+
+__device__ tetQualityFct meanRatioTetQualityPtr = meanRatioTetQuality;
+__device__ priQualityFct meanRatioPriQualityPtr = meanRatioPriQuality;
+__device__ hexQualityFct meanRatioHexQualityPtr = meanRatioHexQuality;
+
+
+// CUDA Drivers
+void installCudaMeanRatioEvaluator()
+{
+    tetQualityFct d_tetQuality = nullptr;
+    cudaMemcpyFromSymbol(&d_tetQuality, meanRatioTetQualityPtr, sizeof(tetQualityFct));
+    cudaMemcpyToSymbol(tetQualityImpl, &d_tetQuality, sizeof(tetQualityFct));
+
+    priQualityFct d_priQuality = nullptr;
+    cudaMemcpyFromSymbol(&d_priQuality, meanRatioPriQualityPtr, sizeof(priQualityFct));
+    cudaMemcpyToSymbol(priQualityImpl, &d_priQuality, sizeof(priQualityFct));
+
+    hexQualityFct d_hexQuality = nullptr;
+    cudaMemcpyFromSymbol(&d_hexQuality, meanRatioHexQualityPtr, sizeof(hexQualityFct));
+    cudaMemcpyToSymbol(hexQualityImpl, &d_hexQuality, sizeof(hexQualityFct));
+
+    printf("I -> CUDA \tMean Ration Evaluator installed\n");
+}

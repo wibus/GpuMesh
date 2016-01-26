@@ -45,7 +45,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
         smoothVertices(mesh, crew, vIds);
     }
 
-    mesh.updateGpuVertices();
+    mesh.updateVerticesFromCpu();
 }
 
 void AbstractVertexWiseSmoother::smoothMeshThread(
@@ -104,7 +104,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         }
     }
 
-    mesh.updateGpuVertices();
+    mesh.updateVerticesFromCpu();
 }
 
 void AbstractVertexWiseSmoother::smoothMeshGlsl(
@@ -117,7 +117,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     // this makes subsequent passes much more faster...
     // I guess it's because the driver put buffer back on GPU.
     // It looks like glGetBufferSubData takes it out of the GPU.
-    mesh.updateGpuVertices();
+    mesh.updateVerticesFromCpu();
 
 
     vector<IndependentDispatch> dispatches;
@@ -151,7 +151,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
 
 
     // Fetch new vertices' position
-    mesh.updateCpuVertices();
+    mesh.updateVerticesFromGlsl();
 }
 
 void AbstractVertexWiseSmoother::initializeProgram(

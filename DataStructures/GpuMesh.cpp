@@ -7,7 +7,8 @@ using namespace std;
 using namespace cellar;
 
 
-// CUDA Interface
+// CUDA Drivers Interface
+void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength);
 void updateCudaTets(const std::vector<GpuTet>& tetBuff);
 void updateCudaPris(const std::vector<GpuPri>& priBuff);
 void updateCudaHexs(const std::vector<GpuHex>& hexBuff);
@@ -92,7 +93,7 @@ void GpuMesh::compileTopology()
     glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    updateGpuVertices();
+    updateVerticesFromCpu();
     updateGpuTopology();
 }
 
@@ -210,24 +211,25 @@ void GpuMesh::updateGpuTopology()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void GpuMesh::updateGpuVertices()
+void GpuMesh::updateVerticesFromCpu()
 {
-    size_t nbVert = verts.size();
-    size_t vertBuffSize = sizeof(GpuVert) * nbVert;
+    size_t vertCount = verts.size();
+    size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
     GpuVert* gpuVerts = (GpuVert*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-    for(int i=0; i < nbVert; ++i)
+    for(int i=0; i < vertCount; ++i)
         gpuVerts[i] = GpuVert(verts[i]);
+    updateCudaVerts(gpuVerts, verts.size());
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void GpuMesh::updateCpuVertices()
+void GpuMesh::updateVerticesFromGlsl()
 {
     size_t nbVert = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * nbVert;
@@ -238,11 +240,17 @@ void GpuMesh::updateCpuVertices()
         GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
         GL_MAP_READ_BIT);
 
+    updateCudaVerts(gpuVerts, verts.size());
     for(int i=0; i < nbVert; ++i)
         verts[i].p = glm::dvec3(gpuVerts[i].p);
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void GpuMesh::updateVerticesFromCuda()
+{
+    // TODO wbussiere 2016-01-26 : Fecth vertices from CUDA
 }
 
 unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const

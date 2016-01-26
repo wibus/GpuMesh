@@ -5,8 +5,12 @@
 using namespace glm;
 
 
+// CUDA Drivers Interface
+void installCudaMeanRatioEvaluator();
+
+
 MeanRatioEvaluator::MeanRatioEvaluator() :
-    AbstractEvaluator(":/glsl/compute/Evaluating/MeanRatio.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/MeanRatio.glsl", installCudaMeanRatioEvaluator)
 {
 }
 

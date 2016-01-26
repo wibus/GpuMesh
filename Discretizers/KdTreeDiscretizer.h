@@ -23,14 +23,6 @@ public:
     virtual bool isMetricWise() const;
 
 
-    virtual void installPlugin(
-            const Mesh& mesh,
-            cellar::GlProgram& program) const override;
-
-    virtual void setPluginUniforms(
-            const Mesh& mesh,
-            cellar::GlProgram& program) const override;
-
     virtual void setupPluginExecution(
             const Mesh& mesh,
             const cellar::GlProgram& program) const override;

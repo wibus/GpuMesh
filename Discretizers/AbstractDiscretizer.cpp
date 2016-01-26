@@ -9,10 +9,12 @@
 
 AbstractDiscretizer::AbstractDiscretizer(
         const std::string& name,
-        const std::string& shader) :
+        const std::string& shader,
+        const installCudaFct installCuda) :
     _discretizationName(name),
     _discretizationShader(shader),
-    _baseShader(":/glsl/compute/Discretizing/Base.glsl")
+    _baseShader(":/glsl/compute/Discretizing/Base.glsl"),
+    _installCuda(installCuda)
 {
 
 }
@@ -43,6 +45,8 @@ void AbstractDiscretizer::installPlugin(
             _discretizationShader.c_str()
         });
     }
+
+    _installCuda();
 }
 
 void AbstractDiscretizer::setPluginUniforms(

@@ -94,7 +94,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault("Kd-Tree");
+    _availableDiscretizers.setDefault("Analytic");
     _availableDiscretizers.setContent({
         {NO_DISCRETIZATION,  shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
         {string("Analytic"), shared_ptr<AbstractDiscretizer>(new AnalyticDiscretizer())},

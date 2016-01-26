@@ -244,12 +244,17 @@ void Mesh::updateGpuTopology()
 
 }
 
-void Mesh::updateGpuVertices()
+void Mesh::updateVerticesFromCpu()
 {
 
 }
 
-void Mesh::updateCpuVertices()
+void Mesh::updateVerticesFromGlsl()
+{
+
+}
+
+void Mesh::updateVerticesFromCuda()
 {
 
 }

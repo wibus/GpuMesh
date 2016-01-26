@@ -1,20 +1,20 @@
-#include "../Mesh.cuh"
+#include "Base.cuh"
+
+#include <unistd.h>
 
 #include "DataStructures/Mesh.h"
 #include "DataStructures/MeshCrew.h"
 
-__device__ int qualMin;
-__device__ int* means;
 
-__device__ float tetQuality(const Tet &tet);
-__device__ float priQuality(const Pri &pri);
-__device__ float hexQuality(const Hex &hex);
+__device__ float tetQuality(const Tet& tet);
+__device__ float priQuality(const Pri& pri);
+__device__ float hexQuality(const Hex& hex);
 
 
 #define MIN_MAX 2147483647
 #define MEAN_MAX (MIN_MAX / (blockDim.x * 3))
 
-__device__ void evaluateCudaQualityMain()
+__global__ void evaluateCudaMeshQualityMain(int* qualMin, int* means)
 {
     uint vId = threadIdx.x + blockIdx.x * blockDim.x;
     uint gid = blockIdx.x;
@@ -23,29 +23,67 @@ __device__ void evaluateCudaQualityMain()
     if(vId < tets_length)
     {
         float q = tetQuality(tets[vId]);
-        atomicMin(&qualMin, int(q * MIN_MAX));
+        atomicMin(qualMin, int(q * MIN_MAX));
         atomicAdd(&means[gid], int(q * MEAN_MAX + 0.5));
     }
 
     if(vId < pris_length)
     {
         float q = priQuality(pris[vId]);
-        atomicMin(&qualMin, int(q * MIN_MAX));
+        atomicMin(qualMin, int(q * MIN_MAX));
         atomicAdd(&means[gid], int(q * MEAN_MAX + 0.5));
     }
 
     if(vId < hexs_length)
     {
         float q = hexQuality(hexs[vId]);
-        atomicMin(&qualMin, int(q * MIN_MAX));
+        atomicMin(qualMin, int(q * MIN_MAX));
         atomicAdd(&means[gid], int(q * MEAN_MAX + 0.5));
     }
 }
 
 
 // CUDA Drivers
-void evaluateCudaMetricConformityQuality(
-        const Mesh& mesh,
-        const MeshCrew& crew)
+void evaluateCudaMeshQuality(
+        double meanScaleFactor,
+        size_t workgroupSize,
+        size_t workgroupCount,
+        double& minQuality,
+        double& qualityMean)
 {
+    int* d_qualMin;
+    int h_qualMin = MIN_MAX;
+    cudaMalloc(&d_qualMin, sizeof(d_qualMin));
+    cudaMemcpy(d_qualMin, &h_qualMin, sizeof(h_qualMin), cudaMemcpyHostToDevice);
+
+
+    int* d_means = nullptr;
+    int* h_means = new int[workgroupCount];
+    size_t meansSize = sizeof(int) * workgroupCount;
+    for(int i=0; i < workgroupCount; ++i)
+        h_means[i] = 0;
+
+    cudaMalloc(&d_means, meansSize);
+    cudaMemcpy(d_means, h_means, meansSize, cudaMemcpyHostToDevice);
+
+
+    evaluateCudaMeshQualityMain<<<workgroupCount, workgroupSize>>>(d_qualMin, d_means);
+
+    cudaMemcpy(&h_qualMin, d_qualMin, sizeof(h_qualMin), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_means, d_means, meansSize, cudaMemcpyDeviceToHost);
+
+
+    // Get minimum quality
+    minQuality = h_qualMin / double(MIN_MAX);
+
+    // Combine workgroups' mean
+    qualityMean = 0.0;
+    for(int i=0; i < workgroupCount; ++i)
+        qualityMean += h_means[i];
+    qualityMean /= meanScaleFactor;
+    delete[] h_means;
+
+    // Free CUDA memory
+    cudaFree(d_means);
+    cudaFree(d_qualMin);
 }

@@ -1,3 +1,5 @@
+#include <cstdio>
+
 #include <cuda.h>
 
 #include <GLM/glm.hpp>
@@ -112,3 +114,20 @@ extern __device__ uint* groupMembers;
 // Hexahedron
 #define HEX_ELEMENT_TYPE int(2)
 #define HEX_VERTEX_COUNT uint(8)
+
+
+
+/////////////////////////
+// CUDA Error Handling //
+/////////////////////////
+#define cudaCheckErrors(msg) \
+    do { \
+        cudaError_t __err = cudaGetLastError(); \
+        if (__err != cudaSuccess) { \
+            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
+                msg, cudaGetErrorString(__err), \
+                __FILE__, __LINE__); \
+            fprintf(stderr, "*** FAILED - ABORTING\n"); \
+            exit(1); \
+        } \
+    } while (0)

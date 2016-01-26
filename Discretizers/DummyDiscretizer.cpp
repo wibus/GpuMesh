@@ -3,8 +3,12 @@
 #include "DataStructures/Mesh.h"
 
 
+// CUDA Drivers Interface
+void installCudaDummyDiscretizer();
+
+
 DummyDiscretizer::DummyDiscretizer() :
-    AbstractDiscretizer("Dummy", ":/glsl/compute/Discretizing/Dummy.glsl"),
+    AbstractDiscretizer("Dummy", ":/glsl/compute/Discretizing/Dummy.glsl", installCudaDummyDiscretizer),
     _debugMesh(new Mesh())
 {
     _debugMesh->modelName = "Dummy discretization mesh";

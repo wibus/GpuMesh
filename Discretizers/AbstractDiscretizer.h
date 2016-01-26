@@ -22,8 +22,10 @@ typedef glm::dmat3 Metric;
 class AbstractDiscretizer
 {
 protected:
+    typedef void (*installCudaFct)(void);
     AbstractDiscretizer(const std::string& name,
-                        const std::string& shader);
+                        const std::string& shader,
+                        const installCudaFct installCuda);
 
 public:
     virtual ~AbstractDiscretizer();
@@ -80,6 +82,7 @@ private:
     std::string _discretizationName;
     std::string _discretizationShader;
     std::string _baseShader;
+    installCudaFct _installCuda;
 };
 
 #endif // GPUMESH_ABSTRACTDISCRETIZER

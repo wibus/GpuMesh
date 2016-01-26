@@ -253,7 +253,7 @@ void AbstractSmoother::benchmark(
 
             // Restore mesh vertices' initial position
             mesh.verts = verticesBackup;
-            mesh.updateGpuVertices();
+            mesh.updateVerticesFromCpu();
         }
         else
         {
@@ -266,7 +266,7 @@ void AbstractSmoother::benchmark(
     if(!smoothedVertices.empty())
     {
         mesh.verts = smoothedVertices;
-        mesh.updateGpuVertices();
+        mesh.updateVerticesFromCpu();
     }
 
     // Get minimums for ratio computations

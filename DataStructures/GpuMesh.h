@@ -154,8 +154,9 @@ public:
 
     virtual void compileTopology() override;
     virtual void updateGpuTopology() override;
-    virtual void updateGpuVertices() override;
-    virtual void updateCpuVertices() override;
+    virtual void updateVerticesFromCpu() override;
+    virtual void updateVerticesFromGlsl() override;
+    virtual void updateVerticesFromCuda() override;
 
     virtual std::string meshGeometryShaderName() const override;
     virtual void uploadGeometry(cellar::GlProgram& program) const override;

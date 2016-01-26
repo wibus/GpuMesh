@@ -1,4 +1,8 @@
-#include "../Mesh.cuh"
+#include "Base.cuh"
+
+
+__device__ metricAtFct metricAt = nullptr;
+
 
 __device__ mat3 interpolateMetrics(const mat3& m1, const mat3& m2, float a)
 {

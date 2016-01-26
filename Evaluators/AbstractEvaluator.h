@@ -13,8 +13,12 @@ class MeshCrew;
 
 class AbstractEvaluator
 {
+protected:
+    typedef void (*installCudaFct)(void);
+    AbstractEvaluator(const std::string& shapeMeasuresShader,
+                      const installCudaFct installCuda);
+
 public:
-    AbstractEvaluator(const std::string& shapeMeasuresShader);
     virtual ~AbstractEvaluator();
 
 
@@ -112,6 +116,13 @@ public:
             double& minQuality,
             double& qualityMean) const;
 
+    virtual void evaluateMeshQualityCuda(
+            const Mesh& mesh,
+            const AbstractDiscretizer& discretizer,
+            const AbstractMeasurer& measurer,
+            double& minQuality,
+            double& qualityMean) const;
+
     virtual void benchmark(
             const Mesh& mesh,
             const AbstractDiscretizer& discretizer,
@@ -128,6 +139,7 @@ protected:
     virtual double finalizePatchQuality(
             double patchQuality,
             double patchWeight) const;
+
 
     static const size_t WORKGROUP_SIZE;
     static const size_t POLYHEDRON_TYPE_COUNT;
@@ -147,6 +159,7 @@ protected:
     std::string _measureShader;
     std::string _evaluationShader;
     cellar::GlProgram _evaluationProgram;
+    installCudaFct _installCuda;
 
     typedef std::function<void(const Mesh&,
                                const AbstractDiscretizer&,

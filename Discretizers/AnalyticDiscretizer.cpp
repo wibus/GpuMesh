@@ -3,8 +3,12 @@
 #include "DataStructures/Mesh.h"
 
 
+// CUDA Drivers Interface
+void installCudaAnalyticDiscretizer();
+
+
 AnalyticDiscretizer::AnalyticDiscretizer() :
-    AbstractDiscretizer("Analytic", ":/glsl/compute/Discretizing/Analytic.glsl"),
+    AbstractDiscretizer("Analytic", ":/glsl/compute/Discretizing/Analytic.glsl", installCudaAnalyticDiscretizer),
     _debugMesh(new Mesh())
 {
     _debugMesh->modelName = "Analytic discretization mesh";

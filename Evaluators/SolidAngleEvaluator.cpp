@@ -1,10 +1,19 @@
 #include "SolidAngleEvaluator.h"
 
 using namespace glm;
+using namespace cellar;
 
+
+// CUDA Drivers Interface
+void installCudaSolidAngleEvaluator()
+{
+    getLog().postMessage(new Message('W', false,
+        "No CUDA implementation of SolidAngle evaluator",
+        "SolidAngleEvaluator"));
+}
 
 SolidAngleEvaluator::SolidAngleEvaluator() :
-    AbstractEvaluator(":/glsl/compute/Evaluating/SolidAngle.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/SolidAngle.glsl", installCudaSolidAngleEvaluator)
 {
 
 }

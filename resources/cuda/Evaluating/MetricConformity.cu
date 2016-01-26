@@ -1,6 +1,5 @@
-#include "../Mesh.cuh"
+#include "Base.cuh"
 
-__device__ mat3 metricAt(const vec3& position);
 
 #define TWO_I mat3(2.0)
 
@@ -22,11 +21,11 @@ __device__ mat3 specifiedMetric(
 {
     const float H = 0.5;
     const float Q = (1.0 - H) / 3.0;
-    return (metricAt((v0 + v1 + v2 + v3)/4.0f) * (-0.8f) +
-            metricAt(v0*H + v1*Q + v2*Q + v3*Q) * 0.45f +
-            metricAt(v0*Q + v1*H + v2*Q + v3*Q) * 0.45f +
-            metricAt(v0*Q + v1*Q + v2*H + v3*Q) * 0.45f +
-            metricAt(v0*Q + v1*Q + v2*Q + v3*H) * 0.45f);
+    return ((*metricAt)((v0 + v1 + v2 + v3)/4.0f) * (-0.8f) +
+            (*metricAt)(v0*H + v1*Q + v2*Q + v3*Q) * 0.45f +
+            (*metricAt)(v0*Q + v1*H + v2*Q + v3*Q) * 0.45f +
+            (*metricAt)(v0*Q + v1*Q + v2*H + v3*Q) * 0.45f +
+            (*metricAt)(v0*Q + v1*Q + v2*Q + v3*H) * 0.45f);
 }
 
 __device__ float metricConformity(const mat3& Fk, const mat3& Ms)
@@ -47,7 +46,7 @@ __device__ float metricConformity(const mat3& Fk, const mat3& Ms)
     return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
 }
 
-__device__ float tetQuality(const vec3 vp[4])
+__device__ float metricConformityTetQuality(const vec3 vp[4])
 {
     vec3 e10 = vp[0] - vp[1];
     vec3 e20 = vp[0] - vp[2];
@@ -62,7 +61,7 @@ __device__ float tetQuality(const vec3 vp[4])
     return qual0;
 }
 
-__device__ float priQuality(const vec3 vp[6])
+__device__ float metricConformityPriQuality(const vec3 vp[6])
 {
     vec3 e01 = vp[1] - vp[0];
     vec3 e02 = vp[2] - vp[0];
@@ -100,7 +99,7 @@ __device__ float priQuality(const vec3 vp[6])
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
 
-__device__ float hexQuality(const vec3 vp[8])
+__device__ float metricConformityHexQuality(const vec3 vp[8])
 {
     vec3 e01 = vp[1] - vp[0];
     vec3 e02 = vp[2] - vp[0];
@@ -145,4 +144,27 @@ __device__ float hexQuality(const vec3 vp[8])
     float qual7 = metricConformity(Fk7, Ms7);
 
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5 + qual6 + qual7) / 8.0;
+}
+
+__device__ tetQualityFct metricConformityTetQualityPtr = metricConformityTetQuality;
+__device__ priQualityFct metricConformityPriQualityPtr = metricConformityPriQuality;
+__device__ hexQualityFct metricConformityHexQualityPtr = metricConformityHexQuality;
+
+
+// CUDA Drivers
+void installCudaMetricConformityEvaluator()
+{
+    tetQualityFct d_tetQuality = nullptr;
+    cudaMemcpyFromSymbol(&d_tetQuality, metricConformityTetQualityPtr, sizeof(tetQualityFct));
+    cudaMemcpyToSymbol(tetQualityImpl, &d_tetQuality, sizeof(tetQualityFct));
+
+    priQualityFct d_priQuality = nullptr;
+    cudaMemcpyFromSymbol(&d_priQuality, metricConformityPriQualityPtr, sizeof(priQualityFct));
+    cudaMemcpyToSymbol(priQualityImpl, &d_priQuality, sizeof(priQualityFct));
+
+    hexQualityFct d_hexQuality = nullptr;
+    cudaMemcpyFromSymbol(&d_hexQuality, metricConformityHexQualityPtr, sizeof(hexQualityFct));
+    cudaMemcpyToSymbol(hexQualityImpl, &d_hexQuality, sizeof(hexQualityFct));
+
+    printf("I -> CUDA \tMetric Conformity Evaluator installed\n");
 }

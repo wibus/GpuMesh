@@ -63,7 +63,7 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
         updateVertexPositions(mesh, crew, vIds);
     }
 
-    mesh.updateGpuVertices();
+    mesh.updateVerticesFromCpu();
 
 
     // Deallocate vertex accumulators
@@ -163,7 +163,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
         }
     }
 
-    mesh.updateGpuVertices();
+    mesh.updateVerticesFromCpu();
 
 
     // Deallocate vertex accumulators
@@ -182,7 +182,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     // this makes subsequent passes much more faster...
     // I guess it's because the driver put buffer back on GPU.
     // It looks like glGetBufferSubData takes it out of the GPU.
-    mesh.updateGpuVertices();
+    mesh.updateVerticesFromCpu();
 
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
@@ -248,7 +248,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
 
 
     // Fetch new vertices' position
-    mesh.updateCpuVertices();
+    mesh.updateVerticesFromGlsl();
 }
 
 void AbstractElementWiseSmoother::initializeProgram(

@@ -1,4 +1,4 @@
-#include "../Mesh.cuh"
+#include "Base.cuh"
 
 
 ///////////////////////////////
@@ -6,14 +6,14 @@
 ///////////////////////////////
 
 // Externally defined
-__device__ float tetQuality(const vec3 vp[TET_VERTEX_COUNT]);
-__device__ float priQuality(const vec3 vp[PRI_VERTEX_COUNT]);
-__device__ float hexQuality(const vec3 vp[HEX_VERTEX_COUNT]);
+__device__ tetQualityFct tetQualityImpl;
+__device__ priQualityFct priQualityImpl;
+__device__ hexQualityFct hexQualityImpl;
 
 // Internally defined
-__device__ float tetQuality(const Tet &tet);
-__device__ float priQuality(const Pri &pri);
-__device__ float hexQuality(const Hex &hex);
+__device__ float tetQuality(const Tet& tet);
+__device__ float priQuality(const Pri& pri);
+__device__ float hexQuality(const Hex& hex);
 
 __device__ float patchQuality(uint vId);
 
@@ -32,7 +32,7 @@ __device__ float tetQuality(const Tet& tet)
         vec3(verts[tet.v[3]].p)
     };
 
-    return tetQuality(vp);
+    return (*tetQualityImpl)(vp);
 }
 
 __device__ float priQuality(const Pri& pri)
@@ -46,7 +46,7 @@ __device__ float priQuality(const Pri& pri)
         vec3(verts[pri.v[5]].p)
     };
 
-    return priQuality(vp);
+    return (*priQualityImpl)(vp);
 }
 
 __device__ float hexQuality(const Hex& hex)
@@ -62,7 +62,7 @@ __device__ float hexQuality(const Hex& hex)
         vec3(verts[hex.v[7]].p)
     };
 
-    return hexQuality(vp);
+    return (*hexQualityImpl)(vp);
 }
 
 __device__ void accumulatePatchQuality(

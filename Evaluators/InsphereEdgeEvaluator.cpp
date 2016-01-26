@@ -1,10 +1,19 @@
 #include "InsphereEdgeEvaluator.h"
 
 using namespace glm;
+using namespace cellar;
 
+
+// CUDA Drivers Interface
+void installCudaInsphereEvaluator()
+{
+    getLog().postMessage(new Message('W', false,
+        "No CUDA implementation of InsphereEdge evaluator",
+        "InsphereEdgeEvaluator"));
+}
 
 InsphereEdgeEvaluator::InsphereEdgeEvaluator() :
-    AbstractEvaluator(":/glsl/compute/Evaluating/InsphereEdge.glsl")
+    AbstractEvaluator(":/glsl/compute/Evaluating/InsphereEdge.glsl", installCudaInsphereEvaluator)
 {
 
 }
