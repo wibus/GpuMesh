@@ -1,7 +1,6 @@
-#include "DataStructures/GpuMesh.h"
-
 #include "Mesh.cuh"
 
+#include "DataStructures/GpuMesh.h"
 
 
 ///////////////////////
@@ -41,7 +40,8 @@ void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength)
     if(d_verts == nullptr || d_vertsLength != vertsLength)
     {
         cudaFree(d_verts);
-        cudaMalloc(&d_verts, vertsBuffSize);
+        if(!vertsLength) d_verts = nullptr;
+        else cudaMalloc(&d_verts, vertsBuffSize);
         cudaMemcpyToSymbol(verts, &d_verts, sizeof(d_verts));
 
         d_vertsLength = vertsLength;
@@ -53,153 +53,159 @@ void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength)
 }
 
 
-size_t d_tetLength = 0;
+size_t d_tetsLength = 0;
 GpuTet* d_tets = nullptr;
-void updateCudaTets(const std::vector<GpuTet>& tetBuff)
+void updateCudaTets(const std::vector<GpuTet>& tetsBuff)
 {
-    uint tetLength = tetBuff.size();
-    size_t tetBuffSize = sizeof(decltype(tetBuff.front())) * tetLength;
-    if(d_tets == nullptr || d_tetLength != tetLength)
+    uint tetsLength = tetsBuff.size();
+    size_t tetsBuffSize = sizeof(decltype(tetsBuff.front())) * tetsLength;
+    if(d_tets == nullptr || d_tetsLength != tetsLength)
     {
         cudaFree(d_tets);
-        cudaMalloc(&d_tets, tetBuffSize);
+        if(!tetsLength) d_tets = nullptr;
+        else cudaMalloc(&d_tets, tetsBuffSize);
         cudaMemcpyToSymbol(tets, &d_tets, sizeof(d_tets));
 
-        d_tetLength = tetLength;
-        cudaMemcpyToSymbol(tets_length, &tetLength, sizeof(uint));
+        d_tetsLength = tetsLength;
+        cudaMemcpyToSymbol(tets_length, &tetsLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_tets, tetBuff.data(), tetBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_tets, tetsBuff.data(), tetsBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \ttets updated\n");
 }
 
 
-size_t d_priLength = 0;
+size_t d_prisLength = 0;
 GpuPri* d_pris = nullptr;
-void updateCudaPris(const std::vector<GpuPri>& priBuff)
+void updateCudaPris(const std::vector<GpuPri>& prisBuff)
 {
-    uint priLength = priBuff.size();
-    size_t priBuffSize = sizeof(decltype(priBuff.front())) * priLength;
-    if(d_pris == nullptr || d_priLength != priLength)
+    uint prisLength = prisBuff.size();
+    size_t prisBuffSize = sizeof(decltype(prisBuff.front())) * prisLength;
+    if(d_pris == nullptr || d_prisLength != prisLength)
     {
         cudaFree(d_pris);
-        cudaMalloc(&d_pris, priBuffSize);
+        if(!prisLength) d_pris = nullptr;
+        else cudaMalloc(&d_pris, prisBuffSize);
         cudaMemcpyToSymbol(pris, &d_pris, sizeof(d_pris));
 
-        d_priLength = priLength;
-        cudaMemcpyToSymbol(pris_length, &priLength, sizeof(uint));
+        d_prisLength = prisLength;
+        cudaMemcpyToSymbol(pris_length, &prisLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_pris, priBuff.data(), priBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_pris, prisBuff.data(), prisBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \tpris updated\n");
 }
 
 
-size_t d_hexLength = 0;
+size_t d_hexsLength = 0;
 GpuHex* d_hexs = nullptr;
-void updateCudaHexs(const std::vector<GpuHex>& hexBuff)
+void updateCudaHexs(const std::vector<GpuHex>& hexsBuff)
 {
-    uint hexLength = hexBuff.size();
-    size_t hexBuffSize = sizeof(decltype(hexBuff.front())) * hexLength;
-    if(d_hexs == nullptr || d_hexLength != hexLength)
+    uint hexsLength = hexsBuff.size();
+    size_t hexsBuffSize = sizeof(decltype(hexsBuff.front())) * hexsLength;
+    if(d_hexs == nullptr || d_hexsLength != hexsLength)
     {
         cudaFree(d_hexs);
-        cudaMalloc(&d_hexs, hexBuffSize);
+        if(!hexsLength) d_hexs = nullptr;
+        else cudaMalloc(&d_hexs, hexsBuffSize);
         cudaMemcpyToSymbol(hexs, &d_hexs, sizeof(d_hexs));
 
-        d_hexLength = hexLength;
-        cudaMemcpyToSymbol(hexs_length, &hexLength, sizeof(uint));
+        d_hexsLength = hexsLength;
+        cudaMemcpyToSymbol(hexs_length, &hexsLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_hexs, hexBuff.data(), hexBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_hexs, hexsBuff.data(), hexsBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \thexs updated\n");
 }
 
 
-size_t d_topoLength = 0;
+size_t d_toposLength = 0;
 Topo* d_topos = nullptr;
 
-size_t d_neighVertLength = 0;
+size_t d_neigVertsLength = 0;
 NeigVert* d_neigVerts = nullptr;
 
-size_t d_neighElemLength = 0;
+size_t d_neigElemsLength = 0;
 NeigElem* d_neigElems = nullptr;
 
 void updateCudaTopo(
-        const std::vector<GpuTopo>& topoBuff,
-        const std::vector<GpuNeigVert>& neigVertBuff,
-        const std::vector<GpuNeigElem>& neigElemBuff)
+        const std::vector<GpuTopo>& toposBuff,
+        const std::vector<GpuNeigVert>& neigVertsBuff,
+        const std::vector<GpuNeigElem>& neigElemsBuff)
 {
     // Topologies
-    uint topoLength = topoBuff.size();
-    size_t topoBuffSize = sizeof(decltype(topoBuff.front())) * topoLength;
-    if(d_topos == nullptr || d_topoLength != topoLength)
+    uint toposLength = toposBuff.size();
+    size_t toposBuffSize = sizeof(decltype(toposBuff.front())) * toposLength;
+    if(d_topos == nullptr || d_toposLength != toposLength)
     {
         cudaFree(d_topos);
-        cudaMalloc(&d_topos, topoBuffSize);
+        if(!toposLength) d_topos = nullptr;
+        else cudaMalloc(&d_topos, toposBuffSize);
         cudaMemcpyToSymbol(topos, &d_topos, sizeof(d_topos));
 
-        d_topoLength = topoLength;
-        cudaMemcpyToSymbol(topos_length, &topoLength, sizeof(uint));
+        d_toposLength = toposLength;
+        cudaMemcpyToSymbol(topos_length, &toposLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_topos, topoBuff.data(), topoBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_topos, toposBuff.data(), toposBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \ttopos updated\n");
 
 
     // Neighbor vertices
-    uint neigVertLength = neigVertBuff.size();
-    size_t neigVertBuffSize = sizeof(decltype(neigVertBuff.front())) * neigVertLength;
-    if(d_neigVerts == nullptr || d_neighVertLength != neigVertLength)
+    uint neigVertsLength = neigVertsBuff.size();
+    size_t neigVertsBuffSize = sizeof(decltype(neigVertsBuff.front())) * neigVertsLength;
+    if(d_neigVerts == nullptr || d_neigVertsLength != neigVertsLength)
     {
         cudaFree(d_neigVerts);
-        cudaMalloc(&d_neigVerts, neigVertBuffSize);
+        if(!neigVertsLength) d_neigVerts = nullptr;
+        else cudaMalloc(&d_neigVerts, neigVertsBuffSize);
         cudaMemcpyToSymbol(neigVerts, &d_neigVerts, sizeof(d_neigVerts));
 
-        d_neighVertLength = neigVertLength;
-        cudaMemcpyToSymbol(neigVerts_length, &neigVertLength, sizeof(uint));
+        d_neigVertsLength = neigVertsLength;
+        cudaMemcpyToSymbol(neigVerts_length, &neigVertsLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_neigVerts, neigVertBuff.data(), neigVertBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_neigVerts, neigVertsBuff.data(), neigVertsBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \tneigVerts updated\n");
 
 
     // Neighbor elements
-    uint neigElemLength = neigElemBuff.size();
-    size_t neigElemBuffSize = sizeof(decltype(neigElemBuff.front())) * neigElemLength;
-    if(d_neigElems == nullptr || d_neighElemLength != neigElemLength)
+    uint neigElemsLength = neigElemsBuff.size();
+    size_t neigElemsBuffSize = sizeof(decltype(neigElemsBuff.front())) * neigElemsLength;
+    if(d_neigElems == nullptr || d_neigElemsLength != neigElemsLength)
     {
         cudaFree(d_neigElems);
-        cudaMalloc(&d_neigElems, neigElemBuffSize);
+        if(!neigElemsLength) d_neigElems = nullptr;
+        else cudaMalloc(&d_neigElems, neigElemsBuffSize);
         cudaMemcpyToSymbol(neigElems, &d_neigElems, sizeof(d_neigElems));
 
-        d_neighElemLength = neigElemLength;
-        cudaMemcpyToSymbol(neigElems_length, &neigElemLength, sizeof(uint));
+        d_neigElemsLength = neigElemsLength;
+        cudaMemcpyToSymbol(neigElems_length, &neigElemsLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_neigElems, neigElemBuff.data(), neigElemBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_neigElems, neigElemsBuff.data(), neigElemsBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \tneigElems updated\n");
 }
 
 
 size_t d_groupMembersLength = 0;
 GLuint* d_groupMembers = nullptr;
-void updateCudaGroupMembers(
-        const std::vector<GLuint>& groupMemberBuff)
+void updateCudaGroupMembers(const std::vector<GLuint>& groupMembersBuff)
 {
     // Group members
-    uint groupMembersLength = groupMemberBuff.size();
-    size_t groupMembersBuffSize = sizeof(decltype(groupMemberBuff.front())) * groupMembersLength;
+    uint groupMembersLength = groupMembersBuff.size();
+    size_t groupMembersBuffSize = sizeof(decltype(groupMembersBuff.front())) * groupMembersLength;
     if(d_groupMembers == nullptr || d_groupMembersLength != groupMembersLength)
     {
         cudaFree(d_groupMembers);
-        cudaMalloc(&d_groupMembers, groupMembersBuffSize);
+        if(!groupMembersLength) d_groupMembers = nullptr;
+        else cudaMalloc(&d_groupMembers, groupMembersBuffSize);
         cudaMemcpyToSymbol(groupMembers, &d_groupMembers, sizeof(d_groupMembers));
 
         d_groupMembersLength = groupMembersLength;
         cudaMemcpyToSymbol(groupMembers_length, &groupMembersLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_groupMembers, groupMemberBuff.data(), groupMembersBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_groupMembers, groupMembersBuff.data(), groupMembersBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \tgroupMembers updated\n");
 }

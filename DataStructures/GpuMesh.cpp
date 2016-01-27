@@ -9,13 +9,13 @@ using namespace cellar;
 
 // CUDA Drivers Interface
 void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength);
-void updateCudaTets(const std::vector<GpuTet>& tetBuff);
-void updateCudaPris(const std::vector<GpuPri>& priBuff);
-void updateCudaHexs(const std::vector<GpuHex>& hexBuff);
+void updateCudaTets(const std::vector<GpuTet>& tetsBuff);
+void updateCudaPris(const std::vector<GpuPri>& prisBuff);
+void updateCudaHexs(const std::vector<GpuHex>& hexsBuff);
 void updateCudaTopo(
-        const std::vector<GpuTopo>& topoBuff,
-        const std::vector<GpuNeigVert>& neigVertBuff,
-        const std::vector<GpuNeigElem>& neigElemBuff);
+        const std::vector<GpuTopo>& toposBuff,
+        const std::vector<GpuNeigVert>& neigVertsBuff,
+        const std::vector<GpuNeigElem>& neigElemsBuff);
 void updateCudaGroupMembers(
         const std::vector<GLuint>& groupMembersBuff);
 

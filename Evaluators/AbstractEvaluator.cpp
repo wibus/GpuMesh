@@ -356,6 +356,13 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
     int hexCount = mesh.hexs.size();
     int elemCount = tetCount + priCount + hexCount;
 
+    if(elemCount == 0)
+    {
+        minQuality = -1;
+        qualityMean = -1;
+        return;
+    }
+
     std::vector<double> qualities(elemCount);
     int idx = 0;
 
@@ -391,6 +398,13 @@ void AbstractEvaluator::evaluateMeshQualityThread(
     int priCount = mesh.pris.size();
     int hexCount = mesh.hexs.size();
     int elemCount = tetCount + priCount + hexCount;
+
+    if(elemCount == 0)
+    {
+        minQuality = -1;
+        qualityMean = -1;
+        return;
+    }
 
     vector<future<pair<double, double>>> futures;
     uint coreCountHint = thread::hardware_concurrency();
@@ -469,6 +483,13 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
     size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
 
+    if(elemCount == 0)
+    {
+        minQuality = -1;
+        qualityMean = -1;
+        return;
+    }
+
     // Workgroup integer accum VS. Mesh float accum for mean quality computation
     //
     //    Using atomic integer operations on an array (one int per workgroup)
@@ -542,16 +563,19 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
         return;
     }
 
-
-    discretizer.setupPluginExecution(mesh, _evaluationProgram);
-    measurer.setupPluginExecution(mesh, _evaluationProgram);
-
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
     size_t hexCount = mesh.hexs.size();
     size_t elemCount = tetCount + priCount + hexCount;
     size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
     size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
+
+    if(elemCount == 0)
+    {
+        minQuality = -1;
+        qualityMean = -1;
+        return;
+    }
 
     evaluateCudaMeshQuality(MAX_QUALITY_VALUE * elemCount,
                             WORKGROUP_SIZE, workgroupCount,

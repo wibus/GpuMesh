@@ -6,8 +6,11 @@
 #include "Evaluators/AbstractEvaluator.h"
 
 
+void installCudaMetricWiseMeasurer();
+
+
 MetricWiseMeasurer::MetricWiseMeasurer() :
-    AbstractMeasurer("Metric Wise", ":/glsl/compute/Measuring/MetricWise.glsl")
+    AbstractMeasurer("Metric Wise", ":/glsl/compute/Measuring/MetricWise.glsl", installCudaMetricWiseMeasurer)
 {
 
 }

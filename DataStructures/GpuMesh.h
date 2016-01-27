@@ -143,6 +143,24 @@ struct GpuTopo
         neigElemBase(neigElemBase), neigElemCount(neigElemCount) {}
 };
 
+struct GpuKdNode
+{
+    GpuKdNode() :
+        left(-1),
+        right(-1),
+        tetBeg(0),
+        tetEnd(0)
+    {}
+
+    GLint left;
+    GLint right;
+
+    GLuint tetBeg;
+    GLuint tetEnd;
+
+    glm::vec4 separator;
+};
+
 
 class GpuMesh : public Mesh
 {

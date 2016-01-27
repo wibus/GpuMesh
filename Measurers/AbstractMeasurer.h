@@ -22,8 +22,10 @@ class AbstractDiscretizer;
 class AbstractMeasurer
 {
 protected:
+    typedef void (*installCudaFct)(void);
     AbstractMeasurer(const std::string& name,
-                     const std::string& shader);
+                     const std::string& shader,
+                     const installCudaFct installCuda);
 
 public:
     virtual ~AbstractMeasurer();
@@ -98,6 +100,7 @@ public:
 private:
     std::string _measureName;
     std::string _measureShader;
+    installCudaFct _installCuda;
 };
 
 #endif // GPUMESH_ABSTRACTMEASURER

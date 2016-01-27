@@ -1,11 +1,5 @@
 #include "Base.cuh"
 
-// TODO wbussiere 2016-01-26 : Plug measurer function pointer
-__device__ vec3 riemannianSegment(const vec3& a, const vec3& b)
-{
-    return b - a;
-}
-
 
 #define Fr_TET_INV mat3( \
     vec3(1, 0, 0), \
@@ -16,6 +10,7 @@ __device__ vec3 riemannianSegment(const vec3& a, const vec3& b)
     vec3(1.0, 0.0, 0.0), \
     vec3(-0.5773502691896257645091, 1.154700538379251529018, 0.0), \
     vec3(0.0, 0.0, 1.0))
+
 
 __device__ float cornerQuality(const mat3& Fk)
 {
@@ -31,9 +26,9 @@ __device__ float cornerQuality(const mat3& Fk)
 
 __device__ float meanRatioTetQuality(const vec3 vp[TET_VERTEX_COUNT])
 {
-    vec3 e10 = riemannianSegment(vp[1], vp[0]);
-    vec3 e20 = riemannianSegment(vp[2], vp[0]);
-    vec3 e30 = riemannianSegment(vp[3], vp[0]);
+    vec3 e10 = (*riemannianSegmentImpl)(vp[1], vp[0]);
+    vec3 e20 = (*riemannianSegmentImpl)(vp[2], vp[0]);
+    vec3 e30 = (*riemannianSegmentImpl)(vp[3], vp[0]);
 
     mat3 Tk0 = mat3(e10, e20, e30);
 
@@ -45,15 +40,15 @@ __device__ float meanRatioTetQuality(const vec3 vp[TET_VERTEX_COUNT])
 
 __device__ float meanRatioPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
 {
-    vec3 e01 = riemannianSegment(vp[0], vp[1]);
-    vec3 e02 = riemannianSegment(vp[0], vp[2]);
-    vec3 e04 = riemannianSegment(vp[0], vp[4]);
-    vec3 e13 = riemannianSegment(vp[1], vp[3]);
-    vec3 e15 = riemannianSegment(vp[1], vp[5]);
-    vec3 e23 = riemannianSegment(vp[2], vp[3]);
-    vec3 e42 = riemannianSegment(vp[4], vp[2]);
-    vec3 e35 = riemannianSegment(vp[3], vp[5]);
-    vec3 e45 = riemannianSegment(vp[4], vp[5]);
+    vec3 e01 = (*riemannianSegmentImpl)(vp[0], vp[1]);
+    vec3 e02 = (*riemannianSegmentImpl)(vp[0], vp[2]);
+    vec3 e04 = (*riemannianSegmentImpl)(vp[0], vp[4]);
+    vec3 e13 = (*riemannianSegmentImpl)(vp[1], vp[3]);
+    vec3 e15 = (*riemannianSegmentImpl)(vp[1], vp[5]);
+    vec3 e23 = (*riemannianSegmentImpl)(vp[2], vp[3]);
+    vec3 e42 = (*riemannianSegmentImpl)(vp[4], vp[2]);
+    vec3 e35 = (*riemannianSegmentImpl)(vp[3], vp[5]);
+    vec3 e45 = (*riemannianSegmentImpl)(vp[4], vp[5]);
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two cross product
@@ -78,18 +73,18 @@ __device__ float meanRatioHexQuality(const vec3 vp[HEX_VERTEX_COUNT])
 {
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_INV.
-    vec3 e01 = riemannianSegment(vp[0], vp[1]);
-    vec3 e02 = riemannianSegment(vp[0], vp[2]);
-    vec3 e04 = riemannianSegment(vp[0], vp[4]);
-    vec3 e13 = riemannianSegment(vp[1], vp[3]);
-    vec3 e15 = riemannianSegment(vp[1], vp[5]);
-    vec3 e23 = riemannianSegment(vp[2], vp[3]);
-    vec3 e26 = riemannianSegment(vp[2], vp[6]);
-    vec3 e37 = riemannianSegment(vp[3], vp[7]);
-    vec3 e45 = riemannianSegment(vp[4], vp[5]);
-    vec3 e46 = riemannianSegment(vp[4], vp[6]);
-    vec3 e57 = riemannianSegment(vp[5], vp[7]);
-    vec3 e67 = riemannianSegment(vp[6], vp[7]);
+    vec3 e01 = (*riemannianSegmentImpl)(vp[0], vp[1]);
+    vec3 e02 = (*riemannianSegmentImpl)(vp[0], vp[2]);
+    vec3 e04 = (*riemannianSegmentImpl)(vp[0], vp[4]);
+    vec3 e13 = (*riemannianSegmentImpl)(vp[1], vp[3]);
+    vec3 e15 = (*riemannianSegmentImpl)(vp[1], vp[5]);
+    vec3 e23 = (*riemannianSegmentImpl)(vp[2], vp[3]);
+    vec3 e26 = (*riemannianSegmentImpl)(vp[2], vp[6]);
+    vec3 e37 = (*riemannianSegmentImpl)(vp[3], vp[7]);
+    vec3 e45 = (*riemannianSegmentImpl)(vp[4], vp[5]);
+    vec3 e46 = (*riemannianSegmentImpl)(vp[4], vp[6]);
+    vec3 e57 = (*riemannianSegmentImpl)(vp[5], vp[7]);
+    vec3 e67 = (*riemannianSegmentImpl)(vp[6], vp[7]);
 
     mat3 Tk0 = mat3(e01,  e04, -e02);
     mat3 Tk1 = mat3(e01,  e13,  e15);

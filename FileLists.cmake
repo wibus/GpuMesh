@@ -333,11 +333,18 @@ SET(GpuMesh_EVALUATING_CUDA
     ${GpuMesh_CUDA_DIR}/Evaluating/MeanRatio.cu
     ${GpuMesh_CUDA_DIR}/Evaluating/MetricConformity.cu)
 
+SET(GpuMesh_MEASURING_CUDA
+    ${GpuMesh_CUDA_DIR}/Measuring/Base.cuh
+    ${GpuMesh_CUDA_DIR}/Measuring/Base.cu
+    ${GpuMesh_CUDA_DIR}/Measuring/MetricFree.cu
+    ${GpuMesh_CUDA_DIR}/Measuring/MetricWise.cu)
+
 # CUDA sources
 SET(GpuMesh_CUDA_SOURCES
     ${GpuMesh_BOUNDARY_CUDA}
     ${GpuMesh_DISCRETIZING_CUDA}
     ${GpuMesh_EVALUATING_CUDA}
+    ${GpuMesh_MEASURING_CUDA}
     ${GpuMesh_CUDA_DIR}/Mesh.cuh
     ${GpuMesh_CUDA_DIR}/Mesh.cu)
 

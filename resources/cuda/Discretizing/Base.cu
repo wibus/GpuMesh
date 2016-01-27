@@ -1,9 +1,16 @@
 #include "Base.cuh"
 
 
+///////////////////////////////
+//   Function declarations   //
+///////////////////////////////
 __device__ metricAtFct metricAt = nullptr;
 
 
+
+//////////////////////////////
+//   Function definitions   //
+//////////////////////////////
 __device__ mat3 interpolateMetrics(const mat3& m1, const mat3& m2, float a)
 {
     return mat3(

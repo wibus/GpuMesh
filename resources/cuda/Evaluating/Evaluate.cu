@@ -66,8 +66,9 @@ void evaluateCudaMeshQuality(
     cudaMalloc(&d_means, meansSize);
     cudaMemcpy(d_means, h_means, meansSize, cudaMemcpyHostToDevice);
 
-
+    cudaCheckErrors("CUDA error before launch");
     evaluateCudaMeshQualityMain<<<workgroupCount, workgroupSize>>>(d_qualMin, d_means);
+    cudaCheckErrors("CUDA error in kernel");
 
     cudaMemcpy(&h_qualMin, d_qualMin, sizeof(h_qualMin), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_means, d_means, meansSize, cudaMemcpyDeviceToHost);

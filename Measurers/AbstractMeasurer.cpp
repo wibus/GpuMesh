@@ -9,9 +9,11 @@ using namespace std;
 
 AbstractMeasurer::AbstractMeasurer(
         const string& name,
-        const string& shader) :
+        const string& shader,
+        const installCudaFct installCuda) :
     _measureName(name),
-    _measureShader(shader)
+    _measureShader(shader),
+    _installCuda(installCuda)
 {
 
 }
@@ -39,6 +41,8 @@ void AbstractMeasurer::installPlugin(
         mesh.meshGeometryShaderName(),
         _measureShader.c_str()
     });
+
+    _installCuda();
 }
 
 void AbstractMeasurer::setPluginUniforms(

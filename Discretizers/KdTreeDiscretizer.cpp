@@ -33,27 +33,14 @@ struct KdNode
     glm::dvec3 maxBox;
 };
 
-struct GpuKdNode
-{
-    GpuKdNode() :
-        left(-1),
-        right(-1),
-        tetBeg(0),
-        tetEnd(0)
-    {}
-
-    GLint left;
-    GLint right;
-
-    GLuint tetBeg;
-    GLuint tetEnd;
-
-    glm::vec4 separator;
-};
-
 
 // CUDA Drivers Interface
 void installCudaKdTreeDiscretizer();
+void updateCudaKdTreeStructure(
+        const std::vector<GpuTet>& kdTetsBuff,
+        const std::vector<GpuKdNode>& kdNodesBuff);
+void updateCudaKdTreeMetrics(
+        const std::vector<glm::mat4>& kdMetricsBuff);
 
 
 KdTreeDiscretizer::KdTreeDiscretizer() :
@@ -155,10 +142,12 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
         _vertMetrics.push_back(vertMetric(mesh.verts[v]));
 
 
-    // Update SSBOs
+    // Build GPU Buffers
     std::vector<GpuTet> gpuKdTets;
     std::vector<GpuKdNode> gpuKdNodes;
     buildGpuBuffers(_rootNode.get(), gpuKdNodes, gpuKdTets);
+
+    updateCudaKdTreeStructure(gpuKdTets, gpuKdNodes);
 
     glGenBuffers(1, &_kdNodesSsbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
@@ -179,6 +168,8 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
     gpuKdMetrics.reserve(_vertMetrics.size());
     for(const auto& metric : _vertMetrics)
         gpuKdMetrics.push_back(glm::mat4(metric));
+
+    updateCudaKdTreeMetrics(gpuKdMetrics);
 
     glGenBuffers(1, &_kdMetricsSsbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdMetricsSsbo);

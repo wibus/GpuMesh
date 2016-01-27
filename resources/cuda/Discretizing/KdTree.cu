@@ -1,5 +1,7 @@
 #include "Base.cuh"
 
+#include "DataStructures/GpuMesh.h"
+
 
 #define METRIC_ERROR mat3(0.0)
 
@@ -113,6 +115,76 @@ void installCudaKdTreeDiscretizer()
     cudaMemcpyToSymbol(metricAt, &d_metricAt, sizeof(metricAtFct));
 
     printf("I -> CUDA \tkD-Tree Discritizer installed\n");
+}
 
-    printf("kDTree()\n");
+
+class GpuKdNode;
+
+size_t d_kdTetsLength = 0;
+Topo* d_kdTets = nullptr;
+
+size_t d_kdNodesLength = 0;
+NeigVert* d_kdNodes = nullptr;
+
+void updateCudaKdTreeStructure(
+        const std::vector<GpuTet>& kdTetsBuff,
+        const std::vector<GpuKdNode>& kdNodesBuff)
+{
+    // Tetrahedra
+    uint kdTetsLength = kdTetsBuff.size();
+    size_t kdTetsBuffSize = sizeof(decltype(kdTetsBuff.front())) * kdTetsLength;
+    if(d_kdTets == nullptr || d_kdTetsLength != kdTetsLength)
+    {
+        cudaFree(d_kdTets);
+        if(!kdTetsLength) d_kdTets = nullptr;
+        else cudaMalloc(&d_kdTets, kdTetsBuffSize);
+        cudaMemcpyToSymbol(kdTets, &d_kdTets, sizeof(d_kdTets));
+
+        d_kdTetsLength = kdTetsLength;
+        cudaMemcpyToSymbol(kdTets_length, &kdTetsLength, sizeof(uint));
+    }
+
+    cudaMemcpy(d_kdTets, kdTetsBuff.data(), kdTetsBuffSize, cudaMemcpyHostToDevice);
+    printf("I -> CUDA \tkdTets updated\n");
+
+
+    // kD-Tree Nodes
+    uint kdNodesLength = kdNodesBuff.size();
+    size_t kdNodesBuffSize = sizeof(decltype(kdNodesBuff.front())) * kdNodesLength;
+    if(d_kdNodes == nullptr || d_kdNodesLength != kdNodesLength)
+    {
+        cudaFree(d_kdNodes);
+        if(!kdNodesLength) d_kdNodes = nullptr;
+        else cudaMalloc(&d_kdNodes, kdNodesBuffSize);
+        cudaMemcpyToSymbol(kdNodes, &d_kdNodes, sizeof(d_kdNodes));
+
+        d_kdNodesLength = kdNodesLength;
+        cudaMemcpyToSymbol(kdNodes_length, &kdNodesLength, sizeof(uint));
+    }
+
+    cudaMemcpy(d_kdNodes, kdNodesBuff.data(), kdNodesBuffSize, cudaMemcpyHostToDevice);
+    printf("I -> CUDA \tkdNodes updated\n");
+}
+
+size_t d_kdMetricsLength = 0;
+GLuint* d_kdMetrics = nullptr;
+void updateCudaKdTreeMetrics(
+        const std::vector<glm::mat4>& kdMetricsBuff)
+{
+    // Group members
+    uint kdMetricsLength = kdMetricsBuff.size();
+    size_t kdMetricsBuffSize = sizeof(decltype(kdMetricsBuff.front())) * kdMetricsLength;
+    if(d_kdMetrics == nullptr || d_kdMetricsLength != kdMetricsLength)
+    {
+        cudaFree(d_kdMetrics);
+        if(!kdMetricsLength) d_kdMetrics = nullptr;
+        else cudaMalloc(&d_kdMetrics, kdMetricsBuffSize);
+        cudaMemcpyToSymbol(kdMetrics, &d_kdMetrics, sizeof(d_kdMetrics));
+
+        d_kdMetricsLength = kdMetricsLength;
+        cudaMemcpyToSymbol(kdMetrics_length, &kdMetricsLength, sizeof(uint));
+    }
+
+    cudaMemcpy(d_kdMetrics, kdMetricsBuff.data(), kdMetricsBuffSize, cudaMemcpyHostToDevice);
+    printf("I -> CUDA \tkdMetrics updated\n");
 }

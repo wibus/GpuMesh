@@ -4,25 +4,14 @@
 ///////////////////////////////
 //   Function declarations   //
 ///////////////////////////////
-
-// Externally defined
 __device__ tetQualityFct tetQualityImpl;
 __device__ priQualityFct priQualityImpl;
 __device__ hexQualityFct hexQualityImpl;
-
-// Internally defined
-__device__ float tetQuality(const Tet& tet);
-__device__ float priQuality(const Pri& pri);
-__device__ float hexQuality(const Hex& hex);
-
-__device__ float patchQuality(uint vId);
 
 
 //////////////////////////////
 //   Function definitions   //
 //////////////////////////////
-
-// Element Quality
 __device__ float tetQuality(const Tet& tet)
 {
     const vec3 vp[] = {

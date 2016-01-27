@@ -6,8 +6,11 @@
 using namespace std;
 
 
+void installCudaMetricFreeMeasurer();
+
+
 MetricFreeMeasurer::MetricFreeMeasurer() :
-    AbstractMeasurer("Metric Free", ":/glsl/compute/Measuring/MetricFree.glsl")
+    AbstractMeasurer("Metric Free", ":/glsl/compute/Measuring/MetricFree.glsl", installCudaMetricFreeMeasurer)
 {
 
 }
