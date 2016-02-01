@@ -274,8 +274,9 @@ void KdTreeDiscretizer::releaseDebugMesh()
 
 const Mesh& KdTreeDiscretizer::debugMesh()
 {
-    if(_debugMesh->tets.empty() &&
-       !_debugMesh->verts.empty())
+    //if(_debugMesh->tets.empty() &&
+    //   !_debugMesh->verts.empty())
+    if(_debugMesh->hexs.empty())
     {
         if(_rootNode.get() != nullptr)
         {
@@ -487,7 +488,7 @@ void KdTreeDiscretizer::meshTree(KdNode* node, Mesh& mesh)
     {
         {
             cellId = 0;
-            mesh.tets.insert(mesh.tets.end(), node->tets.begin(), node->tets.end());
+            //mesh.tets.insert(mesh.tets.end(), node->tets.begin(), node->tets.end());
 
             uint baseVert = mesh.verts.size();
             mesh.verts.push_back(glm::dvec3(node->minBox.x, node->minBox.y, node->minBox.z));
@@ -501,7 +502,7 @@ void KdTreeDiscretizer::meshTree(KdNode* node, Mesh& mesh)
 
             MeshHex hex(baseVert + 0, baseVert + 1, baseVert + 2, baseVert + 3,
                         baseVert + 4, baseVert + 5, baseVert + 6, baseVert + 7);
-            hex.value = 1.0;
+            hex.value = metricAt((node->minBox + node->maxBox) / 2.0)[0][0];
             mesh.hexs.push_back(hex);
         }
     }
