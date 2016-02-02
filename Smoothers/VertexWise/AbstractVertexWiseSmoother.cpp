@@ -143,7 +143,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
             _vertSmoothProgram.setInt("GroupSize", dispatch.size);
 
             glDispatchCompute(dispatch.workgroupCount, 1, 1);
-            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
         }
 
         _vertSmoothProgram.popProgram();

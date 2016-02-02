@@ -63,9 +63,9 @@ float hexQuality(in Hex hex)
 }
 
 void accumulatePatchQuality(
-        inout float patchQuality,
-        inout float patchWeight,
-        in float elemQuality)
+        inout double patchQuality,
+        inout double patchWeight,
+        in double elemQuality)
 {
     patchQuality = min(
         min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
@@ -73,17 +73,17 @@ void accumulatePatchQuality(
             patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
 }
 
-float finalizePatchQuality(in float patchQuality, in float patchWeight)
+float finalizePatchQuality(in double patchQuality, in double patchWeight)
 {
-    return patchQuality;
+    return float(sign(patchQuality) * sqrt(abs(patchQuality)));
 }
 
 float patchQuality(in uint vId)
 {
     Topo topo = topos[vId];
 
-    float patchWeight = 0.0;
-    float patchQuality = 1.0;
+    double patchWeight = 0.0;
+    double patchQuality = 1.0;
     uint neigElemCount = topo.neigElemCount;
     for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
     {
@@ -94,19 +94,19 @@ float patchQuality(in uint vId)
         case TET_ELEMENT_TYPE:
             accumulatePatchQuality(
                 patchQuality, patchWeight,
-                tetQuality(tets[neigElem.id]));
+                double(tetQuality(tets[neigElem.id])));
             break;
 
         case PRI_ELEMENT_TYPE:
             accumulatePatchQuality(
                 patchQuality, patchWeight,
-                priQuality(pris[neigElem.id]));
+                double(priQuality(pris[neigElem.id])));
             break;
 
         case HEX_ELEMENT_TYPE:
             accumulatePatchQuality(
                 patchQuality, patchWeight,
-                hexQuality(hexs[neigElem.id]));
+                double(hexQuality(hexs[neigElem.id])));
             break;
         }
     }
