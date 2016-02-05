@@ -14,6 +14,11 @@ using namespace std;
 using namespace cellar;
 
 
+// CUDA Drivers interface
+void installCudaBoxBoundary();
+void installCudaSphereBoundary();
+
+
 struct Vertex
 {
     Vertex() {}
@@ -170,8 +175,10 @@ void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
         topo.isFixed = false;
     }
 
-    mesh.setmodelBoundariesShaderName(
+    mesh.setModelBoundsShaderName(
         ":/glsl/compute/Boundary/Box.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaBoxBoundary);
 }
 
 void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
@@ -204,8 +211,10 @@ void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
         topo.isFixed = false;
     }
 
-    mesh.setmodelBoundariesShaderName(
+    mesh.setModelBoundsShaderName(
         ":/glsl/compute/Boundary/Sphere.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaSphereBoundary);
 }
 
 void CpuDelaunayMesher::insertBoundingMesh()

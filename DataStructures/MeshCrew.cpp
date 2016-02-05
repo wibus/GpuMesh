@@ -96,6 +96,8 @@ void MeshCrew::installPlugins(const Mesh& mesh, cellar::GlProgram& program) cons
         mesh.meshGeometryShaderName(),
         mesh.modelBoundsShaderName().c_str()});
 
+    mesh.modelBoundsCudaFct()();
+
     // Crew members' plugin
     _discretizer->installPlugin(mesh, program);
     _evaluator->installPlugin(mesh, program);
@@ -132,6 +134,8 @@ void MeshCrew::reinitCrew(const Mesh& mesh)
            _measurer.get()    != nullptr &&
            _evaluator.get()   != nullptr)
         {
+            _discretizer->initialize();
+            _measurer->initialize();
             _evaluator->initialize(mesh, *this);
         }
     }

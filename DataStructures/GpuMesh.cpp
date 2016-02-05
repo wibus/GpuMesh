@@ -8,6 +8,7 @@ using namespace cellar;
 
 
 // CUDA Drivers Interface
+void fetchCudaVerts(GpuVert* vertsBuff, size_t vertsLength);
 void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength);
 void updateCudaTets(const std::vector<GpuTet>& tetsBuff);
 void updateCudaPris(const std::vector<GpuPri>& prisBuff);
@@ -217,13 +218,13 @@ void GpuMesh::updateVerticesFromCpu()
     size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    GpuVert* gpuVerts = (GpuVert*) glMapBufferRange(
+    GpuVert* glslVerts = (GpuVert*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
     for(int i=0; i < vertCount; ++i)
-        gpuVerts[i] = GpuVert(verts[i]);
-    updateCudaVerts(gpuVerts, verts.size());
+        glslVerts[i] = GpuVert(verts[i]);
+    updateCudaVerts(glslVerts, verts.size());
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -231,18 +232,18 @@ void GpuMesh::updateVerticesFromCpu()
 
 void GpuMesh::updateVerticesFromGlsl()
 {
-    size_t nbVert = verts.size();
-    size_t vertBuffSize = sizeof(GpuVert) * nbVert;
+    size_t vertCount = verts.size();
+    size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    GpuVert* gpuVerts = (GpuVert*) glMapBufferRange(
+    GpuVert* glslVerts = (GpuVert*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
         GL_MAP_READ_BIT);
 
-    updateCudaVerts(gpuVerts, verts.size());
-    for(int i=0; i < nbVert; ++i)
-        verts[i].p = glm::dvec3(gpuVerts[i].p);
+    updateCudaVerts(glslVerts, verts.size());
+    for(int i=0; i < vertCount; ++i)
+        verts[i].p = glm::dvec3(glslVerts[i].p);
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -250,7 +251,20 @@ void GpuMesh::updateVerticesFromGlsl()
 
 void GpuMesh::updateVerticesFromCuda()
 {
-    // TODO wbussiere 2016-01-26 : Fecth vertices from CUDA
+    size_t vertCount = verts.size();
+    size_t vertBuffSize = sizeof(GpuVert) * vertCount;
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+    GpuVert* glslVerts = (GpuVert*) glMapBufferRange(
+        GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
+        GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+    fetchCudaVerts(glslVerts, verts.size());
+    for(int i=0; i < vertCount; ++i)
+        verts[i].p = glm::dvec3(glslVerts[i].p);
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const

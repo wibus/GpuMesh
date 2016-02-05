@@ -30,4 +30,4 @@ extern __device__ hexVolumeFct hexVolumeImpl;
 
 // Compute Vertex Equilibrium
 typedef vec3 (*computeVertexEquilibriumFct)(uint vId);
-extern __device__ computeVertexEquilibriumFct computeVertexEquilibriumImpl;
+extern __device__ computeVertexEquilibriumFct computeVertexEquilibrium;

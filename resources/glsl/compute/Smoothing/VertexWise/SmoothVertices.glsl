@@ -2,7 +2,7 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 
 // Algorithm entry point
-void smoothVertex(uint vId);
+void smoothVert(uint vId);
 
 // Smoothing Helper
 uint getInvocationVertexId();
@@ -15,6 +15,6 @@ void main()
 
     if(isSmoothableVertex(vId))
     {
-        smoothVertex(vId);
+        smoothVert(vId);
     }
 }

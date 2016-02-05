@@ -33,6 +33,8 @@ public:
 
     virtual bool isMetricWise() const = 0;
 
+    virtual void initialize();
+
 
     // GLSL Plug-in interface
     virtual std::string discretizationShader() const;

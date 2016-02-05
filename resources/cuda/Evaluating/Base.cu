@@ -55,9 +55,9 @@ __device__ float hexQuality(const Hex& hex)
 }
 
 __device__ void accumulatePatchQuality(
-        float& patchQuality,
-        float& patchWeight,
-        float elemQuality)
+        double& patchQuality,
+        double& patchWeight,
+        double elemQuality)
 {
     patchQuality = min(
         min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
@@ -67,15 +67,15 @@ __device__ void accumulatePatchQuality(
 
 __device__ float finalizePatchQuality(float patchQuality, float patchWeight)
 {
-    return patchQuality;
+    return float(sign(patchQuality) * sqrt(abs(patchQuality)));
 }
 
 __device__ float patchQuality(uint vId)
 {
     Topo topo = topos[vId];
 
-    float patchWeight = 0.0;
-    float patchQuality = 1.0;
+    double patchWeight = 0.0;
+    double patchQuality = 1.0;
     uint neigElemCount = topo.neigElemCount;
     for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
     {

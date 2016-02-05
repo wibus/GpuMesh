@@ -9,7 +9,7 @@ vec3 computeVertexEquilibrium(in uint vId);
 
 
 // ENTRY POINT //
-void smoothVertex(uint vId)
+void smoothVert(uint vId)
 {
     vec3 patchCenter = computeVertexEquilibrium(vId);
 

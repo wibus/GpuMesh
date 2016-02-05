@@ -12,7 +12,8 @@ using namespace std;
 using namespace cellar;
 
 
-AbstractSmoother::AbstractSmoother() :
+AbstractSmoother::AbstractSmoother(const installCudaFct installCuda) :
+    _installCuda(installCuda),
     _smoothingUtilsShader(":/glsl/compute/Smoothing/Utils.glsl"),
     _implementationFuncs("Smoothing Implementations")
 {
@@ -22,6 +23,7 @@ AbstractSmoother::AbstractSmoother() :
         {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
         {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},
         {string("GLSL"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshGlsl,   this, _1, _2))},
+        {string("CUDA"),    ImplementationFunc(bind(&AbstractSmoother::smoothMeshCuda,   this, _1, _2))},
     });
 }
 
@@ -47,7 +49,7 @@ void AbstractSmoother::smoothMesh(
     if(_implementationFuncs.select(implementationName, implementationFunc))
     {
         _minIteration = minIteration;
-        _moveFactor = moveFactor;
+        _moveCoeff = moveFactor;
         _gainThreshold = gainThreshold;
 
         auto tStart = chrono::high_resolution_clock::now();
@@ -108,6 +110,11 @@ bool AbstractSmoother::evaluateMeshQualityGlsl(Mesh& mesh,  const MeshCrew& crew
     return evaluateMeshQuality(mesh, crew, 2);
 }
 
+bool AbstractSmoother::evaluateMeshQualityCuda(Mesh& mesh,  const MeshCrew& crew)
+{
+    return evaluateMeshQuality(mesh, crew, 3);
+}
+
 bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, int impl)
 {
     double qualMean, qualMin;
@@ -123,6 +130,10 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         break;
     case 2 :
         crew.evaluator().evaluateMeshQualityGlsl(
+            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
+        break;
+    case 3 :
+        crew.evaluator().evaluateMeshQualityCuda(
             mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
         break;
     }
@@ -177,7 +188,7 @@ void AbstractSmoother::benchmark(
         OptimizationPlot& outPlot)
 {
     _minIteration = minIteration;
-    _moveFactor = moveFactor;
+    _moveCoeff = moveFactor;
     _gainThreshold = gainThreshold;
     initializeProgram(mesh, crew);
 

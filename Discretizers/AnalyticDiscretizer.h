@@ -11,7 +11,7 @@ public:
     virtual ~AnalyticDiscretizer();
 
 
-    virtual bool isMetricWise() const;
+    virtual bool isMetricWise() const override;
 
 
     virtual void discretize(

@@ -55,6 +55,12 @@ KdTreeDiscretizer::KdTreeDiscretizer() :
 
 KdTreeDiscretizer::~KdTreeDiscretizer()
 {
+    glDeleteBuffers(1, &_kdNodesSsbo);
+    _kdNodesSsbo = 0;
+    glDeleteBuffers(1, &_kdTetsSsbo);
+    _kdTetsSsbo = 0;
+    glDeleteBuffers(1, &_kdMetricsSsbo);
+    _kdMetricsSsbo = 0;
 }
 
 bool KdTreeDiscretizer::isMetricWise() const
@@ -62,11 +68,23 @@ bool KdTreeDiscretizer::isMetricWise() const
     return true;
 }
 
-void KdTreeDiscretizer::setupPluginExecution(
-        const Mesh& mesh,
-        const cellar::GlProgram& program) const
+void KdTreeDiscretizer::initialize()
 {
-    AbstractDiscretizer::setupPluginExecution(mesh, program);
+    if(_kdNodesSsbo == 0)
+        glGenBuffers(1, &_kdNodesSsbo);
+
+    if(_kdTetsSsbo == 0)
+        glGenBuffers(1, &_kdTetsSsbo);
+
+    if(_kdMetricsSsbo == 0)
+        glGenBuffers(1, &_kdMetricsSsbo);
+}
+
+void KdTreeDiscretizer::installPlugin(
+        const Mesh& mesh,
+        cellar::GlProgram& program) const
+{
+    AbstractDiscretizer::installPlugin(mesh, program);
 
     GLuint kdNodes   = mesh.bufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
     GLuint kdTets    = mesh.bufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
@@ -75,6 +93,13 @@ void KdTreeDiscretizer::setupPluginExecution(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdNodes,   _kdNodesSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdTets,    _kdTetsSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdMetrics, _kdMetricsSsbo);
+}
+
+void KdTreeDiscretizer::setupPluginExecution(
+        const Mesh& mesh,
+        const cellar::GlProgram& program) const
+{
+    AbstractDiscretizer::setupPluginExecution(mesh, program);
 
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &_metricAtSub);
 }
@@ -87,14 +112,6 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
 
     _vertMetrics.clear();
     _vertMetrics.shrink_to_fit();
-
-    glDeleteBuffers(1, &_kdNodesSsbo);
-    _kdNodesSsbo = 0;
-    glDeleteBuffers(1, &_kdTetsSsbo);
-    _kdTetsSsbo = 0;
-    glDeleteBuffers(1, &_kdMetricsSsbo);
-    _kdMetricsSsbo = 0;
-
     _rootNode.reset();
 
 
@@ -149,14 +166,12 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
 
     updateCudaKdTreeStructure(gpuKdTets, gpuKdNodes);
 
-    glGenBuffers(1, &_kdNodesSsbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
     size_t kdNodesSize = sizeof(decltype(gpuKdNodes.front())) * gpuKdNodes.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, kdNodesSize, gpuKdNodes.data(), GL_STATIC_DRAW);
     gpuKdNodes.clear();
     gpuKdNodes.shrink_to_fit();
 
-    glGenBuffers(1, &_kdTetsSsbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdTetsSsbo);
     size_t kdTetsSize = sizeof(decltype(gpuKdTets.front())) * gpuKdTets.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, kdTetsSize, gpuKdTets.data(), GL_STATIC_DRAW);
@@ -171,7 +186,6 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
 
     updateCudaKdTreeMetrics(gpuKdMetrics);
 
-    glGenBuffers(1, &_kdMetricsSsbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdMetricsSsbo);
     size_t kdMetricsSize = sizeof(decltype(gpuKdMetrics.front())) * gpuKdMetrics.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, kdMetricsSize, gpuKdMetrics.data(), GL_STATIC_DRAW);

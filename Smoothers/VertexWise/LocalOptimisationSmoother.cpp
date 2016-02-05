@@ -9,9 +9,14 @@
 using namespace std;
 
 
+// CUDA Drivers
+void installCudaLocalOptimisationSmoother();
+
+
 LocalOptimisationSmoother::LocalOptimisationSmoother() :
     AbstractVertexWiseSmoother(
-        {":/glsl/compute/Smoothing/VertexWise/LocalOptimisation.glsl"}),
+        {":/glsl/compute/Smoothing/VertexWise/LocalOptimisation.glsl"},
+        installCudaLocalOptimisationSmoother),
     _securityCycleCount(5),
     _localSizeToNodeShift(1.0 / 25.0)
 {

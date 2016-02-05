@@ -34,6 +34,13 @@ __device__ uint groupMembers_length = 0;
 // CUDA Drivers
 size_t d_vertsLength = 0;
 GpuVert* d_verts = nullptr;
+
+void fetchCudaVerts(GpuVert* vertsBuff, size_t vertsLength)
+{
+    size_t vertsBuffSize = sizeof(GpuVert) *vertsLength;
+    cudaMemcpy(vertsBuff, d_verts, vertsBuffSize, cudaMemcpyDeviceToHost);
+}
+
 void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength)
 {
     size_t vertsBuffSize = sizeof(GpuVert) * vertsLength;
@@ -189,7 +196,7 @@ void updateCudaTopo(
 
 
 size_t d_groupMembersLength = 0;
-GLuint* d_groupMembers = nullptr;
+uint* d_groupMembers = nullptr;
 void updateCudaGroupMembers(const std::vector<GLuint>& groupMembersBuff)
 {
     // Group members

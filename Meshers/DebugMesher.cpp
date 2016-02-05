@@ -6,6 +6,10 @@
 using namespace std;
 
 
+// CUDA Drivers interface
+void installCudaNoneBoundary();
+
+
 DebugMesher::DebugMesher()
 {
     using namespace std::placeholders;
@@ -98,6 +102,11 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         eBase += MeshHex::VERTEX_COUNT;
         //*/
     }
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/None.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaNoneBoundary);
 }
 
 void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
@@ -148,6 +157,11 @@ void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
             }
         }
     }
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/None.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaNoneBoundary);
 }
 
 void DebugMesher::genGrid(Mesh& mesh, size_t vertexCount)
@@ -190,4 +204,9 @@ void DebugMesher::genGrid(Mesh& mesh, size_t vertexCount)
             }
         }
     }
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/None.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaNoneBoundary);
 }

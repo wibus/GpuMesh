@@ -10,9 +10,14 @@ using namespace std;
 const uint PROPOSITION_COUNT = 4;
 
 
+// CUDA Drivers
+void installCudaQualityLaplaceSmoother();
+
+
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
     AbstractVertexWiseSmoother(
-        {":/glsl/compute/Smoothing/VertexWise/QualityLaplace.glsl"})
+        {":/glsl/compute/Smoothing/VertexWise/QualityLaplace.glsl"},
+        installCudaQualityLaplaceSmoother)
 {
 
 }
@@ -29,7 +34,7 @@ void QualityLaplaceSmoother::printSmoothingParameters(
     AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Quality Laplace");
     plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
-    plot.addSmoothingProperty("Line Gaps", to_string(_moveFactor));
+    plot.addSmoothingProperty("Line Gaps", to_string(_moveCoeff));
 }
 
 void QualityLaplaceSmoother::smoothVertices(
@@ -61,9 +66,9 @@ void QualityLaplaceSmoother::smoothVertices(
         // Define propositions for new vertex's position
         glm::dvec3 propositions[PROPOSITION_COUNT] = {
             pos,
-            patchCenter - centerDist * _moveFactor,
+            patchCenter - centerDist * _moveCoeff,
             patchCenter,
-            patchCenter + centerDist * _moveFactor,
+            patchCenter + centerDist * _moveCoeff,
         };
 
         const MeshTopo& topo = topos[vId];

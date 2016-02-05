@@ -28,8 +28,11 @@ struct IndependentDispatch
 
 class AbstractSmoother
 {
+protected:
+    typedef void (*installCudaFct)(void);
+    AbstractSmoother(const installCudaFct installCuda);
+
 public:
-    AbstractSmoother();
     virtual ~AbstractSmoother();
 
     virtual OptionMapDetails availableImplementations() const;
@@ -51,6 +54,10 @@ public:
             const MeshCrew& crew) = 0;
 
     virtual void smoothMeshGlsl(
+            Mesh& mesh,
+            const MeshCrew& crew) = 0;
+
+    virtual void smoothMeshCuda(
             Mesh& mesh,
             const MeshCrew& crew) = 0;
 
@@ -85,6 +92,7 @@ protected:
     bool evaluateMeshQualitySerial(Mesh& mesh, const MeshCrew& crew);
     bool evaluateMeshQualityThread(Mesh& mesh, const MeshCrew& crew);
     bool evaluateMeshQualityGlsl(Mesh& mesh, const MeshCrew& crew);
+    bool evaluateMeshQualityCuda(Mesh& mesh, const MeshCrew& crew);
     bool evaluateMeshQuality(Mesh& mesh, const MeshCrew& crew, int impl);
 
 
@@ -92,8 +100,10 @@ protected:
     std::string smoothingUtilsShader() const;
 
 
+    installCudaFct _installCuda;
+
     int _minIteration;
-    double _moveFactor;
+    double _moveCoeff;
     double _gainThreshold;
 
     int _smoothPassId;

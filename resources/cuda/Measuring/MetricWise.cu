@@ -171,7 +171,7 @@ void installCudaMetricWiseMeasurer()
 
     computeVertexEquilibriumFct d_computeVertexEquilibrium = nullptr;
     cudaMemcpyFromSymbol(&d_computeVertexEquilibrium, metricWiseComputeVertexEquilibriumPtr, sizeof(computeVertexEquilibriumFct));
-    cudaMemcpyToSymbol(computeVertexEquilibriumImpl, &d_computeVertexEquilibrium, sizeof(computeVertexEquilibriumFct));
+    cudaMemcpyToSymbol(computeVertexEquilibrium, &d_computeVertexEquilibrium, sizeof(computeVertexEquilibriumFct));
 
 
     printf("I -> CUDA \tMetric Wise Measurer installed\n");

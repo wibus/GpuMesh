@@ -236,6 +236,8 @@ enum class ECutType
 
 class OptimizationPlot;
 
+typedef void (*ModelBoundsCudaFct)(void);
+
 
 class Mesh
 {
@@ -258,7 +260,10 @@ public:
     virtual void bindShaderStorageBuffers() const;
 
     virtual std::string modelBoundsShaderName() const;
-    virtual void setmodelBoundariesShaderName(const std::string& name);
+    virtual void setModelBoundsShaderName(const std::string& name);
+
+    virtual ModelBoundsCudaFct modelBoundsCudaFct() const;
+    virtual void setModelBoundsCudaFct(ModelBoundsCudaFct fct);
 
     virtual void printPropperties(OptimizationPlot& plot) const;
 
@@ -292,6 +297,7 @@ protected:
     virtual void compileIndependentGroups();
 
     std::string _modelBoundsShaderName;
+    ModelBoundsCudaFct _modelBoundsCudaFct;
 };
 
 #endif // GPUMESH_MESH

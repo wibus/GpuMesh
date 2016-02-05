@@ -12,6 +12,12 @@ const double PIPE_RADIUS = 0.3;
 const glm::dvec3 EXT_NORMAL(-1, 0, 0);
 const glm::dvec3 EXT_CENTER(-1, 0.5, 0.0);
 
+
+// CUDA Drivers interface
+void installCudaNoneBoundary();
+void installCudaElbowPipeBoundary();
+
+
 class PipeSurfaceBoundary : public MeshBound
 {
 public:
@@ -156,8 +162,10 @@ void CpuParametricMesher::genPipe(Mesh& mesh, size_t vertexCount)
 
     meshPipe(mesh, totalStackCount, sliceCount, layerCount);
 
-    mesh.setmodelBoundariesShaderName(
+    mesh.setModelBoundsShaderName(
         ":/glsl/compute/Boundary/ElbowPipe.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaElbowPipeBoundary);
 }
 
 void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
@@ -500,6 +508,11 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
 
         lastStackBaseIdx = currStackBaseIdx;
     }
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/None.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaNoneBoundary);
 }
 
 void CpuParametricMesher::insertStraightRingPipe(

@@ -7,9 +7,14 @@
 using namespace std;
 
 
+// CUDA Drivers
+void installCudaSpringLaplaceSmoother();
+
+
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
     AbstractVertexWiseSmoother(
-        {":/glsl/compute/Smoothing/VertexWise/SpringLaplace.glsl"})
+        {":/glsl/compute/Smoothing/VertexWise/SpringLaplace.glsl"},
+        installCudaSpringLaplaceSmoother)
 {
 
 }
@@ -25,7 +30,7 @@ void SpringLaplaceSmoother::printSmoothingParameters(
 {
     AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Spring Laplace");
-    plot.addSmoothingProperty("Move Factor", to_string(_moveFactor));
+    plot.addSmoothingProperty("Move Factor", to_string(_moveCoeff));
 }
 
 void SpringLaplaceSmoother::smoothVertices(
@@ -49,7 +54,7 @@ void SpringLaplaceSmoother::smoothVertices(
                 mesh, crew.discretizer(), vId);
 
         glm::dvec3& pos = verts[vId].p;
-        pos = glm::mix(pos, patchCenter, _moveFactor);
+        pos = glm::mix(pos, patchCenter, _moveCoeff);
 
         const MeshTopo& topo = topos[vId];
         if(topo.isBoundary)

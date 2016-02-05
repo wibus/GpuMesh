@@ -11,7 +11,7 @@ __device__ tetVolumeFct tetVolumeImpl = nullptr;
 __device__ priVolumeFct priVolumeImpl = nullptr;
 __device__ hexVolumeFct hexVolumeImpl = nullptr;
 
-__device__ computeVertexEquilibriumFct computeVertexEquilibriumImpl = nullptr;
+__device__ computeVertexEquilibriumFct computeVertexEquilibrium = nullptr;
 
 
 //////////////////////////////

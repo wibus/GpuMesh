@@ -23,6 +23,11 @@ AbstractMeasurer::~AbstractMeasurer()
 
 }
 
+void AbstractMeasurer::initialize()
+{
+
+}
+
 std::string AbstractMeasurer::measureShader() const
 {
     return _measureShader;

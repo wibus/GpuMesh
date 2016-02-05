@@ -14,6 +14,10 @@ using namespace std;
 using namespace cellar;
 
 
+// CUDA Drivers interface
+void installCudaNoneBoundary();
+
+
 const MeshEdge MeshTet::edges[MeshTet::EDGE_COUNT] = {
     MeshEdge(0, 1),
     MeshEdge(0, 2),
@@ -147,7 +151,8 @@ MeshTopo::MeshTopo(const MeshBound* boundaryCallback) :
 
 
 Mesh::Mesh() :
-    _modelBoundsShaderName(":/glsl/compute/Boundary/None.glsl")
+    _modelBoundsShaderName(":/glsl/compute/Boundary/None.glsl"),
+    _modelBoundsCudaFct(installCudaNoneBoundary)
 {
 
 }
@@ -289,9 +294,19 @@ std::string Mesh::modelBoundsShaderName() const
     return _modelBoundsShaderName;
 }
 
-void Mesh::setmodelBoundariesShaderName(const std::string& name)
+void Mesh::setModelBoundsShaderName(const std::string& name)
 {
     _modelBoundsShaderName = name;
+}
+
+ModelBoundsCudaFct Mesh::modelBoundsCudaFct() const
+{
+    return _modelBoundsCudaFct;
+}
+
+void Mesh::setModelBoundsCudaFct(ModelBoundsCudaFct fct)
+{
+    _modelBoundsCudaFct = fct;
 }
 
 void Mesh::printPropperties(OptimizationPlot& plot) const

@@ -10,9 +10,14 @@
 using namespace std;
 
 
+// CUDA Drivers interface
+void installCudaGetmeSmoother();
+
+
 GetmeSmoother::GetmeSmoother() :
     AbstractElementWiseSmoother(
-        {":/glsl/compute/Smoothing/ElementWise/GETMe.glsl"}),
+        {":/glsl/compute/Smoothing/ElementWise/GETMe.glsl"},
+        installCudaGetmeSmoother),
     _lambda(0.78)
 {
 

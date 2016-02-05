@@ -1,18 +1,14 @@
-uniform float MoveCoeff;
+#include "Base.cuh"
 
-const uint PROPOSITION_COUNT = 4;
+#define PROPOSITION_COUNT uint(4)
 
-
-// Boundaries
-vec3 snapToBoundary(int boundaryID, vec3 pos);
 
 // Smoothing helper
-vec3 computeVertexEquilibrium(in uint vId);
-float patchQuality(in uint vId);
+__device__ float patchQuality(uint vId);
 
 
 // ENTRY POINT //
-void smoothVert(uint vId)
+__device__ void qualityLaplaceSmoothVert(uint vId)
 {
     // Compute patch center
     vec3 patchCenter = computeVertexEquilibrium(vId);
@@ -21,12 +17,12 @@ void smoothVert(uint vId)
 
 
     // Define propositions for new vertex's position
-    vec3 propositions[PROPOSITION_COUNT] = vec3[](
+    vec3 propositions[PROPOSITION_COUNT] = {
         pos,
         patchCenter - centerDist * MoveCoeff,
         patchCenter,
         patchCenter + centerDist * MoveCoeff
-    );
+    };
 
     Topo topo = topos[vId];
     if(topo.type > 0)
@@ -47,11 +43,11 @@ void smoothVert(uint vId)
         // to compute element shape measures.
         verts[vId].p = vec4(propositions[p], 0.0);
 
-        float patchQuality = patchQuality(vId);
+        float pq = patchQuality(vId);
 
-        if(patchQuality > bestQualityMean)
+        if(pq > bestQualityMean)
         {
-            bestQualityMean = patchQuality;
+            bestQualityMean = pq;
             bestProposition = p;
         }
     }
@@ -59,4 +55,17 @@ void smoothVert(uint vId)
 
     // Update vertex's position
     verts[vId].p = vec4(propositions[bestProposition], 0.0);
+}
+
+__device__ smoothVertFct qualityLaplaceSmoothVertPtr = qualityLaplaceSmoothVert;
+
+
+// CUDA Drivers
+void installCudaQualityLaplaceSmoother()
+{
+    smoothVertFct d_smoothVert = nullptr;
+    cudaMemcpyFromSymbol(&d_smoothVert, qualityLaplaceSmoothVertPtr, sizeof(smoothVertFct));
+    cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
+
+    printf("I -> CUDA \tQuality Laplace smoother installed\n");
 }

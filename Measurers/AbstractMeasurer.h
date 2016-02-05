@@ -31,6 +31,9 @@ public:
     virtual ~AbstractMeasurer();
 
 
+    virtual void initialize();
+
+
     // GLSL Plug-in interface
     virtual std::string measureShader() const;
 

@@ -16,10 +16,19 @@ using namespace std;
 using namespace cellar;
 
 
+// CUDA Drivers
+void smoothCudaVertices(
+        const IndependentDispatch& dispatch,
+        size_t workgroupSize,
+        float moveCoeff);
+
+
 const size_t AbstractVertexWiseSmoother::WORKGROUP_SIZE = 256;
 
 AbstractVertexWiseSmoother::AbstractVertexWiseSmoother(
-        const std::vector<std::string>& smoothShaders) :
+        const std::vector<std::string>& smoothShaders,
+        const installCudaFct installCuda) :
+    AbstractSmoother(installCuda),
     _initialized(false),
     _smoothShaders(smoothShaders)
 {
@@ -154,6 +163,40 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     mesh.updateVerticesFromGlsl();
 }
 
+void AbstractVertexWiseSmoother::smoothMeshCuda(
+        Mesh& mesh,
+        const MeshCrew& crew)
+{
+    initializeProgram(mesh, crew);
+    _installCuda();
+
+    // There's no need to upload vertices again, but absurdly
+    // this makes subsequent passes much more faster...
+    // I guess it's because the driver put buffer back on GPU.
+    // It looks like glGetBufferSubData takes it out of the GPU.
+    //mesh.updateVerticesFromCpu();
+
+
+    vector<IndependentDispatch> dispatches;
+    organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
+    size_t dispatchCount = dispatches.size();
+
+
+    _smoothPassId = 0;
+    while(evaluateMeshQualityCuda(mesh, crew))
+    {
+        for(size_t d=0; d < dispatchCount; ++d)
+        {
+            const IndependentDispatch& dispatch = dispatches[d];
+            smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
+        }
+    }
+
+
+    // Fetch new vertices' position
+    mesh.updateVerticesFromCuda();
+}
+
 void AbstractVertexWiseSmoother::initializeProgram(
         Mesh& mesh,
         const MeshCrew& crew)
@@ -210,7 +253,7 @@ void AbstractVertexWiseSmoother::setVertexProgramUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program)
 {
-    program.setFloat("MoveCoeff", _moveFactor);
+    program.setFloat("MoveCoeff", _moveCoeff);
 }
 
 void AbstractVertexWiseSmoother::printSmoothingParameters(

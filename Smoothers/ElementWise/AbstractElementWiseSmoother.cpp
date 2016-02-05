@@ -17,11 +17,24 @@ using namespace std;
 using namespace cellar;
 
 
+// CUDA Drivers interface
+void vertexAccumCudaInstall(size_t vertCount);
+void vertexAccumCudaDeinstall();
+void smoothCudaElements(
+        size_t workGroupCount,
+        size_t workgroupSize);
+void updateCudaSmoothedElementsVertices(
+        const IndependentDispatch& dispatch,
+        size_t workgroupSize);
+
+
 const size_t AbstractElementWiseSmoother::WORKGROUP_SIZE = 256;
 
 
 AbstractElementWiseSmoother::AbstractElementWiseSmoother(
-        const std::vector<std::string>& smoothShaders) :
+        const std::vector<std::string>& smoothShaders,
+        const installCudaFct installCuda) :
+    AbstractSmoother(installCuda),
     _initialized(false),
     _smoothShaders(smoothShaders),
     _vertexAccums(nullptr),
@@ -249,6 +262,51 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
 
     // Fetch new vertices' position
     mesh.updateVerticesFromGlsl();
+}
+
+void AbstractElementWiseSmoother::smoothMeshCuda(
+        Mesh& mesh,
+        const MeshCrew& crew)
+{
+    initializeProgram(mesh, crew);
+    _installCuda();
+
+    // There's no need to upload vertices again, but absurdly
+    // this makes subsequent passes much more faster...
+    // I guess it's because the driver put buffer back on GPU.
+    // It looks like glGetBufferSubData takes it out of the GPU.
+    //mesh.updateVerticesFromCpu();
+
+    size_t tetCount = mesh.tets.size();
+    size_t priCount = mesh.pris.size();
+    size_t hexCount = mesh.hexs.size();
+    size_t maxElem = glm::max(glm::max(tetCount, priCount), hexCount);
+    size_t smoothWgCount = glm::ceil(maxElem / double(WORKGROUP_SIZE));
+
+    vertexAccumCudaInstall(mesh.verts.size());
+
+    vector<IndependentDispatch> dispatches;
+    organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
+    size_t dispatchCount = dispatches.size();
+
+    _smoothPassId = 0;
+    while(evaluateMeshQualityCuda(mesh, crew))
+    {
+        smoothCudaElements(smoothWgCount, WORKGROUP_SIZE);
+
+        for(size_t d=0; d < dispatchCount; ++d)
+        {
+            const IndependentDispatch& dispatch = dispatches[d];
+            updateCudaSmoothedElementsVertices(dispatch, WORKGROUP_SIZE);
+        }
+    }
+
+    // Clear Vertex Accum shader storage buffer
+    vertexAccumCudaDeinstall();
+
+
+    // Fetch new vertices' position
+    mesh.updateVerticesFromCuda();
 }
 
 void AbstractElementWiseSmoother::initializeProgram(

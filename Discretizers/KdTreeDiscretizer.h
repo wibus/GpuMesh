@@ -20,8 +20,14 @@ public:
     virtual ~KdTreeDiscretizer();
 
 
-    virtual bool isMetricWise() const;
+    virtual bool isMetricWise() const override;
 
+    virtual void initialize() override;
+
+
+    virtual void installPlugin(
+            const Mesh& mesh,
+            cellar::GlProgram& program) const override;
 
     virtual void setupPluginExecution(
             const Mesh& mesh,

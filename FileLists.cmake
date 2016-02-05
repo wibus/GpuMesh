@@ -313,6 +313,8 @@ SET(GpuMesh_CUDA_DIR
 
 # Compute shaders
 SET(GpuMesh_BOUNDARY_CUDA
+    ${GpuMesh_CUDA_DIR}/Boundary/Base.cuh
+    ${GpuMesh_CUDA_DIR}/Boundary/Base.cu
     ${GpuMesh_CUDA_DIR}/Boundary/None.cu
     ${GpuMesh_CUDA_DIR}/Boundary/Box.cu
     ${GpuMesh_CUDA_DIR}/Boundary/Sphere.cu
@@ -339,12 +341,32 @@ SET(GpuMesh_MEASURING_CUDA
     ${GpuMesh_CUDA_DIR}/Measuring/MetricFree.cu
     ${GpuMesh_CUDA_DIR}/Measuring/MetricWise.cu)
 
+SET(GpuMesh_ELEMENTWISE_CUDA
+    ${GpuMesh_CUDA_DIR}/Smoothing/ElementWise/Base.cuh
+    ${GpuMesh_CUDA_DIR}/Smoothing/ElementWise/SmoothElements.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/ElementWise/UpdateVertices.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/ElementWise/VertexAccum.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/ElementWise/GETMe.cu)
+
+SET(GpuMesh_VERTEXWISE_CUDA
+    ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/Base.cuh
+    ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/SmoothVertices.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/SpringLaplace.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/QualityLaplace.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/LocalOptimisation.cu)
+
+SET(GpuMesh_SMOOTHING_CUDA
+    ${GpuMesh_ELEMENTWISE_CUDA}
+    ${GpuMesh_VERTEXWISE_CUDA}
+    ${GpuMesh_CUDA_DIR}/Smoothing/Utils.cu)
+
 # CUDA sources
 SET(GpuMesh_CUDA_SOURCES
     ${GpuMesh_BOUNDARY_CUDA}
     ${GpuMesh_DISCRETIZING_CUDA}
     ${GpuMesh_EVALUATING_CUDA}
     ${GpuMesh_MEASURING_CUDA}
+    ${GpuMesh_SMOOTHING_CUDA}
     ${GpuMesh_CUDA_DIR}/Mesh.cuh
     ${GpuMesh_CUDA_DIR}/Mesh.cu)
 

@@ -35,7 +35,7 @@ Metric DummyDiscretizer::metricAt(
         const glm::dvec3& position) const
 {
     // Constant isotropic metric
-    return Metric(36.0);
+    return Metric(1.0);
 }
 
 void DummyDiscretizer::releaseDebugMesh()

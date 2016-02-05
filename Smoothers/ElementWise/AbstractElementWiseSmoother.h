@@ -10,7 +10,8 @@ class AbstractElementWiseSmoother : public AbstractSmoother
 {
 protected:
     AbstractElementWiseSmoother(
-            const std::vector<std::string>& smoothShaders);
+            const std::vector<std::string>& smoothShaders,
+            const installCudaFct installCuda);
 
 public:
     ~AbstractElementWiseSmoother();
@@ -25,6 +26,10 @@ public:
             const MeshCrew& crew) override;
 
     virtual void smoothMeshGlsl(
+            Mesh& mesh,
+            const MeshCrew& crew) override;
+
+    virtual void smoothMeshCuda(
             Mesh& mesh,
             const MeshCrew& crew) override;
 

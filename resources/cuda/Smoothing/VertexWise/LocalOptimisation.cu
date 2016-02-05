@@ -1,17 +1,16 @@
-uniform float MoveCoeff;
-uniform int SecurityCycleCount;
-uniform float LocalSizeToNodeShift;
+#include "Base.cuh"
 
-// Boundaries
-vec3 snapToBoundary(int boundaryID, vec3 pos);
+__device__ int SecurityCycleCount;
+__device__ float LocalSizeToNodeShift;
+
 
 // Smoothing Helper
-float computeLocalElementSize(in uint vId);
-float patchQuality(in uint vId);
+__device__ float computeLocalElementSize(uint vId);
+__device__ float patchQuality(uint vId);
 
 
 // ENTRY POINT //
-void smoothVert(uint vId)
+__device__ void localOptimisationSmoothVert(uint vId)
 {
     // Compute local element size
     float localSize = computeLocalElementSize(vId);
@@ -25,16 +24,16 @@ void smoothVert(uint vId)
         // Define patch quality gradient samples
         vec3 pos = vec3(verts[vId].p);
         const uint GRADIENT_SAMPLE_COUNT = 6;
-        float sampleQualities[GRADIENT_SAMPLE_COUNT] = float[]
-                (1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
-        vec3 gradSamples[GRADIENT_SAMPLE_COUNT] = vec3[](
+        float sampleQualities[GRADIENT_SAMPLE_COUNT] =
+            {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+        vec3 gradSamples[GRADIENT_SAMPLE_COUNT] = {
             pos + vec3(-nodeShift, 0.0,   0.0),
             pos + vec3( nodeShift, 0.0,   0.0),
             pos + vec3( 0.0,  -nodeShift, 0.0),
             pos + vec3( 0.0,   nodeShift, 0.0),
             pos + vec3( 0.0,   0.0,  -nodeShift),
             pos + vec3( 0.0,   0.0,   nodeShift)
-        );
+        };
 
         Topo topo = topos[vId];
         if(topo.type > 0)
@@ -66,7 +65,7 @@ void smoothVert(uint vId)
 
 
         const uint PROPOSITION_COUNT = 7;
-        const float OFFSETS[PROPOSITION_COUNT] = float[](
+        const float OFFSETS[PROPOSITION_COUNT] = {
             -0.25,
              0.00,
              0.25,
@@ -74,10 +73,10 @@ void smoothVert(uint vId)
              0.75,
              1.00,
              1.25
-        );
+        };
 
         vec3 shift = gradQ * (nodeShift / gradQNorm);
-        vec3 propositions[PROPOSITION_COUNT] = vec3[](
+        vec3 propositions[PROPOSITION_COUNT] = {
             pos + shift * OFFSETS[0],
             pos + shift * OFFSETS[1],
             pos + shift * OFFSETS[2],
@@ -85,7 +84,7 @@ void smoothVert(uint vId)
             pos + shift * OFFSETS[4],
             pos + shift * OFFSETS[5],
             pos + shift * OFFSETS[6]
-        );
+        };
 
         if(topo.type > 0)
         {
@@ -103,11 +102,11 @@ void smoothVert(uint vId)
             verts[vId].p = vec4(propositions[p], 0.0);
 
             // Compute patch quality
-            float patchQuality = patchQuality(vId);
+            float pq = patchQuality(vId);
 
-            if(patchQuality > bestQualityMean)
+            if(pq > bestQualityMean)
             {
-                bestQualityMean = patchQuality;
+                bestQualityMean = pq;
                 bestProposition = p;
             }
         }
@@ -121,4 +120,25 @@ void smoothVert(uint vId)
         if(nodeShift < originalNodeShift / 10.0)
             break;
     }
+}
+
+__device__ smoothVertFct localOptimisationSmoothVertPtr = localOptimisationSmoothVert;
+
+
+// CUDA Drivers
+void installCudaLocalOptimisationSmoother()
+{
+    smoothVertFct d_smoothVert = nullptr;
+    cudaMemcpyFromSymbol(&d_smoothVert, localOptimisationSmoothVertPtr, sizeof(smoothVertFct));
+    cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
+
+
+    int h_securityCycleCount = 5;
+    cudaMemcpyToSymbol(SecurityCycleCount, &h_securityCycleCount, sizeof(int));
+
+    float h_localSizeToNodeShift = 1.0 / 25.0;
+    cudaMemcpyToSymbol(LocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
+
+
+    printf("I -> CUDA \tLocal Optimisation smoother installed\n");
 }
