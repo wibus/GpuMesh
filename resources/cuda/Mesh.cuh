@@ -120,6 +120,7 @@ extern __device__ uint* groupMembers;
 /////////////////////////
 // CUDA Error Handling //
 /////////////////////////
+#ifndef NDEBUG
 #define cudaCheckErrors(msg) \
     do { \
         cudaError_t __err = cudaGetLastError(); \
@@ -131,3 +132,6 @@ extern __device__ uint* groupMembers;
             exit(1); \
         } \
     } while (0)
+#else
+#define cudaCheckErrors(msg)
+#endif

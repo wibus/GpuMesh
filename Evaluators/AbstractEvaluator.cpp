@@ -710,10 +710,13 @@ void AbstractEvaluator::accumulatePatchQuality(
         double& patchWeight,
         double elemQuality) const
 {
+    patchQuality = min(patchQuality, elemQuality);
+    /*
     patchQuality = glm::min(
         glm::min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
         glm::min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
                  patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
+                 */
 }
 
 double AbstractEvaluator::finalizePatchQuality(

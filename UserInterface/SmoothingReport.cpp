@@ -130,9 +130,9 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     QTextCharFormat tableTotalCharFormat;
     tableTotalCharFormat.setFontWeight(QFont::Bold);
 
-    QTextTableFormat tableFormat;
-    tableFormat.setWidth(textWidth * 0.45);
-    tableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
+    QTextTableFormat propertyTableFormat;
+    propertyTableFormat.setWidth(textWidth * 0.45);
+    propertyTableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
 
     QTextTableCell tableCell;
     QTextCursor tableCursor;
@@ -145,7 +145,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.insertHtml("<h3>Mesh</h3>");
 
     size_t meshPropCount = _plot.meshProperties().size();
-    QTextTable* meshTable = cursor.insertTable(meshPropCount+1, 2, tableFormat);
+    QTextTable* meshTable = cursor.insertTable(meshPropCount+1, 2, propertyTableFormat);
     tableCell = meshTable->cellAt(0, 0);
     tableCursor = tableCell.firstCursorPosition();
     tableCursor.insertText("Property", tableHeaderCharFormat);
@@ -174,7 +174,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.insertHtml("<h3>Smoothing Method</h3>");
 
     size_t smoothPropCount = _plot.smoothingProperties().size();
-    QTextTable* smoothTable = cursor.insertTable(smoothPropCount+1, 2, tableFormat);
+    QTextTable* smoothTable = cursor.insertTable(smoothPropCount+1, 2, propertyTableFormat);
     tableCell = smoothTable->cellAt(0, 0);
     tableCursor = tableCell.firstCursorPosition();
     tableCursor.insertText("Property", tableHeaderCharFormat);
@@ -225,13 +225,16 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
                 impl.passes.back().timeStamp);
     }
 
+    QTextTableFormat statsTableFormat;
+    statsTableFormat.setWidth(textWidth * (implCount+1) / 5.0f);
+    statsTableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
 
     cursor.insertBlock(blockFormat);
     cursor.insertHtml("<h3>Mean Quality</h3>");
     QTextTable* implMeanTable = cursor.insertTable(
         maxPassCount + 4,
         implCount + 1,
-        tableFormat);
+        statsTableFormat);
 
     tableCell = implMeanTable->cellAt(0, 0);
     tableCursor = tableCell.firstCursorPosition();
@@ -285,7 +288,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     QTextTable* implTimesTable = cursor.insertTable(
         maxPassCount + 3,
         implCount + 1,
-        tableFormat);
+        statsTableFormat);
 
     tableCell = implTimesTable->cellAt(0, 0);
     tableCursor = tableCell.firstCursorPosition();

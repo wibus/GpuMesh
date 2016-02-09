@@ -46,7 +46,7 @@ __device__ float metricConformity(const mat3& Fk, const mat3& Ms)
     return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
 }
 
-__device__ float metricConformityTetQuality(const vec3 vp[4])
+__device__ float metricConformityTetQuality(const vec3 vp[TET_VERTEX_COUNT])
 {
     vec3 e10 = vp[0] - vp[1];
     vec3 e20 = vp[0] - vp[2];
@@ -61,7 +61,7 @@ __device__ float metricConformityTetQuality(const vec3 vp[4])
     return qual0;
 }
 
-__device__ float metricConformityPriQuality(const vec3 vp[6])
+__device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
 {
     vec3 e01 = vp[1] - vp[0];
     vec3 e02 = vp[2] - vp[0];
@@ -99,7 +99,7 @@ __device__ float metricConformityPriQuality(const vec3 vp[6])
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
 
-__device__ float metricConformityHexQuality(const vec3 vp[8])
+__device__ float metricConformityHexQuality(const vec3 vp[HEX_VERTEX_COUNT])
 {
     vec3 e01 = vp[1] - vp[0];
     vec3 e02 = vp[2] - vp[0];

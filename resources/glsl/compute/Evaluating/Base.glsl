@@ -67,15 +67,22 @@ void accumulatePatchQuality(
         inout double patchWeight,
         in double elemQuality)
 {
+    patchQuality = min(patchQuality, elemQuality);
+    /*
     patchQuality = min(
         min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
         min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
             patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
+            */
 }
 
 float finalizePatchQuality(in double patchQuality, in double patchWeight)
 {
-    return float(sign(patchQuality) * sqrt(abs(patchQuality)));
+    return float(patchQuality);
+    /*
+    double s = sign(patchQuality);
+    return float(s * sqrt(s*patchQuality));
+    */
 }
 
 float patchQuality(in uint vId)
