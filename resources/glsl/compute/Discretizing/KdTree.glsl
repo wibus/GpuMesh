@@ -77,6 +77,10 @@ mat3 metricAtImpl(in vec3 position)
 
     KdNode node = kdNodes[nodeId];
 
+    uint nodeSmallestIdx = 0;
+    float nodeSmallestVal = -1/0.0;
+    float nodeSmallestCoor[4];
+
     float coor[4];
     uint tetEnd = node.tetEnd;
     for(uint t=node.tetBeg; t < tetEnd; ++t)
@@ -89,27 +93,52 @@ mat3 metricAtImpl(in vec3 position)
                    coor[2] * mat3(kdMetrics[tet.v[2]]) +
                    coor[3] * mat3(kdMetrics[tet.v[3]]);
         }
+        else
+        {
+            float tetSmallest = 0.0;
+            if(coor[0] < tetSmallest) tetSmallest = coor[0];
+            if(coor[1] < tetSmallest) tetSmallest = coor[1];
+            if(coor[2] < tetSmallest) tetSmallest = coor[2];
+            if(coor[3] < tetSmallest) tetSmallest = coor[3];
+
+            if(tetSmallest > nodeSmallestVal)
+            {
+                nodeSmallestIdx = t;
+                nodeSmallestVal = tetSmallest;
+                nodeSmallestCoor[0] = coor[0];
+                nodeSmallestCoor[1] = coor[1];
+                nodeSmallestCoor[2] = coor[2];
+                nodeSmallestCoor[3] = coor[3];
+            }
+        }
     }
 
-    return mat3(100.0);
 
-    /*
-    // Outside of node's tets
-    uint nearestVert = 0;
-    double nearestDist = 1/0.0;
-    for(uint t=node.tetBeg; t < tetEnd; ++t)
-    {
-        Tet tet = kdTets[t];
-        if(distance(position, vec3(verts[tet.v[0]].p)) < nearestDist)
-            nearestVert = tet.v[0];
-        if(distance(position, vec3(verts[tet.v[1]].p)) < nearestDist)
-            nearestVert = tet.v[1];
-        if(distance(position, vec3(verts[tet.v[2]].p)) < nearestDist)
-            nearestVert = tet.v[2];
-        if(distance(position, vec3(verts[tet.v[3]].p)) < nearestDist)
-            nearestVert = tet.v[3];
-    }
+    // Clamp coordinates for project
+    float coorSum = 0.0;
+    if(nodeSmallestCoor[0] < 0.0)
+        nodeSmallestCoor[0] = 0.0;
+    coorSum += nodeSmallestCoor[0];
+    if(nodeSmallestCoor[1] < 0.0)
+        nodeSmallestCoor[1] = 0.0;
+    coorSum += nodeSmallestCoor[1];
+    if(nodeSmallestCoor[2] < 0.0)
+        nodeSmallestCoor[2] = 0.0;
+    coorSum += nodeSmallestCoor[2];
+    if(nodeSmallestCoor[3] < 0.0)
+        nodeSmallestCoor[3] = 0.0;
+    coorSum += nodeSmallestCoor[3];
 
-    return mat3(kdMetrics[nearestVert]);
-    */
+    nodeSmallestCoor[0] /= coorSum;
+    nodeSmallestCoor[1] /= coorSum;
+    nodeSmallestCoor[2] /= coorSum;
+    nodeSmallestCoor[3] /= coorSum;
+
+
+    // Return projected metric
+    Tet tet = kdTets[nodeSmallestIdx];
+    return nodeSmallestCoor[0] * mat3(kdMetrics[tet.v[0]]) +
+           nodeSmallestCoor[1] * mat3(kdMetrics[tet.v[1]]) +
+           nodeSmallestCoor[2] * mat3(kdMetrics[tet.v[2]]) +
+           nodeSmallestCoor[3] * mat3(kdMetrics[tet.v[3]]);
 }

@@ -241,6 +241,10 @@ Metric KdTreeDiscretizer::metricAt(
 
     if(node != nullptr)
     {
+        size_t nodeSmallestIdx = 0;
+        double nodeSmallestVal = -1/0.0;
+        double nodeSmallestCoor[4];
+
         double coor[4];
         size_t tetCount = node->tets.size();
         const auto& verts = _debugMesh->verts;
@@ -249,32 +253,58 @@ Metric KdTreeDiscretizer::metricAt(
             const MeshTet& tet = node->tets[t];
             if(tetParams(verts, tet, position, coor))
             {
-                Metric m = coor[0] * _vertMetrics[tet.v[0]] +
-                           coor[1] * _vertMetrics[tet.v[1]] +
-                           coor[2] * _vertMetrics[tet.v[2]] +
-                           coor[3] * _vertMetrics[tet.v[3]];
-                return m;
+                return coor[0] * _vertMetrics[tet.v[0]] +
+                       coor[1] * _vertMetrics[tet.v[1]] +
+                       coor[2] * _vertMetrics[tet.v[2]] +
+                       coor[3] * _vertMetrics[tet.v[3]];
+            }
+            else
+            {
+                double tetSmallest = 0.0;
+                if(coor[0] < tetSmallest) tetSmallest = coor[0];
+                if(coor[1] < tetSmallest) tetSmallest = coor[1];
+                if(coor[2] < tetSmallest) tetSmallest = coor[2];
+                if(coor[3] < tetSmallest) tetSmallest = coor[3];
+
+                if(tetSmallest > nodeSmallestVal)
+                {
+                    nodeSmallestIdx = t;
+                    nodeSmallestVal = tetSmallest;
+                    nodeSmallestCoor[0] = coor[0];
+                    nodeSmallestCoor[1] = coor[1];
+                    nodeSmallestCoor[2] = coor[2];
+                    nodeSmallestCoor[3] = coor[3];
+                }
             }
         }
 
-        // Outside of node's tets
-        uint nearestVert = 0;
-        double nearestDist = INFINITY;
-        for(size_t t=0; t < tetCount; ++t)
-        {
-            double distance;
-            const MeshTet& tet = node->tets[t];
-            if((distance = glm::distance(position, verts[tet.v[0]].p)) < nearestDist)
-                { nearestVert = tet.v[0]; nearestDist = distance; }
-            if((distance = glm::distance(position, verts[tet.v[1]].p)) < nearestDist)
-                { nearestVert = tet.v[1]; nearestDist = distance; }
-            if((distance = glm::distance(position, verts[tet.v[2]].p)) < nearestDist)
-                { nearestVert = tet.v[2]; nearestDist = distance; }
-            if((distance = glm::distance(position, verts[tet.v[3]].p)) < nearestDist)
-                { nearestVert = tet.v[3]; nearestDist = distance; }
-        }
 
-        return _vertMetrics[nearestVert];
+        // Clamp coordinates for project
+        double coorSum = 0.0;
+        if(nodeSmallestCoor[0] < 0.0)
+            nodeSmallestCoor[0] = 0.0;
+        coorSum += nodeSmallestCoor[0];
+        if(nodeSmallestCoor[1] < 0.0)
+            nodeSmallestCoor[1] = 0.0;
+        coorSum += nodeSmallestCoor[1];
+        if(nodeSmallestCoor[2] < 0.0)
+            nodeSmallestCoor[2] = 0.0;
+        coorSum += nodeSmallestCoor[2];
+        if(nodeSmallestCoor[3] < 0.0)
+            nodeSmallestCoor[3] = 0.0;
+        coorSum += nodeSmallestCoor[3];
+
+        nodeSmallestCoor[0] /= coorSum;
+        nodeSmallestCoor[1] /= coorSum;
+        nodeSmallestCoor[2] /= coorSum;
+        nodeSmallestCoor[3] /= coorSum;
+
+        // Return projected metric
+        const MeshTet& tet = node->tets[nodeSmallestIdx];
+        return nodeSmallestCoor[0] * _vertMetrics[tet.v[0]] +
+               nodeSmallestCoor[1] * _vertMetrics[tet.v[1]] +
+               nodeSmallestCoor[2] * _vertMetrics[tet.v[2]] +
+               nodeSmallestCoor[3] * _vertMetrics[tet.v[3]];
     }
     else return METRIC_ERROR;
 }
