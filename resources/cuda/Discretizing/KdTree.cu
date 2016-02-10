@@ -17,13 +17,13 @@ struct KdNode
 };
 
 
-__device__ uint kdNodes_length;
+__constant__ uint kdNodes_length;
 __device__ KdNode* kdNodes;
 
-__device__ uint kdTets_length;
+__constant__ uint kdTets_length;
 __device__ Tet* kdTets;
 
-__device__ uint kdMetrics_length;
+__constant__ uint kdMetrics_length;
 __device__ mat4* kdMetrics;
 
 
@@ -36,7 +36,7 @@ __device__ bool tetParams(const Tet& tet, const vec3& p, float coor[4])
 
     dmat3 T = dmat3(vp0 - vp3, vp1 - vp3, vp2 - vp3);
 
-    dvec3 y = inverse(T) * (glm::dvec3(p) - vp3);
+    dvec3 y = inverse(T) * (dvec3(p) - vp3);
     coor[0] = float(y[0]);
     coor[1] = float(y[1]);
     coor[2] = float(y[2]);

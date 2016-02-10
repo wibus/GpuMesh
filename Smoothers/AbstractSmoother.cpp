@@ -146,7 +146,13 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
     bool continueSmoothing = true;
     if(_smoothPassId > _minIteration)
     {
-        continueSmoothing = (qualMean - _lastQualityMean) > _gainThreshold;
+        double minGain = qualMin  - _lastMinQuality;
+        double meanGain = qualMean - _lastQualityMean;
+        double summedGain = minGain + meanGain;
+
+        continueSmoothing = minGain > _gainThreshold ||
+                            meanGain > _gainThreshold ||
+                            summedGain > _gainThreshold;
     }
 
     auto statsNow = chrono::high_resolution_clock::now();

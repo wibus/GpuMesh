@@ -71,28 +71,28 @@ struct Topo
 ///////////////////////
 // Mesh data buffers //
 ///////////////////////
-extern __device__ uint verts_length;
+extern __constant__ uint verts_length;
 extern __device__ Vert* verts;
 
-extern __device__ uint tets_length;
+extern __constant__ uint tets_length;
 extern __device__ Tet* tets;
 
-extern __device__ uint pris_length;
+extern __constant__ uint pris_length;
 extern __device__ Pri* pris;
 
-extern __device__ uint hexs_length;
+extern __constant__ uint hexs_length;
 extern __device__ Hex* hexs;
 
-extern __device__ uint topos_length;
+extern __constant__ uint topos_length;
 extern __device__ Topo* topos;
 
-extern __device__ uint neigVerts_length;
+extern __constant__ uint neigVerts_length;
 extern __device__ NeigVert* neigVerts;
 
-extern __device__ uint neigElems_length;
+extern __constant__ uint neigElems_length;
 extern __device__ NeigElem* neigElems;
 
-extern __device__ uint groupMembers_length;
+extern __constant__ uint groupMembers_length;
 extern __device__ uint* groupMembers;
 
 

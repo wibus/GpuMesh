@@ -639,7 +639,8 @@ void AbstractEvaluator::benchmark(
             size_t markSize = cycleCount / glm::min(markCount, cycleCount);
             for(size_t i=0, m=0; i < cycleCount; ++i)
             {
-                double minQual, qualMean;
+                double minQual = -1;
+                double qualMean = -1;
 
                 tStart = high_resolution_clock::now();
                 implementationFunc(mesh, discretizer, measurer, minQual, qualMean);

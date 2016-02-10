@@ -44,7 +44,7 @@ bool tetParams(in Tet tet, in vec3 p, out float coor[4])
 
     dmat3 T = dmat3(vp0 - vp3, vp1 - vp3, vp2 - vp3);
 
-    dvec3 y = inverse(T) * (p - vp3);
+    dvec3 y = inverse(T) * (dvec3(p) - vp3);
     coor[0] = float(y[0]);
     coor[1] = float(y[1]);
     coor[2] = float(y[2]);
