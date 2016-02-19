@@ -104,7 +104,7 @@ void KdTreeSampler::setupPluginExecution(
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &_metricAtSub);
 }
 
-void KdTreeSampler::setMetricReference(const Mesh& mesh, int density)
+void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 {
     // Clear resources
     _debugMesh->clear();
@@ -117,7 +117,7 @@ void KdTreeSampler::setMetricReference(const Mesh& mesh, int density)
 
     // Break prisms and hex into tetrahedra
     std::vector<MeshTet> tets;
-    tetrahedrizeMesh(mesh, tets);
+    tetrahedrizeMesh(tets, mesh);
 
     // Compute Kd Tree depth
     size_t vertCount = mesh.verts.size();
@@ -190,33 +190,6 @@ void KdTreeSampler::setMetricReference(const Mesh& mesh, int density)
     size_t kdMetricsSize = sizeof(decltype(gpuKdMetrics.front())) * gpuKdMetrics.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, kdMetricsSize, gpuKdMetrics.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-inline bool KdTreeSampler::tetParams(
-        const std::vector<MeshVert>& verts,
-        const MeshTet& tet,
-        const glm::dvec3& p,
-        double coor[4])
-{
-    // ref : https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Barycentric_coordinates_on_tetrahedra
-
-    const glm::dvec3& vp0 = verts[tet.v[0]].p;
-    const glm::dvec3& vp1 = verts[tet.v[1]].p;
-    const glm::dvec3& vp2 = verts[tet.v[2]].p;
-    const glm::dvec3& vp3 = verts[tet.v[3]].p;
-
-    glm::dmat3 T(vp0 - vp3, vp1 - vp3, vp2 - vp3);
-
-    glm::dvec3 y = glm::inverse(T) * (p - vp3);
-    coor[0] = y[0];
-    coor[1] = y[1];
-    coor[2] = y[2];
-    coor[3] = 1.0 - (y[0] + y[1] + y[2]);
-
-    const double EPSILON_IN = -1e-8;
-    bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
-                 coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
-    return isIn;
 }
 
 Metric KdTreeSampler::metricAt(
@@ -554,5 +527,43 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
     {
         meshTree(node->left, mesh);
         meshTree(node->right, mesh);
+    }
+}
+
+void KdTreeSampler::tetrahedrizeMesh(
+        std::vector<MeshTet>& tets,
+        const Mesh& mesh)
+{
+    size_t tetCount = mesh.tets.size();
+    size_t priCount = mesh.pris.size();
+    size_t hexCount = mesh.hexs.size();
+    size_t totalTetCount =
+        tetCount * MeshTet::TET_COUNT +
+        priCount * MeshPri::TET_COUNT +
+        hexCount * MeshHex::TET_COUNT;
+
+    tets.reserve(tets.size() + totalTetCount);
+    tets = mesh.tets;
+
+    for(size_t p=0; p < priCount; ++p)
+    {
+        const MeshPri& pri = mesh.pris[p];
+        for(uint t=0; t < MeshPri::TET_COUNT; ++t)
+            tets.push_back( MeshTet(
+                pri.v[MeshPri::tets[t][0]],
+                pri.v[MeshPri::tets[t][1]],
+                pri.v[MeshPri::tets[t][2]],
+                pri.v[MeshPri::tets[t][3]]));
+    }
+
+    for(size_t h=0; h < hexCount; ++h)
+    {
+        const MeshHex& hex = mesh.hexs[h];
+        for(uint t=0; t < MeshHex::TET_COUNT; ++t)
+            tets.push_back( MeshTet(
+                hex.v[MeshHex::tets[t][0]],
+                hex.v[MeshHex::tets[t][1]],
+                hex.v[MeshHex::tets[t][2]],
+                hex.v[MeshHex::tets[t][3]]));
     }
 }

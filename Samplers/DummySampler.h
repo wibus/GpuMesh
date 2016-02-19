@@ -14,7 +14,7 @@ public:
     virtual bool isMetricWise() const override;
 
 
-    virtual void setMetricReference(
+    virtual void setReferenceMesh(
             const Mesh& mesh,
             int density) override;
 

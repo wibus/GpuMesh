@@ -52,5 +52,6 @@
         <file>glsl/compute/Sampling/Dummy.glsl</file>
         <file>glsl/compute/Sampling/KdTree.glsl</file>
         <file>glsl/compute/Sampling/Uniform.glsl</file>
+        <file>glsl/compute/Sampling/Local.glsl</file>
     </qresource>
 </RCC>

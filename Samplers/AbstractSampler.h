@@ -15,6 +15,7 @@ class Mesh;
 struct MeshTet;
 struct MeshPri;
 struct MeshHex;
+struct MeshVert;
 
 typedef glm::dmat3 Metric;
 
@@ -52,7 +53,7 @@ public:
             const cellar::GlProgram& program) const;
 
 
-    virtual void setMetricReference(
+    virtual void setReferenceMesh(
             const Mesh& mesh,
             int density) = 0;
 
@@ -78,7 +79,12 @@ protected:
                      glm::dvec3& minBounds,
                      glm::dvec3& maxBounds) const;
 
-    static void tetrahedrizeMesh(const Mesh& mesh, std::vector<MeshTet>& tets);
+
+    static bool tetParams(
+            const std::vector<MeshVert>& verts,
+            const MeshTet& tet,
+            const glm::dvec3& p,
+            double coor[4]);
 
 private:
     std::string _samplingName;

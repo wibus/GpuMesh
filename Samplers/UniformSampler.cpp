@@ -80,7 +80,7 @@ bool UniformSampler::isMetricWise() const
     return true;
 }
 
-void UniformSampler::setMetricReference(const Mesh& mesh, int density)
+void UniformSampler::setReferenceMesh(const Mesh& mesh, int density)
 {
     _debugMesh.reset();
     if(mesh.verts.empty())

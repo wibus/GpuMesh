@@ -24,6 +24,7 @@
 #include "Samplers/DummySampler.h"
 #include "Samplers/UniformSampler.h"
 #include "Samplers/KdTreeSampler.h"
+#include "Samplers/LocalSampler.h"
 #include "Evaluators/InsphereEdgeEvaluator.h"
 #include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/MetricConformityEvaluator.h"
@@ -100,6 +101,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
         {string("Uniform"),  shared_ptr<AbstractSampler>(new UniformSampler())},
         {string("Kd-Tree"),  shared_ptr<AbstractSampler>(new KdTreeSampler())},
+        {string("Local"),    shared_ptr<AbstractSampler>(new LocalSampler())},
     });
 
     _availableEvaluators.setDefault("Metric Conformity");
@@ -767,8 +769,8 @@ void GpuMeshCharacter::updateSampling()
 {
     if(_meshCrew->initialized())
     {
-        _meshCrew->sampler().setMetricReference(
-                    *_mesh, _samplingDensity);
+        _meshCrew->sampler().setReferenceMesh(
+            *_mesh, _samplingDensity);
 
         if(_displaySamplingMesh)
             if(_renderer.get() != nullptr)

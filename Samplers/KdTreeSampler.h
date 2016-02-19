@@ -34,7 +34,7 @@ public:
             const cellar::GlProgram& program) const override;
 
 
-    virtual void setMetricReference(
+    virtual void setReferenceMesh(
             const Mesh& mesh,
             int density) override;
 
@@ -65,8 +65,9 @@ private:
 
     void meshTree(KdNode* node, Mesh& mesh);
 
-    static bool tetParams(const std::vector<MeshVert>& verts, const MeshTet& tet,
-                          const glm::dvec3& p, double coor[4]);
+    static void tetrahedrizeMesh(
+            std::vector<MeshTet>& tets,
+            const Mesh& mesh);
 
     std::unique_ptr<KdNode> _rootNode;
     std::shared_ptr<Mesh> _debugMesh;

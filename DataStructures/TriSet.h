@@ -3,23 +3,32 @@
 
 #include <vector>
 
+#include <GLM/glm.hpp>
+
 #include "Triangle.h"
 
 
 struct TriSetNode
 {
-    TriSetNode(const Triangle& tri) :
+    TriSetNode(const Triangle& tri, uint owner, uint side) :
         tri(tri),
-        next(nullptr)
+        next(nullptr),
+        owner(owner),
+        side(side)
     {
     }
 
     Triangle tri;
     TriSetNode* next;
+    uint owner;
+    uint side;
 };
+
 
 struct TriSet
 {
+    static const uint NO_OWNER;
+
     void clear()
     {
         _tris.clear();
@@ -32,7 +41,10 @@ struct TriSet
         clear();
     }
 
-    inline void xOrTri(const Triangle& tri)
+    inline glm::uvec2 xOrTri(
+            const Triangle& tri,
+            uint owner = NO_OWNER,
+            uint side = 0)
     {
         std::size_t hash = tri.hash();
         hash %= _buckets.size();
@@ -49,16 +61,18 @@ struct TriSet
                     parent->next = node->next;
 
                 _disposeNode(node);
-                return;
+                return glm::uvec2(node->owner, node->side);
             }
 
             parent = node;
             node = node->next;
         }
 
-        node = _acquireNode(tri);
+        node = _acquireNode(tri, owner, side);
         node->next = _buckets[hash];
         _buckets[hash] = node;
+
+        return glm::uvec2(NO_OWNER, 0);
     }
 
     inline const std::vector<Triangle>& gather()
@@ -100,16 +114,18 @@ struct TriSet
     }
 
 private:
-    inline static TriSetNode* _acquireNode(const Triangle& tri)
+    inline static TriSetNode* _acquireNode(const Triangle& tri, uint owner, uint side)
     {
         if(_nodePool.empty())
         {
-            return new TriSetNode(tri);
+            return new TriSetNode(tri, owner, side);
         }
         else
         {
             TriSetNode* node = _nodePool.back();
             _nodePool.pop_back();
+            node->owner = owner;
+            node->side = side;
             node->tri = tri;
             return node;
         }

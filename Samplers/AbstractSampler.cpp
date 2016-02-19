@@ -122,31 +122,29 @@ void AbstractSampler::boundingBox(
     }
 }
 
-void AbstractSampler::tetrahedrizeMesh(const Mesh& mesh, std::vector<MeshTet>& tets)
+bool AbstractSampler::tetParams(
+        const std::vector<MeshVert>& verts,
+        const MeshTet& tet,
+        const glm::dvec3& p,
+        double coor[4])
 {
-    tets = mesh.tets;
+    // ref : https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Barycentric_coordinates_on_tetrahedra
 
-    size_t priCount = mesh.pris.size();
-    for(size_t p=0; p < priCount; ++p)
-    {
-        const MeshPri& pri = mesh.pris[p];
-        for(uint t=0; t < MeshPri::TET_COUNT; ++t)
-            tets.push_back(MeshTet(
-                pri.v[MeshPri::tets[t][0]],
-                pri.v[MeshPri::tets[t][1]],
-                pri.v[MeshPri::tets[t][2]],
-                pri.v[MeshPri::tets[t][3]]));
-    }
+    const glm::dvec3& vp0 = verts[tet.v[0]].p;
+    const glm::dvec3& vp1 = verts[tet.v[1]].p;
+    const glm::dvec3& vp2 = verts[tet.v[2]].p;
+    const glm::dvec3& vp3 = verts[tet.v[3]].p;
 
-    size_t hexCount = mesh.hexs.size();
-    for(size_t h=0; h < hexCount; ++h)
-    {
-        const MeshHex& hex = mesh.hexs[h];
-        for(uint t=0; t < MeshHex::TET_COUNT; ++t)
-            tets.push_back(MeshTet(
-                hex.v[MeshHex::tets[t][0]],
-                hex.v[MeshHex::tets[t][1]],
-                hex.v[MeshHex::tets[t][2]],
-                hex.v[MeshHex::tets[t][3]]));
-    }
+    glm::dmat3 T(vp0 - vp3, vp1 - vp3, vp2 - vp3);
+
+    glm::dvec3 y = glm::inverse(T) * (p - vp3);
+    coor[0] = y[0];
+    coor[1] = y[1];
+    coor[2] = y[2];
+    coor[3] = 1.0 - (y[0] + y[1] + y[2]);
+
+    const double EPSILON_IN = -1e-8;
+    bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
+                 coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
+    return isIn;
 }

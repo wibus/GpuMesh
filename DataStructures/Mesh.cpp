@@ -28,10 +28,10 @@ const MeshEdge MeshTet::edges[MeshTet::EDGE_COUNT] = {
 };
 
 const MeshTri MeshTet::tris[MeshTet::TRI_COUNT] = {
-    MeshTri(0, 1, 2),
+    MeshTri(1, 3, 2),
     MeshTri(0, 2, 3),
     MeshTri(0, 3, 1),
-    MeshTri(1, 3, 2)
+    MeshTri(0, 1, 2),
 };
 
 const MeshTet MeshTet::tets[MeshTet::TET_COUNT] = {
