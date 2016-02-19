@@ -40,12 +40,14 @@ void LocalSampler::installPlugin(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
+    AbstractSampler::installPlugin(mesh, program);
 }
 
 void LocalSampler::setupPluginExecution(
         const Mesh& mesh,
         const cellar::GlProgram& program) const
 {
+    AbstractSampler::setupPluginExecution(mesh, program);
 }
 
 void LocalSampler::setReferenceMesh(

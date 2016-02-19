@@ -25,11 +25,8 @@
 #include "Samplers/UniformSampler.h"
 #include "Samplers/KdTreeSampler.h"
 #include "Samplers/LocalSampler.h"
-#include "Evaluators/InsphereEdgeEvaluator.h"
 #include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/MetricConformityEvaluator.h"
-#include "Evaluators/SolidAngleEvaluator.h"
-#include "Evaluators/VolumeEdgeEvaluator.h"
 #include "Measurers/MetricFreeMeasurer.h"
 #include "Measurers/MetricWiseMeasurer.h"
 #include "Meshers/CpuDelaunayMesher.h"
@@ -106,11 +103,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableEvaluators.setDefault("Metric Conformity");
     _availableEvaluators.setContent({
-        {string("Insphere Edge"),     shared_ptr<AbstractEvaluator>(new InsphereEdgeEvaluator())},
         {string("Mean Ratio"),        shared_ptr<AbstractEvaluator>(new MeanRatioEvaluator())},
         {string("Metric Conformity"), shared_ptr<AbstractEvaluator>(new MetricConformityEvaluator())},
-        {string("Solid Angle"),       shared_ptr<AbstractEvaluator>(new SolidAngleEvaluator())},
-        {string("Volume Edge"),       shared_ptr<AbstractEvaluator>(new VolumeEdgeEvaluator())},
     });
 
     _availableSmoothers.setDefault("Local Optimisation");

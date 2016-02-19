@@ -38,10 +38,7 @@
         <file>glsl/compute/Smoothing/ElementWise/VertexAccum.glsl</file>
         <file>glsl/compute/Smoothing/Utils.glsl</file>
         <file>glsl/compute/Evaluating/Evaluate.glsl</file>
-        <file>glsl/compute/Evaluating/InsphereEdge.glsl</file>
         <file>glsl/compute/Evaluating/MeanRatio.glsl</file>
-        <file>glsl/compute/Evaluating/SolidAngle.glsl</file>
-        <file>glsl/compute/Evaluating/VolumeEdge.glsl</file>
         <file>glsl/compute/Measuring/MetricFree.glsl</file>
         <file>glsl/compute/Measuring/MetricWise.glsl</file>
         <file>glsl/compute/Evaluating/Base.glsl</file>
