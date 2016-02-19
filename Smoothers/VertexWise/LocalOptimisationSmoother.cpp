@@ -71,7 +71,7 @@ void LocalOptimisationSmoother::smoothVertices(
         // Compute local element size
         double localSize =
             crew.measurer().computeLocalElementSize(
-                mesh, crew.discretizer(), vId);
+                mesh, crew.sampler(), vId);
 
         // Initialize node shift distance
         double nodeShift = localSize * _localSizeToNodeShift;
@@ -110,7 +110,7 @@ void LocalOptimisationSmoother::smoothVertices(
                 // Compute patch quality
                 sampleQualities[p] =
                     crew.evaluator().patchQuality(
-                        mesh, crew.discretizer(), crew.measurer(), vId);
+                        mesh, crew.sampler(), crew.measurer(), vId);
             }
             pos = originalPos;
 
@@ -163,7 +163,7 @@ void LocalOptimisationSmoother::smoothVertices(
                 // Compute patch quality
                 double patchQuality =
                     crew.evaluator().patchQuality(
-                        mesh, crew.discretizer(), crew.measurer(), vId);
+                        mesh, crew.sampler(), crew.measurer(), vId);
 
                 if(patchQuality > bestQualityMean)
                 {

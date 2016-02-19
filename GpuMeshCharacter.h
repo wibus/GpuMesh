@@ -16,7 +16,7 @@
 
 class Mesh;
 class AbstractMesher;
-class AbstractDiscretizer;
+class AbstractSampler;
 class AbstractEvaluator;
 class AbstractSmoother;
 class AbstractRenderer;
@@ -47,7 +47,7 @@ public:
 
     virtual OptionMapDetails availableMeshers() const;
     virtual OptionMapDetails availableMeshModels(const std::string& mesherName) const;
-    virtual OptionMapDetails availableDiscretizers() const;
+    virtual OptionMapDetails availableSamplers() const;
     virtual OptionMapDetails availableEvaluators() const;
     virtual OptionMapDetails availableEvaluatorImplementations(const std::string& evaluatorName) const;
     virtual OptionMapDetails availableSmoothers() const;
@@ -97,9 +97,9 @@ public:
 
     // Render
     virtual void disableAnisotropy();
-    virtual void displayDiscretizationMesh(bool display);
-    virtual void useDiscretizationDensity(int density);
-    virtual void useDiscretizer(const std::string& discretizerName);
+    virtual void displaySamplingMesh(bool display);
+    virtual void useSamplingDensity(int density);
+    virtual void useSampler(const std::string& samplerName);
     virtual void useEvaluator(const std::string& evaluatorName);
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
@@ -113,7 +113,7 @@ protected:
 
     virtual void refreshCamera();
     virtual void updateMeshMeasures();
-    virtual void updateDiscretization();
+    virtual void updateSampling();
     virtual void setupInstalledRenderer();
     virtual void tearDownInstalledRenderer();
     virtual void installRenderer(const std::shared_ptr<AbstractRenderer>& renderer);
@@ -143,8 +143,8 @@ protected:
     double _qualityCullingMin;
     double _qualityCullingMax;
 
-    int  _discretizationDensity;
-    bool _displayDiscretizationMesh;
+    int  _samplingDensity;
+    bool _displaySamplingMesh;
 
 private:
     std::unique_ptr<Mesh> _mesh;
@@ -164,7 +164,7 @@ private:
     std::shared_ptr<prop2::ImageHud> _qualityLut;
 
     OptionMap<std::shared_ptr<AbstractMesher>>          _availableMeshers;
-    OptionMap<std::shared_ptr<AbstractDiscretizer>>     _availableDiscretizers;
+    OptionMap<std::shared_ptr<AbstractSampler>>     _availableSamplers;
     OptionMap<std::shared_ptr<AbstractEvaluator>>       _availableEvaluators;
     OptionMap<std::shared_ptr<AbstractSmoother>>        _availableSmoothers;
     OptionMap<std::shared_ptr<AbstractRenderer>>        _availableRenderers;

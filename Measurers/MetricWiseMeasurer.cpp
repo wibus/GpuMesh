@@ -2,7 +2,7 @@
 
 #include "DataStructures/Mesh.h"
 
-#include "Discretizers/AbstractDiscretizer.h"
+#include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 
@@ -21,13 +21,13 @@ MetricWiseMeasurer::~MetricWiseMeasurer()
 }
 
 double MetricWiseMeasurer::riemannianDistance(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b) const
 {
     glm::dvec3 abDiff = b - a;
     glm::dvec3 middle = (a + b) / 2.0;
-    double dist = glm::sqrt(glm::dot(abDiff, discretizer.metricAt(middle) * abDiff));
+    double dist = glm::sqrt(glm::dot(abDiff, sampler.metricAt(middle) * abDiff));
 
     int segmentCount = 1;
     double err = 1.0;
@@ -41,7 +41,7 @@ double MetricWiseMeasurer::riemannianDistance(
         double newDist = 0.0;
         for(int i=0; i < segmentCount; ++i)
         {
-            Metric metric = discretizer.metricAt(segBeg + half_ds);
+            Metric metric = sampler.metricAt(segBeg + half_ds);
             newDist += glm::sqrt(glm::dot(ds, metric * ds));
             segBeg += ds;
         }
@@ -54,35 +54,35 @@ double MetricWiseMeasurer::riemannianDistance(
 }
 
 glm::dvec3 MetricWiseMeasurer::riemannianSegment(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b) const
 {
     return glm::normalize(b - a) *
-            riemannianDistance(discretizer, a, b);
+            riemannianDistance(sampler, a, b);
 }
 
 double MetricWiseMeasurer::tetVolume(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
     double detSum = glm::determinant(glm::dmat3(
-        riemannianSegment(discretizer, vp[3], vp[0]),
-        riemannianSegment(discretizer, vp[3], vp[1]),
-        riemannianSegment(discretizer, vp[3], vp[2])));
+        riemannianSegment(sampler, vp[3], vp[0]),
+        riemannianSegment(sampler, vp[3], vp[1]),
+        riemannianSegment(sampler, vp[3], vp[2])));
 
     return detSum / 6.0;
 }
 
 double MetricWiseMeasurer::priVolume(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
-    glm::dvec3 e20 = riemannianSegment(discretizer, vp[2], vp[0]);
-    glm::dvec3 e21 = riemannianSegment(discretizer, vp[2], vp[1]);
-    glm::dvec3 e23 = riemannianSegment(discretizer, vp[2], vp[3]);
-    glm::dvec3 e24 = riemannianSegment(discretizer, vp[2], vp[4]);
-    glm::dvec3 e25 = riemannianSegment(discretizer, vp[2], vp[5]);
+    glm::dvec3 e20 = riemannianSegment(sampler, vp[2], vp[0]);
+    glm::dvec3 e21 = riemannianSegment(sampler, vp[2], vp[1]);
+    glm::dvec3 e23 = riemannianSegment(sampler, vp[2], vp[3]);
+    glm::dvec3 e24 = riemannianSegment(sampler, vp[2], vp[4]);
+    glm::dvec3 e25 = riemannianSegment(sampler, vp[2], vp[5]);
 
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(e24, e20, e21));
@@ -93,37 +93,37 @@ double MetricWiseMeasurer::priVolume(
 }
 
 double MetricWiseMeasurer::hexVolume(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(discretizer, vp[0], vp[1]),
-        riemannianSegment(discretizer, vp[0], vp[2]),
-        riemannianSegment(discretizer, vp[0], vp[4])));
+        riemannianSegment(sampler, vp[0], vp[1]),
+        riemannianSegment(sampler, vp[0], vp[2]),
+        riemannianSegment(sampler, vp[0], vp[4])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(discretizer, vp[3], vp[1]),
-        riemannianSegment(discretizer, vp[3], vp[7]),
-        riemannianSegment(discretizer, vp[3], vp[2])));
+        riemannianSegment(sampler, vp[3], vp[1]),
+        riemannianSegment(sampler, vp[3], vp[7]),
+        riemannianSegment(sampler, vp[3], vp[2])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(discretizer, vp[5], vp[1]),
-        riemannianSegment(discretizer, vp[5], vp[4]),
-        riemannianSegment(discretizer, vp[5], vp[7])));
+        riemannianSegment(sampler, vp[5], vp[1]),
+        riemannianSegment(sampler, vp[5], vp[4]),
+        riemannianSegment(sampler, vp[5], vp[7])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(discretizer, vp[6], vp[2]),
-        riemannianSegment(discretizer, vp[6], vp[7]),
-        riemannianSegment(discretizer, vp[6], vp[4])));
+        riemannianSegment(sampler, vp[6], vp[2]),
+        riemannianSegment(sampler, vp[6], vp[7]),
+        riemannianSegment(sampler, vp[6], vp[4])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(discretizer, vp[1], vp[2]),
-        riemannianSegment(discretizer, vp[1], vp[4]),
-        riemannianSegment(discretizer, vp[1], vp[7])));
+        riemannianSegment(sampler, vp[1], vp[2]),
+        riemannianSegment(sampler, vp[1], vp[4]),
+        riemannianSegment(sampler, vp[1], vp[7])));
 
     return detSum / 6.0;
 }
 
 glm::dvec3 MetricWiseMeasurer::computeVertexEquilibrium(
         const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         size_t vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;
@@ -138,7 +138,7 @@ glm::dvec3 MetricWiseMeasurer::computeVertexEquilibrium(
         const MeshNeigVert& neigVert = topo.neighborVerts[n];
         const glm::dvec3& npos = verts[neigVert.v];
 
-        forceTotal += computeSpringForce(discretizer, pos, npos);
+        forceTotal += computeSpringForce(sampler, pos, npos);
     }
 
     glm::dvec3 equilibrium = pos + forceTotal;
@@ -146,14 +146,14 @@ glm::dvec3 MetricWiseMeasurer::computeVertexEquilibrium(
 }
 
 glm::dvec3 MetricWiseMeasurer::computeSpringForce(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3& pi,
         const glm::dvec3& pj) const
 {
     if(pi == pj)
         return glm::dvec3();
 
-    double d = riemannianDistance(discretizer, pi, pj);
+    double d = riemannianDistance(sampler, pi, pj);
     glm::dvec3 u = (pi - pj) / d;
 
     double d2 = d * d;

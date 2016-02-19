@@ -16,7 +16,7 @@ struct MeshTet;
 struct MeshPri;
 struct MeshHex;
 class AbstractEvaluator;
-class AbstractDiscretizer;
+class AbstractSampler;
 
 
 class AbstractMeasurer
@@ -52,12 +52,12 @@ public:
 
     // Distances
     virtual double riemannianDistance(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b) const = 0;
 
     virtual glm::dvec3 riemannianSegment(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b) const = 0;
 
@@ -65,39 +65,39 @@ public:
     // Volumes
     virtual double tetVolume(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const MeshTet& tet) const;
     virtual double tetVolume(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const glm::dvec3 vp[]) const = 0;
 
     virtual double priVolume(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const MeshPri& pri) const;
     virtual double priVolume(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const glm::dvec3 vp[]) const = 0;
 
     virtual double hexVolume(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const MeshHex& hex) const;
     virtual double hexVolume(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const glm::dvec3 vp[]) const = 0;
 
 
 
     virtual double computeLocalElementSize(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             size_t vId) const;
 
 
     virtual glm::dvec3 computeVertexEquilibrium(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             size_t vId) const = 0;
 
 private:

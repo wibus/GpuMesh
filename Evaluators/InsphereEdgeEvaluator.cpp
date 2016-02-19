@@ -24,7 +24,7 @@ InsphereEdgeEvaluator::~InsphereEdgeEvaluator()
 }
 
 double InsphereEdgeEvaluator::tetQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
@@ -62,7 +62,7 @@ double InsphereEdgeEvaluator::tetQuality(
 }
 
 double InsphereEdgeEvaluator::priQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
@@ -74,26 +74,26 @@ double InsphereEdgeEvaluator::priQuality(
     const dvec3 tetE[] = {vp[0], vp[1], vp[5], vp[3]};
     const dvec3 tetF[] = {vp[1], vp[2], vp[4], vp[0]};
 
-    double tetAq = tetQuality(discretizer, measurer, tetA);
-    double tetBq = tetQuality(discretizer, measurer, tetB);
-    double tetCq = tetQuality(discretizer, measurer, tetC);
-    double tetDq = tetQuality(discretizer, measurer, tetD);
-    double tetEq = tetQuality(discretizer, measurer, tetE);
-    double tetFq = tetQuality(discretizer, measurer, tetF);
+    double tetAq = tetQuality(sampler, measurer, tetA);
+    double tetBq = tetQuality(sampler, measurer, tetB);
+    double tetCq = tetQuality(sampler, measurer, tetC);
+    double tetDq = tetQuality(sampler, measurer, tetD);
+    double tetEq = tetQuality(sampler, measurer, tetE);
+    double tetFq = tetQuality(sampler, measurer, tetF);
     return (tetAq + tetBq + tetCq + tetDq + tetEq + tetFq)
                 / 4.2970697433826288147;
 }
 
 double InsphereEdgeEvaluator::hexQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
     // Hexahedron quality ~= mean of two possible internal tetrahedrons
     const dvec3 tetA[] = {vp[0], vp[3], vp[5], vp[6]};
     const dvec3 tetB[] = {vp[1], vp[2], vp[7], vp[4]};
-    double tetAQuality = tetQuality(discretizer, measurer, tetA);
-    double tetBQuality = tetQuality(discretizer, measurer, tetB);
+    double tetAQuality = tetQuality(sampler, measurer, tetA);
+    double tetBQuality = tetQuality(sampler, measurer, tetB);
     return (tetAQuality + tetBQuality)
                 / 2.0;
 }

@@ -10,7 +10,7 @@ __device__ metricAtFct dummyMetricAtPtr = dummyMetricAt;
 
 
 // CUDA Drivers
-void installCudaDummyDiscretizer()
+void installCudaDummySampler()
 {
     metricAtFct d_metricAt = nullptr;
     cudaMemcpyFromSymbol(&d_metricAt, dummyMetricAtPtr, sizeof(metricAtFct));

@@ -47,10 +47,10 @@
         <file>glsl/compute/Evaluating/Base.glsl</file>
         <file>glsl/compute/Measuring/Base.glsl</file>
         <file>glsl/compute/Evaluating/MetricConformity.glsl</file>
-        <file>glsl/compute/Discretizing/Analytic.glsl</file>
-        <file>glsl/compute/Discretizing/Base.glsl</file>
-        <file>glsl/compute/Discretizing/Dummy.glsl</file>
-        <file>glsl/compute/Discretizing/KdTree.glsl</file>
-        <file>glsl/compute/Discretizing/Uniform.glsl</file>
+        <file>glsl/compute/Sampling/Analytic.glsl</file>
+        <file>glsl/compute/Sampling/Base.glsl</file>
+        <file>glsl/compute/Sampling/Dummy.glsl</file>
+        <file>glsl/compute/Sampling/KdTree.glsl</file>
+        <file>glsl/compute/Sampling/Uniform.glsl</file>
     </qresource>
 </RCC>

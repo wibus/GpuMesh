@@ -122,19 +122,19 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
     {
     case 0 :
         crew.evaluator().evaluateMeshQualitySerial(
-            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
         break;
     case 1 :
         crew.evaluator().evaluateMeshQualityThread(
-            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
         break;
     case 2 :
         crew.evaluator().evaluateMeshQualityGlsl(
-            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
         break;
     case 3 :
         crew.evaluator().evaluateMeshQualityCuda(
-            mesh, crew.discretizer(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
         break;
     }
 
@@ -200,12 +200,12 @@ void AbstractSmoother::benchmark(
 
     printSmoothingParameters(mesh, outPlot);
     // TODO print evaluator parameters
-    // TODO print discretizer parameters
+    // TODO print sampler parameters
 
     double initialMinQuality = 0.0;
     double initialQualityMean = 0.0;
     crew.evaluator().evaluateMeshQualityThread(
-        mesh, crew.discretizer(), crew.measurer(),
+        mesh, crew.sampler(), crew.measurer(),
         initialMinQuality, initialQualityMean);
 
     // We must make a copy of the vertices in order to
@@ -253,7 +253,7 @@ void AbstractSmoother::benchmark(
 
             SmoothBenchmarkStats stats;
             crew.evaluator().evaluateMeshQualityThread(
-                mesh, crew.discretizer(), crew.measurer(),
+                mesh, crew.sampler(), crew.measurer(),
                 stats.minQuality, stats.qualityMean);
 
             stats.impl = impl;

@@ -12,7 +12,7 @@ __device__ metricAtFct analyticMetricAtPtr = analyticMetricAt;
 
 
 // CUDA Drivers
-void installCudaAnalyticDiscretizer()
+void installCudaAnalyticSampler()
 {
     metricAtFct d_metricAt = nullptr;
     cudaMemcpyFromSymbol(&d_metricAt, analyticMetricAtPtr, sizeof(metricAtFct));

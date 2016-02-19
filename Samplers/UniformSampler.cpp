@@ -1,4 +1,4 @@
-#include "UniformDiscretizer.h"
+#include "UniformSampler.h"
 
 #include <CellarWorkbench/DataStructure/Grid3D.h>
 #include <CellarWorkbench/Misc/Log.h>
@@ -62,25 +62,25 @@ private:
 
 
 // CUDA Drivers Interface
-void installCudaUniformDiscretizer();
+void installCudaUniformSampler();
 
 
-UniformDiscretizer::UniformDiscretizer() :
-    AbstractDiscretizer("Uniform", ":/glsl/compute/Discretizing/Uniform.glsl", installCudaUniformDiscretizer)
+UniformSampler::UniformSampler() :
+    AbstractSampler("Uniform", ":/glsl/compute/Sampling/Uniform.glsl", installCudaUniformSampler)
 {
 }
 
-UniformDiscretizer::~UniformDiscretizer()
+UniformSampler::~UniformSampler()
 {
 
 }
 
-bool UniformDiscretizer::isMetricWise() const
+bool UniformSampler::isMetricWise() const
 {
     return true;
 }
 
-void UniformDiscretizer::discretize(const Mesh& mesh, int density)
+void UniformSampler::setMetricReference(const Mesh& mesh, int density)
 {
     _debugMesh.reset();
     if(mesh.verts.empty())
@@ -100,13 +100,13 @@ void UniformDiscretizer::discretize(const Mesh& mesh, int density)
     glm::ivec3 gridSize(alpha * extents);
 
     getLog().postMessage(new Message('I', false,
-        "Discretizing mesh metric in a Uniform grid",
-        "UniformDiscretizer"));
+        "Sampling mesh metric in a Uniform grid",
+        "UniformSampler"));
     getLog().postMessage(new Message('I', false,
         "Grid size: (" + std::to_string(gridSize.x) + ", " +
                          std::to_string(gridSize.y) + ", " +
                          std::to_string(gridSize.z) + ")",
-        "UniformDiscretizer"));
+        "UniformSampler"));
 
 
     std::vector<ElemValue> elemValues;
@@ -221,7 +221,7 @@ void UniformDiscretizer::discretize(const Mesh& mesh, int density)
     }
 }
 
-Metric UniformDiscretizer::metricAt(
+Metric UniformSampler::metricAt(
         const glm::dvec3& position) const
 {
     glm::dvec3 cs = _grid->extents / glm::dvec3(_grid->size);
@@ -265,12 +265,12 @@ Metric UniformDiscretizer::metricAt(
     return mxyz;
 }
 
-void UniformDiscretizer::releaseDebugMesh()
+void UniformSampler::releaseDebugMesh()
 {
     _debugMesh.reset();
 }
 
-const Mesh& UniformDiscretizer::debugMesh()
+const Mesh& UniformSampler::debugMesh()
 {
     if(_debugMesh.get() == nullptr)
     {
@@ -280,7 +280,7 @@ const Mesh& UniformDiscretizer::debugMesh()
         {
             meshGrid(*_grid.get(), *_debugMesh);
 
-            _debugMesh->modelName = "Uniform Discretization Mesh";
+            _debugMesh->modelName = "Uniform Sampling Mesh";
             _debugMesh->compileTopology();
         }
     }
@@ -288,7 +288,7 @@ const Mesh& UniformDiscretizer::debugMesh()
     return *_debugMesh;
 }
 
-inline glm::ivec3 UniformDiscretizer::cellId(
+inline glm::ivec3 UniformSampler::cellId(
         const glm::ivec3& gridSize,
         const glm::dvec3& minBounds,
         const glm::dvec3& extents,
@@ -301,7 +301,7 @@ inline glm::ivec3 UniformDiscretizer::cellId(
     return cellId;
 }
 
-void UniformDiscretizer::meshGrid(UniformGrid& grid, Mesh& mesh)
+void UniformSampler::meshGrid(UniformGrid& grid, Mesh& mesh)
 {
     const glm::ivec3 gridSize(grid.size);
 

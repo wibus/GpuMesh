@@ -21,7 +21,7 @@ MetricFreeMeasurer::~MetricFreeMeasurer()
 }
 
 double MetricFreeMeasurer::riemannianDistance(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b) const
 {
@@ -29,7 +29,7 @@ double MetricFreeMeasurer::riemannianDistance(
 }
 
 glm::dvec3 MetricFreeMeasurer::riemannianSegment(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b) const
 {
@@ -37,7 +37,7 @@ glm::dvec3 MetricFreeMeasurer::riemannianSegment(
 }
 
 double MetricFreeMeasurer::tetVolume(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
     double detSum = glm::determinant(glm::dmat3(
@@ -49,7 +49,7 @@ double MetricFreeMeasurer::tetVolume(
 }
 
 double MetricFreeMeasurer::priVolume(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
     glm::dvec3 e20 = vp[0] - vp[2];
@@ -76,7 +76,7 @@ double MetricFreeMeasurer::priVolume(
 }
 
 double MetricFreeMeasurer::hexVolume(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
     double detSum = 0.0;
@@ -106,7 +106,7 @@ double MetricFreeMeasurer::hexVolume(
 
 glm::dvec3 MetricFreeMeasurer::computeVertexEquilibrium(
         const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         size_t vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;

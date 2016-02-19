@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="meshTab">
        <attribute name="title">
@@ -230,7 +230,7 @@
            <item>
             <widget class="QGroupBox" name="discretizationGroup">
              <property name="title">
-              <string>Discretization</string>
+              <string>Sampling</string>
              </property>
              <layout class="QFormLayout" name="formLayout_5">
               <item row="0" column="0">
@@ -244,14 +244,14 @@
                <widget class="QComboBox" name="discretizationTypeMenu"/>
               </item>
               <item row="1" column="0">
-               <widget class="QLabel" name="discretizetionDensityLabel">
+               <widget class="QLabel" name="discretizationDensityLabel">
                 <property name="text">
                  <string>Density</string>
                 </property>
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QSpinBox" name="discretizetionDensitySpin">
+               <widget class="QSpinBox" name="discretizationDensitySpin">
                 <property name="minimum">
                  <number>1</number>
                 </property>

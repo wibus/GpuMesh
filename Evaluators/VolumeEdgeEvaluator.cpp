@@ -27,11 +27,11 @@ VolumeEdgeEvaluator::~VolumeEdgeEvaluator()
 }
 
 double VolumeEdgeEvaluator::tetQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
-    double volume = measurer.tetVolume(discretizer, vp);
+    double volume = measurer.tetVolume(sampler, vp);
 
     double edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);
@@ -46,11 +46,11 @@ double VolumeEdgeEvaluator::tetQuality(
 }
 
 double VolumeEdgeEvaluator::priQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
-    double volume = measurer.priVolume(discretizer, vp);
+    double volume = measurer.priVolume(sampler, vp);
 
     double edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);
@@ -69,11 +69,11 @@ double VolumeEdgeEvaluator::priQuality(
 }
 
 double VolumeEdgeEvaluator::hexQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
-    double volume = measurer.hexVolume(discretizer, vp);
+    double volume = measurer.hexVolume(sampler, vp);
 
     double edge2Sum = 0.0;
     edge2Sum += length2(vp[0] - vp[1]);

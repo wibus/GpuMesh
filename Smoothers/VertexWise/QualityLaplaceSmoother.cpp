@@ -57,7 +57,7 @@ void QualityLaplaceSmoother::smoothVertices(
         // Compute patch center
         glm::dvec3 patchCenter =
             crew.measurer().computeVertexEquilibrium(
-                mesh, crew.discretizer(), vId);
+                mesh, crew.sampler(), vId);
 
         glm::dvec3& pos = verts[vId].p;
         glm::dvec3 centerDist = patchCenter - pos;
@@ -91,7 +91,7 @@ void QualityLaplaceSmoother::smoothVertices(
             // Compute patch quality
             double patchQuality =
                 crew.evaluator().patchQuality(
-                    mesh, crew.discretizer(), crew.measurer(), vId);
+                    mesh, crew.sampler(), crew.measurer(), vId);
 
             if(patchQuality > bestQualityMean)
             {

@@ -1,4 +1,4 @@
-#include "KdTreeDiscretizer.h"
+#include "KdTreeSampler.h"
 
 #include <algorithm>
 #include <numeric>
@@ -35,7 +35,7 @@ struct KdNode
 
 
 // CUDA Drivers Interface
-void installCudaKdTreeDiscretizer();
+void installCudaKdTreeSampler();
 void updateCudaKdTreeStructure(
         const std::vector<GpuTet>& kdTetsBuff,
         const std::vector<GpuKdNode>& kdNodesBuff);
@@ -43,8 +43,8 @@ void updateCudaKdTreeMetrics(
         const std::vector<glm::mat4>& kdMetricsBuff);
 
 
-KdTreeDiscretizer::KdTreeDiscretizer() :
-    AbstractDiscretizer("Kd-Tree", ":/glsl/compute/Discretizing/KdTree.glsl", installCudaKdTreeDiscretizer),
+KdTreeSampler::KdTreeSampler() :
+    AbstractSampler("Kd-Tree", ":/glsl/compute/Sampling/KdTree.glsl", installCudaKdTreeSampler),
     _debugMesh(new Mesh()),
     _kdNodesSsbo(0),
     _kdTetsSsbo(0),
@@ -53,7 +53,7 @@ KdTreeDiscretizer::KdTreeDiscretizer() :
 {
 }
 
-KdTreeDiscretizer::~KdTreeDiscretizer()
+KdTreeSampler::~KdTreeSampler()
 {
     glDeleteBuffers(1, &_kdNodesSsbo);
     _kdNodesSsbo = 0;
@@ -63,12 +63,12 @@ KdTreeDiscretizer::~KdTreeDiscretizer()
     _kdMetricsSsbo = 0;
 }
 
-bool KdTreeDiscretizer::isMetricWise() const
+bool KdTreeSampler::isMetricWise() const
 {
     return true;
 }
 
-void KdTreeDiscretizer::initialize()
+void KdTreeSampler::initialize()
 {
     if(_kdNodesSsbo == 0)
         glGenBuffers(1, &_kdNodesSsbo);
@@ -80,11 +80,11 @@ void KdTreeDiscretizer::initialize()
         glGenBuffers(1, &_kdMetricsSsbo);
 }
 
-void KdTreeDiscretizer::installPlugin(
+void KdTreeSampler::installPlugin(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-    AbstractDiscretizer::installPlugin(mesh, program);
+    AbstractSampler::installPlugin(mesh, program);
 
     GLuint kdNodes   = mesh.bufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
     GLuint kdTets    = mesh.bufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
@@ -95,16 +95,16 @@ void KdTreeDiscretizer::installPlugin(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdMetrics, _kdMetricsSsbo);
 }
 
-void KdTreeDiscretizer::setupPluginExecution(
+void KdTreeSampler::setupPluginExecution(
         const Mesh& mesh,
         const cellar::GlProgram& program) const
 {
-    AbstractDiscretizer::setupPluginExecution(mesh, program);
+    AbstractSampler::setupPluginExecution(mesh, program);
 
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &_metricAtSub);
 }
 
-void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
+void KdTreeSampler::setMetricReference(const Mesh& mesh, int density)
 {
     // Clear resources
     _debugMesh->clear();
@@ -124,11 +124,11 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
     int height = (int)std::log2(vertCount/density);
 
     getLog().postMessage(new Message('I', false,
-        "Discretizing mesh metric in a Kd-Tree",
-         "KdTreeDiscretizer"));
+        "Sampling mesh metric in a Kd-Tree",
+         "KdTreeSampler"));
     getLog().postMessage(new Message('I', false,
         "Maximum Kd-Tree's depth: " + std::to_string(height),
-        "KdTreeDiscretizer"));
+        "KdTreeSampler"));
 
     std::vector<uint> xSort(vertCount);
     std::iota(xSort.begin(), xSort.end(), 0);
@@ -143,7 +143,7 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
         return mesh.verts[a].p.z < mesh.verts[b].p.z;});
 
 
-    // Fill Discretizer's data strucutres
+    // Fill Sampler's data strucutres
     glm::dvec3 minBounds, maxBounds;
     boundingBox(mesh, minBounds, maxBounds);
 
@@ -192,7 +192,7 @@ void KdTreeDiscretizer::discretize(const Mesh& mesh, int density)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-inline bool KdTreeDiscretizer::tetParams(
+inline bool KdTreeSampler::tetParams(
         const std::vector<MeshVert>& verts,
         const MeshTet& tet,
         const glm::dvec3& p,
@@ -219,7 +219,7 @@ inline bool KdTreeDiscretizer::tetParams(
     return isIn;
 }
 
-Metric KdTreeDiscretizer::metricAt(
+Metric KdTreeSampler::metricAt(
         const glm::dvec3& position) const
 {
     const Metric METRIC_ERROR(0.0);
@@ -309,14 +309,14 @@ Metric KdTreeDiscretizer::metricAt(
     else return METRIC_ERROR;
 }
 
-void KdTreeDiscretizer::releaseDebugMesh()
+void KdTreeSampler::releaseDebugMesh()
 {
     auto verts = _debugMesh->verts;
     _debugMesh->clear();
     _debugMesh->verts = verts;
 }
 
-const Mesh& KdTreeDiscretizer::debugMesh()
+const Mesh& KdTreeSampler::debugMesh()
 {
     //if(_debugMesh->tets.empty() &&
     //   !_debugMesh->verts.empty())
@@ -326,7 +326,7 @@ const Mesh& KdTreeDiscretizer::debugMesh()
         {
             meshTree(_rootNode.get(), *_debugMesh);
 
-            _debugMesh->modelName = "Kd-Tree Discretization Mesh";
+            _debugMesh->modelName = "Kd-Tree Sampling Mesh";
             _debugMesh->compileTopology();
         }
     }
@@ -334,7 +334,7 @@ const Mesh& KdTreeDiscretizer::debugMesh()
     return *_debugMesh;
 }
 
-void KdTreeDiscretizer::build(
+void KdTreeSampler::build(
         KdNode* node,
         int height,
         const Mesh& mesh,
@@ -489,7 +489,7 @@ void KdTreeDiscretizer::build(
     }
 }
 
-void KdTreeDiscretizer::buildGpuBuffers(
+void KdTreeSampler::buildGpuBuffers(
         KdNode* node,
         std::vector<GpuKdNode>& kdNodes,
         std::vector<GpuTet>& kdTets)
@@ -523,7 +523,7 @@ void KdTreeDiscretizer::buildGpuBuffers(
     }
 }
 
-void KdTreeDiscretizer::meshTree(KdNode* node, Mesh& mesh)
+void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
 {
     static int cellId = 0;
 

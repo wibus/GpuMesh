@@ -11,7 +11,7 @@ namespace cellar
 }
 
 class Mesh;
-class AbstractDiscretizer;
+class AbstractSampler;
 class AbstractEvaluator;
 class AbstractMeasurer;
 class AbstractSmoother;
@@ -26,11 +26,11 @@ public:
     MeshCrew& operator = (const MeshCrew& crew) = delete;
     ~MeshCrew() = default;
 
-    AbstractDiscretizer& discretizer();
+    AbstractSampler& sampler();
     AbstractEvaluator& evaluator();
     AbstractMeasurer& measurer();
 
-    const AbstractDiscretizer& discretizer() const;
+    const AbstractSampler& sampler() const;
     const AbstractEvaluator& evaluator() const;
     const AbstractMeasurer& measurer() const;
 
@@ -38,7 +38,7 @@ public:
     void terminate();
     bool initialized() const;
 
-    void setDiscretizer(const Mesh& mesh, const std::shared_ptr<AbstractDiscretizer>& discretizer);
+    void setSampler(const Mesh& mesh, const std::shared_ptr<AbstractSampler>& sampler);
     void setEvaluator(const Mesh& mesh, const std::shared_ptr<AbstractEvaluator>& evaluator);
 
     void installPlugins(const Mesh& mesh, cellar::GlProgram& program) const;
@@ -51,7 +51,7 @@ private:
 
     OptionMap<std::shared_ptr<AbstractMeasurer>> _availableMeasurers;
 
-    std::shared_ptr<AbstractDiscretizer> _discretizer;
+    std::shared_ptr<AbstractSampler> _sampler;
     std::shared_ptr<AbstractEvaluator> _evaluator;
     std::shared_ptr<AbstractMeasurer> _measurer;
     bool _isInitialized;

@@ -9,7 +9,7 @@
 
 #include "DataStructures/MeshCrew.h"
 #include "DataStructures/VertexAccum.h"
-#include "Discretizers/AbstractDiscretizer.h"
+#include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
 
@@ -315,7 +315,7 @@ void AbstractElementWiseSmoother::initializeProgram(
 {
     if(_initialized &&
        _modelBoundsShader == mesh.modelBoundsShaderName() &&
-       _discretizationShader == crew.discretizer().discretizationShader() &&
+       _samplingShader == crew.sampler().samplingShader() &&
        _evaluationShader == crew.evaluator().evaluationShader() &&
        _measureShader == crew.measurer().measureShader())
             return;
@@ -325,7 +325,7 @@ void AbstractElementWiseSmoother::initializeProgram(
         "Initializing smoothing compute shader", "AbstractElementWiseSmoother"));
 
     _modelBoundsShader = mesh.modelBoundsShaderName();
-    _discretizationShader = crew.discretizer().discretizationShader();
+    _samplingShader = crew.sampler().samplingShader();
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();
 
@@ -425,13 +425,13 @@ void AbstractElementWiseSmoother::updateVertexPositions(
 
             double patchQuality =
                 crew.evaluator().patchQuality(
-                    mesh, crew.discretizer(), crew.measurer(), vId);
+                    mesh, crew.sampler(), crew.measurer(), vId);
 
             verts[vId].p = posPrim;
 
             double patchQualityPrime =
                 crew.evaluator().patchQuality(
-                    mesh, crew.discretizer(), crew.measurer(), vId);
+                    mesh, crew.sampler(), crew.measurer(), vId);
 
             if(patchQualityPrime < patchQuality)
                 verts[vId].p = pos;

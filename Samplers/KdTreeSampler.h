@@ -1,11 +1,11 @@
-#ifndef GPUMESH_KDTREEDISCRETIZER
-#define GPUMESH_KDTREEDISCRETIZER
+#ifndef GPUMESH_KDTREESAMPLER
+#define GPUMESH_KDTREESAMPLER
 
 #include <vector>
 
 #include <GL3/gl3w.h>
 
-#include "AbstractDiscretizer.h"
+#include "AbstractSampler.h"
 
 struct KdNode;
 struct MeshVert;
@@ -13,11 +13,11 @@ struct GpuKdNode;
 struct GpuTet;
 
 
-class KdTreeDiscretizer : public AbstractDiscretizer
+class KdTreeSampler : public AbstractSampler
 {
 public:
-    KdTreeDiscretizer();
-    virtual ~KdTreeDiscretizer();
+    KdTreeSampler();
+    virtual ~KdTreeSampler();
 
 
     virtual bool isMetricWise() const override;
@@ -34,7 +34,7 @@ public:
             const cellar::GlProgram& program) const override;
 
 
-    virtual void discretize(
+    virtual void setMetricReference(
             const Mesh& mesh,
             int density) override;
 
@@ -78,4 +78,4 @@ private:
     GLuint _metricAtSub;
 };
 
-#endif // GPUMESH_KDTREEDISCRETIZER
+#endif // GPUMESH_KDTREESAMPLER

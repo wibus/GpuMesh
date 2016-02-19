@@ -15,17 +15,17 @@ public:
     using AbstractEvaluator::hexQuality;
 
     virtual double tetQuality(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const glm::dvec3 vp[]) const override;
 
     virtual double priQuality(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const glm::dvec3 vp[]) const override;
 
     virtual double hexQuality(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const glm::dvec3 vp[]) const override;
 };

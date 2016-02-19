@@ -2,7 +2,7 @@
 
 #include "DataStructures/Mesh.h"
 #include "Evaluators/AbstractEvaluator.h"
-#include "Discretizers/AbstractDiscretizer.h"
+#include "Samplers/AbstractSampler.h"
 
 using namespace std;
 
@@ -66,7 +66,7 @@ void AbstractMeasurer::setupPluginExecution(
 
 double AbstractMeasurer::tetVolume(
         const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const MeshTet& tet) const
 {
     const glm::dvec3 vp[] = {
@@ -76,12 +76,12 @@ double AbstractMeasurer::tetVolume(
         mesh.verts[tet.v[3]],
     };
 
-    return tetVolume(discretizer, vp);
+    return tetVolume(sampler, vp);
 }
 
 double AbstractMeasurer::priVolume(
         const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const MeshPri& pri) const
 {
     const glm::dvec3 vp[] = {
@@ -93,12 +93,12 @@ double AbstractMeasurer::priVolume(
         mesh.verts[pri.v[5]]
     };
 
-    return priVolume(discretizer, vp);
+    return priVolume(sampler, vp);
 }
 
 double AbstractMeasurer::hexVolume(
         const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const MeshHex& hex) const
 {
     const glm::dvec3 vp[] = {
@@ -112,12 +112,12 @@ double AbstractMeasurer::hexVolume(
         mesh.verts[hex.v[7]]
     };
 
-    return hexVolume(discretizer, vp);
+    return hexVolume(sampler, vp);
 }
 
 double AbstractMeasurer::computeLocalElementSize(
         const Mesh& mesh,
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         size_t vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;

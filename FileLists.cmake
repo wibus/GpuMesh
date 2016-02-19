@@ -14,12 +14,12 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h
     ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.h)
 
-SET(GpuMesh_DISCRETIZERS_HEADERS
-    ${GpuMesh_SRC_DIR}/Discretizers/AbstractDiscretizer.h
-    ${GpuMesh_SRC_DIR}/Discretizers/AnalyticDiscretizer.h
-    ${GpuMesh_SRC_DIR}/Discretizers/UniformDiscretizer.h
-    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.h
-    ${GpuMesh_SRC_DIR}/Discretizers/DummyDiscretizer.h)
+SET(GpuMesh_SAMPLERS_HEADERS
+    ${GpuMesh_SRC_DIR}/Samplers/AbstractSampler.h
+    ${GpuMesh_SRC_DIR}/Samplers/AnalyticSampler.h
+    ${GpuMesh_SRC_DIR}/Samplers/UniformSampler.h
+    ${GpuMesh_SRC_DIR}/Samplers/KdTreeSampler.h
+    ${GpuMesh_SRC_DIR}/Samplers/DummySampler.h)
 
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
@@ -87,7 +87,7 @@ SET(GpuMesh_USERINTERFACE_HEADERS
 
 SET(GpuMesh_HEADERS
     ${GpuMesh_DATASTRUCTURES_HEADERS}
-    ${GpuMesh_DISCRETIZERS_HEADERS}
+    ${GpuMesh_SAMPLERS_HEADERS}
     ${GpuMesh_EVALUATORS_HEADERS}
     ${GpuMesh_MESHERS_HEADERS}
     ${GpuMesh_RENDERERS_HEADERS}
@@ -110,12 +110,12 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.cpp)
 
-SET(GpuMesh_DISCRETIZERS_SOURCES
-    ${GpuMesh_SRC_DIR}/Discretizers/AbstractDiscretizer.cpp
-    ${GpuMesh_SRC_DIR}/Discretizers/AnalyticDiscretizer.cpp
-    ${GpuMesh_SRC_DIR}/Discretizers/UniformDiscretizer.cpp
-    ${GpuMesh_SRC_DIR}/Discretizers/KdTreeDiscretizer.cpp
-    ${GpuMesh_SRC_DIR}/Discretizers/DummyDiscretizer.cpp)
+SET(GpuMesh_SAMPLERS_SOURCES
+    ${GpuMesh_SRC_DIR}/Samplers/AbstractSampler.cpp
+    ${GpuMesh_SRC_DIR}/Samplers/AnalyticSampler.cpp
+    ${GpuMesh_SRC_DIR}/Samplers/UniformSampler.cpp
+    ${GpuMesh_SRC_DIR}/Samplers/KdTreeSampler.cpp
+    ${GpuMesh_SRC_DIR}/Samplers/DummySampler.cpp)
 
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp
@@ -184,7 +184,7 @@ SET(GpuMesh_USERINTERFACE_SOURCES
 
 SET(GpuMesh_SOURCES
     ${GpuMesh_DATASTRUCTURES_SOURCES}
-    ${GpuMesh_DISCRETIZERS_SOURCES}
+    ${GpuMesh_SAMPLERS_SOURCES}
     ${GpuMesh_EVALUATORS_SOURCES}
     ${GpuMesh_MEASURERS_SOURCES}
     ${GpuMesh_MESHERS_SOURCES}
@@ -250,11 +250,11 @@ SET(GpuMesh_BOUNDARY_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Boundary/ElbowPipe.glsl)
 
 SET(GpuMesh_DISCRETIZING_SHADERS
-    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Base.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Dummy.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Analytic.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Discretizing/KdTree.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Discretizing/Uniform.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Sampling/Base.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Sampling/Dummy.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Sampling/Analytic.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Sampling/KdTree.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Sampling/Uniform.glsl)
 
 SET(GpuMesh_EVALUATING_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Evaluating/Base.glsl
@@ -321,12 +321,12 @@ SET(GpuMesh_BOUNDARY_CUDA
     ${GpuMesh_CUDA_DIR}/Boundary/ElbowPipe.cu)
 
 SET(GpuMesh_DISCRETIZING_CUDA
-    ${GpuMesh_CUDA_DIR}/Discretizing/Base.cuh
-    ${GpuMesh_CUDA_DIR}/Discretizing/Base.cu
-    ${GpuMesh_CUDA_DIR}/Discretizing/Dummy.cu
-    ${GpuMesh_CUDA_DIR}/Discretizing/Analytic.cu
-    ${GpuMesh_CUDA_DIR}/Discretizing/KdTree.cu
-    ${GpuMesh_CUDA_DIR}/Discretizing/Uniform.cu)
+    ${GpuMesh_CUDA_DIR}/Sampling/Base.cuh
+    ${GpuMesh_CUDA_DIR}/Sampling/Base.cu
+    ${GpuMesh_CUDA_DIR}/Sampling/Dummy.cu
+    ${GpuMesh_CUDA_DIR}/Sampling/Analytic.cu
+    ${GpuMesh_CUDA_DIR}/Sampling/KdTree.cu
+    ${GpuMesh_CUDA_DIR}/Sampling/Uniform.cu)
 
 SET(GpuMesh_EVALUATING_CUDA
     ${GpuMesh_CUDA_DIR}/Evaluating/Base.cuh

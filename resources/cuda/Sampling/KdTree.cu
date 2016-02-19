@@ -137,7 +137,7 @@ __device__ metricAtFct kdTreeMetricAtPtr = kdTreeMetricAt;
 
 
 // CUDA Drivers
-void installCudaKdTreeDiscretizer()
+void installCudaKdTreeSampler()
 {
     metricAtFct d_metricAt = nullptr;
     cudaMemcpyFromSymbol(&d_metricAt, kdTreeMetricAtPtr, sizeof(metricAtFct));

@@ -1,20 +1,20 @@
-#ifndef GPUMESH_ANALYTICDISCRETIZER
-#define GPUMESH_ANALYTICDISCRETIZER
+#ifndef GPUMESH_ANALYTICSAMPLER
+#define GPUMESH_ANALYTICSAMPLER
 
-#include "AbstractDiscretizer.h"
+#include "AbstractSampler.h"
 
 
-class AnalyticDiscretizer : public AbstractDiscretizer
+class AnalyticSampler : public AbstractSampler
 {
 public:
-    AnalyticDiscretizer();
-    virtual ~AnalyticDiscretizer();
+    AnalyticSampler();
+    virtual ~AnalyticSampler();
 
 
     virtual bool isMetricWise() const override;
 
 
-    virtual void discretize(
+    virtual void setMetricReference(
             const Mesh& mesh,
             int density) override;
 
@@ -33,4 +33,4 @@ private:
     std::shared_ptr<Mesh> _debugMesh;
 };
 
-#endif // GPUMESH_ANALYTICDISCRETIZER
+#endif // GPUMESH_ANALYTICSAMPLER

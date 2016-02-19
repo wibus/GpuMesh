@@ -3,7 +3,7 @@
 #include <CellarWorkbench/GL/GlProgram.h>
 
 #include "Mesh.h"
-#include "Discretizers/AbstractDiscretizer.h"
+#include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/MetricFreeMeasurer.h"
 #include "Measurers/MetricWiseMeasurer.h"
@@ -40,9 +40,9 @@ bool MeshCrew::initialized() const
     return _isInitialized;
 }
 
-AbstractDiscretizer& MeshCrew::discretizer()
+AbstractSampler& MeshCrew::sampler()
 {
-    return *_discretizer;
+    return *_sampler;
 }
 
 AbstractEvaluator& MeshCrew::evaluator()
@@ -55,9 +55,9 @@ AbstractMeasurer& MeshCrew::measurer()
     return *_measurer;
 }
 
-const AbstractDiscretizer& MeshCrew::discretizer() const
+const AbstractSampler& MeshCrew::sampler() const
 {
-    return *_discretizer;
+    return *_sampler;
 }
 
 const AbstractEvaluator& MeshCrew::evaluator() const
@@ -70,11 +70,11 @@ const AbstractMeasurer& MeshCrew::measurer() const
     return *_measurer;
 }
 
-void MeshCrew::setDiscretizer(const Mesh& mesh, const std::shared_ptr<AbstractDiscretizer>& discretizer)
+void MeshCrew::setSampler(const Mesh& mesh, const std::shared_ptr<AbstractSampler>& sampler)
 {
-    _discretizer = discretizer;
+    _sampler = sampler;
 
-    if(discretizer->isMetricWise())
+    if(sampler->isMetricWise())
         _availableMeasurers.select(METRIC_WISE, _measurer);
     else
         _availableMeasurers.select(METRIC_FREE, _measurer);
@@ -99,7 +99,7 @@ void MeshCrew::installPlugins(const Mesh& mesh, cellar::GlProgram& program) cons
     mesh.modelBoundsCudaFct()();
 
     // Crew members' plugin
-    _discretizer->installPlugin(mesh, program);
+    _sampler->installPlugin(mesh, program);
     _evaluator->installPlugin(mesh, program);
     _measurer->installPlugin(mesh, program);
 }
@@ -110,7 +110,7 @@ void MeshCrew::setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) c
     mesh.uploadGeometry(program);
 
     // Crew members' uniforms
-    _discretizer->setPluginUniforms(mesh, program);
+    _sampler->setPluginUniforms(mesh, program);
     _evaluator->setPluginUniforms(mesh, program);
     _measurer->setPluginUniforms(mesh, program);
 }
@@ -121,7 +121,7 @@ void MeshCrew::setupPluginExecution(const Mesh& mesh, const cellar::GlProgram& p
     mesh.bindShaderStorageBuffers();
 
     // Crew members' buffers
-    _discretizer->setupPluginExecution(mesh, program);
+    _sampler->setupPluginExecution(mesh, program);
     _evaluator->setupPluginExecution(mesh, program);
     _measurer->setupPluginExecution(mesh, program);
 }
@@ -130,11 +130,11 @@ void MeshCrew::reinitCrew(const Mesh& mesh)
 {
     if(_isInitialized)
     {
-        if(_discretizer.get() != nullptr &&
+        if(_sampler.get() != nullptr &&
            _measurer.get()    != nullptr &&
            _evaluator.get()   != nullptr)
         {
-            _discretizer->initialize();
+            _sampler->initialize();
             _measurer->initialize();
             _evaluator->initialize(mesh, *this);
         }

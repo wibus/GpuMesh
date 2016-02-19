@@ -1,5 +1,5 @@
-#ifndef GPUMESH_ABSTRACTDISCRETIZER
-#define GPUMESH_ABSTRACTDISCRETIZER
+#ifndef GPUMESH_ABSTRACTSAMPLER
+#define GPUMESH_ABSTRACTSAMPLER
 
 #include <memory>
 #include <vector>
@@ -19,16 +19,16 @@ struct MeshHex;
 typedef glm::dmat3 Metric;
 
 
-class AbstractDiscretizer
+class AbstractSampler
 {
 protected:
     typedef void (*installCudaFct)(void);
-    AbstractDiscretizer(const std::string& name,
+    AbstractSampler(const std::string& name,
                         const std::string& shader,
                         const installCudaFct installCuda);
 
 public:
-    virtual ~AbstractDiscretizer();
+    virtual ~AbstractSampler();
 
 
     virtual bool isMetricWise() const = 0;
@@ -37,7 +37,7 @@ public:
 
 
     // GLSL Plug-in interface
-    virtual std::string discretizationShader() const;
+    virtual std::string samplingShader() const;
 
     virtual void installPlugin(
             const Mesh& mesh,
@@ -52,7 +52,7 @@ public:
             const cellar::GlProgram& program) const;
 
 
-    virtual void discretize(
+    virtual void setMetricReference(
             const Mesh& mesh,
             int density) = 0;
 
@@ -81,10 +81,10 @@ protected:
     static void tetrahedrizeMesh(const Mesh& mesh, std::vector<MeshTet>& tets);
 
 private:
-    std::string _discretizationName;
-    std::string _discretizationShader;
+    std::string _samplingName;
+    std::string _samplingShader;
     std::string _baseShader;
     installCudaFct _installCuda;
 };
 
-#endif // GPUMESH_ABSTRACTDISCRETIZER
+#endif // GPUMESH_ABSTRACTSAMPLER

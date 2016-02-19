@@ -1,4 +1,4 @@
-#include "AbstractDiscretizer.h"
+#include "AbstractSampler.h"
 
 #include <GLM/gtc/constants.hpp>
 
@@ -7,38 +7,38 @@
 #include "DataStructures/Mesh.h"
 
 
-AbstractDiscretizer::AbstractDiscretizer(
+AbstractSampler::AbstractSampler(
         const std::string& name,
         const std::string& shader,
         const installCudaFct installCuda) :
-    _discretizationName(name),
-    _discretizationShader(shader),
-    _baseShader(":/glsl/compute/Discretizing/Base.glsl"),
+    _samplingName(name),
+    _samplingShader(shader),
+    _baseShader(":/glsl/compute/Sampling/Base.glsl"),
     _installCuda(installCuda)
 {
 
 }
 
-AbstractDiscretizer::~AbstractDiscretizer()
+AbstractSampler::~AbstractSampler()
 {
 
 }
 
-void AbstractDiscretizer::initialize()
+void AbstractSampler::initialize()
 {
 
 }
 
-std::string AbstractDiscretizer::discretizationShader() const
+std::string AbstractSampler::samplingShader() const
 {
-    return _discretizationShader;
+    return _samplingShader;
 }
 
-void AbstractDiscretizer::installPlugin(
+void AbstractSampler::installPlugin(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-    if(!_discretizationShader.empty())
+    if(!_samplingShader.empty())
     {
         program.addShader(GL_COMPUTE_SHADER, {
             mesh.meshGeometryShaderName(),
@@ -47,27 +47,27 @@ void AbstractDiscretizer::installPlugin(
 
         program.addShader(GL_COMPUTE_SHADER, {
             mesh.meshGeometryShaderName(),
-            _discretizationShader.c_str()
+            _samplingShader.c_str()
         });
     }
 
     _installCuda();
 }
 
-void AbstractDiscretizer::setPluginUniforms(
+void AbstractSampler::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
 
 }
 
-void AbstractDiscretizer::setupPluginExecution(
+void AbstractSampler::setupPluginExecution(
         const Mesh& mesh,
         const cellar::GlProgram& program) const
 {
 }
 
-Metric AbstractDiscretizer::interpolateMetrics(
+Metric AbstractSampler::interpolateMetrics(
         const Metric& m1,
         const Metric& m2,
         double a) const
@@ -75,12 +75,12 @@ Metric AbstractDiscretizer::interpolateMetrics(
     return glm::mix(m1, m2, a);
 }
 
-Metric AbstractDiscretizer::vertMetric(const Mesh& mesh, unsigned int vId) const
+Metric AbstractSampler::vertMetric(const Mesh& mesh, unsigned int vId) const
 {
     return vertMetric(mesh.verts[vId].p);
 }
 
-Metric AbstractDiscretizer::vertMetric(const glm::dvec3& position) const
+Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
     glm::dvec3 vp = position * glm::dvec3(7);
 
@@ -106,7 +106,7 @@ Metric AbstractDiscretizer::vertMetric(const glm::dvec3& position) const
         glm::dvec3(0,  0,  rz));
 }
 
-void AbstractDiscretizer::boundingBox(
+void AbstractSampler::boundingBox(
         const Mesh& mesh,
         glm::dvec3& minBounds,
         glm::dvec3& maxBounds) const
@@ -122,7 +122,7 @@ void AbstractDiscretizer::boundingBox(
     }
 }
 
-void AbstractDiscretizer::tetrahedrizeMesh(const Mesh& mesh, std::vector<MeshTet>& tets)
+void AbstractSampler::tetrahedrizeMesh(const Mesh& mesh, std::vector<MeshTet>& tets)
 {
     tets = mesh.tets;
 

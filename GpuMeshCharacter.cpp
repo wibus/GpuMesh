@@ -20,10 +20,10 @@
 #include <Scaena/StageManagement/Event/StageTime.h>
 
 #include "DataStructures/GpuMesh.h"
-#include "Discretizers/AnalyticDiscretizer.h"
-#include "Discretizers/DummyDiscretizer.h"
-#include "Discretizers/UniformDiscretizer.h"
-#include "Discretizers/KdTreeDiscretizer.h"
+#include "Samplers/AnalyticSampler.h"
+#include "Samplers/DummySampler.h"
+#include "Samplers/UniformSampler.h"
+#include "Samplers/KdTreeSampler.h"
 #include "Evaluators/InsphereEdgeEvaluator.h"
 #include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/MetricConformityEvaluator.h"
@@ -52,7 +52,7 @@ using namespace prop2;
 using namespace scaena;
 
 
-const std::string NO_DISCRETIZATION = "None";
+const std::string NO_METRIC_SAMPLING = "None";
 const glm::vec3 GpuMeshCharacter::nullVec = glm::vec3(0, 0, 0);
 const glm::vec3 GpuMeshCharacter::upVec = glm::vec3(0, 0, 1);
 
@@ -73,12 +73,12 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _hexVisibility(true),
     _qualityCullingMin(-INFINITY),
     _qualityCullingMax(INFINITY),
-    _discretizationDensity(2),
-    _displayDiscretizationMesh(false),
+    _samplingDensity(2),
+    _displaySamplingMesh(false),
     _mesh(new GpuMesh()),
     _meshCrew(new MeshCrew()),
     _availableMeshers("Available Meshers"),
-    _availableDiscretizers("Available Discretizers"),
+    _availableSamplers("Available Samplers"),
     _availableEvaluators("Available Evaluators"),
     _availableSmoothers("Available Smoothers"),
     _availableRenderers("Available Renderers"),
@@ -94,12 +94,12 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableDiscretizers.setDefault("Analytic");
-    _availableDiscretizers.setContent({
-        {NO_DISCRETIZATION,  shared_ptr<AbstractDiscretizer>(new DummyDiscretizer())},
-        {string("Analytic"), shared_ptr<AbstractDiscretizer>(new AnalyticDiscretizer())},
-        {string("Uniform"),  shared_ptr<AbstractDiscretizer>(new UniformDiscretizer())},
-        {string("Kd-Tree"),  shared_ptr<AbstractDiscretizer>(new KdTreeDiscretizer())},
+    _availableSamplers.setDefault("Analytic");
+    _availableSamplers.setContent({
+        {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new DummySampler())},
+        {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
+        {string("Uniform"),  shared_ptr<AbstractSampler>(new UniformSampler())},
+        {string("Kd-Tree"),  shared_ptr<AbstractSampler>(new KdTreeSampler())},
     });
 
     _availableEvaluators.setDefault("Metric Conformity");
@@ -212,14 +212,14 @@ void GpuMeshCharacter::enterStage()
 
 
     // Assess evaluators validy
-    DummyDiscretizer verifDiscretizer;
+    DummySampler verifSampler;
     MetricWiseMeasurer verifMeasurer;
     for(auto evalName : _availableEvaluators.details().options)
     {
         std::shared_ptr<AbstractEvaluator> evaluator;
         if(_availableEvaluators.select(evalName, evaluator))
         {
-            evaluator->assessMeasureValidy(verifDiscretizer, verifMeasurer);
+            evaluator->assessMeasureValidy(verifSampler, verifMeasurer);
         }
     }
 
@@ -337,8 +337,8 @@ void GpuMeshCharacter::draw(const shared_ptr<View>&, const StageTime& time)
 {
     _fps->setText("UPS: " + to_string(time.framesPerSecond()));
 
-    if(_displayDiscretizationMesh)
-        _renderer->display(_meshCrew->discretizer().debugMesh());
+    if(_displaySamplingMesh)
+        _renderer->display(_meshCrew->sampler().debugMesh());
     else
         _renderer->display(*_mesh);
 }
@@ -368,9 +368,9 @@ OptionMapDetails GpuMeshCharacter::availableMeshModels(const string& mesherName)
         return OptionMapDetails();
 }
 
-OptionMapDetails GpuMeshCharacter::availableDiscretizers() const
+OptionMapDetails GpuMeshCharacter::availableSamplers() const
 {
-    return _availableDiscretizers.details();
+    return _availableSamplers.details();
 }
 
 OptionMapDetails GpuMeshCharacter::availableEvaluators() const
@@ -440,7 +440,7 @@ void GpuMeshCharacter::generateMesh(
 
         _mesh->modelName = modelName;
         _mesh->compileTopology();
-        updateDiscretization();
+        updateSampling();
         updateMeshMeasures();
     }
 }
@@ -449,7 +449,7 @@ void GpuMeshCharacter::clearMesh()
 {
     _mesh->clear();
     _mesh->modelName = "";
-    updateDiscretization();
+    updateSampling();
     updateMeshMeasures();
 }
 
@@ -491,7 +491,7 @@ void GpuMeshCharacter::loadMesh(
         if(deserializer->deserialize(fileName, *_mesh))
         {
             _mesh->compileTopology();
-            updateDiscretization();
+            updateSampling();
             updateMeshMeasures();
         }
         else
@@ -516,7 +516,7 @@ void GpuMeshCharacter::evaluateMesh(
         double minQuality, qualityMean;
         evaluator->evaluateMesh(
             *_mesh,
-            _meshCrew->discretizer(),
+            _meshCrew->sampler(),
             _meshCrew->measurer(),
             minQuality,
             qualityMean,
@@ -541,7 +541,7 @@ void GpuMeshCharacter::benchmarkEvaluator(
     {
         evaluator->benchmark(
             *_mesh,
-            _meshCrew->discretizer(),
+            _meshCrew->sampler(),
             _meshCrew->measurer(),
             cycleCounts);
     }
@@ -569,7 +569,7 @@ void GpuMeshCharacter::smoothMesh(
             moveFactor,
             gainThreshold);
 
-        updateDiscretization();
+        updateSampling();
         updateMeshMeasures();
     }
 }
@@ -601,7 +601,7 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
             gainThreshold,
             plot);
 
-        updateDiscretization();
+        updateSampling();
         updateMeshMeasures();
     }
 
@@ -610,34 +610,34 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
 
 void GpuMeshCharacter::disableAnisotropy()
 {
-    displayDiscretizationMesh(false);
-    useDiscretizer(NO_DISCRETIZATION);
+    displaySamplingMesh(false);
+    useSampler(NO_METRIC_SAMPLING);
 }
 
-void GpuMeshCharacter::displayDiscretizationMesh(bool display)
+void GpuMeshCharacter::displaySamplingMesh(bool display)
 {
-    _displayDiscretizationMesh = display;
+    _displaySamplingMesh = display;
     if(_renderer.get() != nullptr)
         _renderer->notifyMeshUpdate();
 
-    if(!_displayDiscretizationMesh)
-        _meshCrew->discretizer().releaseDebugMesh();
+    if(!_displaySamplingMesh)
+        _meshCrew->sampler().releaseDebugMesh();
 }
 
-void GpuMeshCharacter::useDiscretizationDensity(int density)
+void GpuMeshCharacter::useSamplingDensity(int density)
 {
-    _discretizationDensity = density;
-    updateDiscretization();
+    _samplingDensity = density;
+    updateSampling();
     updateMeshMeasures();
 }
 
-void GpuMeshCharacter::useDiscretizer(const std::string& discretizerName)
+void GpuMeshCharacter::useSampler(const std::string& samplerName)
 {
-    std::shared_ptr<AbstractDiscretizer> discretizer;
-    if(_availableDiscretizers.select(discretizerName, discretizer))
+    std::shared_ptr<AbstractSampler> sampler;
+    if(_availableSamplers.select(samplerName, sampler))
     {
-        _meshCrew->setDiscretizer(*_mesh, discretizer);
-        updateDiscretization();
+        _meshCrew->setSampler(*_mesh, sampler);
+        updateSampling();
         updateMeshMeasures();
     }
 }
@@ -731,7 +731,7 @@ void GpuMeshCharacter::updateMeshMeasures()
             MeshTet& elem = _mesh->tets[e];
             elem.value = _meshCrew->evaluator().tetQuality(
                 *_mesh,
-                _meshCrew->discretizer(),
+                _meshCrew->sampler(),
                 _meshCrew->measurer(),
                 elem);
         }
@@ -742,7 +742,7 @@ void GpuMeshCharacter::updateMeshMeasures()
             MeshPri& elem = _mesh->pris[e];
             elem.value = _meshCrew->evaluator().priQuality(
                 *_mesh,
-                _meshCrew->discretizer(),
+                _meshCrew->sampler(),
                 _meshCrew->measurer(),
                 elem);
         }
@@ -753,7 +753,7 @@ void GpuMeshCharacter::updateMeshMeasures()
             MeshHex& elem = _mesh->hexs[e];
             elem.value = _meshCrew->evaluator().hexQuality(
                 *_mesh,
-                _meshCrew->discretizer(),
+                _meshCrew->sampler(),
                 _meshCrew->measurer(),
                 elem);
         }
@@ -763,13 +763,14 @@ void GpuMeshCharacter::updateMeshMeasures()
     }
 }
 
-void GpuMeshCharacter::updateDiscretization()
+void GpuMeshCharacter::updateSampling()
 {
     if(_meshCrew->initialized())
     {
-        _meshCrew->discretizer().discretize(*_mesh, _discretizationDensity);
+        _meshCrew->sampler().setMetricReference(
+                    *_mesh, _samplingDensity);
 
-        if(_displayDiscretizationMesh)
+        if(_displaySamplingMesh)
             if(_renderer.get() != nullptr)
                 _renderer->notifyMeshUpdate();
     }

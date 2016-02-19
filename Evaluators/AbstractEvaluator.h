@@ -6,7 +6,7 @@
 #include "DataStructures/Mesh.h"
 #include "DataStructures/OptionMap.h"
 
-class AbstractDiscretizer;
+class AbstractSampler;
 class AbstractMeasurer;
 class MeshCrew;
 
@@ -48,48 +48,48 @@ public:
 
     virtual double tetQuality(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const MeshTet& tet) const;
     virtual double tetQuality(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const glm::dvec3 vp[]) const = 0;
 
     virtual double priQuality(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const MeshPri& pri) const;
     virtual double priQuality(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const glm::dvec3 vp[]) const = 0;
 
     virtual double hexQuality(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const MeshHex& hex) const;
     virtual double hexQuality(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const glm::dvec3 vp[]) const = 0;
 
     virtual double patchQuality(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             size_t vId) const;
 
 
     virtual bool assessMeasureValidy(
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer);
 
     virtual void evaluateMesh(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             double& minQuality,
             double& qualityMean,
@@ -97,35 +97,35 @@ public:
 
     virtual void evaluateMeshQualitySerial(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             double& minQuality,
             double& qualityMean) const;
 
     virtual void evaluateMeshQualityThread(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             double& minQuality,
             double& qualityMean) const;
 
     virtual void evaluateMeshQualityGlsl(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             double& minQuality,
             double& qualityMean) const;
 
     virtual void evaluateMeshQualityCuda(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             double& minQuality,
             double& qualityMean) const;
 
     virtual void benchmark(
             const Mesh& mesh,
-            const AbstractDiscretizer& discretizer,
+            const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
             const std::map<std::string, int>& cycleCounts);
 
@@ -155,14 +155,14 @@ protected:
     static const glm::dmat3 Fr_HEX_INV;
 
     GLuint _qualSsbo;
-    std::string _discretizationShader;
+    std::string _samplingShader;
     std::string _measureShader;
     std::string _evaluationShader;
     cellar::GlProgram _evaluationProgram;
     installCudaFct _installCuda;
 
     typedef std::function<void(const Mesh&,
-                               const AbstractDiscretizer&,
+                               const AbstractSampler&,
                                const AbstractMeasurer&,
                                double&,
                                double&)> ImplementationFunc;

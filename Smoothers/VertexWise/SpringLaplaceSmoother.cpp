@@ -51,7 +51,7 @@ void SpringLaplaceSmoother::smoothVertices(
 
         glm::dvec3 patchCenter =
             crew.measurer().computeVertexEquilibrium(
-                mesh, crew.discretizer(), vId);
+                mesh, crew.sampler(), vId);
 
         glm::dvec3& pos = verts[vId].p;
         pos = glm::mix(pos, patchCenter, _moveCoeff);

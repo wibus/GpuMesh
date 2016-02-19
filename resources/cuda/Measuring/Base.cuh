@@ -1,4 +1,4 @@
-#include "../Discretizing/Base.cuh"
+#include "../Sampling/Base.cuh"
 
 
 // Riemannian distance

@@ -39,7 +39,7 @@ inline double SolidAngleEvaluator::solidAngle(
 }
 
 double SolidAngleEvaluator::tetQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
@@ -55,7 +55,7 @@ double SolidAngleEvaluator::tetQuality(
 }
 
 double SolidAngleEvaluator::priQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {
@@ -74,7 +74,7 @@ double SolidAngleEvaluator::priQuality(
 }
 
 double SolidAngleEvaluator::hexQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const glm::dvec3 vp[]) const
 {

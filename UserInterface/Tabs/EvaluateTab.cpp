@@ -33,18 +33,18 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
     connect(_ui->enableAnisotropyCheck, &QCheckBox::toggled,
             this, &EvaluateTab::enableAnisotropy);
 
-    deployDiscretizations();
+    deploySamplings();
     connect(_ui->discretizationTypeMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &EvaluateTab::discretizationTypeChanged);
+            this, &EvaluateTab::samplingTypeChanged);
 
-    _character->useDiscretizationDensity(
-        _ui->discretizetionDensitySpin->value());
-    connect(_ui->discretizetionDensitySpin,
+    _character->useSamplingDensity(
+        _ui->discretizationDensitySpin->value());
+    connect(_ui->discretizationDensitySpin,
             static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            this, &EvaluateTab::discretizationDensityChanged);
+            this, &EvaluateTab::samplingDensityChanged);
 
-    _character->displayDiscretizationMesh(
+    _character->displaySamplingMesh(
         _ui->discretizationDisplayCheck->isChecked());
     connect(_ui->discretizationDisplayCheck, &QCheckBox::toggled,
             this, &EvaluateTab::displayDicretizationToggled);
@@ -87,9 +87,9 @@ void EvaluateTab::enableAnisotropy(bool enabled)
     _ui->discretizationGroup->setEnabled(enabled);
     if(enabled)
     {
-        _character->useDiscretizer(
+        _character->useSampler(
             _ui->discretizationTypeMenu->currentText().toStdString());
-        _character->displayDiscretizationMesh(
+        _character->displaySamplingMesh(
             _ui->discretizationDisplayCheck->isChecked());
     }
     else
@@ -98,20 +98,20 @@ void EvaluateTab::enableAnisotropy(bool enabled)
     }
 }
 
-void EvaluateTab::discretizationTypeChanged(const QString& type)
+void EvaluateTab::samplingTypeChanged(const QString& type)
 {
-    _character->useDiscretizer(type.toStdString());
+    _character->useSampler(type.toStdString());
 }
 
-void EvaluateTab::discretizationDensityChanged(int unused)
+void EvaluateTab::samplingDensityChanged(int unused)
 {
-    _character->useDiscretizationDensity(
-        _ui->discretizetionDensitySpin->value());
+    _character->useSamplingDensity(
+        _ui->discretizationDensitySpin->value());
 }
 
 void EvaluateTab::displayDicretizationToggled(bool display)
 {
-    _character->displayDiscretizationMesh(display);
+    _character->displaySamplingMesh(display);
 }
 
 void EvaluateTab::deployShapeMeasures()
@@ -185,14 +185,14 @@ void EvaluateTab::deployImplementations()
     _cycleCounts = newCycleCounts;
 }
 
-void EvaluateTab::deployDiscretizations()
+void EvaluateTab::deploySamplings()
 {
-    OptionMapDetails discretizers = _character->availableDiscretizers();
+    OptionMapDetails samplers = _character->availableSamplers();
 
     _ui->discretizationTypeMenu->clear();
-    for(const auto& name : discretizers.options)
+    for(const auto& name : samplers.options)
         _ui->discretizationTypeMenu->addItem(QString(name.c_str()));
-    _ui->discretizationTypeMenu->setCurrentText(discretizers.defaultOption.c_str());
+    _ui->discretizationTypeMenu->setCurrentText(samplers.defaultOption.c_str());
 
-    _character->useDiscretizer(discretizers.defaultOption);
+    _character->useSampler(samplers.defaultOption);
 }

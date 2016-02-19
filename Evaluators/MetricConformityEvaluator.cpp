@@ -23,7 +23,7 @@ MetricConformityEvaluator::~MetricConformityEvaluator()
 }
 
 Metric MetricConformityEvaluator::specifiedMetric(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const dvec3& v0,
         const dvec3& v1,
         const dvec3& v2,
@@ -36,11 +36,11 @@ Metric MetricConformityEvaluator::specifiedMetric(
 
     const double H = 0.5;
     const double Q = (1.0 - H) / 3.0;
-    return (discretizer.metricAt((v0 + v1 + v2 + v3)/4.0) * (-0.8) +
-            discretizer.metricAt(v0*H + v1*Q + v2*Q + v3*Q) * 0.45 +
-            discretizer.metricAt(v0*Q + v1*H + v2*Q + v3*Q) * 0.45 +
-            discretizer.metricAt(v0*Q + v1*Q + v2*H + v3*Q) * 0.45 +
-            discretizer.metricAt(v0*Q + v1*Q + v2*Q + v3*H) * 0.45);
+    return (sampler.metricAt((v0 + v1 + v2 + v3)/4.0) * (-0.8) +
+            sampler.metricAt(v0*H + v1*Q + v2*Q + v3*Q) * 0.45 +
+            sampler.metricAt(v0*Q + v1*H + v2*Q + v3*Q) * 0.45 +
+            sampler.metricAt(v0*Q + v1*Q + v2*H + v3*Q) * 0.45 +
+            sampler.metricAt(v0*Q + v1*Q + v2*Q + v3*H) * 0.45);
 }
 
 double MetricConformityEvaluator::metricConformity(
@@ -64,7 +64,7 @@ double MetricConformityEvaluator::metricConformity(
 }
 
 double MetricConformityEvaluator::tetQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const dvec3 vp[]) const
 {
@@ -74,7 +74,7 @@ double MetricConformityEvaluator::tetQuality(
 
     glm::dmat3 Fk = dmat3(e10, e20, e30) * Fr_TET_INV;
 
-    Metric Ms0 = specifiedMetric(discretizer, vp[0], vp[1], vp[2], vp[3]);
+    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[3]);
 
     double qual0 = metricConformity(Fk, Ms0);
 
@@ -82,7 +82,7 @@ double MetricConformityEvaluator::tetQuality(
 }
 
 double MetricConformityEvaluator::priQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const dvec3 vp[]) const
 {
@@ -105,12 +105,12 @@ double MetricConformityEvaluator::priQuality(
     dmat3 Fk4 = dmat3(e42, -e04, -e45) * Fr_PRI_INV;
     dmat3 Fk5 = dmat3(e15,  e35,  e45) * Fr_PRI_INV;
 
-    Metric Ms0 = specifiedMetric(discretizer, vp[0], vp[2], vp[4], vp[1]);
-    Metric Ms1 = specifiedMetric(discretizer, vp[0], vp[1], vp[3], vp[5]);
-    Metric Ms2 = specifiedMetric(discretizer, vp[0], vp[2], vp[3], vp[4]);
-    Metric Ms3 = specifiedMetric(discretizer, vp[1], vp[2], vp[3], vp[5]);
-    Metric Ms4 = specifiedMetric(discretizer, vp[0], vp[2], vp[4], vp[5]);
-    Metric Ms5 = specifiedMetric(discretizer, vp[1], vp[3], vp[4], vp[5]);
+    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[2], vp[4], vp[1]);
+    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[3], vp[5]);
+    Metric Ms2 = specifiedMetric(sampler, vp[0], vp[2], vp[3], vp[4]);
+    Metric Ms3 = specifiedMetric(sampler, vp[1], vp[2], vp[3], vp[5]);
+    Metric Ms4 = specifiedMetric(sampler, vp[0], vp[2], vp[4], vp[5]);
+    Metric Ms5 = specifiedMetric(sampler, vp[1], vp[3], vp[4], vp[5]);
 
     double qual0 = metricConformity(Fk0, Ms0);
     double qual1 = metricConformity(Fk1, Ms1);
@@ -123,7 +123,7 @@ double MetricConformityEvaluator::priQuality(
 }
 
 double MetricConformityEvaluator::hexQuality(
-        const AbstractDiscretizer& discretizer,
+        const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
         const dvec3 vp[]) const
 {
@@ -151,14 +151,14 @@ double MetricConformityEvaluator::hexQuality(
     dmat3 Fk6 = dmat3(e26,  e46, -e67);
     dmat3 Fk7 = dmat3(e37,  e67,  e57);
 
-    Metric Ms0 = specifiedMetric(discretizer, vp[0], vp[1], vp[2], vp[4]);
-    Metric Ms1 = specifiedMetric(discretizer, vp[0], vp[1], vp[3], vp[5]);
-    Metric Ms2 = specifiedMetric(discretizer, vp[0], vp[2], vp[3], vp[6]);
-    Metric Ms3 = specifiedMetric(discretizer, vp[1], vp[2], vp[3], vp[7]);
-    Metric Ms4 = specifiedMetric(discretizer, vp[0], vp[4], vp[5], vp[6]);
-    Metric Ms5 = specifiedMetric(discretizer, vp[1], vp[4], vp[5], vp[7]);
-    Metric Ms6 = specifiedMetric(discretizer, vp[2], vp[4], vp[6], vp[7]);
-    Metric Ms7 = specifiedMetric(discretizer, vp[3], vp[5], vp[6], vp[7]);
+    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[4]);
+    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[3], vp[5]);
+    Metric Ms2 = specifiedMetric(sampler, vp[0], vp[2], vp[3], vp[6]);
+    Metric Ms3 = specifiedMetric(sampler, vp[1], vp[2], vp[3], vp[7]);
+    Metric Ms4 = specifiedMetric(sampler, vp[0], vp[4], vp[5], vp[6]);
+    Metric Ms5 = specifiedMetric(sampler, vp[1], vp[4], vp[5], vp[7]);
+    Metric Ms6 = specifiedMetric(sampler, vp[2], vp[4], vp[6], vp[7]);
+    Metric Ms7 = specifiedMetric(sampler, vp[3], vp[5], vp[6], vp[7]);
 
     double qual0 = metricConformity(Fk0, Ms0);
     double qual1 = metricConformity(Fk1, Ms1);

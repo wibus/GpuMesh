@@ -1,22 +1,22 @@
-#ifndef GPUMESH_UNIFORMDISCRETIZER
-#define GPUMESH_UNIFORMDISCRETIZER
+#ifndef GPUMESH_UNIFORMSAMPLER
+#define GPUMESH_UNIFORMSAMPLER
 
-#include "AbstractDiscretizer.h"
+#include "AbstractSampler.h"
 
 class UniformGrid;
 
 
-class UniformDiscretizer : public AbstractDiscretizer
+class UniformSampler : public AbstractSampler
 {
 public:
-    UniformDiscretizer();
-    virtual ~UniformDiscretizer();
+    UniformSampler();
+    virtual ~UniformSampler();
 
 
     virtual bool isMetricWise() const override;
 
 
-    virtual void discretize(
+    virtual void setMetricReference(
             const Mesh& mesh,
             int density) override;
 
@@ -43,4 +43,4 @@ private:
     std::shared_ptr<Mesh> _debugMesh;
 };
 
-#endif // GPUMESH_UNIFORMDISCRETIZER
+#endif // GPUMESH_UNIFORMSAMPLER

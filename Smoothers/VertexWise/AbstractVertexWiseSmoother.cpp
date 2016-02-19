@@ -8,7 +8,7 @@
 #include <fstream>
 
 #include "DataStructures/MeshCrew.h"
-#include "Discretizers/AbstractDiscretizer.h"
+#include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
 
@@ -203,7 +203,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
 {
     if(_initialized &&
        _modelBoundsShader == mesh.modelBoundsShaderName() &&
-       _discretizationShader == crew.discretizer().discretizationShader() &&
+       _samplingShader == crew.sampler().samplingShader() &&
        _evaluationShader == crew.evaluator().evaluationShader() &&
        _measureShader == crew.measurer().measureShader())
             return;
@@ -213,7 +213,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
         "Initializing smoothing compute shader", "AbstractVertexWiseSmoother"));
 
     _modelBoundsShader = mesh.modelBoundsShaderName();
-    _discretizationShader = crew.discretizer().discretizationShader();
+    _samplingShader = crew.sampler().samplingShader();
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();
 

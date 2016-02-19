@@ -73,7 +73,7 @@ bool StlSerializer::serialize(
                 glm::vec3(mesh.verts[elem.v[MeshTet::tris[t][1]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshTet::tris[t][2]]].p)};
             double qual = computeQuality ? crew.evaluator().tetQuality(
-                mesh, crew.discretizer(), crew.measurer(), elem) : 0;
+                mesh, crew.sampler(), crew.measurer(), elem) : 0;
             printFunc(stlFile, v, qual);
         }
     }
@@ -89,7 +89,7 @@ bool StlSerializer::serialize(
                 glm::vec3(mesh.verts[elem.v[MeshPri::tris[t][1]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshPri::tris[t][2]]].p)};
             double qual = computeQuality ? crew.evaluator().priQuality(
-                mesh, crew.discretizer(), crew.measurer(), elem) : 0;
+                mesh, crew.sampler(), crew.measurer(), elem) : 0;
             printFunc(stlFile, v, qual);
         }
     }
@@ -105,7 +105,7 @@ bool StlSerializer::serialize(
                 glm::vec3(mesh.verts[elem.v[MeshHex::tris[t][1]]].p),
                 glm::vec3(mesh.verts[elem.v[MeshHex::tris[t][2]]].p)};
             double qual = computeQuality ? crew.evaluator().hexQuality(
-                mesh, crew.discretizer(), crew.measurer(), elem) : 0;
+                mesh, crew.sampler(), crew.measurer(), elem) : 0;
             printFunc(stlFile, v, qual);
         }
     }

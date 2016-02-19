@@ -10,7 +10,7 @@ __device__ metricAtFct uniformMetricAtPtr = uniformMetricAt;
 
 
 // CUDA Drivers
-void installCudaUniformDiscretizer()
+void installCudaUniformSampler()
 {
     metricAtFct d_metricAt = nullptr;
     cudaMemcpyFromSymbol(&d_metricAt, uniformMetricAtPtr, sizeof(metricAtFct));
