@@ -908,7 +908,7 @@ void CpuDelaunayMesher::makeTetrahedronPositive(Tetrahedron* tet)
     const glm::dvec3& C = vert[tet->v[2]].p;
     const glm::dvec3& D = vert[tet->v[3]].p;
 
-    glm::dvec3 d10(A - B);
+    glm::dvec3 d10(B - A);
     glm::dvec3 d12(C - B);
     glm::dvec3 d23(D - C);
     glm::dmat3 triple(d10, d12, d23);

@@ -68,11 +68,11 @@ double MetricConformityEvaluator::tetQuality(
         const AbstractMeasurer& measurer,
         const dvec3 vp[]) const
 {
-    glm::dvec3 e10 = vp[0] - vp[1];
-    glm::dvec3 e20 = vp[0] - vp[2];
-    glm::dvec3 e30 = vp[0] - vp[3];
+    glm::dvec3 e03 = vp[3] - vp[0];
+    glm::dvec3 e13 = vp[3] - vp[1];
+    glm::dvec3 e23 = vp[3] - vp[2];
 
-    glm::dmat3 Fk = dmat3(e10, e20, e30) * Fr_TET_INV;
+    glm::dmat3 Fk = dmat3(e03, e13, e23) * Fr_TET_INV;
 
     Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[3]);
 
@@ -86,31 +86,31 @@ double MetricConformityEvaluator::priQuality(
         const AbstractMeasurer& measurer,
         const dvec3 vp[]) const
 {
+    dvec3 e03 = vp[3] - vp[0];
+    dvec3 e14 = vp[4] - vp[1];
+    dvec3 e25 = vp[5] - vp[2];
     dvec3 e01 = vp[1] - vp[0];
-    dvec3 e02 = vp[2] - vp[0];
-    dvec3 e04 = vp[4] - vp[0];
-    dvec3 e13 = vp[3] - vp[1];
-    dvec3 e15 = vp[5] - vp[1];
-    dvec3 e23 = vp[3] - vp[2];
-    dvec3 e42 = vp[2] - vp[4];
-    dvec3 e35 = vp[5] - vp[3];
+    dvec3 e12 = vp[2] - vp[1];
+    dvec3 e20 = vp[0] - vp[2];
+    dvec3 e34 = vp[4] - vp[3];
     dvec3 e45 = vp[5] - vp[4];
+    dvec3 e53 = vp[3] - vp[5];
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two's cross product
-    dmat3 Fk0 = dmat3(e02,  e04,  e01) * Fr_PRI_INV;
-    dmat3 Fk1 = dmat3(e13,  e15,  e01) * Fr_PRI_INV;
-    dmat3 Fk2 = dmat3(e02,  e42, -e23) * Fr_PRI_INV;
-    dmat3 Fk3 = dmat3(e35, -e13,  e23) * Fr_PRI_INV;
-    dmat3 Fk4 = dmat3(e42, -e04, -e45) * Fr_PRI_INV;
-    dmat3 Fk5 = dmat3(e15,  e35,  e45) * Fr_PRI_INV;
+    dmat3 Fk0 = dmat3(-e01, e20, e03) * Fr_PRI_INV;
+    dmat3 Fk1 = dmat3(-e12, e01, e14) * Fr_PRI_INV;
+    dmat3 Fk2 = dmat3(-e20, e12, e25) * Fr_PRI_INV;
+    dmat3 Fk3 = dmat3(-e34, e53, e03) * Fr_PRI_INV;
+    dmat3 Fk4 = dmat3(-e45, e34, e14) * Fr_PRI_INV;
+    dmat3 Fk5 = dmat3(-e53, e45, e25) * Fr_PRI_INV;
 
-    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[2], vp[4], vp[1]);
-    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[3], vp[5]);
-    Metric Ms2 = specifiedMetric(sampler, vp[0], vp[2], vp[3], vp[4]);
-    Metric Ms3 = specifiedMetric(sampler, vp[1], vp[2], vp[3], vp[5]);
-    Metric Ms4 = specifiedMetric(sampler, vp[0], vp[2], vp[4], vp[5]);
-    Metric Ms5 = specifiedMetric(sampler, vp[1], vp[3], vp[4], vp[5]);
+    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[3]);
+    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[4]);
+    Metric Ms2 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[5]);
+    Metric Ms3 = specifiedMetric(sampler, vp[0], vp[3], vp[4], vp[5]);
+    Metric Ms4 = specifiedMetric(sampler, vp[1], vp[3], vp[4], vp[5]);
+    Metric Ms5 = specifiedMetric(sampler, vp[2], vp[3], vp[4], vp[5]);
 
     double qual0 = metricConformity(Fk0, Ms0);
     double qual1 = metricConformity(Fk1, Ms1);
@@ -128,37 +128,37 @@ double MetricConformityEvaluator::hexQuality(
         const dvec3 vp[]) const
 {
     dvec3 e01 = vp[1] - vp[0];
-    dvec3 e02 = vp[2] - vp[0];
+    dvec3 e03 = vp[3] - vp[0];
     dvec3 e04 = vp[4] - vp[0];
-    dvec3 e13 = vp[3] - vp[1];
+    dvec3 e12 = vp[2] - vp[1];
     dvec3 e15 = vp[5] - vp[1];
     dvec3 e23 = vp[3] - vp[2];
     dvec3 e26 = vp[6] - vp[2];
     dvec3 e37 = vp[7] - vp[3];
     dvec3 e45 = vp[5] - vp[4];
-    dvec3 e46 = vp[6] - vp[4];
-    dvec3 e57 = vp[7] - vp[5];
+    dvec3 e47 = vp[7] - vp[4];
+    dvec3 e56 = vp[6] - vp[5];
     dvec3 e67 = vp[7] - vp[6];
 
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_INV.
-    dmat3 Fk0 = dmat3(e01,  e04, -e02);
-    dmat3 Fk1 = dmat3(e01,  e13,  e15);
-    dmat3 Fk2 = dmat3(e02,  e26,  e23);
-    dmat3 Fk3 = dmat3(e13,  e23, -e37);
-    dmat3 Fk4 = dmat3(e04,  e45,  e46);
-    dmat3 Fk5 = dmat3(e15, -e57,  e45);
-    dmat3 Fk6 = dmat3(e26,  e46, -e67);
-    dmat3 Fk7 = dmat3(e37,  e67,  e57);
+    dmat3 Fk0 = dmat3(e01,  e04, -e03);
+    dmat3 Fk1 = dmat3(e01,  e12,  e15);
+    dmat3 Fk2 = dmat3(e12,  e26, -e23);
+    dmat3 Fk3 = dmat3(e03,  e23,  e37);
+    dmat3 Fk4 = dmat3(e04,  e45,  e47);
+    dmat3 Fk5 = dmat3(e15, -e56,  e45);
+    dmat3 Fk6 = dmat3(e26,  e56,  e67);
+    dmat3 Fk7 = dmat3(e37,  e67, -e47);
 
-    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[4]);
-    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[3], vp[5]);
-    Metric Ms2 = specifiedMetric(sampler, vp[0], vp[2], vp[3], vp[6]);
-    Metric Ms3 = specifiedMetric(sampler, vp[1], vp[2], vp[3], vp[7]);
-    Metric Ms4 = specifiedMetric(sampler, vp[0], vp[4], vp[5], vp[6]);
-    Metric Ms5 = specifiedMetric(sampler, vp[1], vp[4], vp[5], vp[7]);
-    Metric Ms6 = specifiedMetric(sampler, vp[2], vp[4], vp[6], vp[7]);
-    Metric Ms7 = specifiedMetric(sampler, vp[3], vp[5], vp[6], vp[7]);
+    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[3], vp[4]);
+    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[5]);
+    Metric Ms2 = specifiedMetric(sampler, vp[1], vp[2], vp[3], vp[6]);
+    Metric Ms3 = specifiedMetric(sampler, vp[0], vp[2], vp[3], vp[7]);
+    Metric Ms4 = specifiedMetric(sampler, vp[0], vp[4], vp[5], vp[7]);
+    Metric Ms5 = specifiedMetric(sampler, vp[1], vp[4], vp[5], vp[6]);
+    Metric Ms6 = specifiedMetric(sampler, vp[2], vp[5], vp[6], vp[7]);
+    Metric Ms7 = specifiedMetric(sampler, vp[3], vp[4], vp[6], vp[7]);
 
     double qual0 = metricConformity(Fk0, Ms0);
     double qual1 = metricConformity(Fk1, Ms1);

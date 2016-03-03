@@ -266,12 +266,12 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
                         (currRingSideBaseIdx + 1)%currRingVertCount;
 
                 mesh.pris.push_back(MeshPri(
-                    lastSliceBaseIdx + currRingBaseIdx + currRingSideBaseIdx,
-                    currSliceBaseIdx + currRingBaseIdx + currRingSideBaseIdx,
-                    lastSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx,
-                    currSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx,
                     lastSliceBaseIdx + lastRingBaseIdx + lastRingSideBaseIdx,
-                    currSliceBaseIdx + lastRingBaseIdx + lastRingSideBaseIdx));
+                    lastSliceBaseIdx + currRingBaseIdx + currRingSideBaseIdx,
+                    lastSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx,
+                    currSliceBaseIdx + lastRingBaseIdx + lastRingSideBaseIdx,
+                    currSliceBaseIdx + currRingBaseIdx + currRingSideBaseIdx,
+                    currSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx));
 
                 size_t currRingSideStepIdx = currRingSideNextIdx;
                 size_t lastRingSideStepIdx = lastRingSideBaseIdx;
@@ -282,18 +282,18 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
 
                     mesh.pris.push_back(MeshPri(
                         lastSliceBaseIdx + lastRingBaseIdx + lastRingSideStepIdx,
-                        currSliceBaseIdx + lastRingBaseIdx + lastRingSideStepIdx,
                         lastSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
-                        currSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
                         lastSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx,
+                        currSliceBaseIdx + lastRingBaseIdx + lastRingSideStepIdx,
+                        currSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
                         currSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx));
 
                     mesh.pris.push_back(MeshPri(
                         lastSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx,
-                        currSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx,
                         lastSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
-                        currSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
                         lastSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx,
+                        currSliceBaseIdx + lastRingBaseIdx + lastRingSideNextIdx,
+                        currSliceBaseIdx + currRingBaseIdx + currRingSideStepIdx,
                         currSliceBaseIdx + currRingBaseIdx + currRingSideNextIdx));
 
                     ++currRingSideStepIdx;
@@ -396,12 +396,12 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
                 mesh.hexs.push_back(MeshHex(
                     currSliceBaseIdx + d,
                     lastSliceBaseIdx + d,
-                    currSliceBaseIdx + nextD,
                     lastSliceBaseIdx + nextD,
+                    currSliceBaseIdx + nextD,
                     currStackBaseIdx + d,
                     lastStackBaseIdx + d,
-                    currStackBaseIdx + nextD,
-                    lastStackBaseIdx + nextD));
+                    lastStackBaseIdx + nextD,
+                    currStackBaseIdx + nextD));
             }
         }
 
@@ -416,12 +416,12 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
                 mesh.hexs.push_back(MeshHex(
                     currStackBaseIdx + lastRingIdx + d,
                     lastStackBaseIdx + lastRingIdx + d,
-                    currStackBaseIdx + lastRingIdx + nextD,
                     lastStackBaseIdx + lastRingIdx + nextD,
+                    currStackBaseIdx + lastRingIdx + nextD,
                     currStackBaseIdx + currRingIdx + d,
                     lastStackBaseIdx + currRingIdx + d,
-                    currStackBaseIdx + currRingIdx + nextD,
-                    lastStackBaseIdx + currRingIdx + nextD));
+                    lastStackBaseIdx + currRingIdx + nextD,
+                    currStackBaseIdx + currRingIdx + nextD));
             }
         }
 
@@ -477,12 +477,12 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
                 mesh.hexs.push_back(MeshHex(
                     currStackBaseIdx + ultimateRingIdx + d,
                     lastStackBaseIdx + ultimateRingIdx + d,
-                    currStackBaseIdx + ultimateRingIdx + nextD,
                     lastStackBaseIdx + ultimateRingIdx + nextD,
+                    currStackBaseIdx + ultimateRingIdx + nextD,
                     currRingIdx + d,
                     lastRingIdx + d,
-                    currRingIdx + nextD,
-                    lastRingIdx + nextD));
+                    lastRingIdx + nextD,
+                    currRingIdx + nextD));
             }
         }
 
@@ -497,12 +497,12 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
                 mesh.hexs.push_back(MeshHex(
                     currStackBaseIdx + lastRingIdx + d,
                     lastStackBaseIdx + lastRingIdx + d,
-                    currStackBaseIdx + lastRingIdx + nextD,
                     lastStackBaseIdx + lastRingIdx + nextD,
+                    currStackBaseIdx + lastRingIdx + nextD,
                     currStackBaseIdx + currRingIdx + d,
                     lastStackBaseIdx + currRingIdx + d,
-                    currStackBaseIdx + currRingIdx + nextD,
-                    lastStackBaseIdx + currRingIdx + nextD));
+                    lastStackBaseIdx + currRingIdx + nextD,
+                    currStackBaseIdx + currRingIdx + nextD));
             }
         }
 
@@ -671,12 +671,12 @@ void CpuParametricMesher::meshPipe(
             // Create penta center
             mesh.pris.push_back(
                 MeshPri(
-                    minJ + minK,
-                    minJ + maxK,
-                    maxJ + minK,
-                    maxJ + maxK,
                     minK,
-                    maxK
+                    minK + minJ,
+                    minK + maxJ,
+                    maxK,
+                    maxK + minJ,
+                    maxK + maxJ
             ));
 
 
@@ -690,12 +690,12 @@ void CpuParametricMesher::meshPipe(
                     MeshHex(
                         minI + minJ + minK,
                         maxI + minJ + minK,
-                        minI + maxJ + minK,
                         maxI + maxJ + minK,
+                        minI + maxJ + minK,
                         minI + minJ + maxK,
                         maxI + minJ + maxK,
-                        minI + maxJ + maxK,
-                        maxI + maxJ + maxK
+                        maxI + maxJ + maxK,
+                        minI + maxJ + maxK
                 ));
             }
         }

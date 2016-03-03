@@ -67,9 +67,9 @@ double MetricWiseMeasurer::tetVolume(
         const glm::dvec3 vp[]) const
 {
     double detSum = glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[3], vp[0]),
-        riemannianSegment(sampler, vp[3], vp[1]),
-        riemannianSegment(sampler, vp[3], vp[2])));
+        riemannianSegment(sampler, vp[0], vp[3]),
+        riemannianSegment(sampler, vp[1], vp[3]),
+        riemannianSegment(sampler, vp[2], vp[3])));
 
     return detSum / 6.0;
 }
@@ -78,16 +78,16 @@ double MetricWiseMeasurer::priVolume(
         const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
-    glm::dvec3 e20 = riemannianSegment(sampler, vp[2], vp[0]);
-    glm::dvec3 e21 = riemannianSegment(sampler, vp[2], vp[1]);
-    glm::dvec3 e23 = riemannianSegment(sampler, vp[2], vp[3]);
-    glm::dvec3 e24 = riemannianSegment(sampler, vp[2], vp[4]);
-    glm::dvec3 e25 = riemannianSegment(sampler, vp[2], vp[5]);
+    glm::dvec3 e02 = riemannianSegment(sampler, vp[0], vp[2]);
+    glm::dvec3 e12 = riemannianSegment(sampler, vp[1], vp[2]);
+    glm::dvec3 e32 = riemannianSegment(sampler, vp[3], vp[2]);
+    glm::dvec3 e42 = riemannianSegment(sampler, vp[4], vp[2]);
+    glm::dvec3 e52 = riemannianSegment(sampler, vp[5], vp[2]);
 
     double detSum = 0.0;
-    detSum += glm::determinant(glm::dmat3(e24, e20, e21));
-    detSum += glm::determinant(glm::dmat3(e25, e21, e23));
-    detSum += glm::determinant(glm::dmat3(e24, e21, e25));
+    detSum += glm::determinant(glm::dmat3(e32, e52, e42));
+    detSum += glm::determinant(glm::dmat3(e02, e32, e42));
+    detSum += glm::determinant(glm::dmat3(e12, e02, e42));
 
     return detSum / 6.0;
 }
@@ -98,25 +98,25 @@ double MetricWiseMeasurer::hexVolume(
 {
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[0], vp[1]),
-        riemannianSegment(sampler, vp[0], vp[2]),
-        riemannianSegment(sampler, vp[0], vp[4])));
-    detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[3], vp[1]),
-        riemannianSegment(sampler, vp[3], vp[7]),
-        riemannianSegment(sampler, vp[3], vp[2])));
-    detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[5], vp[1]),
-        riemannianSegment(sampler, vp[5], vp[4]),
-        riemannianSegment(sampler, vp[5], vp[7])));
-    detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[6], vp[2]),
-        riemannianSegment(sampler, vp[6], vp[7]),
-        riemannianSegment(sampler, vp[6], vp[4])));
+        riemannianSegment(sampler, vp[1], vp[0]),
+        riemannianSegment(sampler, vp[4], vp[0]),
+        riemannianSegment(sampler, vp[3], vp[0])));
     detSum += glm::determinant(glm::dmat3(
         riemannianSegment(sampler, vp[1], vp[2]),
+        riemannianSegment(sampler, vp[3], vp[2]),
+        riemannianSegment(sampler, vp[6], vp[2])));
+    detSum += glm::determinant(glm::dmat3(
+        riemannianSegment(sampler, vp[4], vp[5]),
+        riemannianSegment(sampler, vp[1], vp[5]),
+        riemannianSegment(sampler, vp[6], vp[5])));
+    detSum += glm::determinant(glm::dmat3(
+        riemannianSegment(sampler, vp[4], vp[7]),
+        riemannianSegment(sampler, vp[6], vp[7]),
+        riemannianSegment(sampler, vp[3], vp[7])));
+    detSum += glm::determinant(glm::dmat3(
         riemannianSegment(sampler, vp[1], vp[4]),
-        riemannianSegment(sampler, vp[1], vp[7])));
+        riemannianSegment(sampler, vp[6], vp[4]),
+        riemannianSegment(sampler, vp[3], vp[4])));
 
     return detSum / 6.0;
 }

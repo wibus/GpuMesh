@@ -510,12 +510,12 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
             uint baseVert = mesh.verts.size();
             mesh.verts.push_back(glm::dvec3(node->minBox.x, node->minBox.y, node->minBox.z));
             mesh.verts.push_back(glm::dvec3(node->maxBox.x, node->minBox.y, node->minBox.z));
-            mesh.verts.push_back(glm::dvec3(node->minBox.x, node->maxBox.y, node->minBox.z));
             mesh.verts.push_back(glm::dvec3(node->maxBox.x, node->maxBox.y, node->minBox.z));
+            mesh.verts.push_back(glm::dvec3(node->minBox.x, node->maxBox.y, node->minBox.z));
             mesh.verts.push_back(glm::dvec3(node->minBox.x, node->minBox.y, node->maxBox.z));
             mesh.verts.push_back(glm::dvec3(node->maxBox.x, node->minBox.y, node->maxBox.z));
-            mesh.verts.push_back(glm::dvec3(node->minBox.x, node->maxBox.y, node->maxBox.z));
             mesh.verts.push_back(glm::dvec3(node->maxBox.x, node->maxBox.y, node->maxBox.z));
+            mesh.verts.push_back(glm::dvec3(node->minBox.x, node->maxBox.y, node->maxBox.z));
 
             MeshHex hex(baseVert + 0, baseVert + 1, baseVert + 2, baseVert + 3,
                         baseVert + 4, baseVert + 5, baseVert + 6, baseVert + 7);

@@ -20,6 +20,7 @@ struct MeshVert
 {
     glm::dvec3 p;
 
+
     inline MeshVert() : p(0) {}
     inline MeshVert(const glm::dvec3 p) : p(p){}
     inline double& operator[] (int c) { return p[c]; }
@@ -31,15 +32,11 @@ struct MeshEdge
 {
     uint v[2];
 
-#if defined(_MSC_VER) && _MSC_VER <= 1800
-	inline MeshEdge() {}
-	inline MeshEdge(uint v0, uint v1) 
-		{ v[0] = v0; v[1] = v1; }
-#else
+
     inline MeshEdge() : v{0, 0} {}
     inline MeshEdge(uint v0, uint v1) :
-		v{v0, v1} {}
-#endif
+        v{v0, v1} {}
+
     inline uint& operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
 };
@@ -48,15 +45,11 @@ struct MeshTri
 {
     uint v[3];
 
-#if defined(_MSC_VER) && _MSC_VER <= 1800
-	inline MeshTri() {}
-	inline MeshTri(uint v0, uint v1, uint v2) 
-		{ v[0] = v0; v[1] = v1; v[2] = v2; }
-#else
+
 	inline MeshTri() : v{0, 0, 0} {}
 	inline MeshTri(uint v0, uint v1, uint v2) : 
 		v{v0, v1, v2} {}
-#endif
+
     inline uint& operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
 };
@@ -68,15 +61,10 @@ struct MeshTet
     double value;
 
 
-#if defined(_MSC_VER) && _MSC_VER <= 1800
-	inline MeshTet() {}
-	inline MeshTet(uint v0, uint v1, uint v2, uint v3) 
-		{ v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3; }
-#else
 	inline MeshTet() : v{0, 0, 0, 0} {}
 	inline MeshTet(uint v0, uint v1, uint v2, uint v3) : 
 		v{v0, v1, v2, v3} {}
-#endif
+
     inline uint& operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
 
@@ -97,18 +85,11 @@ struct MeshPri
     double value;
 
 
-#if defined(_MSC_VER) && _MSC_VER <= 1800
-	inline MeshPri() {}
-	inline MeshPri(uint v0, uint v1, uint v2,
-				   uint v3, uint v4, uint v5) 
-	{ v[0] = v0; v[1] = v1; v[2] = v2; 
-	  v[3] = v3; v[4] = v4; v[5] = v5; }
-#else
 	inline MeshPri() : v{0, 0, 0, 0, 0, 0} {}
 	inline MeshPri(uint v0, uint v1, uint v2,
 		           uint v3, uint v4, uint v5) :
 		v{ v0, v1, v2, v3, v4, v5 } {}
-#endif
+
     inline uint operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
 
@@ -129,18 +110,11 @@ struct MeshHex
     double value;
 
 
-#if defined(_MSC_VER) && _MSC_VER <= 1800
-	inline MeshHex() {}
-	inline MeshHex(uint v0, uint v1, uint v2, uint v3,
-		           uint v4, uint v5, uint v6, uint v7) 
-		{ v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3; 
-	      v[4] = v4; v[5] = v5; v[6] = v6; v[7] = v7; }
-#else
 	inline MeshHex() : v{0, 0, 0, 0, 0, 0, 0, 0} {}
 	inline MeshHex(uint v0, uint v1, uint v2, uint v3,
 		           uint v4, uint v5, uint v6, uint v7) :
 		v{ v0, v1, v2, v3, v4, v5, v6, v7 } {}
-#endif
+
     inline uint operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
 

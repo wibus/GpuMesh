@@ -365,7 +365,7 @@ void SurfacicRenderer::compileFacesAttributes(
                     glm::dvec3 normal = glm::normalize(glm::cross(A, B));
                     pushTriangle(vertices, normals, triEdges, qualities,
                                  verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                                 normal, f < 6, quality);
+                                 normal, f >= 2, quality);
                 }
             }
         }

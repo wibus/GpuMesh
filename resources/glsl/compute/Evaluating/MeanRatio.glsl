@@ -27,13 +27,13 @@ float cornerQuality(in mat3 Fk)
 
 float tetQuality(in vec3 vp[4])
 {
-    vec3 e10 = riemannianSegment(vp[1], vp[0]);
-    vec3 e20 = riemannianSegment(vp[2], vp[0]);
-    vec3 e30 = riemannianSegment(vp[3], vp[0]);
+    vec3 e03 = riemannianSegment(vp[0], vp[3]);
+    vec3 e13 = riemannianSegment(vp[1], vp[3]);
+    vec3 e23 = riemannianSegment(vp[2], vp[3]);
 
-    mat3 Tk0 = mat3(e10, e20, e30);
+    mat3 Fk0 = mat3(e03, e13, e23) * Fr_TET_INV;
 
-    float qual0 = cornerQuality(Tk0 * Fr_TET_INV);
+    float qual0 = cornerQuality(Fk0);
 
     // Shape measure is independent of chosen corner
     return qual0;
@@ -41,31 +41,31 @@ float tetQuality(in vec3 vp[4])
 
 float priQuality(in vec3 vp[6])
 {
+    vec3 e03 = riemannianSegment(vp[0], vp[3]);
+    vec3 e14 = riemannianSegment(vp[1], vp[4]);
+    vec3 e25 = riemannianSegment(vp[2], vp[5]);
     vec3 e01 = riemannianSegment(vp[0], vp[1]);
-    vec3 e02 = riemannianSegment(vp[0], vp[2]);
-    vec3 e04 = riemannianSegment(vp[0], vp[4]);
-    vec3 e13 = riemannianSegment(vp[1], vp[3]);
-    vec3 e15 = riemannianSegment(vp[1], vp[5]);
-    vec3 e23 = riemannianSegment(vp[2], vp[3]);
-    vec3 e42 = riemannianSegment(vp[4], vp[2]);
-    vec3 e35 = riemannianSegment(vp[3], vp[5]);
+    vec3 e12 = riemannianSegment(vp[1], vp[2]);
+    vec3 e20 = riemannianSegment(vp[2], vp[0]);
+    vec3 e34 = riemannianSegment(vp[3], vp[4]);
     vec3 e45 = riemannianSegment(vp[4], vp[5]);
+    vec3 e53 = riemannianSegment(vp[5], vp[3]);
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two cross product
-    mat3 Tk0 = mat3(e02,  e04,  e01);
-    mat3 Tk1 = mat3(e13,  e15,  e01);
-    mat3 Tk2 = mat3(e02,  e42, -e23);
-    mat3 Tk3 = mat3(e35, -e13,  e23);
-    mat3 Tk4 = mat3(e42, -e04, -e45);
-    mat3 Tk5 = mat3(e15,  e35,  e45);
+    mat3 Fk0 = mat3(-e01, e20, e03) * Fr_PRI_INV;
+    mat3 Fk1 = mat3(-e12, e01, e14) * Fr_PRI_INV;
+    mat3 Fk2 = mat3(-e20, e12, e25) * Fr_PRI_INV;
+    mat3 Fk3 = mat3(-e34, e53, e03) * Fr_PRI_INV;
+    mat3 Fk4 = mat3(-e45, e34, e14) * Fr_PRI_INV;
+    mat3 Fk5 = mat3(-e53, e45, e25) * Fr_PRI_INV;
 
-    float qual0 = cornerQuality(Tk0 * Fr_PRI_INV);
-    float qual1 = cornerQuality(Tk1 * Fr_PRI_INV);
-    float qual2 = cornerQuality(Tk2 * Fr_PRI_INV);
-    float qual3 = cornerQuality(Tk3 * Fr_PRI_INV);
-    float qual4 = cornerQuality(Tk4 * Fr_PRI_INV);
-    float qual5 = cornerQuality(Tk5 * Fr_PRI_INV);
+    float qual0 = cornerQuality(Fk0);
+    float qual1 = cornerQuality(Fk1);
+    float qual2 = cornerQuality(Fk2);
+    float qual3 = cornerQuality(Fk3);
+    float qual4 = cornerQuality(Fk4);
+    float qual5 = cornerQuality(Fk5);
 
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
@@ -73,37 +73,37 @@ float priQuality(in vec3 vp[6])
 float hexQuality(in vec3 vp[8])
 {
     // Since hex's corner matrix is the identity matrix,
-    // there's no need to define Fr_INV.
+    // there's no need to define Fr_HEX_INV.
     vec3 e01 = riemannianSegment(vp[0], vp[1]);
-    vec3 e02 = riemannianSegment(vp[0], vp[2]);
+    vec3 e03 = riemannianSegment(vp[0], vp[3]);
     vec3 e04 = riemannianSegment(vp[0], vp[4]);
-    vec3 e13 = riemannianSegment(vp[1], vp[3]);
+    vec3 e12 = riemannianSegment(vp[1], vp[2]);
     vec3 e15 = riemannianSegment(vp[1], vp[5]);
     vec3 e23 = riemannianSegment(vp[2], vp[3]);
     vec3 e26 = riemannianSegment(vp[2], vp[6]);
     vec3 e37 = riemannianSegment(vp[3], vp[7]);
     vec3 e45 = riemannianSegment(vp[4], vp[5]);
-    vec3 e46 = riemannianSegment(vp[4], vp[6]);
-    vec3 e57 = riemannianSegment(vp[5], vp[7]);
+    vec3 e47 = riemannianSegment(vp[4], vp[7]);
+    vec3 e56 = riemannianSegment(vp[5], vp[6]);
     vec3 e67 = riemannianSegment(vp[6], vp[7]);
 
-    mat3 Tk0 = mat3(e01,  e04, -e02);
-    mat3 Tk1 = mat3(e01,  e13,  e15);
-    mat3 Tk2 = mat3(e02,  e26,  e23);
-    mat3 Tk3 = mat3(e13,  e23, -e37);
-    mat3 Tk4 = mat3(e04,  e45,  e46);
-    mat3 Tk5 = mat3(e15, -e57,  e45);
-    mat3 Tk6 = mat3(e26,  e46, -e67);
-    mat3 Tk7 = mat3(e37,  e67,  e57);
+    mat3 Fk0 = mat3(e01,  e04, -e03);
+    mat3 Fk1 = mat3(e01,  e12,  e15);
+    mat3 Fk2 = mat3(e12,  e26, -e23);
+    mat3 Fk3 = mat3(e03,  e23,  e37);
+    mat3 Fk4 = mat3(e04,  e45,  e47);
+    mat3 Fk5 = mat3(e15, -e56,  e45);
+    mat3 Fk6 = mat3(e26,  e56,  e67);
+    mat3 Fk7 = mat3(e37,  e67, -e47);
 
-    float qual0 = cornerQuality(Tk0);
-    float qual1 = cornerQuality(Tk1);
-    float qual2 = cornerQuality(Tk2);
-    float qual3 = cornerQuality(Tk3);
-    float qual4 = cornerQuality(Tk4);
-    float qual5 = cornerQuality(Tk5);
-    float qual6 = cornerQuality(Tk6);
-    float qual7 = cornerQuality(Tk7);
+    float qual0 = cornerQuality(Fk0);
+    float qual1 = cornerQuality(Fk1);
+    float qual2 = cornerQuality(Fk2);
+    float qual3 = cornerQuality(Fk3);
+    float qual4 = cornerQuality(Fk4);
+    float qual5 = cornerQuality(Fk5);
+    float qual6 = cornerQuality(Fk6);
+    float qual7 = cornerQuality(Fk7);
 
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5 + qual6 + qual7) / 8.0;
 }

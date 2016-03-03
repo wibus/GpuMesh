@@ -43,8 +43,8 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         // Tetrahedron
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
         mesh.verts.push_back(glm::dvec3(1, 0, 0));
-        mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
         mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
+        mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
         mesh.tets.push_back(MeshTet(eBase + 0, eBase + 1,
                                     eBase + 2, eBase + 3));
         offset = glm::linearRand(glm::dvec3(-1.0), glm::dvec3(1.0));
@@ -61,10 +61,10 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         //*
         // Prism
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
-        mesh.verts.push_back(glm::dvec3(1, 0, 0));
         mesh.verts.push_back(glm::dvec3(0, 1, 0));
-        mesh.verts.push_back(glm::dvec3(1, 1, 0));
         mesh.verts.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
+        mesh.verts.push_back(glm::dvec3(1, 0, 0));
+        mesh.verts.push_back(glm::dvec3(1, 1, 0));
         mesh.verts.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
         mesh.pris.push_back(MeshPri(eBase + 0, eBase + 1, eBase + 2,
                                     eBase + 3, eBase + 4, eBase + 5));
@@ -83,12 +83,12 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         // Hexahedron
         mesh.verts.push_back(glm::dvec3(0, 0, 0));
         mesh.verts.push_back(glm::dvec3(1, 0, 0));
-        mesh.verts.push_back(glm::dvec3(0, 1, 0));
         mesh.verts.push_back(glm::dvec3(1, 1, 0));
+        mesh.verts.push_back(glm::dvec3(0, 1, 0));
         mesh.verts.push_back(glm::dvec3(0, 0, 1));
         mesh.verts.push_back(glm::dvec3(1, 0, 1));
-        mesh.verts.push_back(glm::dvec3(0, 1, 1));
         mesh.verts.push_back(glm::dvec3(1, 1, 1));
+        mesh.verts.push_back(glm::dvec3(0, 1, 1));
         mesh.hexs.push_back(MeshHex(eBase + 0, eBase + 1, eBase + 2, eBase + 3,
                                     eBase + 4, eBase + 5, eBase + 6, eBase + 7));
         offset = glm::linearRand(glm::dvec3(-1.0), glm::dvec3(1.0));
@@ -147,12 +147,12 @@ void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
                 MeshHex hex(
                     (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
                     (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
-                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
                     (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
                     (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
                     (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
-                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH,
-                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH);
+                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH);
                 mesh.hexs.push_back(hex);
             }
         }
@@ -194,12 +194,12 @@ void DebugMesher::genGrid(Mesh& mesh, size_t vertexCount)
                 MeshHex hex(
                     (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
                     (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+0) * Z_WIDTH,
-                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
                     (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+0) * Z_WIDTH,
                     (x+0) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
                     (x+1) * X_WIDTH + (y+0) * Y_WIDTH + (z+1) * Z_WIDTH,
-                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH,
-                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH);
+                    (x+1) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH,
+                    (x+0) * X_WIDTH + (y+1) * Y_WIDTH + (z+1) * Z_WIDTH);
                 mesh.hexs.push_back(hex);
             }
         }

@@ -18,28 +18,25 @@ __device__ float metricFreeTetVolume(const vec3 vp[TET_VERTEX_COUNT])
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
-        vp[0] - vp[3],
-        vp[1] - vp[3],
-        vp[2] - vp[3]));
+        vp[3] - vp[0],
+        vp[3] - vp[1],
+        vp[3] - vp[2]));
 
     return detSum / 6.0;
 }
 
 __device__ float metricFreePriVolume(const vec3 vp[PRI_VERTEX_COUNT])
 {
+    vec3 e02 = vp[2] - vp[0];
+    vec3 e12 = vp[2] - vp[1];
+    vec3 e32 = vp[2] - vp[3];
+    vec3 e42 = vp[2] - vp[4];
+    vec3 e52 = vp[2] - vp[5];
+
     float detSum = 0.0;
-    detSum += determinant(mat3(
-        vp[4] - vp[2],
-        vp[0] - vp[2],
-        vp[1] - vp[2]));
-    detSum += determinant(mat3(
-        vp[5] - vp[2],
-        vp[1] - vp[2],
-        vp[3] - vp[2]));
-    detSum += determinant(mat3(
-        vp[4] - vp[2],
-        vp[1] - vp[2],
-        vp[5] - vp[2]));
+    detSum += determinant(mat3(e32, e52, e42));
+    detSum += determinant(mat3(e02, e32, e42));
+    detSum += determinant(mat3(e12, e02, e42));
 
     return detSum / 6.0;
 }
@@ -48,25 +45,25 @@ __device__ float metricFreeHexVolume(const vec3 vp[HEX_VERTEX_COUNT])
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
-        vp[0] - vp[2],
-        vp[1] - vp[2],
-        vp[4] - vp[2]));
+        vp[0] - vp[1],
+        vp[0] - vp[4],
+        vp[0] - vp[3]));
     detSum += determinant(mat3(
-        vp[3] - vp[1],
         vp[2] - vp[1],
-        vp[7] - vp[1]));
+        vp[2] - vp[3],
+        vp[2] - vp[6]));
     detSum += determinant(mat3(
         vp[5] - vp[4],
-        vp[1] - vp[4],
-        vp[7] - vp[4]));
+        vp[5] - vp[1],
+        vp[5] - vp[6]));
     detSum += determinant(mat3(
-        vp[6] - vp[7],
-        vp[2] - vp[7],
-        vp[4] - vp[7]));
+        vp[7] - vp[4],
+        vp[7] - vp[6],
+        vp[7] - vp[3]));
     detSum += determinant(mat3(
-        vp[1] - vp[2],
-        vp[7] - vp[2],
-        vp[4] - vp[2]));
+        vp[4] - vp[1],
+        vp[4] - vp[6],
+        vp[4] - vp[3]));
 
     return detSum / 6.0;
 }

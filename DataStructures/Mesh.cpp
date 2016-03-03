@@ -23,15 +23,15 @@ const MeshEdge MeshTet::edges[MeshTet::EDGE_COUNT] = {
     MeshEdge(0, 2),
     MeshEdge(0, 3),
     MeshEdge(1, 2),
-    MeshEdge(2, 3),
-    MeshEdge(3, 1)
+    MeshEdge(1, 3),
+    MeshEdge(2, 3)
 };
 
 const MeshTri MeshTet::tris[MeshTet::TRI_COUNT] = {
-    MeshTri(1, 3, 2),
-    MeshTri(0, 2, 3),
-    MeshTri(0, 3, 1),
-    MeshTri(0, 1, 2),
+    MeshTri(1, 2, 3),
+    MeshTri(0, 3, 2),
+    MeshTri(0, 1, 3),
+    MeshTri(0, 2, 1),
 };
 
 const MeshTet MeshTet::tets[MeshTet::TET_COUNT] = {
@@ -42,30 +42,30 @@ const MeshTet MeshTet::tets[MeshTet::TET_COUNT] = {
 const MeshEdge MeshPri::edges[MeshPri::EDGE_COUNT] = {
     MeshEdge(0, 1),
     MeshEdge(0, 2),
-    MeshEdge(1, 3),
-    MeshEdge(2, 3),
-    MeshEdge(0, 4),
-    MeshEdge(1, 5),
-    MeshEdge(2, 4),
+    MeshEdge(1, 2),
+    MeshEdge(0, 3),
+    MeshEdge(1, 4),
+    MeshEdge(2, 5),
+    MeshEdge(3, 4),
     MeshEdge(3, 5),
     MeshEdge(4, 5)
 };
 
 const MeshTri MeshPri::tris[MeshPri::TRI_COUNT] = {
-    MeshTri(2, 1, 0), // Z neg face 0
-    MeshTri(1, 2, 3), // Z neg face 1
-    MeshTri(1, 4, 0), // Y neg face 0
-    MeshTri(4, 1, 5), // Y neg face 1
-    MeshTri(4, 3, 2), // Y pos face 0
-    MeshTri(3, 4, 5), // Y pos face 1
-    MeshTri(0, 4, 2), // X neg face
-    MeshTri(1, 3, 5)  // X pos face
+    MeshTri(2, 1, 0), // Z neg face
+    MeshTri(3, 4, 5), // Z pos face
+    MeshTri(3, 2, 0), // Back face 0
+    MeshTri(2, 3, 5), // Back face 1
+    MeshTri(1, 3, 0), // Left face 0
+    MeshTri(3, 1, 4), // Left face 1
+    MeshTri(2, 4, 1), // Right face 0
+    MeshTri(4, 2, 5)  // Right face 1
 };
 
 const MeshTet MeshPri::tets[MeshPri::TET_COUNT] = {
-    MeshTet(4, 0, 1, 2),
-    MeshTet(5, 1, 3, 2),
-    MeshTet(4, 1, 5, 2)
+    MeshTet(0, 1, 2, 3),
+    MeshTet(3, 5, 4, 2),
+    MeshTet(1, 4, 2, 3)
 };
 
 
@@ -85,26 +85,26 @@ const MeshEdge MeshHex::edges[MeshHex::EDGE_COUNT] = {
 };
 
 const MeshTri MeshHex::tris[MeshHex::TRI_COUNT] = {
-    MeshTri(2, 1, 0), // Z neg face 0
-    MeshTri(1, 2, 3), // Z pos face 1
-    MeshTri(5, 6, 4), // Z pos face 0
-    MeshTri(6, 5, 7), // Z pos face 1
+    MeshTri(3, 1, 0), // Z neg face 0
+    MeshTri(1, 3, 2), // Z neg face 1
+    MeshTri(5, 7, 4), // Z pos face 0
+    MeshTri(7, 5, 6), // Z pos face 1
     MeshTri(1, 4, 0), // Y neg face 0
     MeshTri(4, 1, 5), // Y neg face 1
-    MeshTri(2, 7, 3), // Y pos face 0
-    MeshTri(7, 2, 6), // Y pos face 1
-    MeshTri(4, 2, 0), // X neg face 0
-    MeshTri(2, 4, 6), // X neg face 1
-    MeshTri(7, 1, 3), // X pos face 0
-    MeshTri(1, 7, 5), // X pos face 1
+    MeshTri(3, 6, 2), // Y pos face 0
+    MeshTri(6, 3, 7), // Y pos face 1
+    MeshTri(4, 3, 0), // X neg face 0
+    MeshTri(3, 4, 7), // X neg face 1
+    MeshTri(2, 5, 1), // X pos face 0
+    MeshTri(5, 2, 6), // X pos face 1
 };
 
 const MeshTet MeshHex::tets[MeshHex::TET_COUNT] = {
-    MeshTet(0, 1, 4, 2),
-    MeshTet(3, 2, 7, 1),
-    MeshTet(5, 1, 7, 4),
-    MeshTet(6, 2, 4, 7),
-    MeshTet(1, 7, 4, 2)
+    MeshTet(1, 4, 3, 0),
+    MeshTet(1, 3, 6, 2),
+    MeshTet(1, 6, 4, 5),
+    MeshTet(3, 4, 6, 7),
+    MeshTet(1, 3, 4, 6)
 };
 
 

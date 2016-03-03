@@ -333,12 +333,12 @@ void UniformSampler::meshGrid(UniformGrid& grid, Mesh& mesh)
                     MeshHex hex(
                         xb + yb + zb,
                         xt + yb + zb,
-                        xb + yt + zb,
                         xt + yt + zb,
+                        xb + yt + zb,
                         xb + yb + zt,
                         xt + yb + zt,
-                        xb + yt + zt,
-                        xt + yt + zt);
+                        xt + yt + zt,
+                        xb + yt + zt);
 
                     hex.value = grid.at(cellId).metric[0][0];
                     mesh.hexs.push_back(hex);

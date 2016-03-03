@@ -41,9 +41,9 @@ double MetricFreeMeasurer::tetVolume(
         const glm::dvec3 vp[]) const
 {
     double detSum = glm::determinant(glm::dmat3(
-        vp[0] - vp[3],
-        vp[1] - vp[3],
-        vp[2] - vp[3]));
+        vp[3] - vp[0],
+        vp[3] - vp[1],
+        vp[3] - vp[2]));
 
     return detSum / 6.0;
 }
@@ -52,25 +52,16 @@ double MetricFreeMeasurer::priVolume(
         const AbstractSampler& sampler,
         const glm::dvec3 vp[]) const
 {
-    glm::dvec3 e20 = vp[0] - vp[2];
-    glm::dvec3 e21 = vp[1] - vp[2];
-    glm::dvec3 e23 = vp[3] - vp[2];
-    glm::dvec3 e24 = vp[4] - vp[2];
-    glm::dvec3 e25 = vp[5] - vp[2];
+    glm::dvec3 e02 = vp[2] - vp[0];
+    glm::dvec3 e12 = vp[2] - vp[1];
+    glm::dvec3 e32 = vp[2] - vp[3];
+    glm::dvec3 e42 = vp[2] - vp[4];
+    glm::dvec3 e52 = vp[2] - vp[5];
 
     double detSum = 0.0;
-    detSum += glm::determinant(glm::dmat3(
-        e24,
-        e20,
-        e21));
-    detSum += glm::determinant(glm::dmat3(
-        e25,
-        e21,
-        e23));
-    detSum += glm::determinant(glm::dmat3(
-        e24,
-        e21,
-        e25));
+    detSum += glm::determinant(glm::dmat3(e32, e52, e42));
+    detSum += glm::determinant(glm::dmat3(e02, e32, e42));
+    detSum += glm::determinant(glm::dmat3(e12, e02, e42));
 
     return detSum / 6.0;
 }
@@ -81,25 +72,25 @@ double MetricFreeMeasurer::hexVolume(
 {
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(
-        vp[1] - vp[0],
-        vp[2] - vp[0],
-        vp[4] - vp[0]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[1] - vp[3],
-        vp[7] - vp[3],
-        vp[2] - vp[3]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[1] - vp[5],
-        vp[4] - vp[5],
-        vp[7] - vp[5]));
-    detSum += glm::determinant(glm::dmat3(
-        vp[2] - vp[6],
-        vp[7] - vp[6],
-        vp[4] - vp[6]));
+        vp[0] - vp[1],
+        vp[0] - vp[4],
+        vp[0] - vp[3]));
     detSum += glm::determinant(glm::dmat3(
         vp[2] - vp[1],
+        vp[2] - vp[3],
+        vp[2] - vp[6]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[5] - vp[4],
+        vp[5] - vp[1],
+        vp[5] - vp[6]));
+    detSum += glm::determinant(glm::dmat3(
+        vp[7] - vp[4],
+        vp[7] - vp[6],
+        vp[7] - vp[3]));
+    detSum += glm::determinant(glm::dmat3(
         vp[4] - vp[1],
-        vp[7] - vp[1]));
+        vp[4] - vp[6],
+        vp[4] - vp[3]));
 
     return detSum / 6.0;
 }

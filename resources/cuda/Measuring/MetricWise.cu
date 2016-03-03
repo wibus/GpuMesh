@@ -43,25 +43,25 @@ __device__ vec3 metricWiseRiemannianSegment(const vec3& a, const vec3& b)
 __device__ float metricWiseTetVolume(const vec3 vp[TET_VERTEX_COUNT])
 {
     float detSum = determinant(mat3(
-        metricWiseRiemannianSegment(vp[3], vp[0]),
-        metricWiseRiemannianSegment(vp[3], vp[1]),
-        metricWiseRiemannianSegment(vp[3], vp[2])));
+        metricWiseRiemannianSegment(vp[0], vp[3]),
+        metricWiseRiemannianSegment(vp[1], vp[3]),
+        metricWiseRiemannianSegment(vp[2], vp[3])));
 
     return detSum / 6.0;
 }
 
 __device__ float metricWisePriVolume(const vec3 vp[PRI_VERTEX_COUNT])
 {
-    vec3 e20 = metricWiseRiemannianSegment(vp[2], vp[0]);
-    vec3 e21 = metricWiseRiemannianSegment(vp[2], vp[1]);
-    vec3 e23 = metricWiseRiemannianSegment(vp[2], vp[3]);
-    vec3 e24 = metricWiseRiemannianSegment(vp[2], vp[4]);
-    vec3 e25 = metricWiseRiemannianSegment(vp[2], vp[5]);
+    dvec3 e02 = metricWiseRiemannianSegment(vp[0], vp[2]);
+    dvec3 e12 = metricWiseRiemannianSegment(vp[1], vp[2]);
+    dvec3 e32 = metricWiseRiemannianSegment(vp[3], vp[2]);
+    dvec3 e42 = metricWiseRiemannianSegment(vp[4], vp[2]);
+    dvec3 e52 = metricWiseRiemannianSegment(vp[5], vp[2]);
 
     float detSum = 0.0;
-    detSum += determinant(mat3(e24, e20, e21));
-    detSum += determinant(mat3(e25, e21, e23));
-    detSum += determinant(mat3(e24, e21, e25));
+    detSum += determinant(mat3(e32, e52, e42));
+    detSum += determinant(mat3(e02, e32, e42));
+    detSum += determinant(mat3(e12, e02, e42));
 
     return detSum / 6.0;
 }
@@ -70,25 +70,25 @@ __device__ float metricWiseHexVolume(const vec3 vp[HEX_VERTEX_COUNT])
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[0], vp[1]),
-        metricWiseRiemannianSegment(vp[0], vp[2]),
-        metricWiseRiemannianSegment(vp[0], vp[4])));
-    detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[3], vp[1]),
-        metricWiseRiemannianSegment(vp[3], vp[7]),
-        metricWiseRiemannianSegment(vp[3], vp[2])));
-    detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[5], vp[1]),
-        metricWiseRiemannianSegment(vp[5], vp[4]),
-        metricWiseRiemannianSegment(vp[5], vp[7])));
-    detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[6], vp[2]),
-        metricWiseRiemannianSegment(vp[6], vp[7]),
-        metricWiseRiemannianSegment(vp[6], vp[4])));
+        metricWiseRiemannianSegment(vp[1], vp[0]),
+        metricWiseRiemannianSegment(vp[4], vp[0]),
+        metricWiseRiemannianSegment(vp[3], vp[0])));
     detSum += determinant(mat3(
         metricWiseRiemannianSegment(vp[1], vp[2]),
+        metricWiseRiemannianSegment(vp[3], vp[2]),
+        metricWiseRiemannianSegment(vp[6], vp[2])));
+    detSum += determinant(mat3(
+        metricWiseRiemannianSegment(vp[4], vp[5]),
+        metricWiseRiemannianSegment(vp[1], vp[5]),
+        metricWiseRiemannianSegment(vp[6], vp[5])));
+    detSum += determinant(mat3(
+        metricWiseRiemannianSegment(vp[4], vp[7]),
+        metricWiseRiemannianSegment(vp[6], vp[7]),
+        metricWiseRiemannianSegment(vp[3], vp[7])));
+    detSum += determinant(mat3(
         metricWiseRiemannianSegment(vp[1], vp[4]),
-        metricWiseRiemannianSegment(vp[1], vp[7])));
+        metricWiseRiemannianSegment(vp[6], vp[4]),
+        metricWiseRiemannianSegment(vp[3], vp[4])));
 
     return detSum / 6.0;
 }

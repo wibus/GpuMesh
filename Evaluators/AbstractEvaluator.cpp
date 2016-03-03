@@ -272,24 +272,24 @@ bool AbstractEvaluator::assessMeasureValidy(
     Mesh mesh;
     mesh.verts.push_back(glm::dvec3(0, 0, 0));
     mesh.verts.push_back(glm::dvec3(1, 0, 0));
-    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
     mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
+    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
 
     mesh.verts.push_back(glm::dvec3(0, 0, 0));
-    mesh.verts.push_back(glm::dvec3(1, 0, 0));
     mesh.verts.push_back(glm::dvec3(0, 1, 0));
-    mesh.verts.push_back(glm::dvec3(1, 1, 0));
     mesh.verts.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 1, 0));
     mesh.verts.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
 
     mesh.verts.push_back(glm::dvec3(0, 0, 0));
     mesh.verts.push_back(glm::dvec3(1, 0, 0));
-    mesh.verts.push_back(glm::dvec3(0, 1, 0));
     mesh.verts.push_back(glm::dvec3(1, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0, 1, 0));
     mesh.verts.push_back(glm::dvec3(0, 0, 1));
     mesh.verts.push_back(glm::dvec3(1, 0, 1));
-    mesh.verts.push_back(glm::dvec3(0, 1, 1));
     mesh.verts.push_back(glm::dvec3(1, 1, 1));
+    mesh.verts.push_back(glm::dvec3(0, 1, 1));
 
     const MeshTet tet = MeshTet(0, 1, 2, 3);
     const MeshPri pri = MeshPri(4, 5, 6, 7, 8, 9);

@@ -48,11 +48,11 @@ __device__ float metricConformity(const mat3& Fk, const mat3& Ms)
 
 __device__ float metricConformityTetQuality(const vec3 vp[TET_VERTEX_COUNT])
 {
-    vec3 e10 = vp[0] - vp[1];
-    vec3 e20 = vp[0] - vp[2];
-    vec3 e30 = vp[0] - vp[3];
+    vec3 e03 = vp[3] - vp[0];
+    vec3 e13 = vp[3] - vp[1];
+    vec3 e23 = vp[3] - vp[2];
 
-    mat3 Fk = mat3(e10, e20, e30) * Fr_TET_INV;
+    mat3 Fk = mat3(e03, e13, e23) * Fr_TET_INV;
 
     mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[2], vp[3]);
 
@@ -63,31 +63,31 @@ __device__ float metricConformityTetQuality(const vec3 vp[TET_VERTEX_COUNT])
 
 __device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
 {
+    vec3 e03 = vp[3] - vp[0];
+    vec3 e14 = vp[4] - vp[1];
+    vec3 e25 = vp[5] - vp[2];
     vec3 e01 = vp[1] - vp[0];
-    vec3 e02 = vp[2] - vp[0];
-    vec3 e04 = vp[4] - vp[0];
-    vec3 e13 = vp[3] - vp[1];
-    vec3 e15 = vp[5] - vp[1];
-    vec3 e23 = vp[3] - vp[2];
-    vec3 e42 = vp[2] - vp[4];
-    vec3 e35 = vp[5] - vp[3];
+    vec3 e12 = vp[2] - vp[1];
+    vec3 e20 = vp[0] - vp[2];
+    vec3 e34 = vp[4] - vp[3];
     vec3 e45 = vp[5] - vp[4];
+    vec3 e53 = vp[3] - vp[5];
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two's cross product
-    mat3 Fk0 = mat3(e02,  e04,  e01) * Fr_PRI_INV;
-    mat3 Fk1 = mat3(e13,  e15,  e01) * Fr_PRI_INV;
-    mat3 Fk2 = mat3(e02,  e42, -e23) * Fr_PRI_INV;
-    mat3 Fk3 = mat3(e35, -e13,  e23) * Fr_PRI_INV;
-    mat3 Fk4 = mat3(e42, -e04, -e45) * Fr_PRI_INV;
-    mat3 Fk5 = mat3(e15,  e35,  e45) * Fr_PRI_INV;
+    mat3 Fk0 = mat3(-e01, e20, e03) * Fr_PRI_INV;
+    mat3 Fk1 = mat3(-e12, e01, e14) * Fr_PRI_INV;
+    mat3 Fk2 = mat3(-e20, e12, e25) * Fr_PRI_INV;
+    mat3 Fk3 = mat3(-e34, e53, e03) * Fr_PRI_INV;
+    mat3 Fk4 = mat3(-e45, e34, e14) * Fr_PRI_INV;
+    mat3 Fk5 = mat3(-e53, e45, e25) * Fr_PRI_INV;
 
-    mat3 Ms0 = specifiedMetric(vp[0], vp[2], vp[4], vp[1]);
-    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[3], vp[5]);
-    mat3 Ms2 = specifiedMetric(vp[0], vp[2], vp[3], vp[4]);
-    mat3 Ms3 = specifiedMetric(vp[1], vp[2], vp[3], vp[5]);
-    mat3 Ms4 = specifiedMetric(vp[0], vp[2], vp[4], vp[5]);
-    mat3 Ms5 = specifiedMetric(vp[1], vp[3], vp[4], vp[5]);
+    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[2], vp[3]);
+    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[2], vp[4]);
+    mat3 Ms2 = specifiedMetric(vp[0], vp[1], vp[2], vp[5]);
+    mat3 Ms3 = specifiedMetric(vp[0], vp[3], vp[4], vp[5]);
+    mat3 Ms4 = specifiedMetric(vp[1], vp[3], vp[4], vp[5]);
+    mat3 Ms5 = specifiedMetric(vp[2], vp[3], vp[4], vp[5]);
 
     float qual0 = metricConformity(Fk0, Ms0);
     float qual1 = metricConformity(Fk1, Ms1);
@@ -102,37 +102,37 @@ __device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
 __device__ float metricConformityHexQuality(const vec3 vp[HEX_VERTEX_COUNT])
 {
     vec3 e01 = vp[1] - vp[0];
-    vec3 e02 = vp[2] - vp[0];
+    vec3 e03 = vp[3] - vp[0];
     vec3 e04 = vp[4] - vp[0];
-    vec3 e13 = vp[3] - vp[1];
+    vec3 e12 = vp[2] - vp[1];
     vec3 e15 = vp[5] - vp[1];
     vec3 e23 = vp[3] - vp[2];
     vec3 e26 = vp[6] - vp[2];
     vec3 e37 = vp[7] - vp[3];
     vec3 e45 = vp[5] - vp[4];
-    vec3 e46 = vp[6] - vp[4];
-    vec3 e57 = vp[7] - vp[5];
+    vec3 e47 = vp[7] - vp[4];
+    vec3 e56 = vp[6] - vp[5];
     vec3 e67 = vp[7] - vp[6];
 
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_INV.
-    mat3 Fk0 = mat3(e01,  e04, -e02);
-    mat3 Fk1 = mat3(e01,  e13,  e15);
-    mat3 Fk2 = mat3(e02,  e26,  e23);
-    mat3 Fk3 = mat3(e13,  e23, -e37);
-    mat3 Fk4 = mat3(e04,  e45,  e46);
-    mat3 Fk5 = mat3(e15, -e57,  e45);
-    mat3 Fk6 = mat3(e26,  e46, -e67);
-    mat3 Fk7 = mat3(e37,  e67,  e57);
+    mat3 Fk0 = mat3(e01,  e04, -e03);
+    mat3 Fk1 = mat3(e01,  e12,  e15);
+    mat3 Fk2 = mat3(e12,  e26, -e23);
+    mat3 Fk3 = mat3(e03,  e23,  e37);
+    mat3 Fk4 = mat3(e04,  e45,  e47);
+    mat3 Fk5 = mat3(e15, -e56,  e45);
+    mat3 Fk6 = mat3(e26,  e56,  e67);
+    mat3 Fk7 = mat3(e37,  e67, -e47);
 
-    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[2], vp[4]);
-    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[3], vp[5]);
-    mat3 Ms2 = specifiedMetric(vp[0], vp[2], vp[3], vp[6]);
-    mat3 Ms3 = specifiedMetric(vp[1], vp[2], vp[3], vp[7]);
-    mat3 Ms4 = specifiedMetric(vp[0], vp[4], vp[5], vp[6]);
-    mat3 Ms5 = specifiedMetric(vp[1], vp[4], vp[5], vp[7]);
-    mat3 Ms6 = specifiedMetric(vp[2], vp[4], vp[6], vp[7]);
-    mat3 Ms7 = specifiedMetric(vp[3], vp[5], vp[6], vp[7]);
+    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[3], vp[4]);
+    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[2], vp[5]);
+    mat3 Ms2 = specifiedMetric(vp[1], vp[2], vp[3], vp[6]);
+    mat3 Ms3 = specifiedMetric(vp[0], vp[2], vp[3], vp[7]);
+    mat3 Ms4 = specifiedMetric(vp[0], vp[4], vp[5], vp[7]);
+    mat3 Ms5 = specifiedMetric(vp[1], vp[4], vp[5], vp[6]);
+    mat3 Ms6 = specifiedMetric(vp[2], vp[5], vp[6], vp[7]);
+    mat3 Ms7 = specifiedMetric(vp[3], vp[4], vp[6], vp[7]);
 
     float qual0 = metricConformity(Fk0, Ms0);
     float qual1 = metricConformity(Fk1, Ms1);
