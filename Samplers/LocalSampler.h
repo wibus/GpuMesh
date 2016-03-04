@@ -14,7 +14,7 @@ struct LocalTet
         { v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3;
           n[0] = -1; n[1] = -1; n[2] = -1; n[3] = -1;}
 
-    inline LocalTet(const MeshTet& t);
+    LocalTet(const MeshTet& t);
 
     // Vertices of the tetrahedron
     uint v[4];
@@ -57,12 +57,6 @@ public:
 
     virtual void releaseDebugMesh() override;
     virtual const Mesh& debugMesh() override;
-
-
-protected:
-    static void tetrahedrizeMesh(
-            std::vector<LocalTet>& tets,
-            const Mesh& mesh);
 
 
 private:

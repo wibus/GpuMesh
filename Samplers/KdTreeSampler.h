@@ -65,10 +65,6 @@ private:
 
     void meshTree(KdNode* node, Mesh& mesh);
 
-    static void tetrahedrizeMesh(
-            std::vector<MeshTet>& tets,
-            const Mesh& mesh);
-
     std::unique_ptr<KdNode> _rootNode;
     std::shared_ptr<Mesh> _debugMesh;
     std::vector<Metric> _vertMetrics;

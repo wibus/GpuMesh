@@ -7,6 +7,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/MeshCrew.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptionMap.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.h
+    ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedralizer.h
     ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedron.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.h

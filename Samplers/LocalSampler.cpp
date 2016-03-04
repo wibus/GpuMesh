@@ -4,6 +4,7 @@
 
 #include <DataStructures/Mesh.h>
 #include <DataStructures/TriSet.h>
+#include <DataStructures/Tetrahedralizer.h>
 
 using namespace cellar;
 
@@ -66,7 +67,7 @@ void LocalSampler::setReferenceMesh(
 
 
     // Break prisms and hex into tetrahedra
-    tetrahedrizeMesh(_localTets, mesh);
+    tetrahedrize(_localTets, mesh);
     size_t tetCount = _localTets.size();
     size_t triCount = tetCount * 4;
     if(tetCount == 0)
@@ -145,20 +146,4 @@ void LocalSampler::releaseDebugMesh()
 const Mesh& LocalSampler::debugMesh()
 {
     return *_debugMesh;
-}
-
-void LocalSampler::tetrahedrizeMesh(
-        std::vector<LocalTet>& tets,
-        const Mesh& mesh)
-{
-    size_t tetCount = mesh.tets.size();
-    size_t priCount = mesh.pris.size();
-    size_t hexCount = mesh.hexs.size();
-    size_t maxTetCount = tetCount +
-        priCount * 3 + hexCount * 6;
-
-    tets.reserve(maxTetCount);
-
-    for(const MeshTet& tet : mesh.tets)
-        tets.push_back(tet);
 }

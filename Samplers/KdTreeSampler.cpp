@@ -6,6 +6,7 @@
 #include <CellarWorkbench/Misc/Log.h>
 
 #include "DataStructures/GpuMesh.h"
+#include "DataStructures/Tetrahedralizer.h"
 
 using namespace cellar;
 
@@ -117,7 +118,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 
     // Break prisms and hex into tetrahedra
     std::vector<MeshTet> tets;
-    tetrahedrizeMesh(tets, mesh);
+    tetrahedrize(tets, mesh);
 
     // Compute Kd Tree depth
     size_t vertCount = mesh.verts.size();
@@ -527,43 +528,5 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
     {
         meshTree(node->left, mesh);
         meshTree(node->right, mesh);
-    }
-}
-
-void KdTreeSampler::tetrahedrizeMesh(
-        std::vector<MeshTet>& tets,
-        const Mesh& mesh)
-{
-    size_t tetCount = mesh.tets.size();
-    size_t priCount = mesh.pris.size();
-    size_t hexCount = mesh.hexs.size();
-    size_t totalTetCount =
-        tetCount * MeshTet::TET_COUNT +
-        priCount * MeshPri::TET_COUNT +
-        hexCount * MeshHex::TET_COUNT;
-
-    tets.reserve(tets.size() + totalTetCount);
-    tets = mesh.tets;
-
-    for(size_t p=0; p < priCount; ++p)
-    {
-        const MeshPri& pri = mesh.pris[p];
-        for(uint t=0; t < MeshPri::TET_COUNT; ++t)
-            tets.push_back( MeshTet(
-                pri.v[MeshPri::tets[t][0]],
-                pri.v[MeshPri::tets[t][1]],
-                pri.v[MeshPri::tets[t][2]],
-                pri.v[MeshPri::tets[t][3]]));
-    }
-
-    for(size_t h=0; h < hexCount; ++h)
-    {
-        const MeshHex& hex = mesh.hexs[h];
-        for(uint t=0; t < MeshHex::TET_COUNT; ++t)
-            tets.push_back( MeshTet(
-                hex.v[MeshHex::tets[t][0]],
-                hex.v[MeshHex::tets[t][1]],
-                hex.v[MeshHex::tets[t][2]],
-                hex.v[MeshHex::tets[t][3]]));
     }
 }
