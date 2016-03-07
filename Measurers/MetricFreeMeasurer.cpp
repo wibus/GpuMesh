@@ -23,7 +23,8 @@ MetricFreeMeasurer::~MetricFreeMeasurer()
 double MetricFreeMeasurer::riemannianDistance(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
-        const glm::dvec3& b) const
+        const glm::dvec3& b,
+        uint vId) const
 {
     return glm::distance(a, b);
 }
@@ -31,14 +32,16 @@ double MetricFreeMeasurer::riemannianDistance(
 glm::dvec3 MetricFreeMeasurer::riemannianSegment(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
-        const glm::dvec3& b) const
+        const glm::dvec3& b,
+        uint vId) const
 {
     return b - a;
 }
 
 double MetricFreeMeasurer::tetVolume(
         const AbstractSampler& sampler,
-        const glm::dvec3 vp[]) const
+        const glm::dvec3 vp[],
+        const MeshTet& tet) const
 {
     double detSum = glm::determinant(glm::dmat3(
         vp[3] - vp[0],
@@ -50,7 +53,8 @@ double MetricFreeMeasurer::tetVolume(
 
 double MetricFreeMeasurer::priVolume(
         const AbstractSampler& sampler,
-        const glm::dvec3 vp[]) const
+        const glm::dvec3 vp[],
+        const MeshPri& pri) const
 {
     glm::dvec3 e02 = vp[2] - vp[0];
     glm::dvec3 e12 = vp[2] - vp[1];
@@ -68,7 +72,8 @@ double MetricFreeMeasurer::priVolume(
 
 double MetricFreeMeasurer::hexVolume(
         const AbstractSampler& sampler,
-        const glm::dvec3 vp[]) const
+        const glm::dvec3 vp[],
+        const MeshHex& hex) const
 {
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(

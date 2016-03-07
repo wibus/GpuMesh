@@ -10,24 +10,23 @@ public:
     MeanRatioEvaluator();
     virtual ~MeanRatioEvaluator();
 
-    using AbstractEvaluator::tetQuality;
-    using AbstractEvaluator::priQuality;
-    using AbstractEvaluator::hexQuality;
-
     virtual double tetQuality(
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            const glm::dvec3 vp[]) const override;
+            const glm::dvec3 vp[],
+            const MeshTet& tet) const override;
 
     virtual double priQuality(
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            const glm::dvec3 vp[]) const override;
+            const glm::dvec3 vp[],
+            const MeshPri& pri) const override;
 
     virtual double hexQuality(
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            const glm::dvec3 vp[]) const override;
+            const glm::dvec3 vp[],
+            const MeshHex& hex) const override;
 
 protected:
     virtual double cornerQuality(const glm::dmat3& Fk) const;

@@ -39,7 +39,8 @@ public:
             int density) override;
 
     virtual Metric metricAt(
-            const glm::dvec3& position) const override;
+            const glm::dvec3& position,
+            uint vertOwnerId) const override;
 
 
     virtual void releaseDebugMesh() override;

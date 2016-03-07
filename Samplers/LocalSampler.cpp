@@ -55,15 +55,21 @@ void LocalSampler::setReferenceMesh(
         const Mesh& mesh,
         int density)
 {
+    size_t vertCount = mesh.verts.size();
+
     // Clear resources
     _debugMesh->clear();
 
-    _vertMetrics.clear();
-    _vertMetrics.shrink_to_fit();
     _localTets.clear();
     _localTets.shrink_to_fit();
-    _indexCache.clear();
+    _indexCache.resize(mesh.verts.size());
     _indexCache.shrink_to_fit();
+    _localVerts = mesh.verts;
+    _localVerts.shrink_to_fit();
+    _vertMetrics.resize(mesh.verts.size());
+    for(size_t vId=0; vId < vertCount; ++vId)
+        _vertMetrics[vId] = vertMetric(mesh, vId);
+    _vertMetrics.shrink_to_fit();
 
 
     // Break prisms and hex into tetrahedra
@@ -106,6 +112,13 @@ void LocalSampler::setReferenceMesh(
                 _localTets[owner].n[side] = t;
             }
         }
+
+        // At the end, the cache will be initialized with
+        // the last tetrahedron for witch the vertex is node
+        _indexCache[tet.v[0]] = t;
+        _indexCache[tet.v[1]] = t;
+        _indexCache[tet.v[2]] = t;
+        _indexCache[tet.v[3]] = t;
     }
 
     const std::vector<Triangle>& surfTri = triSet.gather();
@@ -129,14 +142,52 @@ void LocalSampler::setReferenceMesh(
         " / " + std::to_string(triCount), "LocalSampler"));
     triSet.releaseMemoryPool();
 
-
-    // Build index cache
 }
 
 Metric LocalSampler::metricAt(
-        const glm::dvec3& position) const
+        const glm::dvec3& position,
+        uint vertOwnerId) const
 {
-    return vertMetric(position);
+    uint tetId = _indexCache[vertOwnerId];
+    const LocalTet* tet = &_localTets[tetId];
+
+    double coor[4];
+    while(!tetParams(_localVerts, *tet, position, coor))
+    {
+        uint n = 0;
+        if(coor[1] < coor[n]) n = 1;
+        if(coor[2] < coor[n]) n = 2;
+        if(coor[3] < coor[n]) n = 3;
+
+        uint nt = tet->n[n];
+        if(nt == -1)
+        {
+            double sum = 0.0;
+            if(coor[0] < 0.0) coor[0] = 0.0; else sum += coor[0];
+            if(coor[1] < 0.0) coor[1] = 0.0; else sum += coor[1];
+            if(coor[2] < 0.0) coor[2] = 0.0; else sum += coor[2];
+            if(coor[3] < 0.0) coor[3] = 0.0; else sum += coor[3];
+            coor[0] /= sum;
+            coor[1] /= sum;
+            coor[2] /= sum;
+            coor[3] /= sum;
+            break;
+        }
+        else
+        {
+            tetId = nt;
+            tet = &_localTets[nt];
+        }
+    }
+
+    // TODO wbussiere 2016-03-07 :
+    //  Verify potential race conditions issues
+    _indexCache[vertOwnerId] = tetId;
+
+    return coor[0] * _vertMetrics[tet->v[0]] +
+           coor[1] * _vertMetrics[tet->v[1]] +
+           coor[2] * _vertMetrics[tet->v[2]] +
+           coor[3] * _vertMetrics[tet->v[3]];
 }
 
 void LocalSampler::releaseDebugMesh()

@@ -54,12 +54,14 @@ public:
     virtual double riemannianDistance(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
-            const glm::dvec3& b) const = 0;
+            const glm::dvec3& b,
+            uint vId) const = 0;
 
     virtual glm::dvec3 riemannianSegment(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
-            const glm::dvec3& b) const = 0;
+            const glm::dvec3& b,
+            uint vId) const = 0;
 
 
     // Volumes
@@ -69,7 +71,8 @@ public:
             const MeshTet& tet) const;
     virtual double tetVolume(
             const AbstractSampler& sampler,
-            const glm::dvec3 vp[]) const = 0;
+            const glm::dvec3 vp[],
+            const MeshTet& tet) const = 0;
 
     virtual double priVolume(
             const Mesh& mesh,
@@ -77,7 +80,8 @@ public:
             const MeshPri& pri) const;
     virtual double priVolume(
             const AbstractSampler& sampler,
-            const glm::dvec3 vp[]) const = 0;
+            const glm::dvec3 vp[],
+            const MeshPri& pri) const = 0;
 
     virtual double hexVolume(
             const Mesh& mesh,
@@ -85,7 +89,8 @@ public:
             const MeshHex& hex) const;
     virtual double hexVolume(
             const AbstractSampler& sampler,
-            const glm::dvec3 vp[]) const = 0;
+            const glm::dvec3 vp[],
+            const MeshHex& hex) const = 0;
 
 
 

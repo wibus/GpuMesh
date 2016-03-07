@@ -54,7 +54,8 @@ public:
     virtual double tetQuality(
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            const glm::dvec3 vp[]) const = 0;
+            const glm::dvec3 vp[],
+            const MeshTet& tet) const = 0;
 
     virtual double priQuality(
             const Mesh& mesh,
@@ -64,7 +65,8 @@ public:
     virtual double priQuality(
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            const glm::dvec3 vp[]) const = 0;
+            const glm::dvec3 vp[],
+            const MeshPri& pri) const = 0;
 
     virtual double hexQuality(
             const Mesh& mesh,
@@ -74,7 +76,8 @@ public:
     virtual double hexQuality(
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            const glm::dvec3 vp[]) const = 0;
+            const glm::dvec3 vp[],
+            const MeshHex& hex) const = 0;
 
     virtual double patchQuality(
             const Mesh& mesh,

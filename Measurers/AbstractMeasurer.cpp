@@ -69,14 +69,9 @@ double AbstractMeasurer::tetVolume(
         const AbstractSampler& sampler,
         const MeshTet& tet) const
 {
-    const glm::dvec3 vp[] = {
-        mesh.verts[tet.v[0]],
-        mesh.verts[tet.v[1]],
-        mesh.verts[tet.v[2]],
-        mesh.verts[tet.v[3]],
-    };
-
-    return tetVolume(sampler, vp);
+    glm::dvec3 vp[4];
+    mesh.getVerts(vp, tet);
+    return tetVolume(sampler, vp, tet);
 }
 
 double AbstractMeasurer::priVolume(
@@ -84,16 +79,9 @@ double AbstractMeasurer::priVolume(
         const AbstractSampler& sampler,
         const MeshPri& pri) const
 {
-    const glm::dvec3 vp[] = {
-        mesh.verts[pri.v[0]],
-        mesh.verts[pri.v[1]],
-        mesh.verts[pri.v[2]],
-        mesh.verts[pri.v[3]],
-        mesh.verts[pri.v[4]],
-        mesh.verts[pri.v[5]]
-    };
-
-    return priVolume(sampler, vp);
+    glm::dvec3 vp[6];
+    mesh.getVerts(vp, pri);
+    return priVolume(sampler, vp, pri);
 }
 
 double AbstractMeasurer::hexVolume(
@@ -101,18 +89,9 @@ double AbstractMeasurer::hexVolume(
         const AbstractSampler& sampler,
         const MeshHex& hex) const
 {
-    const glm::dvec3 vp[] = {
-        mesh.verts[hex.v[0]],
-        mesh.verts[hex.v[1]],
-        mesh.verts[hex.v[2]],
-        mesh.verts[hex.v[3]],
-        mesh.verts[hex.v[4]],
-        mesh.verts[hex.v[5]],
-        mesh.verts[hex.v[6]],
-        mesh.verts[hex.v[7]]
-    };
-
-    return hexVolume(sampler, vp);
+    glm::dvec3 vp[8];
+    mesh.getVerts(vp, hex);
+    return hexVolume(sampler, vp, hex);
 }
 
 double AbstractMeasurer::computeLocalElementSize(

@@ -158,6 +158,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
     _vertMetrics.reserve(vertCount);
     for(size_t v=0; v < vertCount; ++v)
         _vertMetrics.push_back(vertMetric(mesh.verts[v]));
+    _vertMetrics.shrink_to_fit();
 
 
     // Build GPU Buffers
@@ -194,7 +195,8 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 }
 
 Metric KdTreeSampler::metricAt(
-        const glm::dvec3& position) const
+        const glm::dvec3& position,
+        uint vertOwnerId) const
 {
     const Metric METRIC_ERROR(0.0);
 
@@ -520,7 +522,7 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
 
             MeshHex hex(baseVert + 0, baseVert + 1, baseVert + 2, baseVert + 3,
                         baseVert + 4, baseVert + 5, baseVert + 6, baseVert + 7);
-            hex.value = metricAt((node->minBox + node->maxBox) / 2.0)[0][0];
+            hex.value = metricAt((node->minBox + node->maxBox) / 2.0, -1)[0][0];
             mesh.hexs.push_back(hex);
         }
     }

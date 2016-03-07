@@ -25,8 +25,8 @@ class AbstractSampler
 protected:
     typedef void (*installCudaFct)(void);
     AbstractSampler(const std::string& name,
-                        const std::string& shader,
-                        const installCudaFct installCuda);
+                    const std::string& shader,
+                    const installCudaFct installCuda);
 
 public:
     virtual ~AbstractSampler();
@@ -58,7 +58,8 @@ public:
             int density) = 0;
 
     virtual Metric metricAt(
-            const glm::dvec3& position) const = 0;
+            const glm::dvec3& position,
+            uint vertOwnerId) const = 0;
 
 
     // Debug mesh
@@ -78,13 +79,6 @@ protected:
     void boundingBox(const Mesh& mesh,
                      glm::dvec3& minBounds,
                      glm::dvec3& maxBounds) const;
-
-
-    static bool tetParams(
-            const std::vector<MeshVert>& verts,
-            const MeshTet& tet,
-            const glm::dvec3& p,
-            double coor[4]);
 
 private:
     std::string _samplingName;

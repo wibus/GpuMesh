@@ -121,30 +121,3 @@ void AbstractSampler::boundingBox(
         maxBounds = glm::max(maxBounds, vertPos);
     }
 }
-
-bool AbstractSampler::tetParams(
-        const std::vector<MeshVert>& verts,
-        const MeshTet& tet,
-        const glm::dvec3& p,
-        double coor[4])
-{
-    // ref : https://en.wikipedia.org/wiki/Barycentric_coordinate_system#Barycentric_coordinates_on_tetrahedra
-
-    const glm::dvec3& vp0 = verts[tet.v[0]].p;
-    const glm::dvec3& vp1 = verts[tet.v[1]].p;
-    const glm::dvec3& vp2 = verts[tet.v[2]].p;
-    const glm::dvec3& vp3 = verts[tet.v[3]].p;
-
-    glm::dmat3 T(vp0 - vp3, vp1 - vp3, vp2 - vp3);
-
-    glm::dvec3 y = glm::inverse(T) * (p - vp3);
-    coor[0] = y[0];
-    coor[1] = y[1];
-    coor[2] = y[2];
-    coor[3] = 1.0 - (y[0] + y[1] + y[2]);
-
-    const double EPSILON_IN = -1e-8;
-    bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
-                 coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
-    return isIn;
-}

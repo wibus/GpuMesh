@@ -172,14 +172,9 @@ double AbstractEvaluator::tetQuality(
         const AbstractMeasurer& measurer,
         const MeshTet& tet) const
 {
-    const glm::dvec3 vp[] = {
-        mesh.verts[tet.v[0]],
-        mesh.verts[tet.v[1]],
-        mesh.verts[tet.v[2]],
-        mesh.verts[tet.v[3]],
-    };
-
-    return tetQuality(sampler, measurer, vp);
+    glm::dvec3 vp[4];
+    mesh.getVerts(vp, tet);
+    return tetQuality(sampler, measurer, vp, tet);
 }
 
 double AbstractEvaluator::priQuality(
@@ -188,16 +183,9 @@ double AbstractEvaluator::priQuality(
         const AbstractMeasurer& measurer,
         const MeshPri& pri) const
 {
-    const glm::dvec3 vp[] = {
-        mesh.verts[pri.v[0]],
-        mesh.verts[pri.v[1]],
-        mesh.verts[pri.v[2]],
-        mesh.verts[pri.v[3]],
-        mesh.verts[pri.v[4]],
-        mesh.verts[pri.v[5]]
-    };
-
-    return priQuality(sampler, measurer, vp);
+    glm::dvec3 vp[6];
+    mesh.getVerts(vp, pri);
+    return priQuality(sampler, measurer, vp, pri);
 }
 
 double AbstractEvaluator::hexQuality(
@@ -206,18 +194,9 @@ double AbstractEvaluator::hexQuality(
         const AbstractMeasurer& measurer,
         const MeshHex& hex) const
 {
-    const glm::dvec3 vp[] = {
-        mesh.verts[hex.v[0]],
-        mesh.verts[hex.v[1]],
-        mesh.verts[hex.v[2]],
-        mesh.verts[hex.v[3]],
-        mesh.verts[hex.v[4]],
-        mesh.verts[hex.v[5]],
-        mesh.verts[hex.v[6]],
-        mesh.verts[hex.v[7]]
-    };
-
-    return hexQuality(sampler, measurer, vp);
+    glm::dvec3 vp[8];
+    mesh.getVerts(vp, hex);
+    return hexQuality(sampler, measurer, vp, hex);
 }
 
 double AbstractEvaluator::patchQuality(

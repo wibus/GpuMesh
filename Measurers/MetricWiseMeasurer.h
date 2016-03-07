@@ -15,30 +15,31 @@ public:
     virtual double riemannianDistance(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
-            const glm::dvec3& b) const override;
+            const glm::dvec3& b,
+            uint vId) const override;
 
     virtual glm::dvec3 riemannianSegment(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
-            const glm::dvec3& b) const override;
+            const glm::dvec3& b,
+            uint vId) const override;
 
 
     // Volumes
-    using AbstractMeasurer::tetVolume;
-    using AbstractMeasurer::priVolume;
-    using AbstractMeasurer::hexVolume;
-
     virtual double tetVolume(
             const AbstractSampler& sampler,
-            const glm::dvec3 vp[]) const override;
+            const glm::dvec3 vp[],
+            const MeshTet& tet) const override;
 
     virtual double priVolume(
             const AbstractSampler& sampler,
-            const glm::dvec3 vp[]) const override;
+            const glm::dvec3 vp[],
+            const MeshPri& pri) const override;
 
     virtual double hexVolume(
             const AbstractSampler& sampler,
-            const glm::dvec3 vp[]) const override;
+            const glm::dvec3 vp[],
+            const MeshHex& hex) const override;
 
 
     // High level measurements
@@ -51,7 +52,8 @@ protected:
     virtual glm::dvec3 computeSpringForce(
             const AbstractSampler& sampler,
             const glm::dvec3& pi,
-            const glm::dvec3& pj) const;
+            const glm::dvec3& pj,
+            uint vId) const;
 };
 
 #endif // GPUMESH_METRICWISEMEASURER

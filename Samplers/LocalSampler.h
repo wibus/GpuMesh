@@ -52,7 +52,8 @@ public:
             int density) override;
 
     virtual Metric metricAt(
-            const glm::dvec3& position) const override;
+            const glm::dvec3& position,
+            uint vertOwnerId) const override;
 
 
     virtual void releaseDebugMesh() override;
@@ -63,7 +64,8 @@ private:
     std::shared_ptr<Mesh> _debugMesh;
     std::vector<Metric> _vertMetrics;
     std::vector<LocalTet> _localTets;
-    std::vector<uint> _indexCache;
+    std::vector<MeshVert> _localVerts;
+    mutable std::vector<uint> _indexCache;
 };
 
 #endif // GPUMESH_LOCALSAMPLER

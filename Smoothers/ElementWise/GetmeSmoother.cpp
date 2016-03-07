@@ -94,8 +94,8 @@ void GetmeSmoother::smoothTets(
         };
 
 
-        double volume = crew.measurer().tetVolume(crew.sampler(), vp);
-        double volumePrime = crew.measurer().tetVolume(crew.sampler(), vpp);
+        double volume = crew.measurer().tetVolume(crew.sampler(), vp, tet);
+        double volumePrime = crew.measurer().tetVolume(crew.sampler(), vpp, tet);
         double absVolumeRation = glm::abs(volume / volumePrime);
         double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
 
@@ -112,8 +112,8 @@ void GetmeSmoother::smoothTets(
         if(topos[vi[2]].isBoundary) vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
         if(topos[vi[3]].isBoundary) vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
 
-        double quality = crew.evaluator().tetQuality(crew.sampler(), crew.measurer(), vp);
-        double qualityPrime = crew.evaluator().tetQuality(crew.sampler(), crew.measurer(), vpp);
+        double quality = crew.evaluator().tetQuality(crew.sampler(), crew.measurer(), vp, tet);
+        double qualityPrime = crew.evaluator().tetQuality(crew.sampler(), crew.measurer(), vpp, tet);
 
         double weight = qualityPrime / (1.0 + quality);
         _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
@@ -195,8 +195,8 @@ void GetmeSmoother::smoothPris(
         };
 
 
-        double volume = crew.measurer().priVolume(crew.sampler(), vp);
-        double volumePrime = crew.measurer().priVolume(crew.sampler(), vpp);
+        double volume = crew.measurer().priVolume(crew.sampler(), vp, pri);
+        double volumePrime = crew.measurer().priVolume(crew.sampler(), vpp, pri);
         double absVolumeRation = glm::abs(volume / volumePrime);
         double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
 
@@ -218,8 +218,8 @@ void GetmeSmoother::smoothPris(
         if(topos[vi[5]].isBoundary) vpp[5] = (*topos[vi[5]].snapToBoundary)(vpp[5]);
 
 
-        double quality = crew.evaluator().priQuality(crew.sampler(), crew.measurer(), vp);
-        double qualityPrime = crew.evaluator().priQuality(crew.sampler(), crew.measurer(), vpp);
+        double quality = crew.evaluator().priQuality(crew.sampler(), crew.measurer(), vp, pri);
+        double qualityPrime = crew.evaluator().priQuality(crew.sampler(), crew.measurer(), vpp, pri);
 
         double weight = qualityPrime / (1.0 + quality);
         _vertexAccums[vi[0]]->addPosition(vpp[0], weight);
@@ -312,8 +312,8 @@ void GetmeSmoother::smoothHexs(
         };
 
 
-        double volume = crew.measurer().hexVolume(crew.sampler(), vp);
-        double volumePrime = crew.measurer().hexVolume(crew.sampler(), vpp);
+        double volume = crew.measurer().hexVolume(crew.sampler(), vp, hex);
+        double volumePrime = crew.measurer().hexVolume(crew.sampler(), vpp, hex);
         double absVolumeRation = glm::abs(volume / volumePrime);
         double volumeVar = glm::pow(absVolumeRation, 1.0/3.0);
 
@@ -339,8 +339,8 @@ void GetmeSmoother::smoothHexs(
         if(topos[vi[7]].isBoundary) vpp[7] = (*topos[vi[7]].snapToBoundary)(vpp[7]);
 
 
-        double quality = crew.evaluator().hexQuality(crew.sampler(), crew.measurer(), vp);
-        double qualityPrime = crew.evaluator().hexQuality(crew.sampler(), crew.measurer(), vpp);
+        double quality = crew.evaluator().hexQuality(crew.sampler(), crew.measurer(), vp, hex);
+        double qualityPrime = crew.evaluator().hexQuality(crew.sampler(), crew.measurer(), vpp, hex);
 
         double weight = qualityPrime / (1.0 + quality);
         _vertexAccums[vi[0]]->addPosition(vpp[0], weight);

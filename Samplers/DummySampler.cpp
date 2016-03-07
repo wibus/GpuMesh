@@ -32,7 +32,8 @@ void DummySampler::setReferenceMesh(
 }
 
 Metric DummySampler::metricAt(
-        const glm::dvec3& position) const
+        const glm::dvec3& position,
+        uint vertOwnerId) const
 {
     // Constant isotropic metric
     return Metric(1.0);
