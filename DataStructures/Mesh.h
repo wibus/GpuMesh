@@ -241,10 +241,6 @@ public:
 
     virtual void printPropperties(OptimizationPlot& plot) const;
 
-    void getVerts(glm::dvec3 vp[4], const MeshTet& tet) const;
-    void getVerts(glm::dvec3 vp[6], const MeshPri& pri) const;
-    void getVerts(glm::dvec3 vp[8], const MeshHex& hex) const;
-
 
     std::string modelName;
     std::vector<MeshVert> verts;
@@ -277,38 +273,5 @@ protected:
     std::string _modelBoundsShaderName;
     ModelBoundsCudaFct _modelBoundsCudaFct;
 };
-
-
-
-// IMPLEMENTATION //
-inline void Mesh::getVerts(glm::dvec3 vp[4], const MeshTet& tet) const
-{
-    vp[0] = verts[tet.v[0]].p;
-    vp[1] = verts[tet.v[1]].p;
-    vp[2] = verts[tet.v[2]].p;
-    vp[3] = verts[tet.v[3]].p;
-}
-
-inline void Mesh::getVerts(glm::dvec3 vp[6], const MeshPri& pri) const
-{
-    vp[0] = verts[pri.v[0]].p;
-    vp[1] = verts[pri.v[1]].p;
-    vp[2] = verts[pri.v[2]].p;
-    vp[3] = verts[pri.v[3]].p;
-    vp[4] = verts[pri.v[4]].p;
-    vp[5] = verts[pri.v[5]].p;
-}
-
-inline void Mesh::getVerts(glm::dvec3 vp[8], const MeshHex& hex) const
-{
-    vp[0] = verts[hex.v[0]].p;
-    vp[1] = verts[hex.v[1]].p;
-    vp[2] = verts[hex.v[2]].p;
-    vp[3] = verts[hex.v[3]].p;
-    vp[4] = verts[hex.v[4]].p;
-    vp[5] = verts[hex.v[5]].p;
-    vp[6] = verts[hex.v[6]].p;
-    vp[7] = verts[hex.v[7]].p;
-}
 
 #endif // GPUMESH_MESH
