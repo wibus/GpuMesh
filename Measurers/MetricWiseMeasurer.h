@@ -46,7 +46,7 @@ public:
     virtual glm::dvec3 computeVertexEquilibrium(
             const Mesh& mesh,
             const AbstractSampler& sampler,
-            size_t vId) const override;
+            uint vId) const override;
 
 protected:
     virtual glm::dvec3 computeSpringForce(

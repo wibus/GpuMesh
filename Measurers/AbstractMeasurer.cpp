@@ -118,7 +118,7 @@ double AbstractMeasurer::hexVolume(
 double AbstractMeasurer::computeLocalElementSize(
         const Mesh& mesh,
         const AbstractSampler& sampler,
-        size_t vId) const
+        uint vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;
 

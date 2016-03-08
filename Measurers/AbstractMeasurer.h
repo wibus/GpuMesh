@@ -97,13 +97,13 @@ public:
     virtual double computeLocalElementSize(
             const Mesh& mesh,
             const AbstractSampler& sampler,
-            size_t vId) const;
+            uint vId) const;
 
 
     virtual glm::dvec3 computeVertexEquilibrium(
             const Mesh& mesh,
             const AbstractSampler& sampler,
-            size_t vId) const = 0;
+            uint vId) const = 0;
 
 private:
     std::string _measureName;
