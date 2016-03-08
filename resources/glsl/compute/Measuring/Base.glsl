@@ -3,9 +3,9 @@
 ///////////////////////////////
 
 // Externally defined
-float tetVolume(in vec3 vp[TET_VERTEX_COUNT]);
-float priVolume(in vec3 vp[PRI_VERTEX_COUNT]);
-float hexVolume(in vec3 vp[HEX_VERTEX_COUNT]);
+float tetVolume(in vec3 vp[TET_VERTEX_COUNT], in Tet tet);
+float priVolume(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri);
+float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex);
 
 // Internally defined
 float tetVolume(in Tet tet);
@@ -27,7 +27,7 @@ float tetVolume(in Tet tet)
         verts[tet.v[3]].p
     );
 
-    return tetVolume(vp);
+    return tetVolume(vp, tet);
 }
 
 float priVolume(in Pri pri)
@@ -41,7 +41,7 @@ float priVolume(in Pri pri)
         verts[pri.v[5]].p
     );
 
-    return priVolume(vp);
+    return priVolume(vp, pri);
 }
 
 float hexVolume(in Hex hex)
@@ -57,7 +57,7 @@ float hexVolume(in Hex hex)
         verts[hex.v[7]].p
     );
 
-    return hexVolume(vp);
+    return hexVolume(vp, hex);
 }
 
 float computeLocalElementSize(in uint vId)

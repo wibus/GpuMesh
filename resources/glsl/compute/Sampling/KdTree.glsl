@@ -26,12 +26,12 @@ layout(std140, binding = KD_METRICS_BUFFER_BINDING) buffer KdMetrics
 };
 
 
-subroutine mat3 metricAtSub(in vec3 position);
+subroutine mat3 metricAtSub(in vec3 position, in uint vId);
 layout(location=0) subroutine uniform metricAtSub metricAtUni;
 
-mat3 metricAt(in vec3 position)
+mat3 metricAt(in vec3 position, in uint vId)
 {
-    return metricAtUni(position);
+    return metricAtUni(position, vId);
 }
 
 
@@ -57,7 +57,7 @@ bool tetParams(in Tet tet, in vec3 p, out float coor[4])
 }
 
 layout(index=0) subroutine(metricAtSub)
-mat3 metricAtImpl(in vec3 position)
+mat3 metricAtImpl(in vec3 position, in uint vId)
 {
     const mat3 METRIC_ERROR = mat3(0.0);
 

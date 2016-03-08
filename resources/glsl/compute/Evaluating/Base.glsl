@@ -3,9 +3,9 @@
 ///////////////////////////////
 
 // Externally defined
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT]);
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT]);
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT]);
+float tetQuality(in vec3 vp[TET_VERTEX_COUNT], in Tet tet);
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri);
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex);
 
 // Internally defined
 float tetQuality(in Tet tet);
@@ -29,7 +29,7 @@ float tetQuality(in Tet tet)
         verts[tet.v[3]].p
     );
 
-    return tetQuality(vp);
+    return tetQuality(vp, tet);
 }
 
 float priQuality(in Pri pri)
@@ -43,7 +43,7 @@ float priQuality(in Pri pri)
         verts[pri.v[5]].p
     );
 
-    return priQuality(vp);
+    return priQuality(vp, pri);
 }
 
 float hexQuality(in Hex hex)
@@ -59,7 +59,7 @@ float hexQuality(in Hex hex)
         verts[hex.v[7]].p
     );
 
-    return hexQuality(vp);
+    return hexQuality(vp, hex);
 }
 
 void accumulatePatchQuality(

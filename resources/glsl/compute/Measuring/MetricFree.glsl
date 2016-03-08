@@ -9,7 +9,7 @@ vec3 riemannianSegment(in vec3 a, in vec3 b)
     return b - a;
 }
 
-float tetVolume(in vec3 vp[TET_VERTEX_COUNT])
+float tetVolume(in vec3 vp[TET_VERTEX_COUNT], in Tet tet)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
@@ -20,7 +20,7 @@ float tetVolume(in vec3 vp[TET_VERTEX_COUNT])
     return detSum / 6.0;
 }
 
-float priVolume(in vec3 vp[PRI_VERTEX_COUNT])
+float priVolume(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri)
 {
     vec3 e02 = vp[2] - vp[0];
     vec3 e12 = vp[2] - vp[1];
@@ -37,7 +37,7 @@ float priVolume(in vec3 vp[PRI_VERTEX_COUNT])
     return detSum / 6.0;
 }
 
-float hexVolume(in vec3 vp[HEX_VERTEX_COUNT])
+float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
