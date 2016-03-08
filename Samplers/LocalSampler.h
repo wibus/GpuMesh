@@ -65,6 +65,7 @@ private:
     std::vector<Metric> _vertMetrics;
     std::vector<LocalTet> _localTets;
     std::vector<MeshVert> _localVerts;
+
     mutable std::vector<uint> _indexCache;
 };
 

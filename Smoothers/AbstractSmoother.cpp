@@ -18,7 +18,7 @@ AbstractSmoother::AbstractSmoother(const installCudaFct installCuda) :
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("GLSL");
+    _implementationFuncs.setDefault("Thread");
     _implementationFuncs.setContent({
         {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
         {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},

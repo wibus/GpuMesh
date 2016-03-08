@@ -1,5 +1,7 @@
 #include "LocalSampler.h"
 
+#include <array>
+
 #include <CellarWorkbench/Misc/Log.h>
 
 #include <DataStructures/Mesh.h>
@@ -86,7 +88,7 @@ void LocalSampler::setReferenceMesh(
 
     // Find tets neighbors
     TriSet triSet;
-    size_t bucketCount = size_t(pow(double(tetCount), 1/3.0));
+    size_t bucketCount = pow(double(triCount), 2.0/3.0);
     triSet.reset(bucketCount);
 
     getLog().postMessage(new Message('I', false,
@@ -141,27 +143,108 @@ void LocalSampler::setReferenceMesh(
         "Surface triangle count: " + std::to_string(remTriCount) +
         " / " + std::to_string(triCount), "LocalSampler"));
     triSet.releaseMemoryPool();
+}
 
+const size_t MAX_TABOO = 32;
+bool isTaboo(uint tId, uint taboo[], size_t count)
+{
+    if(tId != -1)
+    {
+        for(size_t i=0; i < count; ++i)
+            if(tId == taboo[i])
+                return true;
+    }
+
+    return false;
 }
 
 Metric LocalSampler::metricAt(
         const glm::dvec3& position,
         uint vertOwnerId) const
 {
+    // Taboo search structures
+    size_t tabooCount = 0;
+    uint taboo[MAX_TABOO];
+
     uint tetId = _indexCache[vertOwnerId];
     const LocalTet* tet = &_localTets[tetId];
 
     double coor[4];
     while(!tetParams(_localVerts, *tet, position, coor))
     {
-        uint n = 0;
-        if(coor[1] < coor[n]) n = 1;
-        if(coor[2] < coor[n]) n = 2;
-        if(coor[3] < coor[n]) n = 3;
+        uint n = -1;
+        double minCoor = 1/0.0;
 
-        uint nt = tet->n[n];
-        if(nt == -1)
+        if(coor[0] < minCoor && !isTaboo(tet->n[0], taboo, tabooCount))
         {
+            n = 0;
+            minCoor = coor[0];
+        }
+        if(coor[1] < minCoor && !isTaboo(tet->n[1], taboo, tabooCount))
+        {
+            n = 1;
+            minCoor = coor[1];
+        }
+        if(coor[2] < minCoor && !isTaboo(tet->n[2], taboo, tabooCount))
+        {
+            n = 2;
+            minCoor = coor[2];
+        }
+        if(coor[3] < minCoor && !isTaboo(tet->n[3], taboo, tabooCount))
+        {
+            n = 3;
+            minCoor = coor[3];
+        }
+
+        bool clipCurrentTet = false;
+        if(n != -1)
+        {
+            uint nextTet = tet->n[n];
+
+            if((nextTet != -1))
+            {
+                if(tabooCount < MAX_TABOO)
+                {
+                    // Add last tet to taboo list
+                    taboo[tabooCount] = tetId;
+                    ++tabooCount;
+
+                    // Fetch the next local tet
+                    tet = &_localTets[nextTet];
+                    tetId = nextTet;
+                }
+                else
+                {
+                    // We went too far,
+                    // stay where we are
+                    clipCurrentTet = true;
+                    getLog().postMessage(new Message('E', false,
+                       "Visited to many tets during local search", "LocalSampler"));
+                }
+            }
+            else
+            {
+                // The sampling point is on
+                // the other side of the boundary
+                clipCurrentTet = true;
+                // This may not be an issue
+            }
+        }
+        else
+        {
+            // Every surrounding tet
+            // were already visited
+            clipCurrentTet = true;
+            getLog().postMessage(new Message('E', false,
+               "Surrounded by taboo tets during local search", "LocalSampler"));
+        }
+
+
+        if(clipCurrentTet)
+        {
+            // Clamp sample to current tet
+            // It's seems to be the closest
+            // we can get to the sampling point
             double sum = 0.0;
             if(coor[0] < 0.0) coor[0] = 0.0; else sum += coor[0];
             if(coor[1] < 0.0) coor[1] = 0.0; else sum += coor[1];
@@ -172,11 +255,6 @@ Metric LocalSampler::metricAt(
             coor[2] /= sum;
             coor[3] /= sum;
             break;
-        }
-        else
-        {
-            tetId = nt;
-            tet = &_localTets[nt];
         }
     }
 
