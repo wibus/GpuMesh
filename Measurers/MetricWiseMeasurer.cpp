@@ -24,11 +24,11 @@ double MetricWiseMeasurer::riemannianDistance(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b,
-        uint vId) const
+        uint cacheId) const
 {
     glm::dvec3 abDiff = b - a;
     glm::dvec3 middle = (a + b) / 2.0;
-    Metric origMetric = sampler.metricAt(middle, vId);
+    Metric origMetric = sampler.metricAt(middle, cacheId);
     double dist = glm::sqrt(glm::dot(abDiff, origMetric * abDiff));
 
     int segmentCount = 1;
@@ -43,7 +43,7 @@ double MetricWiseMeasurer::riemannianDistance(
         double newDist = 0.0;
         for(int i=0; i < segmentCount; ++i)
         {
-            Metric metric = sampler.metricAt(segBeg + half_ds, vId);
+            Metric metric = sampler.metricAt(segBeg + half_ds, cacheId);
             newDist += glm::sqrt(glm::dot(ds, metric * ds));
             segBeg += ds;
         }
@@ -59,10 +59,10 @@ glm::dvec3 MetricWiseMeasurer::riemannianSegment(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b,
-        uint vId) const
+        uint cacheId) const
 {
     return glm::normalize(b - a) *
-            riemannianDistance(sampler, a, b, vId);
+            riemannianDistance(sampler, a, b, cacheId);
 }
 
 double MetricWiseMeasurer::tetVolume(
@@ -155,12 +155,12 @@ glm::dvec3 MetricWiseMeasurer::computeSpringForce(
         const AbstractSampler& sampler,
         const glm::dvec3& pi,
         const glm::dvec3& pj,
-        uint vId) const
+        uint cacheId) const
 {
     if(pi == pj)
         return glm::dvec3();
 
-    double d = riemannianDistance(sampler, pi, pj, vId);
+    double d = riemannianDistance(sampler, pi, pj, cacheId);
     glm::dvec3 u = (pi - pj) / d;
 
     double d2 = d * d;

@@ -55,13 +55,13 @@ public:
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint vId) const = 0;
+            uint cacheId) const = 0;
 
     virtual glm::dvec3 riemannianSegment(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint vId) const = 0;
+            uint cacheId) const = 0;
 
 
     // Volumes

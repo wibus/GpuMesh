@@ -24,7 +24,7 @@ double MetricFreeMeasurer::riemannianDistance(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b,
-        uint vId) const
+        uint cacheId) const
 {
     return glm::distance(a, b);
 }
@@ -33,7 +33,7 @@ glm::dvec3 MetricFreeMeasurer::riemannianSegment(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b,
-        uint vId) const
+        uint cacheId) const
 {
     return b - a;
 }

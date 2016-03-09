@@ -16,13 +16,13 @@ public:
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint vId) const override;
+            uint cacheId) const override;
 
     virtual glm::dvec3 riemannianSegment(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint vId) const override;
+            uint cacheId) const override;
 
 
     // Volumes
@@ -53,7 +53,7 @@ protected:
             const AbstractSampler& sampler,
             const glm::dvec3& pi,
             const glm::dvec3& pj,
-            uint vId) const;
+            uint cacheId) const;
 };
 
 #endif // GPUMESH_METRICWISEMEASURER
