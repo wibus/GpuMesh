@@ -207,7 +207,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.insertHtml("<h2>Implementations</h2>");
 
     size_t maxPassCount = 0;
-    double minMeanGain = INFINITY;
+    double minImplGain = INFINITY;
     double minImplTime = INFINITY;
     size_t implCount = _plot.implementations().size();
     for(size_t i=0; i < implCount; ++i)
@@ -217,9 +217,9 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
         maxPassCount = std::max(maxPassCount,
                 impl.passes.size());
 
-        minMeanGain = std::min(minMeanGain,
-                impl.passes.back().qualityMean -
-                impl.passes.front().qualityMean);
+        minImplGain = std::min(minImplGain,
+                impl.passes.back().minQuality -
+                impl.passes.front().minQuality);
 
         minImplTime = std::min(minImplTime,
                 impl.passes.back().timeStamp);
@@ -230,24 +230,24 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     statsTableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
 
     cursor.insertBlock(blockFormat);
-    cursor.insertHtml("<h3>Mean Quality</h3>");
-    QTextTable* implMeanTable = cursor.insertTable(
+    cursor.insertHtml("<h3>Minimum Quality</h3>");
+    QTextTable* implMinQualTable = cursor.insertTable(
         maxPassCount + 4,
         implCount + 1,
         statsTableFormat);
 
-    tableCell = implMeanTable->cellAt(0, 0);
+    tableCell = implMinQualTable->cellAt(0, 0);
     tableCursor = tableCell.firstCursorPosition();
     tableCursor.insertText("Passes", tableHeaderCharFormat);
-    tableCell = implMeanTable->cellAt(maxPassCount+2, 0);
+    tableCell = implMinQualTable->cellAt(maxPassCount+2, 0);
     tableCursor = tableCell.firstCursorPosition();
     tableCursor.insertText("Gain", tableTotalCharFormat);
-    tableCell = implMeanTable->cellAt(maxPassCount+3, 0);
+    tableCell = implMinQualTable->cellAt(maxPassCount+3, 0);
     tableCursor = tableCell.firstCursorPosition();
     tableCursor.insertText("Ratio", tableTotalCharFormat);
     for(size_t p=0; p < maxPassCount; ++p)
     {
-        tableCell = implMeanTable->cellAt(1+p, 0);
+        tableCell = implMinQualTable->cellAt(1+p, 0);
         tableCursor = tableCell.firstCursorPosition();
         tableCursor.insertText(QString::number(p));
     }
@@ -256,7 +256,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     {
         const OptimizationImpl& impl = _plot.implementations()[i];
 
-        tableCell = implMeanTable->cellAt(0, i+1);
+        tableCell = implMinQualTable->cellAt(0, i+1);
         tableCursor = tableCell.firstCursorPosition();
         tableCursor.insertText(impl.name.c_str(), tableHeaderCharFormat);
 
@@ -265,20 +265,20 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
         {
             const OptimizationPass& pass = impl.passes[p];
 
-            tableCell = implMeanTable->cellAt(1+p, i+1);
+            tableCell = implMinQualTable->cellAt(1+p, i+1);
             tableCursor = tableCell.firstCursorPosition();
-            tableCursor.insertText(QString::number(pass.qualityMean, 'f'));
+            tableCursor.insertText(QString::number(pass.minQuality, 'f'));
         }
 
-        double meanGain = impl.passes.back().qualityMean -
-                          impl.passes.front().qualityMean;
+        double minGain = impl.passes.back().minQuality -
+                         impl.passes.front().minQuality;
 
-        tableCell = implMeanTable->cellAt(maxPassCount+2, i+1);
+        tableCell = implMinQualTable->cellAt(maxPassCount+2, i+1);
         tableCursor = tableCell.firstCursorPosition();
-        tableCursor.insertText(QString::number(meanGain, 'f'));
-        tableCell = implMeanTable->cellAt(maxPassCount+3, i+1);
+        tableCursor.insertText(QString::number(minGain, 'f'));
+        tableCell = implMinQualTable->cellAt(maxPassCount+3, i+1);
         tableCursor = tableCell.firstCursorPosition();
-        tableCursor.insertText(QString::number(meanGain / minMeanGain, 'f'));
+        tableCursor.insertText(QString::number(minGain / minImplGain, 'f'));
     }
     cursor.movePosition(QTextCursor::End);
 
@@ -356,23 +356,23 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
         for(const auto& pass : impl.passes)
         {
             maxT = glm::max(maxT, pass.timeStamp);
-            minQ = glm::min(minQ, pass.qualityMean);
-            maxQ = glm::max(maxQ, pass.qualityMean);
+            minQ = glm::min(minQ, pass.minQuality);
+            maxQ = glm::max(maxQ, pass.minQuality);
         }
 
-        begQ = impl.passes.front().qualityMean;
+        begQ = impl.passes.front().minQuality;
     }
     double marginQ = (maxQ - minQ) * 0.05;
     double bottomQ = minQ - marginQ;
     double topQ = maxQ + marginQ;
     double scaleQ = 1.0 / (topQ - bottomQ);
 
-    // Min timestamp and min qualityMean
+    // Min timestamp and min minQuality
     QGraphicsTextItem* minTimeText = scene.addText("0s");
     double minTimeTextLen = minTimeText->document()->size().width();
     minTimeText->setPos(-minTimeTextLen/2.0, sceneHeight);
 
-    // Algo final quality mean
+    // Algo final minimum quality
     QGraphicsTextItem* begQualityText = scene.addText(QString::number(minQ));
     double begQualityTextWidth = begQualityText->document()->size().width();
     double begQualityTextHeight = begQualityText->document()->size().height();
@@ -391,7 +391,7 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
         double totalTime = samples.back().timeStamp;
         double xAsymptote = sceneWidth * (totalTime / maxT);
         scene.addLine(xAsymptote, 0, xAsymptote, sceneHeight, QPen(Qt::lightGray));
-        double yAsymptote = sceneHeight * (topQ - samples.back().qualityMean) * scaleQ;
+        double yAsymptote = sceneHeight * (topQ - samples.back().minQuality) * scaleQ;
         scene.addLine(0, yAsymptote, sceneWidth, yAsymptote, QPen(Qt::lightGray));
 
         // Algo total times
@@ -400,15 +400,15 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
         timeText->setPos(xAsymptote - timeTextLen/2.0, sceneHeight);
         timeText->setDefaultTextColor(pens[label].color());
 
-        // Algo final quality mean
-        double finalQuality = samples.back().qualityMean;
+        // Algo final minimum quality
+        double finalQuality = samples.back().minQuality;
         QGraphicsTextItem* qualityText = scene.addText(QString::number(finalQuality));
         double qualityTextHeight = qualityText->document()->size().height();
         qualityText->setPos(sceneWidth, sceneHeight * (topQ - finalQuality) * scaleQ - qualityTextHeight/2.0);
         qualityText->setDefaultTextColor(pens[label].color());
 
         // Legend
-        double gainValue = samples.back().qualityMean - samples.front().qualityMean;
+        double gainValue = samples.back().minQuality - samples.front().minQuality;
         QString gainText = " (" + ((gainValue < 0.0 ? "-" : "+") + QString::number(gainValue)) + ")";
         QGraphicsTextItem* text = scene.addText(label.c_str() + gainText);
         text->setPos(legendLeft + 10.0, legendTop + labelHeight);
@@ -431,9 +431,9 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
             const OptimizationPass& currPass = samples[i];
             scene.addLine(
                 sceneWidth * prevPass.timeStamp / maxT,
-                sceneHeight * (topQ - prevPass.qualityMean) * scaleQ,
+                sceneHeight * (topQ - prevPass.minQuality) * scaleQ,
                 sceneWidth * currPass.timeStamp / maxT,
-                sceneHeight * (topQ - currPass.qualityMean) * scaleQ,
+                sceneHeight * (topQ - currPass.minQuality) * scaleQ,
                 pens[label]);
         }
     }
