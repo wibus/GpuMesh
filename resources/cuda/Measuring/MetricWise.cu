@@ -2,11 +2,11 @@
 
 
 // Distance
-__device__ float metricWiseRiemannianDistance(const vec3& a, const vec3& b)
+__device__ float metricWiseRiemannianDistance(const vec3& a, const vec3& b, uint cacheId)
 {
     vec3 abDiff = b - a;
     vec3 middle = (a + b) / 2.0f;
-    float dist = sqrt(dot(abDiff, metricAt(middle) * abDiff));
+    float dist = sqrt(dot(abDiff, metricAt(middle, cacheId) * abDiff));
 
     int segmentCount = 1;
     float err = 1.0;
@@ -20,7 +20,7 @@ __device__ float metricWiseRiemannianDistance(const vec3& a, const vec3& b)
         float newDist = 0.0;
         for(int i=0; i < segmentCount; ++i)
         {
-            mat3 metric = metricAt(segBeg + half_ds);
+            mat3 metric = metricAt(segBeg + half_ds, cacheId);
             newDist += sqrt(dot(ds, metric * ds));
             segBeg += ds;
         }
@@ -32,31 +32,31 @@ __device__ float metricWiseRiemannianDistance(const vec3& a, const vec3& b)
     return dist;
 }
 
-__device__ vec3 metricWiseRiemannianSegment(const vec3& a, const vec3& b)
+__device__ vec3 metricWiseRiemannianSegment(const vec3& a, const vec3& b, uint cacheId)
 {
     return normalize(b - a) *
-        metricWiseRiemannianDistance(a, b);
+        metricWiseRiemannianDistance(a, b, cacheId);
 }
 
 
 // Volume
-__device__ float metricWiseTetVolume(const vec3 vp[TET_VERTEX_COUNT])
+__device__ float metricWiseTetVolume(const vec3 vp[TET_VERTEX_COUNT], const Tet& tet)
 {
     float detSum = determinant(mat3(
-        metricWiseRiemannianSegment(vp[0], vp[3]),
-        metricWiseRiemannianSegment(vp[1], vp[3]),
-        metricWiseRiemannianSegment(vp[2], vp[3])));
+        (*riemannianSegmentImpl)(vp[0], vp[3], tet.v[0]),
+        (*riemannianSegmentImpl)(vp[1], vp[3], tet.v[1]),
+        (*riemannianSegmentImpl)(vp[2], vp[3], tet.v[2])));
 
     return detSum / 6.0;
 }
 
-__device__ float metricWisePriVolume(const vec3 vp[PRI_VERTEX_COUNT])
+__device__ float metricWisePriVolume(const vec3 vp[PRI_VERTEX_COUNT], const Pri& pri)
 {
-    dvec3 e02 = metricWiseRiemannianSegment(vp[0], vp[2]);
-    dvec3 e12 = metricWiseRiemannianSegment(vp[1], vp[2]);
-    dvec3 e32 = metricWiseRiemannianSegment(vp[3], vp[2]);
-    dvec3 e42 = metricWiseRiemannianSegment(vp[4], vp[2]);
-    dvec3 e52 = metricWiseRiemannianSegment(vp[5], vp[2]);
+    vec3 e02 = (*riemannianSegmentImpl)(vp[0], vp[2], pri.v[0]);
+    vec3 e12 = (*riemannianSegmentImpl)(vp[1], vp[2], pri.v[1]);
+    vec3 e32 = (*riemannianSegmentImpl)(vp[3], vp[2], pri.v[3]);
+    vec3 e42 = (*riemannianSegmentImpl)(vp[4], vp[2], pri.v[4]);
+    vec3 e52 = (*riemannianSegmentImpl)(vp[5], vp[2], pri.v[5]);
 
     float detSum = 0.0;
     detSum += determinant(mat3(e32, e52, e42));
@@ -66,41 +66,41 @@ __device__ float metricWisePriVolume(const vec3 vp[PRI_VERTEX_COUNT])
     return detSum / 6.0;
 }
 
-__device__ float metricWiseHexVolume(const vec3 vp[HEX_VERTEX_COUNT])
+__device__ float metricWiseHexVolume(const vec3 vp[HEX_VERTEX_COUNT], const Hex& hex)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[1], vp[0]),
-        metricWiseRiemannianSegment(vp[4], vp[0]),
-        metricWiseRiemannianSegment(vp[3], vp[0])));
+        (*riemannianSegmentImpl)(vp[1], vp[0], hex.v[1]),
+        (*riemannianSegmentImpl)(vp[4], vp[0], hex.v[4]),
+        (*riemannianSegmentImpl)(vp[3], vp[0], hex.v[3])));
     detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[1], vp[2]),
-        metricWiseRiemannianSegment(vp[3], vp[2]),
-        metricWiseRiemannianSegment(vp[6], vp[2])));
+        (*riemannianSegmentImpl)(vp[1], vp[2], hex.v[1]),
+        (*riemannianSegmentImpl)(vp[3], vp[2], hex.v[3]),
+        (*riemannianSegmentImpl)(vp[6], vp[2], hex.v[6])));
     detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[4], vp[5]),
-        metricWiseRiemannianSegment(vp[1], vp[5]),
-        metricWiseRiemannianSegment(vp[6], vp[5])));
+        (*riemannianSegmentImpl)(vp[4], vp[5], hex.v[4]),
+        (*riemannianSegmentImpl)(vp[1], vp[5], hex.v[1]),
+        (*riemannianSegmentImpl)(vp[6], vp[5], hex.v[6])));
     detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[4], vp[7]),
-        metricWiseRiemannianSegment(vp[6], vp[7]),
-        metricWiseRiemannianSegment(vp[3], vp[7])));
+        (*riemannianSegmentImpl)(vp[4], vp[7], hex.v[4]),
+        (*riemannianSegmentImpl)(vp[6], vp[7], hex.v[6]),
+        (*riemannianSegmentImpl)(vp[3], vp[7], hex.v[3])));
     detSum += determinant(mat3(
-        metricWiseRiemannianSegment(vp[1], vp[4]),
-        metricWiseRiemannianSegment(vp[6], vp[4]),
-        metricWiseRiemannianSegment(vp[3], vp[4])));
+        (*riemannianSegmentImpl)(vp[1], vp[4], hex.v[1]),
+        (*riemannianSegmentImpl)(vp[6], vp[4], hex.v[6]),
+        (*riemannianSegmentImpl)(vp[3], vp[4], hex.v[3])));
 
     return detSum / 6.0;
 }
 
 
 // High level measurement
-__device__ vec3 computeSpringForce(const vec3& pi, const vec3& pj)
+__device__ vec3 computeSpringForce(const vec3& pi, const vec3& pj, uint cacheId)
 {
     if(pi == pj)
         return vec3(0.0);
 
-    float d = metricWiseRiemannianDistance(pi, pj);
+    float d = metricWiseRiemannianDistance(pi, pj, cacheId);
     vec3 u = (pi - pj) / d;
 
     float d2 = d * d;
@@ -125,7 +125,7 @@ __device__ vec3 metricWiseComputeVertexEquilibrium(uint vId)
         NeigVert neigVert = neigVerts[n];
         vec3 npos = vec3(verts[neigVert.v].p);
 
-        forceTotal += computeSpringForce(pos, npos);
+        forceTotal += computeSpringForce(pos, npos, vId);
     }
 
     vec3 equilibrium = pos + forceTotal;

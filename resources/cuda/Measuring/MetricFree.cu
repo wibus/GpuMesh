@@ -2,19 +2,19 @@
 
 
 // Distance
-__device__ float metricFreeRiemannianDistance(const vec3& a, const vec3& b)
+__device__ float metricFreeRiemannianDistance(const vec3& a, const vec3& b, uint cacheId)
 {
     return distance(a, b);
 }
 
-__device__ vec3 metricFreeRiemannianSegment(const vec3& a, const vec3& b)
+__device__ vec3 metricFreeRiemannianSegment(const vec3& a, const vec3& b, uint cacheId)
 {
     return b - a;
 }
 
 
 // Volume
-__device__ float metricFreeTetVolume(const vec3 vp[TET_VERTEX_COUNT])
+__device__ float metricFreeTetVolume(const vec3 vp[TET_VERTEX_COUNT], const Tet& tet)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
@@ -25,7 +25,7 @@ __device__ float metricFreeTetVolume(const vec3 vp[TET_VERTEX_COUNT])
     return detSum / 6.0;
 }
 
-__device__ float metricFreePriVolume(const vec3 vp[PRI_VERTEX_COUNT])
+__device__ float metricFreePriVolume(const vec3 vp[PRI_VERTEX_COUNT], const Pri& pri)
 {
     vec3 e02 = vp[2] - vp[0];
     vec3 e12 = vp[2] - vp[1];
@@ -41,7 +41,7 @@ __device__ float metricFreePriVolume(const vec3 vp[PRI_VERTEX_COUNT])
     return detSum / 6.0;
 }
 
-__device__ float metricFreeHexVolume(const vec3 vp[HEX_VERTEX_COUNT])
+__device__ float metricFreeHexVolume(const vec3 vp[HEX_VERTEX_COUNT], const Hex& hex)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(

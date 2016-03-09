@@ -17,15 +17,16 @@ __device__ mat3 specifiedMetric(
         const vec3& v0,
         const vec3& v1,
         const vec3& v2,
-        const vec3& v3)
+        const vec3& v3,
+        uint cacheId)
 {
     const float H = 0.5;
     const float Q = (1.0 - H) / 3.0;
-    return ((*metricAt)((v0 + v1 + v2 + v3)/4.0f) * (-0.8f) +
-            (*metricAt)(v0*H + v1*Q + v2*Q + v3*Q) * 0.45f +
-            (*metricAt)(v0*Q + v1*H + v2*Q + v3*Q) * 0.45f +
-            (*metricAt)(v0*Q + v1*Q + v2*H + v3*Q) * 0.45f +
-            (*metricAt)(v0*Q + v1*Q + v2*Q + v3*H) * 0.45f);
+    return ((*metricAt)((v0 + v1 + v2 + v3)/4.0f,  cacheId) * (-0.8f) +
+            (*metricAt)(v0*H + v1*Q + v2*Q + v3*Q, cacheId) * 0.45f +
+            (*metricAt)(v0*Q + v1*H + v2*Q + v3*Q, cacheId) * 0.45f +
+            (*metricAt)(v0*Q + v1*Q + v2*H + v3*Q, cacheId) * 0.45f +
+            (*metricAt)(v0*Q + v1*Q + v2*Q + v3*H, cacheId) * 0.45f);
 }
 
 __device__ float metricConformity(const mat3& Fk, const mat3& Ms)
@@ -46,7 +47,7 @@ __device__ float metricConformity(const mat3& Fk, const mat3& Ms)
     return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
 }
 
-__device__ float metricConformityTetQuality(const vec3 vp[TET_VERTEX_COUNT])
+__device__ float metricConformityTetQuality(const vec3 vp[TET_VERTEX_COUNT], const Tet& tet)
 {
     vec3 e03 = vp[3] - vp[0];
     vec3 e13 = vp[3] - vp[1];
@@ -54,14 +55,14 @@ __device__ float metricConformityTetQuality(const vec3 vp[TET_VERTEX_COUNT])
 
     mat3 Fk = mat3(e03, e13, e23) * Fr_TET_INV;
 
-    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[2], vp[3]);
+    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[2], vp[3], tet.v[0]);
 
     float qual0 = metricConformity(Fk, Ms0);
 
     return qual0;
 }
 
-__device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
+__device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT], const Pri& pri)
 {
     vec3 e03 = vp[3] - vp[0];
     vec3 e14 = vp[4] - vp[1];
@@ -82,12 +83,12 @@ __device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
     mat3 Fk4 = mat3(-e45, e34, e14) * Fr_PRI_INV;
     mat3 Fk5 = mat3(-e53, e45, e25) * Fr_PRI_INV;
 
-    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[2], vp[3]);
-    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[2], vp[4]);
-    mat3 Ms2 = specifiedMetric(vp[0], vp[1], vp[2], vp[5]);
-    mat3 Ms3 = specifiedMetric(vp[0], vp[3], vp[4], vp[5]);
-    mat3 Ms4 = specifiedMetric(vp[1], vp[3], vp[4], vp[5]);
-    mat3 Ms5 = specifiedMetric(vp[2], vp[3], vp[4], vp[5]);
+    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[2], vp[3], pri.v[0]);
+    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[2], vp[4], pri.v[1]);
+    mat3 Ms2 = specifiedMetric(vp[0], vp[1], vp[2], vp[5], pri.v[2]);
+    mat3 Ms3 = specifiedMetric(vp[0], vp[3], vp[4], vp[5], pri.v[3]);
+    mat3 Ms4 = specifiedMetric(vp[1], vp[3], vp[4], vp[5], pri.v[4]);
+    mat3 Ms5 = specifiedMetric(vp[2], vp[3], vp[4], vp[5], pri.v[5]);
 
     float qual0 = metricConformity(Fk0, Ms0);
     float qual1 = metricConformity(Fk1, Ms1);
@@ -99,7 +100,7 @@ __device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT])
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
 
-__device__ float metricConformityHexQuality(const vec3 vp[HEX_VERTEX_COUNT])
+__device__ float metricConformityHexQuality(const vec3 vp[HEX_VERTEX_COUNT], const Hex& hex)
 {
     vec3 e01 = vp[1] - vp[0];
     vec3 e03 = vp[3] - vp[0];
@@ -125,14 +126,14 @@ __device__ float metricConformityHexQuality(const vec3 vp[HEX_VERTEX_COUNT])
     mat3 Fk6 = mat3(e26,  e56,  e67);
     mat3 Fk7 = mat3(e37,  e67, -e47);
 
-    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[3], vp[4]);
-    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[2], vp[5]);
-    mat3 Ms2 = specifiedMetric(vp[1], vp[2], vp[3], vp[6]);
-    mat3 Ms3 = specifiedMetric(vp[0], vp[2], vp[3], vp[7]);
-    mat3 Ms4 = specifiedMetric(vp[0], vp[4], vp[5], vp[7]);
-    mat3 Ms5 = specifiedMetric(vp[1], vp[4], vp[5], vp[6]);
-    mat3 Ms6 = specifiedMetric(vp[2], vp[5], vp[6], vp[7]);
-    mat3 Ms7 = specifiedMetric(vp[3], vp[4], vp[6], vp[7]);
+    mat3 Ms0 = specifiedMetric(vp[0], vp[1], vp[3], vp[4], hex.v[0]);
+    mat3 Ms1 = specifiedMetric(vp[0], vp[1], vp[2], vp[5], hex.v[1]);
+    mat3 Ms2 = specifiedMetric(vp[1], vp[2], vp[3], vp[6], hex.v[2]);
+    mat3 Ms3 = specifiedMetric(vp[0], vp[2], vp[3], vp[7], hex.v[3]);
+    mat3 Ms4 = specifiedMetric(vp[0], vp[4], vp[5], vp[7], hex.v[4]);
+    mat3 Ms5 = specifiedMetric(vp[1], vp[4], vp[5], vp[6], hex.v[5]);
+    mat3 Ms6 = specifiedMetric(vp[2], vp[5], vp[6], vp[7], hex.v[6]);
+    mat3 Ms7 = specifiedMetric(vp[3], vp[4], vp[6], vp[7], hex.v[7]);
 
     float qual0 = metricConformity(Fk0, Ms0);
     float qual1 = metricConformity(Fk1, Ms1);

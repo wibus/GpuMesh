@@ -1,7 +1,7 @@
 #include "Base.cuh"
 
 
-__device__ mat3 uniformMetricAt(const vec3& position)
+__device__ mat3 uniformMetricAt(const vec3& position, uint cacheId)
 {
     return mat3(0.0);
 }

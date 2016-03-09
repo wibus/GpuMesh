@@ -21,7 +21,7 @@ __device__ float tetQuality(const Tet& tet)
         vec3(verts[tet.v[3]].p)
     };
 
-    return (*tetQualityImpl)(vp);
+    return (*tetQualityImpl)(vp, tet);
 }
 
 __device__ float priQuality(const Pri& pri)
@@ -35,7 +35,7 @@ __device__ float priQuality(const Pri& pri)
         vec3(verts[pri.v[5]].p)
     };
 
-    return (*priQualityImpl)(vp);
+    return (*priQualityImpl)(vp, pri);
 }
 
 __device__ float hexQuality(const Hex& hex)
@@ -51,7 +51,7 @@ __device__ float hexQuality(const Hex& hex)
         vec3(verts[hex.v[7]].p)
     };
 
-    return (*hexQualityImpl)(vp);
+    return (*hexQualityImpl)(vp, hex);
 }
 
 __device__ void accumulatePatchQuality(

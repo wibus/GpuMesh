@@ -168,9 +168,9 @@ struct GpuLocalTet
         n{0, 0, 0, 0}
     {}
 
-    GpuLocalTet(const LocalTet& t) :
-        v{t.v[0], t.v[1], t.v[2], t.v[3]},
-        n{t.n[0], t.n[1], t.n[2], t.n[3]}
+    GpuLocalTet(const uint v[4], const uint n[4]) :
+        v{v[0], v[1], v[2], v[3]},
+        n{n[0], n[1], n[2], n[3]}
     {}
 
     GLuint v[4];

@@ -3,8 +3,6 @@
 #include "DataStructures/GpuMesh.h"
 
 
-#define METRIC_ERROR mat3(0.0)
-
 struct KdNode
 {
     int left;
@@ -16,11 +14,11 @@ struct KdNode
     vec4 separator;
 };
 
-__constant__ uint kdNodes_length;
-__device__ KdNode* kdNodes;
-
 __constant__ uint kdTets_length;
 __device__ Tet* kdTets;
+
+__constant__ uint kdNodes_length;
+__device__ KdNode* kdNodes;
 
 
 ///////////////////////////////
@@ -32,9 +30,8 @@ __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4]);
 //////////////////////////////
 //   Function definitions   //
 //////////////////////////////
-__device__ mat3 kdTreeMetricAt(const vec3& position)
+__device__ mat3 kdTreeMetricAt(const vec3& position, uint cacheId)
 {
-
     int nodeId = 0;
     int childId = 0;
     while(childId != -1)
@@ -131,8 +128,6 @@ void installCudaKdTreeSampler()
 }
 
 
-class GpuKdNode;
-
 size_t d_kdTetsLength = 0;
 Topo* d_kdTets = nullptr;
 void updateCudaKdTets(
@@ -158,7 +153,7 @@ void updateCudaKdTets(
 
 
 size_t d_kdNodesLength = 0;
-NeigVert* d_kdNodes = nullptr;
+KdNode* d_kdNodes = nullptr;
 void updateCudaKdNodes(
         const std::vector<GpuKdNode>& kdNodesBuff)
 {

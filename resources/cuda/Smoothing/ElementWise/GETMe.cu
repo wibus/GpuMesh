@@ -42,8 +42,8 @@ __device__ void getmeSmoothTet(uint eId)
     };
 
 
-    float volume = tetVolumeImpl(vp);
-    float volumePrime = tetVolumeImpl(vpp);
+    float volume = tetVolumeImpl(vp, tet);
+    float volumePrime = tetVolumeImpl(vpp, tet);
     float absVolumeRation = abs(volume / volumePrime);
     float volumeVar = pow(absVolumeRation, 1.0/3.0);
 
@@ -60,8 +60,8 @@ __device__ void getmeSmoothTet(uint eId)
     if(topos[vi[2]].type > 0) vpp[2] = snapToBoundary(topos[vi[2]].type, vpp[2]);
     if(topos[vi[3]].type > 0) vpp[3] = snapToBoundary(topos[vi[3]].type, vpp[3]);
 
-    float quality = tetQualityImpl(vp);
-    float qualityPrime = tetQualityImpl(vpp);
+    float quality = tetQualityImpl(vp, tet);
+    float qualityPrime = tetQualityImpl(vpp, tet);
 
     float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);
@@ -132,8 +132,8 @@ __device__ void getmeSmoothPri(uint eId)
     };
 
 
-    float volume = priVolumeImpl(vp);
-    float volumePrime = priVolumeImpl(vpp);
+    float volume = priVolumeImpl(vp, pri);
+    float volumePrime = priVolumeImpl(vpp, pri);
     float absVolumeRation = abs(volume / volumePrime);
     float volumeVar = pow(absVolumeRation, 1.0/3.0);
 
@@ -155,8 +155,8 @@ __device__ void getmeSmoothPri(uint eId)
     if(topos[vi[5]].type > 0) vpp[5] = snapToBoundary(topos[vi[5]].type, vpp[5]);
 
 
-    float quality = priQualityImpl(vp);
-    float qualityPrime = priQualityImpl(vpp);
+    float quality = priQualityImpl(vp, pri);
+    float qualityPrime = priQualityImpl(vpp, pri);
 
     float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);
@@ -238,8 +238,8 @@ __device__ void getmeSmoothHex(uint eId)
     };
 
 
-    float volume = hexVolumeImpl(vp);
-    float volumePrime = hexVolumeImpl(vpp);
+    float volume = hexVolumeImpl(vp, hex);
+    float volumePrime = hexVolumeImpl(vpp, hex);
     float absVolumeRation = abs(volume / volumePrime);
     float volumeVar = pow(absVolumeRation, 1.0/3.0);
 
@@ -265,8 +265,8 @@ __device__ void getmeSmoothHex(uint eId)
     if(topos[vi[7]].type > 0) vpp[7] = snapToBoundary(topos[vi[7]].type, vpp[7]);
 
 
-    float quality = hexQualityImpl(vp);
-    float qualityPrime = hexQualityImpl(vpp);
+    float quality = hexQualityImpl(vp, hex);
+    float qualityPrime = hexQualityImpl(vpp, hex);
 
     float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);

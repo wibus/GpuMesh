@@ -26,7 +26,7 @@ __device__ float tetVolume(const Tet& tet)
         vec3(verts[tet.v[3]].p),
     };
 
-    return (*tetVolumeImpl)(vp);
+    return (*tetVolumeImpl)(vp, tet);
 }
 
 __device__ float priVolume(const Pri& pri)
@@ -40,7 +40,7 @@ __device__ float priVolume(const Pri& pri)
         vec3(verts[pri.v[5]].p),
     };
 
-    return (*priVolumeImpl)(vp);
+    return (*priVolumeImpl)(vp, pri);
 }
 
 __device__ float hexVolume(const Hex& hex)
@@ -55,7 +55,7 @@ __device__ float hexVolume(const Hex& hex)
         vec3(verts[hex.v[6]].p),
         vec3(verts[hex.v[7]].p)
     };
-    return (*hexVolumeImpl)(vp);
+    return (*hexVolumeImpl)(vp, hex);
 }
 
 __device__ float computeLocalElementSize(uint vId)

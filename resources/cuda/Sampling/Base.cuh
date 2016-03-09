@@ -2,5 +2,5 @@
 
 
 // Metric sampling function
-typedef mat3 (*metricAtFct)(const vec3&);
+typedef mat3 (*metricAtFct)(const vec3&, uint);
 extern __device__ metricAtFct metricAt;

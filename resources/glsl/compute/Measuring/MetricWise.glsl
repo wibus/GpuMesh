@@ -51,11 +51,11 @@ float tetVolume(in vec3 vp[TET_VERTEX_COUNT], in Tet tet)
 
 float priVolume(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri)
 {
-    dvec3 e02 = riemannianSegment(vp[0], vp[2], pri.v[0]);
-    dvec3 e12 = riemannianSegment(vp[1], vp[2], pri.v[1]);
-    dvec3 e32 = riemannianSegment(vp[3], vp[2], pri.v[3]);
-    dvec3 e42 = riemannianSegment(vp[4], vp[2], pri.v[4]);
-    dvec3 e52 = riemannianSegment(vp[5], vp[2], pri.v[5]);
+    vec3 e02 = riemannianSegment(vp[0], vp[2], pri.v[0]);
+    vec3 e12 = riemannianSegment(vp[1], vp[2], pri.v[1]);
+    vec3 e32 = riemannianSegment(vp[3], vp[2], pri.v[3]);
+    vec3 e42 = riemannianSegment(vp[4], vp[2], pri.v[4]);
+    vec3 e52 = riemannianSegment(vp[5], vp[2], pri.v[5]);
 
     float detSum = 0.0;
     detSum += determinant(mat3(e32, e52, e42));
