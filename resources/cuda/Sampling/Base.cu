@@ -62,3 +62,24 @@ __device__ void boundingBox(vec3& minBounds, vec3& maxBounds)
         maxBounds = max(maxBounds, vertPos);
     }
 }
+
+__device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4])
+{
+    dvec3 vp0 = dvec3(refVerts[vi[0]].p);
+    dvec3 vp1 = dvec3(refVerts[vi[1]].p);
+    dvec3 vp2 = dvec3(refVerts[vi[2]].p);
+    dvec3 vp3 = dvec3(refVerts[vi[3]].p);
+
+    dmat3 T = dmat3(vp0 - vp3, vp1 - vp3, vp2 - vp3);
+
+    dvec3 y = inverse(T) * (dvec3(p) - vp3);
+    coor[0] = float(y[0]);
+    coor[1] = float(y[1]);
+    coor[2] = float(y[2]);
+    coor[3] = float(1.0 - (y[0] + y[1] + y[2]));
+
+    const float EPSILON_IN = -1e-8;
+    bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
+                 coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
+    return isIn;
+}

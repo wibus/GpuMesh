@@ -40,7 +40,7 @@ public:
 
     virtual Metric metricAt(
             const glm::dvec3& position,
-            uint vertOwnerId) const override;
+            uint cacheId) const override;
 
 
     virtual void releaseDebugMesh() override;
@@ -68,11 +68,13 @@ private:
 
     std::unique_ptr<KdNode> _rootNode;
     std::shared_ptr<Mesh> _debugMesh;
-    std::vector<Metric> _vertMetrics;
+    std::vector<MeshVert> _refVerts;
+    std::vector<Metric> _refMetrics;
 
-    GLuint _kdNodesSsbo;
     GLuint _kdTetsSsbo;
-    GLuint _kdMetricsSsbo;
+    GLuint _kdNodesSsbo;
+    GLuint _refVertsSsbo;
+    GLuint _refMetricsSsbo;
     GLuint _metricAtSub;
 };
 

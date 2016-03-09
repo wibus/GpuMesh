@@ -95,6 +95,14 @@ extern __device__ NeigElem* neigElems;
 extern __constant__ uint groupMembers_length;
 extern __device__ uint* groupMembers;
 
+// Reference mesh vertices
+extern __constant__ uint refVerts_length;
+extern __device__ Vert* refVerts;
+
+// Reference mesh metrics
+extern __constant__ uint refMetrics_length;
+extern __device__ mat4* refMetrics;
+
 
 
 //////////////////////////////////

@@ -37,31 +37,37 @@ struct KdNode
 
 // CUDA Drivers Interface
 void installCudaKdTreeSampler();
-void updateCudaKdTreeStructure(
-        const std::vector<GpuTet>& kdTetsBuff,
+void updateCudaKdTets(
+        const std::vector<GpuTet>& kdTetsBuff);
+void updateCudaKdNodes(
         const std::vector<GpuKdNode>& kdNodesBuff);
-void updateCudaKdTreeMetrics(
-        const std::vector<glm::mat4>& kdMetricsBuff);
+void updateCudaRefVerts(
+        const std::vector<GpuVert>& refVertsBuff);
+void updateCudaRefMetrics(
+        const std::vector<glm::mat4>& refMetricsBuff);
 
 
 KdTreeSampler::KdTreeSampler() :
     AbstractSampler("Kd-Tree", ":/glsl/compute/Sampling/KdTree.glsl", installCudaKdTreeSampler),
     _debugMesh(new Mesh()),
-    _kdNodesSsbo(0),
     _kdTetsSsbo(0),
-    _kdMetricsSsbo(0),
+    _kdNodesSsbo(0),
+    _refVertsSsbo(0),
+    _refMetricsSsbo(0),
     _metricAtSub(0)
 {
 }
 
 KdTreeSampler::~KdTreeSampler()
 {
-    glDeleteBuffers(1, &_kdNodesSsbo);
-    _kdNodesSsbo = 0;
     glDeleteBuffers(1, &_kdTetsSsbo);
     _kdTetsSsbo = 0;
-    glDeleteBuffers(1, &_kdMetricsSsbo);
-    _kdMetricsSsbo = 0;
+    glDeleteBuffers(1, &_kdNodesSsbo);
+    _kdNodesSsbo = 0;
+    glDeleteBuffers(1, &_refVertsSsbo);
+    _refVertsSsbo = 0;
+    glDeleteBuffers(1, &_refMetricsSsbo);
+    _refMetricsSsbo = 0;
 }
 
 bool KdTreeSampler::isMetricWise() const
@@ -71,14 +77,17 @@ bool KdTreeSampler::isMetricWise() const
 
 void KdTreeSampler::initialize()
 {
-    if(_kdNodesSsbo == 0)
-        glGenBuffers(1, &_kdNodesSsbo);
-
     if(_kdTetsSsbo == 0)
         glGenBuffers(1, &_kdTetsSsbo);
 
-    if(_kdMetricsSsbo == 0)
-        glGenBuffers(1, &_kdMetricsSsbo);
+    if(_kdNodesSsbo == 0)
+        glGenBuffers(1, &_kdNodesSsbo);
+
+    if(_refVertsSsbo == 0)
+        glGenBuffers(1, &_refVertsSsbo);
+
+    if(_refMetricsSsbo == 0)
+        glGenBuffers(1, &_refMetricsSsbo);
 }
 
 void KdTreeSampler::installPlugin(
@@ -87,13 +96,15 @@ void KdTreeSampler::installPlugin(
 {
     AbstractSampler::installPlugin(mesh, program);
 
-    GLuint kdNodes   = mesh.bufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
-    GLuint kdTets    = mesh.bufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
-    GLuint kdMetrics = mesh.bufferBinding(EBufferBinding::KD_METRICS_BUFFER_BINDING);
+    GLuint kdTets     = mesh.bufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
+    GLuint kdNodes    = mesh.bufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
+    GLuint refVerts   = mesh.bufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
+    GLuint refMetrics = mesh.bufferBinding(EBufferBinding::REF_METRICS_BUFFER_BINDING);
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdNodes,   _kdNodesSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdTets,    _kdTetsSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdMetrics, _kdMetricsSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdTets,     _kdTetsSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdNodes,    _kdNodesSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refVerts,   _refVertsSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
 }
 
 void KdTreeSampler::setupPluginExecution(
@@ -107,13 +118,18 @@ void KdTreeSampler::setupPluginExecution(
 
 void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 {
-    // Clear resources
-    _debugMesh->clear();
-    _debugMesh->verts = mesh.verts;
+    size_t vertCount = mesh.verts.size();
 
-    _vertMetrics.clear();
-    _vertMetrics.shrink_to_fit();
+    // Clear resources
+    _debugMesh.reset();
+
     _rootNode.reset();
+    _refVerts = mesh.verts;
+    _refVerts.shrink_to_fit();
+    _refMetrics.resize(mesh.verts.size());
+    for(size_t vId=0; vId < vertCount; ++vId)
+        _refMetrics[vId] = vertMetric(mesh, vId);
+    _refMetrics.shrink_to_fit();
 
 
     // Break prisms and hex into tetrahedra
@@ -121,7 +137,6 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
     tetrahedrize(tets, mesh);
 
     // Compute Kd Tree depth
-    size_t vertCount = mesh.verts.size();
     int height = (int)std::log2(vertCount/density);
 
     getLog().postMessage(new Message('I', false,
@@ -155,24 +170,12 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
           tets);
 
 
-    _vertMetrics.reserve(vertCount);
-    for(size_t v=0; v < vertCount; ++v)
-        _vertMetrics.push_back(vertMetric(mesh.verts[v]));
-    _vertMetrics.shrink_to_fit();
-
-
     // Build GPU Buffers
     std::vector<GpuTet> gpuKdTets;
     std::vector<GpuKdNode> gpuKdNodes;
     buildGpuBuffers(_rootNode.get(), gpuKdNodes, gpuKdTets);
 
-    updateCudaKdTreeStructure(gpuKdTets, gpuKdNodes);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
-    size_t kdNodesSize = sizeof(decltype(gpuKdNodes.front())) * gpuKdNodes.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, kdNodesSize, gpuKdNodes.data(), GL_STATIC_DRAW);
-    gpuKdNodes.clear();
-    gpuKdNodes.shrink_to_fit();
+    updateCudaKdTets(gpuKdTets);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdTetsSsbo);
     size_t kdTetsSize = sizeof(decltype(gpuKdTets.front())) * gpuKdTets.size();
@@ -180,23 +183,46 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
     gpuKdTets.clear();
     gpuKdTets.shrink_to_fit();
 
+    updateCudaKdNodes(gpuKdNodes);
 
-    std::vector<glm::mat4> gpuKdMetrics;
-    gpuKdMetrics.reserve(_vertMetrics.size());
-    for(const auto& metric : _vertMetrics)
-        gpuKdMetrics.push_back(glm::mat4(metric));
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
+    size_t kdNodesSize = sizeof(decltype(gpuKdNodes.front())) * gpuKdNodes.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, kdNodesSize, gpuKdNodes.data(), GL_STATIC_DRAW);
+    gpuKdNodes.clear();
+    gpuKdNodes.shrink_to_fit();
 
-    updateCudaKdTreeMetrics(gpuKdMetrics);
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdMetricsSsbo);
-    size_t kdMetricsSize = sizeof(decltype(gpuKdMetrics.front())) * gpuKdMetrics.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, kdMetricsSize, gpuKdMetrics.data(), GL_STATIC_DRAW);
+    // Reference Mesh Vertices
+    std::vector<GpuVert> gpuRefVerts;
+    gpuRefVerts.reserve(_refVerts.size());
+    for(const auto& v : _refVerts)
+        gpuRefVerts.push_back(GpuVert(v));
+
+    updateCudaRefVerts(gpuRefVerts);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
+    size_t refVertsSize = sizeof(decltype(gpuRefVerts.front())) * gpuRefVerts.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+    // Reference Mesh Metrics
+    std::vector<glm::mat4> gpuRefMetrics;
+    gpuRefMetrics.reserve(_refMetrics.size());
+    for(const auto& metric : _refMetrics)
+        gpuRefMetrics.push_back(glm::mat4(metric));
+
+    updateCudaRefMetrics(gpuRefMetrics);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
+    size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
+    glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 Metric KdTreeSampler::metricAt(
         const glm::dvec3& position,
-        uint vertOwnerId) const
+        uint cacheId) const
 {
     const Metric METRIC_ERROR(0.0);
 
@@ -223,16 +249,15 @@ Metric KdTreeSampler::metricAt(
 
         double coor[4];
         size_t tetCount = node->tets.size();
-        const auto& verts = _debugMesh->verts;
         for(size_t t=0; t < tetCount; ++t)
         {
             const MeshTet& tet = node->tets[t];
-            if(tetParams(verts, tet, position, coor))
+            if(tetParams(_refVerts, tet, position, coor))
             {
-                return coor[0] * _vertMetrics[tet.v[0]] +
-                       coor[1] * _vertMetrics[tet.v[1]] +
-                       coor[2] * _vertMetrics[tet.v[2]] +
-                       coor[3] * _vertMetrics[tet.v[3]];
+                return coor[0] * _refMetrics[tet.v[0]] +
+                       coor[1] * _refMetrics[tet.v[1]] +
+                       coor[2] * _refMetrics[tet.v[2]] +
+                       coor[3] * _refMetrics[tet.v[3]];
             }
             else
             {
@@ -277,27 +302,25 @@ Metric KdTreeSampler::metricAt(
 
         // Return projected metric
         const MeshTet& tet = node->tets[nodeSmallestIdx];
-        return nodeSmallestCoor[0] * _vertMetrics[tet.v[0]] +
-               nodeSmallestCoor[1] * _vertMetrics[tet.v[1]] +
-               nodeSmallestCoor[2] * _vertMetrics[tet.v[2]] +
-               nodeSmallestCoor[3] * _vertMetrics[tet.v[3]];
+        return nodeSmallestCoor[0] * _refMetrics[tet.v[0]] +
+               nodeSmallestCoor[1] * _refMetrics[tet.v[1]] +
+               nodeSmallestCoor[2] * _refMetrics[tet.v[2]] +
+               nodeSmallestCoor[3] * _refMetrics[tet.v[3]];
     }
     else return METRIC_ERROR;
 }
 
 void KdTreeSampler::releaseDebugMesh()
 {
-    auto verts = _debugMesh->verts;
-    _debugMesh->clear();
-    _debugMesh->verts = verts;
+    _debugMesh.reset();
 }
 
 const Mesh& KdTreeSampler::debugMesh()
 {
-    //if(_debugMesh->tets.empty() &&
-    //   !_debugMesh->verts.empty())
-    if(_debugMesh->hexs.empty())
+    if(_debugMesh.get() == nullptr)
     {
+        _debugMesh.reset(new Mesh());
+
         if(_rootNode.get() != nullptr)
         {
             meshTree(_rootNode.get(), *_debugMesh);
@@ -508,7 +531,6 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
     {
         {
             cellId = 0;
-            //mesh.tets.insert(mesh.tets.end(), node->tets.begin(), node->tets.end());
 
             uint baseVert = mesh.verts.size();
             mesh.verts.push_back(glm::dvec3(node->minBox.x, node->minBox.y, node->minBox.z));

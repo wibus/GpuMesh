@@ -161,6 +161,22 @@ struct GpuKdNode
     glm::vec4 separator;
 };
 
+struct GpuLocalTet
+{
+    GpuLocalTet() :
+        v{0, 0, 0, 0},
+        n{0, 0, 0, 0}
+    {}
+
+    GpuLocalTet(const LocalTet& t) :
+        v{t.v[0], t.v[1], t.v[2], t.v[3]},
+        n{t.n[0], t.n[1], t.n[2], t.n[3]}
+    {}
+
+    GLuint v[4];
+    GLuint n[4];
+};
+
 
 class GpuMesh : public Mesh
 {

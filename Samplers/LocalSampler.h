@@ -1,29 +1,11 @@
 #ifndef GPUMESH_LOCALSAMPLER
 #define GPUMESH_LOCALSAMPLER
 
+#include <GL3/gl3w.h>
+
 #include "AbstractSampler.h"
 
-
-struct LocalTet
-{
-    inline LocalTet()
-        { v[0] = -1; v[1] = -1; v[2] = -1; v[3] = -1;
-          n[0] = -1; n[1] = -1; n[2] = -1; n[3] = -1;}
-
-    inline LocalTet(uint v0, uint v1, uint v2, uint v3)
-        { v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3;
-          n[0] = -1; n[1] = -1; n[2] = -1; n[3] = -1;}
-
-    LocalTet(const MeshTet& t);
-
-    // Vertices of the tetrahedron
-    uint v[4];
-
-    // Neighbors of the tetrahedron
-    //   n[0] is the neighbor tetrahedron
-    //   at the oposite face of vertex v[0]
-    uint n[4];
-};
+class LocalTet;
 
 
 class LocalSampler : public AbstractSampler
@@ -53,7 +35,7 @@ public:
 
     virtual Metric metricAt(
             const glm::dvec3& position,
-            uint vertOwnerId) const override;
+            uint cacheId) const override;
 
 
     virtual void releaseDebugMesh() override;
@@ -62,11 +44,17 @@ public:
 
 private:
     std::shared_ptr<Mesh> _debugMesh;
-    std::vector<Metric> _vertMetrics;
+    std::vector<Metric>   _refMetrics;
     std::vector<LocalTet> _localTets;
-    std::vector<MeshVert> _localVerts;
+    std::vector<MeshVert> _refVerts;
 
-    mutable std::vector<uint> _indexCache;
+    GLuint _localTetsSsbo;
+    GLuint _localCacheSsbo;
+    GLuint _refVertsSsbo;
+    GLuint _refMetricsSsbo;
+    GLuint _metricAtSub;
+
+    mutable std::vector<uint> _localCache;
 };
 
 #endif // GPUMESH_LOCALSAMPLER

@@ -20,44 +20,20 @@ layout(shared, binding = KD_TETS_BUFFER_BINDING) buffer KdTets
     Tet kdTets[];
 };
 
-layout(std140, binding = KD_METRICS_BUFFER_BINDING) buffer KdMetrics
-{
-    mat4 kdMetrics[];
-};
+bool tetParams(in uint vi[4], in vec3 p, out float coor[4]);
 
 
-subroutine mat3 metricAtSub(in vec3 position, in uint vId);
+subroutine mat3 metricAtSub(in vec3 position, in uint cacheId);
 layout(location=0) subroutine uniform metricAtSub metricAtUni;
 
-mat3 metricAt(in vec3 position, in uint vId)
+mat3 metricAt(in vec3 position, in uint cacheId)
 {
-    return metricAtUni(position, vId);
+    return metricAtUni(position, cacheId);
 }
 
-
-bool tetParams(in Tet tet, in vec3 p, out float coor[4])
-{
-    dvec3 vp0 = dvec3(verts[tet.v[0]].p);
-    dvec3 vp1 = dvec3(verts[tet.v[1]].p);
-    dvec3 vp2 = dvec3(verts[tet.v[2]].p);
-    dvec3 vp3 = dvec3(verts[tet.v[3]].p);
-
-    dmat3 T = dmat3(vp0 - vp3, vp1 - vp3, vp2 - vp3);
-
-    dvec3 y = inverse(T) * (dvec3(p) - vp3);
-    coor[0] = float(y[0]);
-    coor[1] = float(y[1]);
-    coor[2] = float(y[2]);
-    coor[3] = float(1.0LF - (y[0] + y[1] + y[2]));
-
-    const float EPSILON_IN = -1e-8;
-    bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
-                 coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
-    return isIn;
-}
 
 layout(index=0) subroutine(metricAtSub)
-mat3 metricAtImpl(in vec3 position, in uint vId)
+mat3 metricAtImpl(in vec3 position, in uint cacheId)
 {
     const mat3 METRIC_ERROR = mat3(0.0);
 
@@ -86,12 +62,12 @@ mat3 metricAtImpl(in vec3 position, in uint vId)
     for(uint t=node.tetBeg; t < tetEnd; ++t)
     {
         Tet tet = kdTets[t];
-        if(tetParams(tet, position, coor))
+        if(tetParams(tet.v, position, coor))
         {
-            return coor[0] * mat3(kdMetrics[tet.v[0]]) +
-                   coor[1] * mat3(kdMetrics[tet.v[1]]) +
-                   coor[2] * mat3(kdMetrics[tet.v[2]]) +
-                   coor[3] * mat3(kdMetrics[tet.v[3]]);
+            return coor[0] * mat3(refMetrics[tet.v[0]]) +
+                   coor[1] * mat3(refMetrics[tet.v[1]]) +
+                   coor[2] * mat3(refMetrics[tet.v[2]]) +
+                   coor[3] * mat3(refMetrics[tet.v[3]]);
         }
         else
         {
@@ -137,8 +113,8 @@ mat3 metricAtImpl(in vec3 position, in uint vId)
 
     // Return projected metric
     Tet tet = kdTets[nodeSmallestIdx];
-    return nodeSmallestCoor[0] * mat3(kdMetrics[tet.v[0]]) +
-           nodeSmallestCoor[1] * mat3(kdMetrics[tet.v[1]]) +
-           nodeSmallestCoor[2] * mat3(kdMetrics[tet.v[2]]) +
-           nodeSmallestCoor[3] * mat3(kdMetrics[tet.v[3]]);
+    return nodeSmallestCoor[0] * mat3(refMetrics[tet.v[0]]) +
+           nodeSmallestCoor[1] * mat3(refMetrics[tet.v[1]]) +
+           nodeSmallestCoor[2] * mat3(refMetrics[tet.v[2]]) +
+           nodeSmallestCoor[3] * mat3(refMetrics[tet.v[3]]);
 }

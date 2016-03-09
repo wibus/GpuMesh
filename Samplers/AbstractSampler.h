@@ -59,7 +59,7 @@ public:
 
     virtual Metric metricAt(
             const glm::dvec3& position,
-            uint vertOwnerId) const = 0;
+            uint cacheId) const = 0;
 
 
     // Debug mesh

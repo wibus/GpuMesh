@@ -30,6 +30,13 @@ __device__ uint neigElems_length = 0;
 __device__ uint* groupMembers = nullptr;
 __device__ uint groupMembers_length = 0;
 
+// Reference mesh
+__constant__ uint refVerts_length;
+__device__ Vert* refVerts;
+
+__constant__ uint refMetrics_length;
+__device__ mat4* refMetrics;
+
 
 // CUDA Drivers
 size_t d_vertsLength = 0;
@@ -215,4 +222,52 @@ void updateCudaGroupMembers(const std::vector<GLuint>& groupMembersBuff)
 
     cudaMemcpy(d_groupMembers, groupMembersBuff.data(), groupMembersBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \tgroupMembers updated\n");
+}
+
+
+size_t d_refVertsLength = 0;
+Vert* d_refVerts = nullptr;
+void updateCudaRefVerts(
+        const std::vector<GpuVert>& refVertsBuff)
+{
+    // Reference mesh vertices
+    uint refVertsLength = refVertsBuff.size();
+    size_t refVertsBuffSize = sizeof(decltype(refVertsBuff.front())) * refVertsLength;
+    if(d_refVerts == nullptr || d_refVertsLength != refVertsLength)
+    {
+        cudaFree(d_refVerts);
+        if(!refVertsLength) d_refVerts = nullptr;
+        else cudaMalloc(&d_refVerts, refVertsBuffSize);
+        cudaMemcpyToSymbol(refVerts, &d_refVerts, sizeof(d_refVerts));
+
+        d_refVertsLength = refVertsLength;
+        cudaMemcpyToSymbol(refVerts_length, &refVertsLength, sizeof(uint));
+    }
+
+    cudaMemcpy(d_refVerts, refVertsBuff.data(), refVertsBuffSize, cudaMemcpyHostToDevice);
+    printf("I -> CUDA \tRef Vertices updated\n");
+}
+
+
+size_t d_refMetricsLength = 0;
+mat4* d_refMetrics = nullptr;
+void updateCudaRefMetrics(
+        const std::vector<glm::mat4>& refMetricsBuff)
+{
+    // Reference mesh metrics
+    uint refMetricsLength = refMetricsBuff.size();
+    size_t refMetricsBuffSize = sizeof(decltype(refMetricsBuff.front())) * refMetricsLength;
+    if(d_refMetrics == nullptr || d_refMetricsLength != refMetricsLength)
+    {
+        cudaFree(d_refMetrics);
+        if(!refMetricsLength) d_refMetrics = nullptr;
+        else cudaMalloc(&d_refMetrics, refMetricsBuffSize);
+        cudaMemcpyToSymbol(refMetrics, &d_refMetrics, sizeof(d_refMetrics));
+
+        d_refMetricsLength = refMetricsLength;
+        cudaMemcpyToSymbol(refMetrics_length, &refMetricsLength, sizeof(uint));
+    }
+
+    cudaMemcpy(d_refMetrics, refMetricsBuff.data(), refMetricsBuffSize, cudaMemcpyHostToDevice);
+    printf("I -> CUDA \tRef Metrics updated\n");
 }

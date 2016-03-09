@@ -16,38 +16,22 @@ struct KdNode
     vec4 separator;
 };
 
-
 __constant__ uint kdNodes_length;
 __device__ KdNode* kdNodes;
 
 __constant__ uint kdTets_length;
 __device__ Tet* kdTets;
 
-__constant__ uint kdMetrics_length;
-__device__ mat4* kdMetrics;
+
+///////////////////////////////
+//   Function declarations   //
+///////////////////////////////
+__device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4]);
 
 
-__device__ bool tetParams(const Tet& tet, const vec3& p, float coor[4])
-{
-    dvec3 vp0 = dvec3(verts[tet.v[0]].p);
-    dvec3 vp1 = dvec3(verts[tet.v[1]].p);
-    dvec3 vp2 = dvec3(verts[tet.v[2]].p);
-    dvec3 vp3 = dvec3(verts[tet.v[3]].p);
-
-    dmat3 T = dmat3(vp0 - vp3, vp1 - vp3, vp2 - vp3);
-
-    dvec3 y = inverse(T) * (dvec3(p) - vp3);
-    coor[0] = float(y[0]);
-    coor[1] = float(y[1]);
-    coor[2] = float(y[2]);
-    coor[3] = float(1.0 - (y[0] + y[1] + y[2]));
-
-    const float EPSILON_IN = -1e-8;
-    bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
-                 coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
-    return isIn;
-}
-
+//////////////////////////////
+//   Function definitions   //
+//////////////////////////////
 __device__ mat3 kdTreeMetricAt(const vec3& position)
 {
 
@@ -76,12 +60,12 @@ __device__ mat3 kdTreeMetricAt(const vec3& position)
     for(uint t=node.tetBeg; t < tetEnd; ++t)
     {
         Tet tet = kdTets[t];
-        if(tetParams(tet, position, coor))
+        if(tetParams(tet.v, position, coor))
         {
-            return coor[0] * mat3(kdMetrics[tet.v[0]]) +
-                   coor[1] * mat3(kdMetrics[tet.v[1]]) +
-                   coor[2] * mat3(kdMetrics[tet.v[2]]) +
-                   coor[3] * mat3(kdMetrics[tet.v[3]]);
+            return coor[0] * mat3(refMetrics[tet.v[0]]) +
+                   coor[1] * mat3(refMetrics[tet.v[1]]) +
+                   coor[2] * mat3(refMetrics[tet.v[2]]) +
+                   coor[3] * mat3(refMetrics[tet.v[3]]);
         }
         else
         {
@@ -127,10 +111,10 @@ __device__ mat3 kdTreeMetricAt(const vec3& position)
 
     // Return projected metric
     Tet tet = kdTets[nodeSmallestIdx];
-    return nodeSmallestCoor[0] * mat3(kdMetrics[tet.v[0]]) +
-           nodeSmallestCoor[1] * mat3(kdMetrics[tet.v[1]]) +
-           nodeSmallestCoor[2] * mat3(kdMetrics[tet.v[2]]) +
-           nodeSmallestCoor[3] * mat3(kdMetrics[tet.v[3]]);
+    return nodeSmallestCoor[0] * mat3(refMetrics[tet.v[0]]) +
+           nodeSmallestCoor[1] * mat3(refMetrics[tet.v[1]]) +
+           nodeSmallestCoor[2] * mat3(refMetrics[tet.v[2]]) +
+           nodeSmallestCoor[3] * mat3(refMetrics[tet.v[3]]);
 }
 
 __device__ metricAtFct kdTreeMetricAtPtr = kdTreeMetricAt;
@@ -151,13 +135,8 @@ class GpuKdNode;
 
 size_t d_kdTetsLength = 0;
 Topo* d_kdTets = nullptr;
-
-size_t d_kdNodesLength = 0;
-NeigVert* d_kdNodes = nullptr;
-
-void updateCudaKdTreeStructure(
-        const std::vector<GpuTet>& kdTetsBuff,
-        const std::vector<GpuKdNode>& kdNodesBuff)
+void updateCudaKdTets(
+        const std::vector<GpuTet>& kdTetsBuff)
 {
     // Tetrahedra
     uint kdTetsLength = kdTetsBuff.size();
@@ -175,8 +154,14 @@ void updateCudaKdTreeStructure(
 
     cudaMemcpy(d_kdTets, kdTetsBuff.data(), kdTetsBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \tkdTets updated\n");
+}
 
 
+size_t d_kdNodesLength = 0;
+NeigVert* d_kdNodes = nullptr;
+void updateCudaKdNodes(
+        const std::vector<GpuKdNode>& kdNodesBuff)
+{
     // kD-Tree Nodes
     uint kdNodesLength = kdNodesBuff.size();
     size_t kdNodesBuffSize = sizeof(decltype(kdNodesBuff.front())) * kdNodesLength;
@@ -193,27 +178,4 @@ void updateCudaKdTreeStructure(
 
     cudaMemcpy(d_kdNodes, kdNodesBuff.data(), kdNodesBuffSize, cudaMemcpyHostToDevice);
     printf("I -> CUDA \tkdNodes updated\n");
-}
-
-size_t d_kdMetricsLength = 0;
-GLuint* d_kdMetrics = nullptr;
-void updateCudaKdTreeMetrics(
-        const std::vector<glm::mat4>& kdMetricsBuff)
-{
-    // Group members
-    uint kdMetricsLength = kdMetricsBuff.size();
-    size_t kdMetricsBuffSize = sizeof(decltype(kdMetricsBuff.front())) * kdMetricsLength;
-    if(d_kdMetrics == nullptr || d_kdMetricsLength != kdMetricsLength)
-    {
-        cudaFree(d_kdMetrics);
-        if(!kdMetricsLength) d_kdMetrics = nullptr;
-        else cudaMalloc(&d_kdMetrics, kdMetricsBuffSize);
-        cudaMemcpyToSymbol(kdMetrics, &d_kdMetrics, sizeof(d_kdMetrics));
-
-        d_kdMetricsLength = kdMetricsLength;
-        cudaMemcpyToSymbol(kdMetrics_length, &kdMetricsLength, sizeof(uint));
-    }
-
-    cudaMemcpy(d_kdMetrics, kdMetricsBuff.data(), kdMetricsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tkdMetrics updated\n");
 }

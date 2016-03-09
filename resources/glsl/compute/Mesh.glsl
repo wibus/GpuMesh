@@ -68,9 +68,21 @@ struct Topo
     uint neigElemCount;
 };
 
+
 ///////////////////////
 // Mesh data buffers //
 ///////////////////////
+
+const uint EVALUATE_QUALS_BUFFER_BINDING    = 8;
+const uint VERTEX_ACCUMS_BUFFER_BINDING     = 9;
+const uint REF_VERTS_BUFFER_BINDING         = 10;
+const uint REF_METRICS_BUFFER_BINDING       = 11;
+const uint KD_TETS_BUFFER_BINDING           = 12;
+const uint KD_NODES_BUFFER_BINDING          = 13;
+const uint LOCAL_TETS_BUFFER_BINDING        = 14;
+const uint LOCAL_CACHE_BUFFER_BINDING       = 15;
+
+
 layout(std140, binding = 0) buffer Verts
 {
     Vert verts[];
@@ -111,12 +123,17 @@ layout(shared, binding = 7) buffer GroupMembers
     uint groupMembers[];
 };
 
+layout(std140, binding = REF_VERTS_BUFFER_BINDING) buffer RefVerts
+{
+    Vert refVerts[];
+};
 
-const uint EVALUATE_QUALS_BUFFER_BINDING    = 8;
-const uint VERTEX_ACCUMS_BUFFER_BINDING     = 9;
-const uint KD_NODES_BUFFER_BINDING          = 10;
-const uint KD_TETS_BUFFER_BINDING           = 11;
-const uint KD_METRICS_BUFFER_BINDING        = 12;
+layout(std140, binding = REF_METRICS_BUFFER_BINDING) buffer RefMetrics
+{
+    mat4 refMetrics[];
+};
+
+
 
 
 //////////////////////////////////
