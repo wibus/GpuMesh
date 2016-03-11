@@ -71,16 +71,16 @@ const MeshTet MeshPri::tets[MeshPri::TET_COUNT] = {
 
 const MeshEdge MeshHex::edges[MeshHex::EDGE_COUNT] = {
     MeshEdge(0, 1),
-    MeshEdge(0, 2),
-    MeshEdge(1, 3),
+    MeshEdge(0, 3),
+    MeshEdge(1, 2),
     MeshEdge(2, 3),
     MeshEdge(0, 4),
     MeshEdge(1, 5),
     MeshEdge(2, 6),
     MeshEdge(3, 7),
     MeshEdge(4, 5),
-    MeshEdge(4, 6),
-    MeshEdge(5, 7),
+    MeshEdge(4, 7),
+    MeshEdge(5, 6),
     MeshEdge(6, 7)
 };
 

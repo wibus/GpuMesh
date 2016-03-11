@@ -50,5 +50,7 @@
         <file>glsl/compute/Sampling/KdTree.glsl</file>
         <file>glsl/compute/Sampling/Uniform.glsl</file>
         <file>glsl/compute/Sampling/Local.glsl</file>
+        <file>glsl/vertex/BoldEdge.vert</file>
+        <file>glsl/fragment/BoldEdge.frag</file>
     </qresource>
 </RCC>

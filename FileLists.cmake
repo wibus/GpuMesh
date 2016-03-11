@@ -221,6 +221,7 @@ SET(GpuMesh_VERTEX_SHADERS
     ${GpuMesh_GLSL_DIR}/vertex/ScaffoldJoint.vert
     ${GpuMesh_GLSL_DIR}/vertex/ScaffoldTube.vert
     ${GpuMesh_GLSL_DIR}/vertex/Wireframe.vert
+    ${GpuMesh_GLSL_DIR}/vertex/BoldEdge.vert
     ${GpuMesh_GLSL_DIR}/vertex/Bloom.vert
     ${GpuMesh_GLSL_DIR}/vertex/Filter.vert)
 
@@ -232,6 +233,7 @@ SET(GpuMesh_FRAGMENT_SHADERS
     ${GpuMesh_GLSL_DIR}/fragment/ScaffoldJoint.frag
     ${GpuMesh_GLSL_DIR}/fragment/ScaffoldTube.frag
     ${GpuMesh_GLSL_DIR}/fragment/Wireframe.frag
+    ${GpuMesh_GLSL_DIR}/fragment/BoldEdge.frag
     ${GpuMesh_GLSL_DIR}/fragment/BloomBlur.frag
     ${GpuMesh_GLSL_DIR}/fragment/BloomBlend.frag
     ${GpuMesh_GLSL_DIR}/fragment/Gradient.frag

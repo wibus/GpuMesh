@@ -11,12 +11,12 @@ using namespace cellar;
 
 
 SurfacicRenderer::SurfacicRenderer() :
-    _buffElemCount(0),
-    _meshVao(0),
-    _vbo(0),
-    _nbo(0),
-    _ebo(0),
-    _qbo(0),
+    _buffFaceElemCount(0),
+    _buffEdgeIdxCount(0),
+    _faceVao(0),
+    _faceVbo(0),
+    _faceNbo(0),
+    _faceQbo(0),
     _shadowFbo(0),
     _shadowDpt(0),
     _shadowTex(0),
@@ -41,7 +41,7 @@ SurfacicRenderer::~SurfacicRenderer()
 }
 
 void SurfacicRenderer::updateCamera(const glm::mat4& view,
-                                  const glm::vec3& pos)
+                                    const glm::vec3& pos)
 {
     _litShader.pushProgram();
     _litShader.setMat4f("ViewMat", view);
@@ -52,10 +52,15 @@ void SurfacicRenderer::updateCamera(const glm::mat4& view,
     _unlitShader.setMat4f("ViewMat", view);
     _unlitShader.setVec3f("CameraPosition", pos);
     _unlitShader.popProgram();
+
+    _edgeShader.pushProgram();
+    _edgeShader.setMat4f("ViewMat", view);
+    _edgeShader.setVec3f("CameraPosition", pos);
+    _edgeShader.popProgram();
 }
 
 void SurfacicRenderer::updateLight(const glm::mat4& view,
-                                 const glm::vec3& pos)
+                                   const glm::vec3& pos)
 {
     glm::mat4 pvMat = _shadowProj * view;
 
@@ -149,6 +154,10 @@ void SurfacicRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
         _unlitShader.setMat4f("ProjMat", proj);
         _unlitShader.popProgram();
 
+        _edgeShader.pushProgram();
+        _edgeShader.setMat4f("ProjMat", proj);
+        _edgeShader.popProgram();
+
 
         // Effects scale
         glm::vec2 scale = filterScale();
@@ -187,76 +196,94 @@ void SurfacicRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
 void SurfacicRenderer::updateGeometry(const Mesh& mesh)
 {
     // Clear old vertex attributes
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceVbo);
     glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, _nbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceNbo);
     glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, _ebo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceQbo);
     glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, _qbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _edgeVbo);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _edgeIbo);
     glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
     // Fetch new vertex attributes
-    vector<glm::vec3> vertices;
+    vector<glm::vec3> faceVertices;
     vector<signed char> normals;
-    vector<unsigned char> edges;
     vector<unsigned char> qualities;
+    vector<glm::vec3> edgeVertices;
+    vector<GLuint> edgeIndices;
 
-    compileFacesAttributes(
+    compileMeshAttributes(
         mesh,
-        vertices,
+        faceVertices,
         normals,
-        edges,
-        qualities);
+        qualities,
+        edgeVertices,
+        edgeIndices);
 
 
-    _buffElemCount = vertices.size();
-    _buffNeedUpdate = false;
+    _buffFaceElemCount = faceVertices.size();
+    _buffEdgeIdxCount = edgeIndices.size();
 
 
     // Send new vertex attributes
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    GLuint verticesSize = vertices.size() * sizeof(decltype(vertices.front()));
-    glBufferData(GL_ARRAY_BUFFER, verticesSize, vertices.data(), GL_STATIC_DRAW);
-    vertices.clear();
-    vertices.shrink_to_fit();
+    glBindBuffer(GL_ARRAY_BUFFER, _faceVbo);
+    GLuint faceVerticesSize = faceVertices.size() * sizeof(decltype(faceVertices.front()));
+    glBufferData(GL_ARRAY_BUFFER, faceVerticesSize, faceVertices.data(), GL_STATIC_DRAW);
+    faceVertices.clear();
+    faceVertices.shrink_to_fit();
 
-    glBindBuffer(GL_ARRAY_BUFFER, _nbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceNbo);
     GLuint normalsSize = normals.size() * sizeof(decltype(normals.front()));
     glBufferData(GL_ARRAY_BUFFER, normalsSize, normals.data(), GL_STATIC_DRAW);
     normals.clear();
     normals.shrink_to_fit();
 
-    glBindBuffer(GL_ARRAY_BUFFER, _ebo);
-    GLuint edgesSize = edges.size() * sizeof(decltype(edges.front()));
-    glBufferData(GL_ARRAY_BUFFER, edgesSize, edges.data(), GL_STATIC_DRAW);
-    edges.clear();
-    edges.shrink_to_fit();
-
-    glBindBuffer(GL_ARRAY_BUFFER, _qbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceQbo);
     GLuint qualitiesSize = qualities.size() * sizeof(decltype(qualities.front()));
     glBufferData(GL_ARRAY_BUFFER, qualitiesSize, qualities.data(), GL_STATIC_DRAW);
     qualities.clear();
     qualities.shrink_to_fit();
 
+    glBindBuffer(GL_ARRAY_BUFFER, _edgeVbo);
+    GLuint edgeVerticesSize = edgeVertices.size() * sizeof(decltype(edgeVertices.front()));
+    glBufferData(GL_ARRAY_BUFFER, edgeVerticesSize, edgeVertices.data(), GL_STATIC_DRAW);
+    edgeVertices.clear();
+    edgeVertices.shrink_to_fit();
+
+    glBindBuffer(GL_ARRAY_BUFFER, _edgeIbo);
+    GLuint edgIndicesSize = edgeIndices.size() * sizeof(decltype(edgeIndices.front()));
+    glBufferData(GL_ARRAY_BUFFER, edgIndicesSize, edgeIndices.data(), GL_STATIC_DRAW);
+    edgeIndices.clear();
+    edgeIndices.shrink_to_fit();
+
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    _buffNeedUpdate = false;
 }
 
-void SurfacicRenderer::compileFacesAttributes(
+void SurfacicRenderer::compileMeshAttributes(
         const Mesh& mesh,
-        std::vector<glm::vec3>& vertices,
+        std::vector<glm::vec3>& faceVertices,
         std::vector<signed char>& normals,
-        std::vector<unsigned char>& triEdges,
-        std::vector<unsigned char>& qualities) const
+        std::vector<unsigned char>& qualities,
+        std::vector<glm::vec3>& edgeVertices,
+        std::vector<GLuint>& edgeIndices) const
 {
+    size_t vertCount = mesh.verts.size();
     glm::dvec3 cutNormal(_physicalCutPlane);
     double cutDistance = _physicalCutPlane.w;
+
+    set<pair<GLuint, GLuint>> edgeSet;
 
     // Tetrahedrons
     if(_tetVisibility)
@@ -304,9 +331,20 @@ void SurfacicRenderer::compileFacesAttributes(
                     glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
                     glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
                     glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-                    pushTriangle(vertices, normals, triEdges, qualities,
+                    pushTriangle(faceVertices, normals, qualities,
                                  verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                                 normal, false, quality);
+                                 normal, quality);
+                }
+
+                // Add verts to edge
+                for(uint e=0; e < MeshTet::EDGE_COUNT; ++e)
+                {
+                    MeshEdge local = MeshTet::edges[e];
+                    MeshEdge global(tet.v[local.v[0]], tet.v[local.v[1]]);
+                    if(global.v[0] < global.v[1])
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[0], global.v[1]));
+                    else
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[1], global.v[0]));
                 }
             }
         }
@@ -363,9 +401,20 @@ void SurfacicRenderer::compileFacesAttributes(
                     glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
                     glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
                     glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-                    pushTriangle(vertices, normals, triEdges, qualities,
+                    pushTriangle(faceVertices, normals, qualities,
                                  verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                                 normal, f >= 2, quality);
+                                 normal, quality);
+                }
+
+                // Add verts to edge
+                for(uint e=0; e < MeshPri::EDGE_COUNT; ++e)
+                {
+                    MeshEdge local = MeshPri::edges[e];
+                    MeshEdge global(pri.v[local.v[0]], pri.v[local.v[1]]);
+                    if(global.v[0] < global.v[1])
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[0], global.v[1]));
+                    else
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[1], global.v[0]));
                 }
             }
         }
@@ -426,25 +475,48 @@ void SurfacicRenderer::compileFacesAttributes(
                     glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
                     glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
                     glm::dvec3 normal = glm::normalize(glm::cross(A, B));
-                    pushTriangle(vertices, normals, triEdges, qualities,
+                    pushTriangle(faceVertices, normals, qualities,
                                  verts[tri[0]], verts[tri[1]], verts[tri[2]],
-                                 normal, true, quality);
+                                 normal, quality);
+                }
+
+                // Add verts to edge
+                for(uint e=0; e < MeshHex::EDGE_COUNT; ++e)
+                {
+                    MeshEdge local = MeshHex::edges[e];
+                    MeshEdge global(hex.v[local.v[0]], hex.v[local.v[1]]);
+                    if(global.v[0] < global.v[1])
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[0], global.v[1]));
+                    else
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[1], global.v[0]));
                 }
             }
         }
+    }
+
+
+    // Edge vertices
+    edgeVertices.resize(vertCount);
+    for(int i=0; i < vertCount; ++i)
+        edgeVertices[i] = mesh.verts[i].p;
+
+
+    // Edge indices
+    for(const pair<int, int>& e : edgeSet)
+    {
+        edgeIndices.push_back(e.first);
+        edgeIndices.push_back(e.second);
     }
 }
 
 void SurfacicRenderer::pushTriangle(
         std::vector<glm::vec3>& vertices,
         std::vector<signed char>& normals,
-        std::vector<unsigned char>& triEdges,
         std::vector<unsigned char>& qualities,
         const glm::dvec3& A,
         const glm::dvec3& B,
         const glm::dvec3& C,
         const glm::dvec3& n,
-        bool fromQuad,
         double quality) const
 {
 
@@ -465,35 +537,6 @@ void SurfacicRenderer::pushTriangle(
     normals.push_back(ny);
     normals.push_back(nz);
 
-    if(fromQuad)
-    {
-        triEdges.push_back(255);
-        triEdges.push_back(0);
-        triEdges.push_back(0);
-
-        triEdges.push_back(0);
-        triEdges.push_back(255);
-        triEdges.push_back(0);
-
-        triEdges.push_back(255);
-        triEdges.push_back(255);
-        triEdges.push_back(0);
-    }
-    else
-    {
-        triEdges.push_back(0);
-        triEdges.push_back(255);
-        triEdges.push_back(255);
-
-        triEdges.push_back(255);
-        triEdges.push_back(0);
-        triEdges.push_back(255);
-
-        triEdges.push_back(255);
-        triEdges.push_back(255);
-        triEdges.push_back(0);
-    }
-
     qualities.push_back(quality * 255);
     qualities.push_back(quality * 255);
     qualities.push_back(quality * 255);
@@ -501,21 +544,26 @@ void SurfacicRenderer::pushTriangle(
 
 void SurfacicRenderer::clearResources()
 {
-    // Delete old buffers
-    glDeleteVertexArrays(1, &_meshVao);
-    _meshVao = 0;
+    // Delete old mesh buffers
+    glDeleteVertexArrays(1, &_faceVao);
+    _faceVao = 0;
 
-    glDeleteBuffers(1, &_vbo);
-    _vbo = 0;
+    glDeleteBuffers(1, &_faceVbo);
+    _faceVbo = 0;
 
-    glDeleteBuffers(1, &_nbo);
-    _nbo = 0;
+    glDeleteBuffers(1, &_faceNbo);
+    _faceNbo = 0;
 
-    glDeleteBuffers(1, &_ebo);
-    _ebo = 0;
+    glDeleteBuffers(1, &_faceQbo);
+    _faceQbo = 0;
 
-    glDeleteBuffers(1, &_qbo);
-    _qbo = 0;
+
+    // Delete old edge buffers
+    glDeleteBuffers(1, &_edgeVbo);
+    _edgeVbo = 0;
+
+    glDeleteBuffers(1, &_edgeIbo);
+    _edgeIbo = 0;
 
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -542,38 +590,49 @@ void SurfacicRenderer::clearResources()
     _bloomFbo = 0;
 
 
-    _buffElemCount = 0;
+    _buffFaceElemCount = 0;
 }
 
 void SurfacicRenderer::resetResources()
 {
-    // Generate new buffers
-    glGenVertexArrays(1, &_meshVao);
-    glBindVertexArray(_meshVao);
+    // Generate new mesh buffers
+    glGenVertexArrays(1, &_faceVao);
+    glBindVertexArray(_faceVao);
 
-    glGenBuffers(1, &_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    glGenBuffers(1, &_faceVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceVbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(0);
 
-    glGenBuffers(1, &_nbo);
-    glBindBuffer(GL_ARRAY_BUFFER, _nbo);
+    glGenBuffers(1, &_faceNbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceNbo);
     glVertexAttribPointer(1, 3, GL_BYTE, GL_TRUE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(1);
 
-    glGenBuffers(1, &_ebo);
-    glBindBuffer(GL_ARRAY_BUFFER, _ebo);
-    glVertexAttribPointer(2, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glGenBuffers(1, &_faceQbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _faceQbo);
+    glVertexAttribPointer(2, 1, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(2);
 
-    glGenBuffers(1, &_qbo);
-    glBindBuffer(GL_ARRAY_BUFFER, _qbo);
-    glVertexAttribPointer(3, 1, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glBindVertexArray(0);
+
+
+    // Generate new edge buffers
+    glGenVertexArrays(1, &_edgeVao);
+    glBindVertexArray(_edgeVao);
+
+    glGenBuffers(1, &_edgeVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, _edgeVbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(0);
+
+    glGenBuffers(1, &_edgeIbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _edgeIbo);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
 
@@ -666,6 +725,12 @@ void SurfacicRenderer::setupShaders()
     _unlitShader.pushProgram();
     _unlitShader.popProgram();
 
+    _edgeShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/BoldEdge.vert");
+    _edgeShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/BoldEdge.frag");
+    _edgeShader.link();
+    _edgeShader.pushProgram();
+    _edgeShader.popProgram();
+
     _bloomBlurShader.addShader(GL_VERTEX_SHADER, ":/glsl/vertex/Bloom.vert");
     _bloomBlurShader.addShader(GL_FRAGMENT_SHADER, ":/glsl/fragment/BloomBlur.frag");
     _bloomBlurShader.link();
@@ -739,7 +804,7 @@ void SurfacicRenderer::render()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _shadowTex);
 
-    glBindVertexArray(_meshVao);
+    glBindVertexArray(_faceVao);
 
 
     // If we are rendring inverted elements, switch triangle windings
@@ -764,11 +829,9 @@ void SurfacicRenderer::render()
             _shadowShader.setVec4f("CutPlaneEq", _virtualCutPlane);
             glDisableVertexAttribArray(1);
             glDisableVertexAttribArray(2);
-            glDisableVertexAttribArray(3);
-            glDrawArrays(GL_TRIANGLES, 0, _buffElemCount);
+            glDrawArrays(GL_TRIANGLES, 0, _buffFaceElemCount);
             glEnableVertexAttribArray(1);
             glEnableVertexAttribArray(2);
-            glEnableVertexAttribArray(3);
             _shadowShader.popProgram();
 
             glBindFramebuffer(GL_FRAMEBUFFER, _bloomFbo);
@@ -791,10 +854,19 @@ void SurfacicRenderer::render()
 
 
     // Render mesh
-    glBindVertexArray(_meshVao);
-    glDrawArrays(GL_TRIANGLES, 0, _buffElemCount);
+    glBindVertexArray(_faceVao);
+    glDrawArrays(GL_TRIANGLES, 0, _buffFaceElemCount);
     GlProgram::popProgram();
 
+    // Render edges
+    _edgeShader.pushProgram();
+    _edgeShader.setVec4f("CutPlaneEq", _virtualCutPlane);
+    glLineWidth(2.5f);
+    glBindVertexArray(_edgeVao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _edgeIbo);
+    glDrawElements(GL_LINES, _buffEdgeIdxCount, GL_UNSIGNED_INT, 0);
+    glLineWidth(1.0f);
+    _edgeShader.popProgram();
 
     // If we were rendring inverted elements, revert windings to default order
     if(_cutType == ECutType::InvertedElements)

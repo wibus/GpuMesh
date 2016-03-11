@@ -26,23 +26,22 @@ protected:
     virtual void updateGeometry(
             const Mesh& mesh) override;
 
-    virtual void compileFacesAttributes(
+    virtual void compileMeshAttributes(
             const Mesh& mesh,
-            std::vector<glm::vec3>& vertices,
+            std::vector<glm::vec3>& faceVertices,
             std::vector<signed char>& normals,
-            std::vector<unsigned char>& triEdges,
-            std::vector<unsigned char>& qualities) const;
+            std::vector<unsigned char>& qualities,
+            std::vector<glm::vec3>& edgeVertices,
+            std::vector<GLuint>& edgeIndices) const;
 
     virtual void pushTriangle(
             std::vector<glm::vec3>& vertices,
             std::vector<signed char>& normals,
-            std::vector<unsigned char>& triEdges,
             std::vector<unsigned char>& qualities,
             const glm::dvec3& A,
             const glm::dvec3& B,
             const glm::dvec3& C,
             const glm::dvec3& n,
-            bool fromQuad,
             double quality) const;
 
     virtual void notifyCameraUpdate(cellar::CameraMsg& msg) override;
@@ -56,18 +55,24 @@ protected:
 
     cellar::GlProgram _litShader;
     cellar::GlProgram _unlitShader;
+    cellar::GlProgram _edgeShader;
     cellar::GlProgram _shadowShader;
     cellar::GlProgram _bloomBlurShader;
     cellar::GlProgram _bloomBlendShader;
     cellar::GlProgram _screenShader;
     cellar::GlProgram _brushShader;
     cellar::GlProgram _grainShader;
-    int _buffElemCount;
-    GLuint _meshVao;
-    GLuint _vbo;
-    GLuint _nbo;
-    GLuint _ebo;
-    GLuint _qbo;
+    int _buffFaceElemCount;
+    int _buffEdgeIdxCount;
+
+    GLuint _faceVao;
+    GLuint _faceVbo;
+    GLuint _faceNbo;
+    GLuint _faceQbo;
+
+    GLuint _edgeVao;
+    GLuint _edgeVbo;
+    GLuint _edgeIbo;
 
     bool _lightingEnabled;
     bool _updateShadow;

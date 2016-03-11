@@ -8,7 +8,6 @@ in vec3 pos;
 in vec3 eye;
 in vec3 lgt;
 in vec3 nrm;
-in vec3 edg;
 in float qual;
 in float dist;
 
@@ -27,17 +26,6 @@ vec3 qualityLut(in float q);
 float lambertDiffuse(in vec3 n);
 float phongSpecular(in vec3 n, in vec3 p, in float shine);
 
-
-vec3 bold(in vec3 e, in float d)
-{
-    const float THRESHOLD = 0.01;
-    float smoothWidth = 0.025 * d;
-    float inf = THRESHOLD - smoothWidth;
-    float sup = THRESHOLD + smoothWidth;
-
-    float maxE = max(max(e.x, e.y), e.z);
-    return vec3(smoothstep(inf, sup, 1.0 - maxE));
-}
 
 float chebyshevUpperBound(in vec3 l)
 {
@@ -60,9 +48,8 @@ void main(void)
     if(dist > 0.0)
         discard;
 
-    float scale = length(eye);
+    vec3 base = qualityLut(qual);
     float occl = chebyshevUpperBound(lgt);
-    vec3 base = qualityLut(qual) * bold(edg, scale);
     vec3 diff = lambertDiffuse(nrm) * LIGHT_DIFF * occl;
     vec3 spec = phongSpecular(nrm, pos, MAT_SHINE) * LIGHT_SPEC * occl;
     FragColor = vec4(base * (LIGHT_AMBT + diff) + spec, 1);
