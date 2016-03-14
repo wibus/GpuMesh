@@ -20,7 +20,6 @@ using namespace scaena;
 
 int main(int argc, char** argv) try
 {
-    getLog().setOuput(std::cout);
     getApplication().init(argc, argv);
     
     std::shared_ptr<GpuMeshCharacter> character(new GpuMeshCharacter());
@@ -31,6 +30,8 @@ int main(int argc, char** argv) try
     play->appendAct(act);
 
     MainWindow window(play, character);
+    QObject::connect(&getApplication(), &Application::aboutToQuitSignal,
+                     &window, &MainWindow::aboutToQuitSlot);
     window.show();
 
     getApplication().setPlay(play);

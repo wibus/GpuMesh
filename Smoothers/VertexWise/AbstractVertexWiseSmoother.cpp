@@ -235,6 +235,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _vertSmoothProgram.link();
     crew.setPluginUniforms(mesh, _vertSmoothProgram);
 
+    /*
     const GlProgramBinary& binary = _vertSmoothProgram.getBinary();
     std::ofstream file("Smoother_binary.txt", std::ios_base::trunc);
     if(file.is_open())
@@ -245,6 +246,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
         file.write(binary.binary, binary.length);
         file.close();
     }
+    */
 
     _initialized = true;
 }

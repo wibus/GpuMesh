@@ -107,7 +107,7 @@ protected:
     double _gainThreshold;
 
     int _smoothPassId;
-    double _lastQualityMean;
+    double _lastAvgQuality;
     double _lastMinQuality;
 
 private:

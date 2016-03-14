@@ -4,6 +4,7 @@
 
 #include "DataStructures/Mesh.h"
 #include "DataStructures/MeshCrew.h"
+#include "DataStructures/QualityHistogram.h"
 
 
 __device__ float tetQuality(const Tet& tet);
@@ -48,8 +49,7 @@ void evaluateCudaMeshQuality(
         double meanScaleFactor,
         size_t workgroupSize,
         size_t workgroupCount,
-        double& minQuality,
-        double& qualityMean)
+        QualityHistogram& histogram)
 {
     int* d_qualMin;
     int h_qualMin = MIN_MAX;
@@ -75,13 +75,14 @@ void evaluateCudaMeshQuality(
 
 
     // Get minimum quality
-    minQuality = h_qualMin / double(MIN_MAX);
+    histogram.setMinimumQuality(h_qualMin / double(MIN_MAX));
 
     // Combine workgroups' mean
-    qualityMean = 0.0;
+    double qualSum = 0.0;
     for(int i=0; i < workgroupCount; ++i)
-        qualityMean += h_means[i];
-    qualityMean /= meanScaleFactor;
+        qualSum += h_means[i];
+    histogram.setAverageQuality(
+        qualSum / meanScaleFactor);
     delete[] h_means;
 
     // Free CUDA memory

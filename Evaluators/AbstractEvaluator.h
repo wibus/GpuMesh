@@ -10,6 +10,8 @@ class AbstractSampler;
 class AbstractMeasurer;
 class MeshCrew;
 
+class QualityHistogram;
+
 
 class AbstractEvaluator
 {
@@ -94,37 +96,32 @@ public:
             const Mesh& mesh,
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            double& minQuality,
-            double& qualityMean,
+            QualityHistogram& histogram,
             const std::string& implementationName) const;
 
     virtual void evaluateMeshQualitySerial(
             const Mesh& mesh,
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            double& minQuality,
-            double& qualityMean) const;
+            QualityHistogram& histogram) const;
 
     virtual void evaluateMeshQualityThread(
             const Mesh& mesh,
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            double& minQuality,
-            double& qualityMean) const;
+            QualityHistogram& histogram) const;
 
     virtual void evaluateMeshQualityGlsl(
             const Mesh& mesh,
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            double& minQuality,
-            double& qualityMean) const;
+            QualityHistogram& histogram) const;
 
     virtual void evaluateMeshQualityCuda(
             const Mesh& mesh,
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            double& minQuality,
-            double& qualityMean) const;
+            QualityHistogram& histogram) const;
 
     virtual void benchmark(
             const Mesh& mesh,
@@ -167,8 +164,7 @@ protected:
     typedef std::function<void(const Mesh&,
                                const AbstractSampler&,
                                const AbstractMeasurer&,
-                               double&,
-                               double&)> ImplementationFunc;
+                               QualityHistogram&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;
 };
 

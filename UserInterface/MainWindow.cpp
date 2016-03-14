@@ -32,6 +32,13 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
     move(0, 0);
 }
 
+void MainWindow::aboutToQuitSlot()
+{
+    // Prevent double deletion of QGlWidgetView
+    // Qt delete child objects when windows are closed
+    _view->setParent(nullptr);
+}
+
 MainWindow::~MainWindow()
 {
     delete _ui;

@@ -6,6 +6,7 @@
 #include <CellarWorkbench/Misc/Log.h>
 
 #include "DataStructures/MeshCrew.h"
+#include "DataStructures/QualityHistogram.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
@@ -117,41 +118,43 @@ bool AbstractSmoother::evaluateMeshQualityCuda(Mesh& mesh,  const MeshCrew& crew
 
 bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, int impl)
 {
-    double qualMean, qualMin;
+    QualityHistogram histogram;
     switch(impl)
     {
     case 0 :
         crew.evaluator().evaluateMeshQualitySerial(
-            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), histogram);
         break;
     case 1 :
         crew.evaluator().evaluateMeshQualityThread(
-            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), histogram);
         break;
     case 2 :
         crew.evaluator().evaluateMeshQualityGlsl(
-            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), histogram);
         break;
     case 3 :
         crew.evaluator().evaluateMeshQualityCuda(
-            mesh, crew.sampler(), crew.measurer(), qualMin, qualMean);
+            mesh, crew.sampler(), crew.measurer(), histogram);
         break;
     }
 
     getLog().postMessage(new Message('I', true,
         "Smooth pass " + to_string(_smoothPassId) + ": " +
-        "min=" + to_string(qualMin) + "\t mean=" + to_string(qualMean), "AbstractSmoother"));
+        "min=" + to_string(histogram.minimumQuality()) +
+        "\t avg=" + to_string(histogram.averageQuality()),
+        "AbstractSmoother"));
 
 
     bool continueSmoothing = true;
     if(_smoothPassId > _minIteration)
     {
-        double minGain = qualMin  - _lastMinQuality;
-        double meanGain = qualMean - _lastQualityMean;
-        double summedGain = minGain + meanGain;
+        double minGain = histogram.minimumQuality() - _lastMinQuality;
+        double avgGain = histogram.averageQuality() - _lastAvgQuality;
+        double summedGain = minGain + avgGain;
 
         continueSmoothing = minGain > _gainThreshold ||
-                            meanGain > _gainThreshold ||
+                            avgGain > _gainThreshold ||
                             summedGain > _gainThreshold;
     }
 
@@ -162,14 +165,13 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         _currentImplementation.passes.clear();
     }
     OptimizationPass stats;
+    stats.histogram = histogram;
     stats.timeStamp = (statsNow - _implBeginTimeStamp).count() / 1.0e9;
-    stats.minQuality = qualMin;
-    stats.qualityMean = qualMean;
+
     _currentImplementation.passes.push_back(stats);
 
-
-    _lastQualityMean = qualMean;
-    _lastMinQuality = qualMin;
+    _lastAvgQuality = histogram.averageQuality();
+    _lastMinQuality = histogram.minimumQuality();
 
     ++_smoothPassId;
     return continueSmoothing;
@@ -178,10 +180,9 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
 struct SmoothBenchmarkStats
 {
     string impl;
-    double minQuality;
-    double qualityMean;
-    double qualityMeanGain;
     double totalSeconds;
+    QualityHistogram histogram;
+    double qualityGain;
 };
 
 void AbstractSmoother::benchmark(
@@ -202,11 +203,10 @@ void AbstractSmoother::benchmark(
     // TODO print evaluator parameters
     // TODO print sampler parameters
 
-    double initialMinQuality = 0.0;
-    double initialQualityMean = 0.0;
+    QualityHistogram initialHistogram;
     crew.evaluator().evaluateMeshQualityThread(
         mesh, crew.sampler(), crew.measurer(),
-        initialMinQuality, initialQualityMean);
+        initialHistogram);
 
     // We must make a copy of the vertices in order to
     // restore mesh's vertices after each implementation.
@@ -248,19 +248,17 @@ void AbstractSmoother::benchmark(
 
             implementationFunc(mesh, crew);
 
-            outPlot.addImplementation(_currentImplementation);
-
-
             SmoothBenchmarkStats stats;
             crew.evaluator().evaluateMeshQualityThread(
                 mesh, crew.sampler(), crew.measurer(),
-                stats.minQuality, stats.qualityMean);
+                stats.histogram);
+
+            outPlot.addImplementation(_currentImplementation);
 
             stats.impl = impl;
             stats.totalSeconds = _currentImplementation.passes.back().timeStamp -
                                  _currentImplementation.passes.front().timeStamp;
-            stats.qualityMeanGain = (stats.qualityMean - initialQualityMean) /
-                                        initialQualityMean;
+            stats.qualityGain = stats.histogram.computeGain(initialHistogram);
             statsVec.push_back(stats);
 
 
@@ -288,11 +286,11 @@ void AbstractSmoother::benchmark(
 
     // Get minimums for ratio computations
     double minTime = statsVec[0].totalSeconds;
-    double minGain = statsVec[0].qualityMeanGain;
+    double minGain = statsVec[0].qualityGain;
     for(size_t i = 1; i < statsVec.size(); ++i)
     {
         minTime = glm::min(minTime, double(statsVec[i].totalSeconds));
-        minGain = glm::min(minGain, statsVec[i].qualityMeanGain);
+        minGain = glm::min(minGain, statsVec[i].qualityGain);
     }
 
     // Build ratio strings
@@ -306,8 +304,8 @@ void AbstractSmoother::benchmark(
         nameStream << statsVec[i].impl << ":";
         timeStream << fixed << setprecision(2) << statsVec[i].totalSeconds * 1000.0 << ":";
         normTimeStream << fixed << setprecision(2)  << statsVec[i].totalSeconds / minTime << ":";
-        gainStream << fixed << setprecision(6)  << statsVec[i].qualityMeanGain << ":";
-        normGainStream << fixed << setprecision(6)  << statsVec[i].qualityMeanGain / minGain  << ":";
+        gainStream << fixed << setprecision(6)  << statsVec[i].qualityGain << ":";
+        normGainStream << fixed << setprecision(6)  << statsVec[i].qualityGain / minGain  << ":";
     }
     string nameString = nameStream.str(); nameString.back() = ' ';
     string timeString = timeStream.str(); timeString.back() = ' ';

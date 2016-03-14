@@ -5,14 +5,14 @@
 #include <vector>
 #include <string>
 
+#include "QualityHistogram.h"
 
 typedef std::vector<std::pair<std::string, std::string>> Properties;
 
 struct OptimizationPass
 {
     double timeStamp;
-    double minQuality;
-    double qualityMean;
+    QualityHistogram histogram;
 };
 
 struct OptimizationImpl

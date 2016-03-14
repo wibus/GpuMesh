@@ -10,6 +10,7 @@
 
 #include "DataStructures/GpuMesh.h"
 #include "DataStructures/MeshCrew.h"
+#include "DataStructures/QualityHistogram.h"
 #include "Samplers/AbstractSampler.h"
 #include "Measurers/AbstractMeasurer.h"
 
@@ -47,8 +48,7 @@ void evaluateCudaMeshQuality(
         double meanScaleFactor,
         size_t workgroupSize,
         size_t workgroupCount,
-        double& minQuality,
-        double& qualityMean);
+        QualityHistogram& histogram);
 
 
 AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
@@ -67,10 +67,10 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
     using namespace std::placeholders;
     _implementationFuncs.setDefault("CUDA");
     _implementationFuncs.setContent({
-      {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4, _5))},
-      {string("Thread"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3, _4, _5))},
-      {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl,   this, _1, _2, _3, _4, _5))},
-      {string("CUDA"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityCuda,   this, _1, _2, _3, _4, _5))},
+      {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4))},
+      {string("Thread"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3, _4))},
+      {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl,   this, _1, _2, _3, _4))},
+      {string("CUDA"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityCuda,   this, _1, _2, _3, _4))},
     });
 }
 
@@ -116,6 +116,7 @@ void AbstractEvaluator::initialize(
     _evaluationProgram.link();
     crew.setPluginUniforms(mesh, _evaluationProgram);
 
+    /*
     const GlProgramBinary& binary = _evaluationProgram.getBinary();
     std::ofstream file("Evaluator_binary.txt", std::ios_base::trunc);
     if(file.is_open())
@@ -126,6 +127,7 @@ void AbstractEvaluator::initialize(
         file.write(binary.binary, binary.length);
         file.close();
     }
+    */
 
     // Shader storage quality blocks
     glDeleteBuffers(1, &_qualSsbo);
@@ -328,19 +330,19 @@ void AbstractEvaluator::evaluateMesh(
         const Mesh& mesh,
         const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
-        double& minQuality,
-        double& qualityMean,
+        QualityHistogram& histogram,
         const std::string& implementationName) const
 {
+    histogram.clear();
     ImplementationFunc implementationFunc;
     if(_implementationFuncs.select(implementationName, implementationFunc))
     {
-        implementationFunc(mesh, sampler, measurer, minQuality, qualityMean);
+        implementationFunc(mesh, sampler, measurer, histogram);
     }
     else
     {
-        minQuality = nan("");
-        qualityMean = nan("");
+        histogram.setMinimumQuality(nan(""));
+        histogram.setAverageQuality(nan(""));
     }
 }
 
@@ -348,125 +350,78 @@ void AbstractEvaluator::evaluateMeshQualitySerial(
         const Mesh& mesh,
         const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
-        double& minQuality,
-        double& qualityMean) const
+        QualityHistogram& histogram) const
 {
     int tetCount = mesh.tets.size();
     int priCount = mesh.pris.size();
     int hexCount = mesh.hexs.size();
-    int elemCount = tetCount + priCount + hexCount;
 
-    if(elemCount == 0)
-    {
-        minQuality = -1;
-        qualityMean = -1;
-        return;
-    }
+    for(int i=0; i < tetCount; ++i)
+        histogram.add(tetQuality(mesh, sampler, measurer, mesh.tets[i]));
 
-    std::vector<double> qualities(elemCount);
-    int idx = 0;
+    for(int i=0; i < priCount; ++i)
+        histogram.add(priQuality(mesh, sampler, measurer, mesh.pris[i]));
 
-    for(int i=0; i < tetCount; ++i, ++idx)
-        qualities[idx] = tetQuality(mesh, sampler, measurer, mesh.tets[i]);
-
-    for(int i=0; i < priCount; ++i, ++idx)
-        qualities[idx] = priQuality(mesh, sampler, measurer, mesh.pris[i]);
-
-    for(int i=0; i < hexCount; ++i, ++idx)
-        qualities[idx] = hexQuality(mesh, sampler, measurer, mesh.hexs[i]);
-
-
-    minQuality = 1.0;
-    qualityMean = 0.0;
-    for(int i=0; i < elemCount; ++i)
-    {
-        double qual = qualities[i];
-        minQuality = glm::min(qual, minQuality);
-        qualityMean += qual;
-    }
-    qualityMean /= elemCount;
+    for(int i=0; i < hexCount; ++i)
+        histogram.add(hexQuality(mesh, sampler, measurer, mesh.hexs[i]));
 }
 
 void AbstractEvaluator::evaluateMeshQualityThread(
         const Mesh& mesh,
         const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
-        double& minQuality,
-        double& qualityMean) const
+        QualityHistogram& histogram) const
 {
     int tetCount = mesh.tets.size();
     int priCount = mesh.pris.size();
     int hexCount = mesh.hexs.size();
-    int elemCount = tetCount + priCount + hexCount;
 
-    if(elemCount == 0)
+    if((tetCount + priCount + hexCount) == 0)
     {
-        minQuality = -1;
-        qualityMean = -1;
         return;
     }
 
-    vector<future<pair<double, double>>> futures;
+    vector<future<QualityHistogram>> futures;
     uint coreCountHint = thread::hardware_concurrency();
     for(uint t=0; t < coreCountHint; ++t)
     {
         futures.push_back(async(launch::async, [&, t](){
+            QualityHistogram coreHist(histogram.bucketCount());
 
             int tetBeg = (tetCount * t) / coreCountHint;
             int tetEnd = (tetCount * (t+1)) / coreCountHint;
-            int tetBatchSize = tetEnd - tetBeg;
             int priBeg = (priCount * t) / coreCountHint;
             int priEnd = (priCount * (t+1)) / coreCountHint;
-            int priBatchSize = priEnd - priBeg;
             int hexBeg = (hexCount * t) / coreCountHint;
             int hexEnd = (hexCount * (t+1)) / coreCountHint;
-            int hexBatchSize = hexEnd - hexBeg;
-            int totalBatchSize = tetBatchSize + priBatchSize + hexBatchSize;
 
-            std::vector<double> qualities(totalBatchSize);
-            int idx = 0;
+            for(int i=tetBeg; i < tetEnd; ++i)
+                coreHist.add(tetQuality(mesh, sampler, measurer, mesh.tets[i]));
 
-            for(int i=tetBeg; i < tetEnd; ++i, ++idx)
-                qualities[idx] = tetQuality(mesh, sampler, measurer, mesh.tets[i]);
+            for(int i=priBeg; i < priEnd; ++i)
+                coreHist.add(priQuality(mesh, sampler, measurer, mesh.pris[i]));
 
-            for(int i=priBeg; i < priEnd; ++i, ++idx)
-                qualities[idx] = priQuality(mesh, sampler, measurer, mesh.pris[i]);
+            for(int i=hexBeg; i < hexEnd; ++i)
+                coreHist.add(hexQuality(mesh, sampler, measurer, mesh.hexs[i]));
 
-            for(int i=hexBeg; i < hexEnd; ++i, ++idx)
-                qualities[idx] = hexQuality(mesh, sampler, measurer, mesh.hexs[i]);
-
-            double futureMinQuality = 1.0;
-            double futureQualityMean = 0.0;
-            for(int i=0; i < totalBatchSize; ++i)
-            {
-                double qual = qualities[i];
-                futureMinQuality = glm::min(qual, futureMinQuality);
-                futureQualityMean += qual;
-            }
-
-            return make_pair(futureMinQuality, futureQualityMean);
+            return coreHist;
         }));
     }
 
 
     // Combine workers' results
-    minQuality = 1.0;
-    qualityMean = 0.0;
     for(uint i=0; i < coreCountHint; ++i)
     {
-        pair<double, double> stats = futures[i].get();
-        minQuality = glm::min(stats.first, minQuality);
-        qualityMean += stats.second;
+        QualityHistogram coreHist = futures[i].get();
+        histogram.merge(coreHist);
     }
-    qualityMean /= elemCount;
 }
 
 void AbstractEvaluator::evaluateMeshQualityGlsl(
         const Mesh& mesh,
         const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
-        double& minQuality,
-        double& qualityMean) const
+        QualityHistogram& histogram) const
 {
     if(_qualSsbo == 0)
     {
@@ -485,8 +440,6 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
 
     if(elemCount == 0)
     {
-        minQuality = -1;
-        qualityMean = -1;
         return;
     }
 
@@ -535,14 +488,15 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
         GL_SHADER_STORAGE_BUFFER, 0, qualSize, GL_MAP_READ_BIT);
 
     // Get minimum quality
-    minQuality = data[0] / MAX_INTEGER_VALUE;
+    histogram.setMinimumQuality(data[0] / MAX_INTEGER_VALUE);
 
     // Combine workgroups' mean
     size_t i = 0;
-    qualityMean = 0.0;
+    double qualSum = 0.0;
     while(i <= workgroupCount)
-        qualityMean += data[++i];
-    qualityMean /= MAX_QUALITY_VALUE * elemCount;
+        qualSum += data[++i];
+    histogram.setAverageQuality(
+        qualSum / MAX_QUALITY_VALUE * elemCount);
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -552,8 +506,7 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
         const Mesh& mesh,
         const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
-        double& minQuality,
-        double& qualityMean) const
+        QualityHistogram& histogram) const
 {
     if(_qualSsbo == 0)
     {
@@ -572,14 +525,12 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
 
     if(elemCount == 0)
     {
-        minQuality = -1;
-        qualityMean = -1;
         return;
     }
 
     evaluateCudaMeshQuality(MAX_QUALITY_VALUE * elemCount,
                             WORKGROUP_SIZE, workgroupCount,
-                            minQuality, qualityMean);
+                            histogram);
 }
 
 struct EvalBenchmarkStats
@@ -601,6 +552,7 @@ void AbstractEvaluator::benchmark(
     high_resolution_clock::time_point tStart;
     high_resolution_clock::time_point tEnd;
 
+    QualityHistogram histogram;
 
     int measuredImplementations = -1;
     std::vector<EvalBenchmarkStats> statsVec;
@@ -639,11 +591,10 @@ void AbstractEvaluator::benchmark(
             size_t markSize = cycleCount / glm::min(markCount, cycleCount);
             for(size_t i=0, m=0; i < cycleCount; ++i)
             {
-                double minQual = -1;
-                double qualMean = -1;
+                histogram.clear();
 
                 tStart = high_resolution_clock::now();
-                implementationFunc(mesh, sampler, measurer, minQual, qualMean);
+                implementationFunc(mesh, sampler, measurer, histogram);
                 tEnd = high_resolution_clock::now();
 
                 totalTime += (tEnd - tStart);
@@ -658,7 +609,8 @@ void AbstractEvaluator::benchmark(
 
                     getLog().postMessage(new Message('I', false,
                        "Benchmark progress : " + to_string(progress) + "%\t" +
-                       "(min=" + to_string(minQual) + ", mean=" + to_string(qualMean) + ")",
+                       "(min=" + to_string(histogram.minimumQuality()) +
+                       ", mean=" + to_string(histogram.averageQuality()) + ")",
                        "AbstractEvaluator"));
                     m += markSize;
                 }

@@ -218,8 +218,8 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
                 impl.passes.size());
 
         minImplGain = std::min(minImplGain,
-                impl.passes.back().minQuality -
-                impl.passes.front().minQuality);
+                impl.passes.back().histogram.minimumQuality() -
+                impl.passes.front().histogram.minimumQuality());
 
         minImplTime = std::min(minImplTime,
                 impl.passes.back().timeStamp);
@@ -267,11 +267,11 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
 
             tableCell = implMinQualTable->cellAt(1+p, i+1);
             tableCursor = tableCell.firstCursorPosition();
-            tableCursor.insertText(QString::number(pass.minQuality, 'f'));
+            tableCursor.insertText(QString::number(pass.histogram.minimumQuality(), 'f'));
         }
 
-        double minGain = impl.passes.back().minQuality -
-                         impl.passes.front().minQuality;
+        double minGain = impl.passes.back().histogram.minimumQuality() -
+                         impl.passes.front().histogram.minimumQuality();
 
         tableCell = implMinQualTable->cellAt(maxPassCount+2, i+1);
         tableCursor = tableCell.firstCursorPosition();
@@ -356,18 +356,18 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
         for(const auto& pass : impl.passes)
         {
             maxT = glm::max(maxT, pass.timeStamp);
-            minQ = glm::min(minQ, pass.minQuality);
-            maxQ = glm::max(maxQ, pass.minQuality);
+            minQ = glm::min(minQ, pass.histogram.minimumQuality());
+            maxQ = glm::max(maxQ, pass.histogram.minimumQuality());
         }
 
-        begQ = impl.passes.front().minQuality;
+        begQ = impl.passes.front().histogram.minimumQuality();
     }
     double marginQ = (maxQ - minQ) * 0.05;
     double bottomQ = minQ - marginQ;
     double topQ = maxQ + marginQ;
     double scaleQ = 1.0 / (topQ - bottomQ);
 
-    // Min timestamp and min minQuality
+    // Min timestamp and min histogram.minimumQuality()
     QGraphicsTextItem* minTimeText = scene.addText("0s");
     double minTimeTextLen = minTimeText->document()->size().width();
     minTimeText->setPos(-minTimeTextLen/2.0, sceneHeight);
@@ -391,7 +391,7 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
         double totalTime = samples.back().timeStamp;
         double xAsymptote = sceneWidth * (totalTime / maxT);
         scene.addLine(xAsymptote, 0, xAsymptote, sceneHeight, QPen(Qt::lightGray));
-        double yAsymptote = sceneHeight * (topQ - samples.back().minQuality) * scaleQ;
+        double yAsymptote = sceneHeight * (topQ - samples.back().histogram.minimumQuality()) * scaleQ;
         scene.addLine(0, yAsymptote, sceneWidth, yAsymptote, QPen(Qt::lightGray));
 
         // Algo total times
@@ -401,14 +401,14 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
         timeText->setDefaultTextColor(pens[label].color());
 
         // Algo final minimum quality
-        double finalQuality = samples.back().minQuality;
+        double finalQuality = samples.back().histogram.minimumQuality();
         QGraphicsTextItem* qualityText = scene.addText(QString::number(finalQuality));
         double qualityTextHeight = qualityText->document()->size().height();
         qualityText->setPos(sceneWidth, sceneHeight * (topQ - finalQuality) * scaleQ - qualityTextHeight/2.0);
         qualityText->setDefaultTextColor(pens[label].color());
 
         // Legend
-        double gainValue = samples.back().minQuality - samples.front().minQuality;
+        double gainValue = samples.back().histogram.minimumQuality() - samples.front().histogram.minimumQuality();
         QString gainText = " (" + ((gainValue < 0.0 ? "-" : "+") + QString::number(gainValue)) + ")";
         QGraphicsTextItem* text = scene.addText(label.c_str() + gainText);
         text->setPos(legendLeft + 10.0, legendTop + labelHeight);
@@ -431,9 +431,9 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
             const OptimizationPass& currPass = samples[i];
             scene.addLine(
                 sceneWidth * prevPass.timeStamp / maxT,
-                sceneHeight * (topQ - prevPass.minQuality) * scaleQ,
+                sceneHeight * (topQ - prevPass.histogram.minimumQuality()) * scaleQ,
                 sceneWidth * currPass.timeStamp / maxT,
-                sceneHeight * (topQ - currPass.minQuality) * scaleQ,
+                sceneHeight * (topQ - currPass.histogram.minimumQuality()) * scaleQ,
                 pens[label]);
         }
     }

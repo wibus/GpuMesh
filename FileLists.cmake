@@ -13,6 +13,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.h
     ${GpuMesh_SRC_DIR}/DataStructures/Triangle.h
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h
+    ${GpuMesh_SRC_DIR}/DataStructures/QualityHistogram.h
     ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.h)
 
 SET(GpuMesh_SAMPLERS_HEADERS
@@ -107,6 +108,7 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/QualityHistogram.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.cpp)
 
 SET(GpuMesh_SAMPLERS_SOURCES

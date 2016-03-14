@@ -509,19 +509,18 @@ void GpuMeshCharacter::evaluateMesh(
     std::shared_ptr<AbstractEvaluator> evaluator;
     if(_availableEvaluators.select(evaluatorName, evaluator))
     {
-        double minQuality, qualityMean;
+        QualityHistogram histogram;
         evaluator->evaluateMesh(
             *_mesh,
             _meshCrew->sampler(),
             _meshCrew->measurer(),
-            minQuality,
-            qualityMean,
+            histogram,
             implementationName);
 
         getLog().postMessage(new Message('I', false,
             "Results "\
-            ": min=" + to_string(minQuality) +
-            ", mean=" + to_string(qualityMean), "GpuMeshCharacter"));
+            ": min=" + to_string(histogram.minimumQuality()) +
+            ", avg=" + to_string(histogram.averageQuality()), "GpuMeshCharacter"));
     }
 }
 
