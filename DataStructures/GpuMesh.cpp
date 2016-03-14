@@ -341,14 +341,15 @@ unsigned int GpuMesh::bufferBinding(EBufferBinding binding) const
 {
     switch(binding)
     {
-    case EBufferBinding::EVALUATE_QUALS_BUFFER_BINDING :    return 8;
-    case EBufferBinding::VERTEX_ACCUMS_BUFFER_BINDING :     return 9;
-    case EBufferBinding::REF_VERTS_BUFFER_BINDING:          return 10;
-    case EBufferBinding::REF_METRICS_BUFFER_BINDING:        return 11;
-    case EBufferBinding::KD_TETS_BUFFER_BINDING :           return 12;
-    case EBufferBinding::KD_NODES_BUFFER_BINDING :          return 13;
-    case EBufferBinding::LOCAL_TETS_BUFFER_BINDING :        return 14;
-    case EBufferBinding::LOCAL_CACHE_BUFFER_BINDING:        return 15;
+    case EBufferBinding::EVALUATE_QUAL_BUFFER_BINDING :     return 8;
+    case EBufferBinding::EVALUATE_HIST_BUFFER_BINDING :     return 9;
+    case EBufferBinding::VERTEX_ACCUMS_BUFFER_BINDING :     return 10;
+    case EBufferBinding::REF_VERTS_BUFFER_BINDING:          return 11;
+    case EBufferBinding::REF_METRICS_BUFFER_BINDING:        return 12;
+    case EBufferBinding::KD_TETS_BUFFER_BINDING :           return 13;
+    case EBufferBinding::KD_NODES_BUFFER_BINDING :          return 14;
+    case EBufferBinding::LOCAL_TETS_BUFFER_BINDING :        return 15;
+    case EBufferBinding::LOCAL_CACHE_BUFFER_BINDING:        return 16;
     }
 
     return 0;

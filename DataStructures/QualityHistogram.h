@@ -15,6 +15,7 @@ public:
     std::size_t sampleCount() const;
 
     const std::vector<int>& buckets() const;
+    void setBucket(std::size_t i, int count);
 
     double minimumQuality() const;
     void setMinimumQuality(double minimum);

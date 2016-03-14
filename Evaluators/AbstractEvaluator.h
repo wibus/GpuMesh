@@ -155,6 +155,7 @@ protected:
     static const glm::dmat3 Fr_HEX_INV;
 
     GLuint _qualSsbo;
+    GLuint _histSsbo;
     std::string _samplingShader;
     std::string _measureShader;
     std::string _evaluationShader;

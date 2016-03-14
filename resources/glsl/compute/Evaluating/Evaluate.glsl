@@ -1,9 +1,14 @@
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
-layout(shared, binding = EVALUATE_QUALS_BUFFER_BINDING) buffer Quals
+layout(shared, binding = EVALUATE_QUAL_BUFFER_BINDING) buffer Quals
 {
     int qualMin;
     int means[];
+};
+
+layout(shared, binding = EVALUATE_HIST_BUFFER_BINDING) buffer Hists
+{
+    int hists[];
 };
 
 float tetQuality(Tet tet);
@@ -15,6 +20,19 @@ const int MIN_MAX = 2147483647;
 const float MEAN_MAX = MIN_MAX / (gl_WorkGroupSize.x * 3);
 
 
+void commit(uint gid, float q)
+{
+    atomicMin(qualMin, int(q * MIN_MAX));
+    atomicAdd(means[gid], int(q * MEAN_MAX + 0.5));
+
+    // ! Driver linker bug :
+    // Makes the linker segfautl
+    //  float histCount = float(hists.length())
+    float histCount = float(100);
+    int bucket = int(max(q * histCount, 0.0));
+    atomicAdd(hists[bucket], 1);
+}
+
 void main()
 {
     uint vId = gl_GlobalInvocationID.x;
@@ -23,22 +41,16 @@ void main()
 
     if(vId < tets.length())
     {
-        float q = tetQuality(tets[vId]);
-        atomicMin(qualMin, int(q * MIN_MAX));
-        atomicAdd(means[gid], int(q * MEAN_MAX + 0.5));
+        commit( gid, tetQuality(tets[vId]) );
     }
 
     if(vId < pris.length())
     {
-        float q = priQuality(pris[vId]);
-        atomicMin(qualMin, int(q * MIN_MAX));
-        atomicAdd(means[gid], int(q * MEAN_MAX + 0.5));
+        commit( gid, priQuality(pris[vId]) );
     }
 
     if(vId < hexs.length())
     {
-        float q = hexQuality(hexs[vId]);
-        atomicMin(qualMin, int(q * MIN_MAX));
-        atomicAdd(means[gid], int(q * MEAN_MAX + 0.5));
+        commit( gid, hexQuality(hexs[vId]) );
     }
 }

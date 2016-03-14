@@ -54,6 +54,7 @@ void evaluateCudaMeshQuality(
 AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
                                      const installCudaFct installCuda) :
     _qualSsbo(0),
+    _histSsbo(0),
     _evaluationShader(shapeMeasuresShader),
     _installCuda(installCuda),
     _implementationFuncs("Shape Measure Implementations")
@@ -77,6 +78,7 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
 AbstractEvaluator::~AbstractEvaluator()
 {
     glDeleteBuffers(1, &_qualSsbo);
+    glDeleteBuffers(1, &_histSsbo);
 }
 
 string AbstractEvaluator::evaluationShader() const
@@ -95,7 +97,7 @@ void AbstractEvaluator::initialize(
 {
     if(_samplingShader == crew.sampler().samplingShader() &&
        _measureShader == crew.measurer().measureShader() &&
-       _qualSsbo != 0)
+       _qualSsbo != 0 && _histSsbo != 0)
         return;
 
 
@@ -129,10 +131,14 @@ void AbstractEvaluator::initialize(
     }
     */
 
-    // Shader storage quality blocks
+    // Shader storage
     glDeleteBuffers(1, &_qualSsbo);
     _qualSsbo = 0;
     glGenBuffers(1, &_qualSsbo);
+
+    glDeleteBuffers(1, &_histSsbo);
+    _histSsbo = 0;
+    glGenBuffers(1, &_histSsbo);
 }
 
 void AbstractEvaluator::installPlugin(
@@ -423,7 +429,7 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
         const AbstractMeasurer& measurer,
         QualityHistogram& histogram) const
 {
-    if(_qualSsbo == 0)
+    if(_qualSsbo == 0 || _histSsbo == 0)
     {
         getLog().postMessage(new Message('E', false,
             "Evalator needs to be initialized first"\
@@ -460,14 +466,24 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
+    std::vector<GLint> histBuff(histogram.bucketCount(), 0);
+    size_t histSize = sizeof(decltype(histBuff.front())) * histBuff.size();
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _histSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, histSize, histBuff.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
     _evaluationProgram.pushProgram();
 
     mesh.bindShaderStorageBuffers();
     sampler.setupPluginExecution(mesh, _evaluationProgram);
     measurer.setupPluginExecution(mesh, _evaluationProgram);
     GLuint qualsBinding = mesh.bufferBinding(
-        EBufferBinding::EVALUATE_QUALS_BUFFER_BINDING);
+        EBufferBinding::EVALUATE_QUAL_BUFFER_BINDING);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, qualsBinding, _qualSsbo);
+    GLuint histBinding = mesh.bufferBinding(
+        EBufferBinding::EVALUATE_HIST_BUFFER_BINDING);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, histBinding, _histSsbo);
 
 
     // Simulatenous and separate elem evaluation deliver the same performance
@@ -484,21 +500,30 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // before and after the call to glGetBufferSubData).
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    GLint* data = (GLint*) glMapBufferRange(
+    GLint* quals = (GLint*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, qualSize, GL_MAP_READ_BIT);
 
     // Get minimum quality
-    histogram.setMinimumQuality(data[0] / MAX_INTEGER_VALUE);
+    histogram.setMinimumQuality(quals[0] / MAX_INTEGER_VALUE);
 
     // Combine workgroups' mean
     size_t i = 0;
     double qualSum = 0.0;
     while(i <= workgroupCount)
-        qualSum += data[++i];
+        qualSum += quals[++i];
     histogram.setAverageQuality(
-        qualSum / MAX_QUALITY_VALUE * elemCount);
+        qualSum / (MAX_QUALITY_VALUE * elemCount));
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _histSsbo);
+    GLint* hist = (GLint*) glMapBufferRange(
+        GL_SHADER_STORAGE_BUFFER, 0, histSize, GL_MAP_READ_BIT);
+    for(size_t i=0; i < histogram.bucketCount(); ++i)
+        histogram.setBucket(i, hist[i]);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
@@ -508,7 +533,7 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
         const AbstractMeasurer& measurer,
         QualityHistogram& histogram) const
 {
-    if(_qualSsbo == 0)
+    if(_qualSsbo == 0 || _histSsbo == 0)
     {
         getLog().postMessage(new Message('E', false,
             "Evalator needs to be initialized first"\

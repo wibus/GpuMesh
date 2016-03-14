@@ -25,6 +25,11 @@ void QualityHistogram::clear()
     std::fill(_buckets.begin(), _buckets.end(), 0);
 }
 
+void QualityHistogram::setBucket(std::size_t i, int count)
+{
+    _buckets[i] = count;
+}
+
 void QualityHistogram::setMinimumQuality(double minimum)
 {
     _minimumQuality = minimum;
