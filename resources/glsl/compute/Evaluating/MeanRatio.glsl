@@ -1,4 +1,4 @@
-vec3 riemannianSegment(in vec3 a, in vec3 b, in uint vId);
+vec3 riemannianSegment(in vec3 a, in vec3 b, in uint cacheId);
 
 
 const mat3 Fr_TET_INV = mat3(

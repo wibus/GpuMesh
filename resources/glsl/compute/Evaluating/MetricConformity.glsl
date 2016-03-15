@@ -1,4 +1,4 @@
-mat3 metricAt(in vec3 position, in uint vId);
+mat3 metricAt(in vec3 position, in uint cacheId);
 
 const mat3 TWO_I = mat3(2.0);
 
@@ -19,15 +19,15 @@ mat3 specifiedMetric(
         in vec3 v1,
         in vec3 v2,
         in vec3 v3,
-        in uint vId)
+        in uint cacheId)
 {
     const float H = 0.5;
     const float Q = (1.0 - H) / 3.0;
-    return (metricAt((v0 + v1 + v2 + v3)/4.0,   vId) * (-0.8) +
-            metricAt(v0*H + v1*Q + v2*Q + v3*Q, vId) * 0.45 +
-            metricAt(v0*Q + v1*H + v2*Q + v3*Q, vId) * 0.45 +
-            metricAt(v0*Q + v1*Q + v2*H + v3*Q, vId) * 0.45 +
-            metricAt(v0*Q + v1*Q + v2*Q + v3*H, vId) * 0.45);
+    return (metricAt((v0 + v1 + v2 + v3)/4.0,   cacheId) * (-0.8) +
+            metricAt(v0*H + v1*Q + v2*Q + v3*Q, cacheId) * 0.45 +
+            metricAt(v0*Q + v1*H + v2*Q + v3*Q, cacheId) * 0.45 +
+            metricAt(v0*Q + v1*Q + v2*H + v3*Q, cacheId) * 0.45 +
+            metricAt(v0*Q + v1*Q + v2*Q + v3*H, cacheId) * 0.45);
 }
 
 float metricConformity(in mat3 Fk, in mat3 Ms)

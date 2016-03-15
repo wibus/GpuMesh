@@ -1,11 +1,11 @@
-mat3 metricAt(in vec3 position, in uint vId);
+mat3 metricAt(in vec3 position, in uint cacheId);
 
 // Distances
-float riemannianDistance(in vec3 a, in vec3 b, in uint vId)
+float riemannianDistance(in vec3 a, in vec3 b, in uint cacheId)
 {
     vec3 abDiff = b - a;
     vec3 middle = (a + b) / 2.0;
-    float dist = sqrt(dot(abDiff, metricAt(middle, vId) * abDiff));
+    float dist = sqrt(dot(abDiff, metricAt(middle, cacheId) * abDiff));
 
     int segmentCount = 1;
     float err = 1.0;
@@ -19,7 +19,7 @@ float riemannianDistance(in vec3 a, in vec3 b, in uint vId)
         float newDist = 0.0;
         for(int i=0; i < segmentCount; ++i)
         {
-            mat3 metric = metricAt(segBeg + half_ds, vId);
+            mat3 metric = metricAt(segBeg + half_ds, cacheId);
             newDist += sqrt(dot(ds, metric * ds));
             segBeg += ds;
         }
@@ -31,10 +31,10 @@ float riemannianDistance(in vec3 a, in vec3 b, in uint vId)
     return dist;
 }
 
-vec3 riemannianSegment(in vec3 a, in vec3 b, in uint vId)
+vec3 riemannianSegment(in vec3 a, in vec3 b, in uint cacheId)
 {
     return normalize(b - a) *
-        riemannianDistance(a, b, vId);
+        riemannianDistance(a, b, cacheId);
 }
 
 

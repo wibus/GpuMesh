@@ -1,10 +1,10 @@
 // Element Volume
-float riemannianDistance(in vec3 a, in vec3 b)
+float riemannianDistance(in vec3 a, in vec3 b, in uint cacheId)
 {
     return distance(a, b);
 }
 
-vec3 riemannianSegment(in vec3 a, in vec3 b)
+vec3 riemannianSegment(in vec3 a, in vec3 b, in uint cacheId)
 {
     return b - a;
 }
