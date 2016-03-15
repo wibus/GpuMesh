@@ -208,6 +208,8 @@ void AbstractSmoother::benchmark(
         mesh, crew.sampler(), crew.measurer(),
         initialHistogram);
 
+    outPlot.setInitialHistogram(initialHistogram);
+
     // We must make a copy of the vertices in order to
     // restore mesh's vertices after each implementation.
     auto verticesBackup = mesh.verts;

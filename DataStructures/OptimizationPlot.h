@@ -36,12 +36,15 @@ public:
 
     void addSmoothingProperty(const std::string& name, const std::string& value);
 
+    void setInitialHistogram(const QualityHistogram& histogram);
+
     void addImplementation(const OptimizationImpl& impl);
 
     const std::string& meshModelName() const;
     const std::string& smoothingMethodName() const;
     const Properties& meshProperties() const;
     const Properties& smoothingProperties() const;
+    const QualityHistogram& initialHistogram() const;
     const std::vector<OptimizationImpl>& implementations() const;
 
 
@@ -50,6 +53,7 @@ private:
     std::string _smoothingMethodName;
     Properties _meshProperties;
     Properties _smoothingProperties;
+    QualityHistogram _initialHistogram;
     std::vector<OptimizationImpl> _implementations;
 };
 

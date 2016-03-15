@@ -31,6 +31,11 @@ void OptimizationPlot::addSmoothingProperty(const std::string& name, const std::
     _smoothingProperties.push_back(make_pair(name, value));
 }
 
+void OptimizationPlot::setInitialHistogram(const QualityHistogram& histogram)
+{
+    _initialHistogram = histogram;
+}
+
 void OptimizationPlot::addImplementation(const OptimizationImpl& impl)
 {
     _implementations.push_back(impl);
@@ -54,6 +59,11 @@ const Properties& OptimizationPlot::meshProperties() const
 const Properties& OptimizationPlot::smoothingProperties() const
 {
     return _smoothingProperties;
+}
+
+const QualityHistogram& OptimizationPlot::initialHistogram() const
+{
+    return _initialHistogram;
 }
 
 const std::vector<OptimizationImpl>& OptimizationPlot::implementations() const

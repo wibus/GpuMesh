@@ -3,6 +3,15 @@
 #include <GLM/glm.hpp>
 
 
+QualityHistogram::QualityHistogram() :
+    _sampleCount(0),
+    _minimumQuality(1.0),
+    _averageQuality(0.0),
+    _buckets(40, 0)
+{
+
+}
+
 QualityHistogram::QualityHistogram(std::size_t bucketCount) :
     _sampleCount(0),
     _minimumQuality(1.0),

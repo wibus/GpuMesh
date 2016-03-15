@@ -11,13 +11,15 @@ layout(shared, binding = EVALUATE_HIST_BUFFER_BINDING) buffer Hists
     int hists[];
 };
 
+uniform float hists_length;
+
+const int MIN_MAX = 2147483647;
+const float MEAN_MAX = MIN_MAX / (gl_WorkGroupSize.x * 3);
+
 float tetQuality(Tet tet);
 float priQuality(Pri pri);
 float hexQuality(Hex hex);
 
-
-const int MIN_MAX = 2147483647;
-const float MEAN_MAX = MIN_MAX / (gl_WorkGroupSize.x * 3);
 
 
 void commit(uint gid, float q)
@@ -28,8 +30,7 @@ void commit(uint gid, float q)
     // ! Driver linker bug :
     // Makes the linker segfautl
     //  float histCount = float(hists.length())
-    float histCount = float(100);
-    int bucket = int(max(q * histCount, 0.0));
+    int bucket = int(max(q * hists_length, 0.0));
     atomicAdd(hists[bucket], 1);
 }
 

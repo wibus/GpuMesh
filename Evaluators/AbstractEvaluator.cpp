@@ -486,6 +486,12 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, histBinding, _histSsbo);
 
 
+    // When Nvidia compiler bug about linker crash on hists.length() is fixed
+    // Remove this uniform and get hists length directly from the SSBO.
+    GLint hists_lenght_loc = glGetUniformLocation(
+                _evaluationProgram.id(), "hists_length");
+    glUniform1f(hists_lenght_loc, histogram.bucketCount());
+
     // Simulatenous and separate elem evaluation deliver the same performance
     // Separate program series gives a tiny, not stable speed boost.
     // (tested on a parametric pri/hex mesh)

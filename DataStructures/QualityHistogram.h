@@ -7,7 +7,8 @@
 class QualityHistogram
 {
 public:
-    QualityHistogram(std::size_t bucketCount = 100);
+    QualityHistogram();
+    QualityHistogram(std::size_t bucketCount);
     virtual ~QualityHistogram();
 
     virtual void clear();

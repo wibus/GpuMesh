@@ -23,7 +23,8 @@ public:
 
 protected:
     virtual void print(QTextDocument& document, bool paged) const;
-    virtual void printOptimizationPlot(QPixmap& pixmap) const;
+    virtual void printMinimumQualityPlot(QPixmap& pixmap) const;
+    virtual void printHistogramPlot(QPixmap& pixmap) const;
 
     QImage _preSmoothingShot;
     QImage _postSmoothingShot;

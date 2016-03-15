@@ -77,7 +77,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
 
     QPixmap plotPixmap = QPixmap(QSize(800, 800 * dHdW));
     plotPixmap.fill(Qt::transparent);
-    printOptimizationPlot(plotPixmap);
+    printHistogramPlot(plotPixmap);
 
     document.addResource(QTextDocument::ImageResource,
                          QUrl("snapshots://preSmoothing.png"),
@@ -329,7 +329,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.movePosition(QTextCursor::End);
 }
 
-void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
+void SmoothingReport::printMinimumQualityPlot(QPixmap& pixmap) const
 {
     QGraphicsScene scene;
 
@@ -447,6 +447,70 @@ void SmoothingReport::printOptimizationPlot(QPixmap& pixmap) const
     QGraphicsTextItem* titleText = scene.addText(
         (_plot.smoothingMethodName() + ": " + _plot.meshModelName()).c_str(), titleFont);
     titleText->setPos((sceneWidth - titleText->document()->size().width())/2.0, -50.0);
+
+    QPainter painter(&pixmap);
+    scene.render(&painter);
+}
+
+void SmoothingReport::printHistogramPlot(QPixmap& pixmap) const
+{
+    QGraphicsScene scene;
+
+    double sceneWidth = pixmap.width();
+    double sceneHeight = pixmap.height();
+
+    QBrush brushes[] = {
+        QBrush(Qt::black),
+        QBrush(Qt::blue),
+        QBrush(Qt::green),
+        QBrush(Qt::darkRed),
+        QBrush(Qt::cyan)
+    };
+
+    int maxElemCount = 0;
+    const QualityHistogram initHist = _plot.initialHistogram();
+    for(int bucket : initHist.buckets())
+        maxElemCount = glm::max(maxElemCount, bucket);
+    for(const OptimizationImpl& impl : _plot.implementations())
+    {
+        for(int bucket : impl.passes.back().histogram.buckets())
+            maxElemCount = glm::max(maxElemCount, bucket);
+    }
+    double scaleY = 0.80 / maxElemCount;
+
+    std::vector<const QualityHistogram*> hists;
+    hists.push_back(&_plot.initialHistogram());
+    for(const OptimizationImpl& impl : _plot.implementations())
+        hists.push_back(&impl.passes.back().histogram);
+
+    // Initial Histogram (Bands)
+    double offset = 0.0;
+    size_t bucketCount = initHist.bucketCount();
+    double bandWidth = sceneWidth / (bucketCount * (hists.size()+1));
+    for(size_t h = 0; h < hists.size(); ++h)
+    {
+        for(size_t i=0; i < bucketCount; ++i)
+        {
+            scene.addRect(
+                sceneWidth * double(i) / (bucketCount) + offset,
+                sceneHeight,
+                bandWidth,
+                -sceneHeight * (double(hists[h]->buckets()[i]) * scaleY),
+                QPen(brushes[h],0), brushes[h]);
+        }
+
+        offset += bandWidth;
+    }
+
+    // Graphics borders
+    scene.addRect(0, 0, sceneWidth, sceneHeight);
+
+
+    QFont titleFont;
+    titleFont.setPointSize(20);
+    QGraphicsTextItem* titleText = scene.addText(
+        (_plot.smoothingMethodName() + ": " + _plot.meshModelName()).c_str(), titleFont);
+    titleText->setPos((sceneWidth - titleText->document()->size().width())/2.0, 30.0);
 
     QPainter painter(&pixmap);
     scene.render(&painter);
