@@ -108,20 +108,146 @@
 \section{Introduction}
 \label{}
 
+
 \section{Background}
 \label{}
+
+\subsection{Element Quality}
+\label{}
+
+\subsubsection{Mean Ratio}
+\label{}
+For standard mesh smoothing (aka "metric free" in the code)
+[ref]
+
+\subsubsection{Metric Conformity}
+\label{}
+For isotropic and anisotropic mesh smoothing (aka "metric wise" in the code)
+[ref]
+
+
+\subsection{Vertex Relocation}
+\label{}
+
+\subsubsection{Quality Laplace}
+\label{}
+Metric free optimisation only
+[ref]
+
+\subsubsection{GETMe}
+\label{}
+Metric free optimisation only
+[ref]
+
+\subsubsection{Local Optimisation}
+\label{}
+For both metric free and metric wise optimisation
+\begin{itemize}
+\item Gradient descent 
+[ref]
+\item Alternative heuristics
+[ref]
+\end{itemize}
+
+
+\subsection{Riemannian Metric}
+\label{}
+
+\subsubsection{Analytical (optional)}
+\label{}
+For testing purposes
+[ref]
+
+\subsubsection{Local Search}
+\label{}
+Best CPU Strategy. Divergence prone for the GPU. (The term "divergence" in GPGPU means that some threads in a thread group evaluate a conditional branch differently which makes them inactive as long as the others are executing the branch)
+[ref]
+
+\subsubsection{Texture Sampling}
+\label{}
+(Thought to be the) Fastest Strategy. What is the best texture resolution for a given mesh?
+[ref]
+
+
+\subsection{Parallelisation}
+\label{}
+
+\subsubsection{Mesh Partitioning}
+\label{}
+Freitag's independent vertex groups
+[ref]
+
+\subsubsection{Known GPU Implementations}
+\label{}
+[ref]
+[ref]
+[ref] (lacking anisotropy or assesment of metric sampling technique's validity)
+
 
 \section{Framework}
 \label{}
 
-\section{Results}
+\subsection{Data Structures}
+\label{}
+\begin{itemize}
+\item GpuMesh updates its geometry in GLSL and CUDA buffers
+\item Independent Groups are rebuilt at each topology change
+\item Specify master buffer to update vertex positions (C++, GLSL, CUDA)
+\end{itemize}
+
+\subsection{Evaluation Modules}
+\label{}
+\begin{itemize}
+\item Sampler provides metric value at given position
+\item Measurer uses Sampler to compute distances and volumes (but is no longer used in MeanRatio and MetricConformity Evaluators...)
+\item Evaluator uses Sampler and Measurer to evaluate element quality
+\end{itemize}
+
+
+\subsection{Optimisation Strategies}
+\label{}
+\begin{itemize}
+\item Vertex Relocation (Quality Laplace, GETMe, Local Optimisation)
+\item Topology modification (Not implemented)
+\item (Diagram of Mesh, Evaluation chain and Optimisation Strategies)
+\end{itemize}
+
+\section{Results And Discussion}
 \label{}
 
-\section{Discussion}
+\subsection{Efficacy/Validity}
 \label{}
+\begin{itemize}
+\item Comparison between C++ Serial and C++ Threaded quality gain to isolate mesh partitioning effect (using local search sampling).
+\item Comparison between C++ Threaded, GLSL and CUDA to verify implementations' efficacy (using local search sampling).
+\end{itemize}
 
-\section{Conclusion}
+
+\subsection{Running times}
 \label{}
+Define algorithm termination condition
+
+\subsubsection{Analytical Metric}
+\label{}
+Comparison of Serial, Threaded, GLSL and CUDA using analytical metric showing that GPU implementations have great potential for accelerating vertex relocation schemes.
+
+\subsubsection{Local Search}
+\label{}
+Comparison of Serial, Threaded, GLSL and CUDA using local search sampling showing that this sampling technique tends to cause thread divergence on the GPU. 
+
+\subsubsection{Constant Time Metric Sampling (Optional)}
+\label{}
+An eventual metric texture or some other constant time metric sampling technique and its implications on GPU runing times. An essential characterisric of this technique is that it must be nearly as precise as the interpolation on a tetrahedron found by local search.
+
+
+\section{Conclusion and Future Work}
+\label{}
+\begin{itemize}
+\item Describe briefly the framework developed to conduct this study
+\item Mesh smoothing isn't complete without topology modifications
+\item Reiterate the need for a constant time but precise metric sampling technique
+\end{itemize}
+
 
 %% The Appendices part is started with the command \appendix;
 %% appendix sections are then done as normal sections
