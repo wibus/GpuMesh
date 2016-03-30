@@ -2,12 +2,12 @@ uniform float Lambda;
 
 
 // Quality Interface
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT]);
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT]);
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT]);
-float tetVolume(in vec3 vp[TET_VERTEX_COUNT]);
-float priVolume(in vec3 vp[PRI_VERTEX_COUNT]);
-float hexVolume(in vec3 vp[HEX_VERTEX_COUNT]);
+float tetQuality(in vec3 vp[TET_VERTEX_COUNT], in Tet tet);
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri);
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex);
+float tetVolume(in vec3 vp[TET_VERTEX_COUNT], in Tet tet);
+float priVolume(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri);
+float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex);
 
 // Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
@@ -39,10 +39,10 @@ void smoothTet(uint eId)
     );
 
     vec3 n[] = vec3[](
-        cross(vp[3]-vp[1], vp[1]-vp[2]),
-        cross(vp[3]-vp[2], vp[2]-vp[0]),
-        cross(vp[1]-vp[3], vp[3]-vp[0]),
-        cross(vp[1]-vp[0], vp[0]-vp[2])
+        cross(vp[3]-vp[1], vp[2]-vp[1]),
+        cross(vp[3]-vp[2], vp[0]-vp[2]),
+        cross(vp[1]-vp[3], vp[0]-vp[3]),
+        cross(vp[1]-vp[0], vp[2]-vp[0]),
     );
 
     vec3 vpp[] = vec3[](
@@ -53,8 +53,8 @@ void smoothTet(uint eId)
     );
 
 
-    float volume = tetVolume(vp);
-    float volumePrime = tetVolume(vpp);
+    float volume = tetVolume(vp, tet);
+    float volumePrime = tetVolume(vpp, tet);
     float absVolumeRation = abs(volume / volumePrime);
     float volumeVar = pow(absVolumeRation, 1.0/3.0);
 
@@ -71,8 +71,8 @@ void smoothTet(uint eId)
     if(topos[vi[2]].type > 0) vpp[2] = snapToBoundary(topos[vi[2]].type, vpp[2]);
     if(topos[vi[3]].type > 0) vpp[3] = snapToBoundary(topos[vi[3]].type, vpp[3]);
 
-    float quality = tetQuality(vp);
-    float qualityPrime = tetQuality(vpp);
+    float quality = tetQuality(vp, tet);
+    float qualityPrime = tetQuality(vpp, tet);
 
     float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);
@@ -104,31 +104,31 @@ void smoothPri(uint eId)
     );
 
     vec3 aux[] = vec3[](
-        (vp[0] + vp[2] + vp[4]) / 3.0,
-        (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0,
-        (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0,
-        (vp[2] + vp[3] + vp[4] + vp[5]) / 4.0,
-        (vp[1] + vp[3] + vp[5]) / 3.0
+        (vp[0] + vp[1] + vp[2]) / 3.0,
+        (vp[0] + vp[1] + vp[4] + vp[3]) / 4.0,
+        (vp[1] + vp[2] + vp[5] + vp[4]) / 4.0,
+        (vp[2] + vp[0] + vp[3] + vp[5]) / 4.0,
+        (vp[3] + vp[4] + vp[5]) / 3.0,
     );
 
     vec3 n[] = vec3[](
-        cross(aux[2] - aux[0], aux[1] - aux[0]),
-        cross(aux[1] - aux[4], aux[2] - aux[4]),
-        cross(aux[3] - aux[0], aux[2] - aux[0]),
-        cross(aux[2] - aux[4], aux[3] - aux[4]),
         cross(aux[1] - aux[0], aux[3] - aux[0]),
-        cross(aux[3] - aux[4], aux[1] - aux[4])
+        cross(aux[2] - aux[0], aux[1] - aux[0]),
+        cross(aux[3] - aux[0], aux[2] - aux[0]),
+        cross(aux[3] - aux[4], aux[1] - aux[4]),
+        cross(aux[1] - aux[4], aux[2] - aux[4]),
+        cross(aux[2] - aux[4], aux[3] - aux[4]),
     );
 
     float t = (4.0/5.0) * (1.0 - pow(4.0/39.0, 0.25) * Lambda);
     float it = 1.0 - t;
     vec3 bases[] = vec3[](
+        it * aux[0] + t * (aux[3] + aux[1]) / 2.0,
         it * aux[0] + t * (aux[1] + aux[2]) / 2.0,
-        it * aux[4] + t * (aux[1] + aux[2]) / 2.0,
         it * aux[0] + t * (aux[2] + aux[3]) / 2.0,
+        it * aux[4] + t * (aux[3] + aux[1]) / 2.0,
+        it * aux[4] + t * (aux[1] + aux[2]) / 2.0,
         it * aux[4] + t * (aux[2] + aux[3]) / 2.0,
-        it * aux[0] + t * (aux[1] + aux[3]) / 2.0,
-        it * aux[4] + t * (aux[1] + aux[3]) / 2.0
     );
 
 
@@ -143,8 +143,8 @@ void smoothPri(uint eId)
     );
 
 
-    float volume = priVolume(vp);
-    float volumePrime = priVolume(vpp);
+    float volume = priVolume(vp, pri);
+    float volumePrime = priVolume(vpp, pri);
     float absVolumeRation = abs(volume / volumePrime);
     float volumeVar = pow(absVolumeRation, 1.0/3.0);
 
@@ -166,8 +166,8 @@ void smoothPri(uint eId)
     if(topos[vi[5]].type > 0) vpp[5] = snapToBoundary(topos[vi[5]].type, vpp[5]);
 
 
-    float quality = priQuality(vp);
-    float qualityPrime = priQuality(vpp);
+    float quality = priQuality(vp, pri);
+    float qualityPrime = priQuality(vpp, pri);
 
     float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);
@@ -206,33 +206,33 @@ void smoothHex(uint eId)
 
     vec3 aux[] = vec3[](
         (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0,
-        (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0,
-        (vp[1] + vp[3] + vp[5] + vp[7]) / 4.0,
-        (vp[2] + vp[3] + vp[6] + vp[7]) / 4.0,
-        (vp[0] + vp[2] + vp[4] + vp[6]) / 4.0,
-        (vp[4] + vp[5] + vp[6] + vp[7]) / 4.0
+        (vp[0] + vp[4] + vp[5] + vp[1]) / 4.0,
+        (vp[1] + vp[5] + vp[6] + vp[2]) / 4.0,
+        (vp[2] + vp[6] + vp[7] + vp[3]) / 4.0,
+        (vp[0] + vp[3] + vp[7] + vp[4]) / 4.0,
+        (vp[4] + vp[7] + vp[6] + vp[5]) / 4.0,
     );
 
     vec3 n[] = vec3[](
         cross(aux[1] - aux[0], aux[4] - aux[0]),
         cross(aux[2] - aux[0], aux[1] - aux[0]),
-        cross(aux[4] - aux[0], aux[3] - aux[0]),
         cross(aux[3] - aux[0], aux[2] - aux[0]),
+        cross(aux[4] - aux[0], aux[3] - aux[0]),
         cross(aux[4] - aux[5], aux[1] - aux[5]),
         cross(aux[1] - aux[5], aux[2] - aux[5]),
+        cross(aux[2] - aux[5], aux[3] - aux[5]),
         cross(aux[3] - aux[5], aux[4] - aux[5]),
-        cross(aux[2] - aux[5], aux[3] - aux[5])
     );
 
     vec3 bases[] = vec3[](
         (aux[0] + aux[1] + aux[4]) / 3.0,
-        (aux[0] + aux[1] + aux[2]) / 3.0,
-        (aux[0] + aux[3] + aux[4]) / 3.0,
-        (aux[0] + aux[2] + aux[3]) / 3.0,
-        (aux[1] + aux[4] + aux[5]) / 3.0,
-        (aux[1] + aux[2] + aux[5]) / 3.0,
-        (aux[3] + aux[4] + aux[5]) / 3.0,
-        (aux[2] + aux[3] + aux[5]) / 3.0
+        (aux[0] + aux[2] + aux[1]) / 3.0,
+        (aux[0] + aux[3] + aux[2]) / 3.0,
+        (aux[0] + aux[4] + aux[3]) / 3.0,
+        (aux[5] + aux[4] + aux[1]) / 3.0,
+        (aux[5] + aux[1] + aux[2]) / 3.0,
+        (aux[5] + aux[2] + aux[3]) / 3.0,
+        (aux[5] + aux[3] + aux[4]) / 3.0,
     );
 
 
@@ -249,8 +249,8 @@ void smoothHex(uint eId)
     );
 
 
-    float volume = hexVolume(vp);
-    float volumePrime = hexVolume(vpp);
+    float volume = hexVolume(vp, hex);
+    float volumePrime = hexVolume(vpp, hex);
     float absVolumeRation = abs(volume / volumePrime);
     float volumeVar = pow(absVolumeRation, 1.0/3.0);
 
@@ -276,8 +276,8 @@ void smoothHex(uint eId)
     if(topos[vi[7]].type > 0) vpp[7] = snapToBoundary(topos[vi[7]].type, vpp[7]);
 
 
-    float quality = hexQuality(vp);
-    float qualityPrime = hexQuality(vpp);
+    float quality = hexQuality(vp, hex);
+    float qualityPrime = hexQuality(vpp, hex);
 
     float weight = qualityPrime / (1.0 + quality);
     addPosition(vi[0], vpp[0], weight);

@@ -10,7 +10,10 @@ void installCudaMetricWiseMeasurer();
 
 
 MetricWiseMeasurer::MetricWiseMeasurer() :
-    AbstractMeasurer("Metric Wise", ":/glsl/compute/Measuring/MetricWise.glsl", installCudaMetricWiseMeasurer)
+    AbstractMeasurer(
+        "Metric Wise",
+        ":/glsl/compute/Measuring/MetricWise.glsl",
+        installCudaMetricWiseMeasurer)
 {
 
 }

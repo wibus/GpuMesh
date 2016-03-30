@@ -80,10 +80,10 @@ void GetmeSmoother::smoothTets(
         };
 
         glm::dvec3 n[] = {
-            glm::cross(vp[3]-vp[1], vp[1]-vp[2]),
-            glm::cross(vp[3]-vp[2], vp[2]-vp[0]),
-            glm::cross(vp[1]-vp[3], vp[3]-vp[0]),
-            glm::cross(vp[1]-vp[0], vp[0]-vp[2]),
+            glm::cross(vp[3]-vp[1], vp[2]-vp[1]),
+            glm::cross(vp[3]-vp[2], vp[0]-vp[2]),
+            glm::cross(vp[1]-vp[3], vp[0]-vp[3]),
+            glm::cross(vp[1]-vp[0], vp[2]-vp[0]),
         };
 
         glm::dvec3 vpp[] = {
@@ -156,31 +156,31 @@ void GetmeSmoother::smoothPris(
         };
 
         glm::dvec3 aux[] = {
-            (vp[0] + vp[2] + vp[4]) / 3.0,
-            (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0,
-            (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0,
-            (vp[2] + vp[3] + vp[4] + vp[5]) / 4.0,
-            (vp[1] + vp[3] + vp[5]) / 3.0,
+            (vp[0] + vp[1] + vp[2]) / 3.0,
+            (vp[0] + vp[1] + vp[4] + vp[3]) / 4.0,
+            (vp[1] + vp[2] + vp[5] + vp[4]) / 4.0,
+            (vp[2] + vp[0] + vp[3] + vp[5]) / 4.0,
+            (vp[3] + vp[4] + vp[5]) / 3.0,
         };
 
         glm::dvec3 n[] = {
-            glm::cross(aux[2] - aux[0], aux[1] - aux[0]),
-            glm::cross(aux[1] - aux[4], aux[2] - aux[4]),
-            glm::cross(aux[3] - aux[0], aux[2] - aux[0]),
-            glm::cross(aux[2] - aux[4], aux[3] - aux[4]),
             glm::cross(aux[1] - aux[0], aux[3] - aux[0]),
+            glm::cross(aux[2] - aux[0], aux[1] - aux[0]),
+            glm::cross(aux[3] - aux[0], aux[2] - aux[0]),
             glm::cross(aux[3] - aux[4], aux[1] - aux[4]),
+            glm::cross(aux[1] - aux[4], aux[2] - aux[4]),
+            glm::cross(aux[2] - aux[4], aux[3] - aux[4]),
         };
 
         double t = (4.0/5.0) * (1.0 - glm::pow(4.0/39.0, 0.25) * _lambda);
         double it = 1.0 - t;
         glm::dvec3 bases[] = {
+            it * aux[0] + t * (aux[3] + aux[1]) / 2.0,
             it * aux[0] + t * (aux[1] + aux[2]) / 2.0,
-            it * aux[4] + t * (aux[1] + aux[2]) / 2.0,
             it * aux[0] + t * (aux[2] + aux[3]) / 2.0,
+            it * aux[4] + t * (aux[3] + aux[1]) / 2.0,
+            it * aux[4] + t * (aux[1] + aux[2]) / 2.0,
             it * aux[4] + t * (aux[2] + aux[3]) / 2.0,
-            it * aux[0] + t * (aux[1] + aux[3]) / 2.0,
-            it * aux[4] + t * (aux[1] + aux[3]) / 2.0,
         };
 
 
@@ -269,33 +269,33 @@ void GetmeSmoother::smoothHexs(
 
         glm::dvec3 aux[] = {
             (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0,
-            (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0,
-            (vp[1] + vp[3] + vp[5] + vp[7]) / 4.0,
-            (vp[2] + vp[3] + vp[6] + vp[7]) / 4.0,
-            (vp[0] + vp[2] + vp[4] + vp[6]) / 4.0,
-            (vp[4] + vp[5] + vp[6] + vp[7]) / 4.0,
+            (vp[0] + vp[4] + vp[5] + vp[1]) / 4.0,
+            (vp[1] + vp[5] + vp[6] + vp[2]) / 4.0,
+            (vp[2] + vp[6] + vp[7] + vp[3]) / 4.0,
+            (vp[0] + vp[3] + vp[7] + vp[4]) / 4.0,
+            (vp[4] + vp[7] + vp[6] + vp[5]) / 4.0,
         };
 
         glm::dvec3 n[] = {
             glm::cross(aux[1] - aux[0], aux[4] - aux[0]),
             glm::cross(aux[2] - aux[0], aux[1] - aux[0]),
-            glm::cross(aux[4] - aux[0], aux[3] - aux[0]),
             glm::cross(aux[3] - aux[0], aux[2] - aux[0]),
+            glm::cross(aux[4] - aux[0], aux[3] - aux[0]),
             glm::cross(aux[4] - aux[5], aux[1] - aux[5]),
             glm::cross(aux[1] - aux[5], aux[2] - aux[5]),
-            glm::cross(aux[3] - aux[5], aux[4] - aux[5]),
             glm::cross(aux[2] - aux[5], aux[3] - aux[5]),
+            glm::cross(aux[3] - aux[5], aux[4] - aux[5]),
         };
 
         glm::dvec3 bases[] = {
             (aux[0] + aux[1] + aux[4]) / 3.0,
-            (aux[0] + aux[1] + aux[2]) / 3.0,
-            (aux[0] + aux[3] + aux[4]) / 3.0,
-            (aux[0] + aux[2] + aux[3]) / 3.0,
-            (aux[1] + aux[4] + aux[5]) / 3.0,
-            (aux[1] + aux[2] + aux[5]) / 3.0,
-            (aux[3] + aux[4] + aux[5]) / 3.0,
-            (aux[2] + aux[3] + aux[5]) / 3.0,
+            (aux[0] + aux[2] + aux[1]) / 3.0,
+            (aux[0] + aux[3] + aux[2]) / 3.0,
+            (aux[0] + aux[4] + aux[3]) / 3.0,
+            (aux[5] + aux[4] + aux[1]) / 3.0,
+            (aux[5] + aux[1] + aux[2]) / 3.0,
+            (aux[5] + aux[2] + aux[3]) / 3.0,
+            (aux[5] + aux[3] + aux[4]) / 3.0,
         };
 
 

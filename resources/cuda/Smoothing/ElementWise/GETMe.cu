@@ -28,10 +28,10 @@ __device__ void getmeSmoothTet(uint eId)
     };
 
     vec3 n[] = {
-        cross(vp[3]-vp[1], vp[1]-vp[2]),
-        cross(vp[3]-vp[2], vp[2]-vp[0]),
-        cross(vp[1]-vp[3], vp[3]-vp[0]),
-        cross(vp[1]-vp[0], vp[0]-vp[2])
+        cross(vp[3]-vp[1], vp[2]-vp[1]),
+        cross(vp[3]-vp[2], vp[0]-vp[2]),
+        cross(vp[1]-vp[3], vp[0]-vp[3]),
+        cross(vp[1]-vp[0], vp[2]-vp[0]),
     };
 
     vec3 vpp[] = {
@@ -93,31 +93,31 @@ __device__ void getmeSmoothPri(uint eId)
     };
 
     vec3 aux[] = {
-        (vp[0] + vp[2] + vp[4]) / 3.0f,
-        (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0f,
-        (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0f,
-        (vp[2] + vp[3] + vp[4] + vp[5]) / 4.0f,
-        (vp[1] + vp[3] + vp[5]) / 3.0f
+        (vp[0] + vp[1] + vp[2]) / 3.0f,
+        (vp[0] + vp[1] + vp[4] + vp[3]) / 4.0f,
+        (vp[1] + vp[2] + vp[5] + vp[4]) / 4.0f,
+        (vp[2] + vp[0] + vp[3] + vp[5]) / 4.0f,
+        (vp[3] + vp[4] + vp[5]) / 3.0f,
     };
 
     vec3 n[] = {
-        cross(aux[2] - aux[0], aux[1] - aux[0]),
-        cross(aux[1] - aux[4], aux[2] - aux[4]),
-        cross(aux[3] - aux[0], aux[2] - aux[0]),
-        cross(aux[2] - aux[4], aux[3] - aux[4]),
         cross(aux[1] - aux[0], aux[3] - aux[0]),
-        cross(aux[3] - aux[4], aux[1] - aux[4])
+        cross(aux[2] - aux[0], aux[1] - aux[0]),
+        cross(aux[3] - aux[0], aux[2] - aux[0]),
+        cross(aux[3] - aux[4], aux[1] - aux[4]),
+        cross(aux[1] - aux[4], aux[2] - aux[4]),
+        cross(aux[2] - aux[4], aux[3] - aux[4]),
     };
 
     float t = (4.0/5.0) * (1.0 - pow(4.0/39.0, 0.25) * Lambda);
     float it = 1.0 - t;
     vec3 bases[] = {
+        it * aux[0] + t * (aux[3] + aux[1]) / 2.0f,
         it * aux[0] + t * (aux[1] + aux[2]) / 2.0f,
-        it * aux[4] + t * (aux[1] + aux[2]) / 2.0f,
         it * aux[0] + t * (aux[2] + aux[3]) / 2.0f,
+        it * aux[4] + t * (aux[3] + aux[1]) / 2.0f,
+        it * aux[4] + t * (aux[1] + aux[2]) / 2.0f,
         it * aux[4] + t * (aux[2] + aux[3]) / 2.0f,
-        it * aux[0] + t * (aux[1] + aux[3]) / 2.0f,
-        it * aux[4] + t * (aux[1] + aux[3]) / 2.0f
     };
 
 
@@ -195,33 +195,33 @@ __device__ void getmeSmoothHex(uint eId)
 
     vec3 aux[] = {
         (vp[0] + vp[1] + vp[2] + vp[3]) / 4.0f,
-        (vp[0] + vp[1] + vp[4] + vp[5]) / 4.0f,
-        (vp[1] + vp[3] + vp[5] + vp[7]) / 4.0f,
-        (vp[2] + vp[3] + vp[6] + vp[7]) / 4.0f,
-        (vp[0] + vp[2] + vp[4] + vp[6]) / 4.0f,
-        (vp[4] + vp[5] + vp[6] + vp[7]) / 4.0f
+        (vp[0] + vp[4] + vp[5] + vp[1]) / 4.0f,
+        (vp[1] + vp[5] + vp[6] + vp[2]) / 4.0f,
+        (vp[2] + vp[6] + vp[7] + vp[3]) / 4.0f,
+        (vp[0] + vp[3] + vp[7] + vp[4]) / 4.0f,
+        (vp[4] + vp[7] + vp[6] + vp[5]) / 4.0f,
     };
 
     vec3 n[] = {
         cross(aux[1] - aux[0], aux[4] - aux[0]),
         cross(aux[2] - aux[0], aux[1] - aux[0]),
-        cross(aux[4] - aux[0], aux[3] - aux[0]),
         cross(aux[3] - aux[0], aux[2] - aux[0]),
+        cross(aux[4] - aux[0], aux[3] - aux[0]),
         cross(aux[4] - aux[5], aux[1] - aux[5]),
         cross(aux[1] - aux[5], aux[2] - aux[5]),
+        cross(aux[2] - aux[5], aux[3] - aux[5]),
         cross(aux[3] - aux[5], aux[4] - aux[5]),
-        cross(aux[2] - aux[5], aux[3] - aux[5])
     };
 
     vec3 bases[] = {
         (aux[0] + aux[1] + aux[4]) / 3.0f,
-        (aux[0] + aux[1] + aux[2]) / 3.0f,
-        (aux[0] + aux[3] + aux[4]) / 3.0f,
-        (aux[0] + aux[2] + aux[3]) / 3.0f,
-        (aux[1] + aux[4] + aux[5]) / 3.0f,
-        (aux[1] + aux[2] + aux[5]) / 3.0f,
-        (aux[3] + aux[4] + aux[5]) / 3.0f,
-        (aux[2] + aux[3] + aux[5]) / 3.0f
+        (aux[0] + aux[2] + aux[1]) / 3.0f,
+        (aux[0] + aux[3] + aux[2]) / 3.0f,
+        (aux[0] + aux[4] + aux[3]) / 3.0f,
+        (aux[5] + aux[4] + aux[1]) / 3.0f,
+        (aux[5] + aux[1] + aux[2]) / 3.0f,
+        (aux[5] + aux[2] + aux[3]) / 3.0f,
+        (aux[5] + aux[3] + aux[4]) / 3.0f,
     };
 
 

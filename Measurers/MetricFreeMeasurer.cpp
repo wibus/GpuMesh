@@ -10,7 +10,10 @@ void installCudaMetricFreeMeasurer();
 
 
 MetricFreeMeasurer::MetricFreeMeasurer() :
-    AbstractMeasurer("Metric Free", ":/glsl/compute/Measuring/MetricFree.glsl", installCudaMetricFreeMeasurer)
+    AbstractMeasurer(
+        "Metric Free",
+        ":/glsl/compute/Measuring/MetricFree.glsl",
+        installCudaMetricFreeMeasurer)
 {
 
 }
