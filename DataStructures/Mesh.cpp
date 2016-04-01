@@ -398,7 +398,6 @@ void Mesh::compileIndependentGroups()
 {
     const int NO_GROUP = 0;
     const int UNSET_GROUP = -1;
-    const int FIRST_GROUP =  1;
 
     size_t vertCount = verts.size();
 

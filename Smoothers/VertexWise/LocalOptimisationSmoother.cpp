@@ -47,8 +47,6 @@ void LocalOptimisationSmoother::printSmoothingParameters(
     plot.addSmoothingProperty("Security Cycle Count", to_string(_securityCycleCount));
 }
 
-#include <iostream>
-
 void LocalOptimisationSmoother::smoothVertices(
         Mesh& mesh,
         const MeshCrew& crew,
@@ -64,9 +62,6 @@ void LocalOptimisationSmoother::smoothVertices(
 
         if(!isSmoothable(mesh, vId))
             continue;
-
-        //double percent = double(vId) / (vIdCount-1);
-        //std::cout << "Smoothing vertex " << v << "(" << percent << "%)" << endl;
 
         // Compute local element size
         double localSize =
