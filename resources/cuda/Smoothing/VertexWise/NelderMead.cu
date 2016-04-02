@@ -1,7 +1,7 @@
 #include "Base.cuh"
 
-__device__ int SecurityCycleCount;
-__device__ float LocalSizeToNodeShift;
+__device__ int NMSecurityCycleCount;
+__device__ float NMLocalSizeToNodeShift;
 
 
 // Smoothing Helper
@@ -10,16 +10,16 @@ __device__ float patchQuality(uint vId);
 
 
 // ENTRY POINT //
-__device__ void localOptimisationSmoothVert(uint vId)
+__device__ void nelderMeadSmoothVert(uint vId)
 {
     // Compute local element size
     float localSize = computeLocalElementSize(vId);
 
     // Initialize node shift distance
-    float nodeShift = localSize * LocalSizeToNodeShift;
+    float nodeShift = localSize * NMLocalSizeToNodeShift;
     float originalNodeShift = nodeShift;
 
-    for(int c=0; c < SecurityCycleCount; ++c)
+    for(int c=0; c < NMSecurityCycleCount; ++c)
     {
         // Define patch quality gradient samples
         vec3 pos = vec3(verts[vId].p);
@@ -122,23 +122,23 @@ __device__ void localOptimisationSmoothVert(uint vId)
     }
 }
 
-__device__ smoothVertFct localOptimisationSmoothVertPtr = localOptimisationSmoothVert;
+__device__ smoothVertFct nelderMeadSmoothVertPtr = nelderMeadSmoothVert;
 
 
 // CUDA Drivers
-void installCudaLocalOptimisationSmoother()
+void installCudaNelderMeadSmoother()
 {
     smoothVertFct d_smoothVert = nullptr;
-    cudaMemcpyFromSymbol(&d_smoothVert, localOptimisationSmoothVertPtr, sizeof(smoothVertFct));
+    cudaMemcpyFromSymbol(&d_smoothVert, nelderMeadSmoothVertPtr, sizeof(smoothVertFct));
     cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
 
     int h_securityCycleCount = 5;
-    cudaMemcpyToSymbol(SecurityCycleCount, &h_securityCycleCount, sizeof(int));
+    cudaMemcpyToSymbol(NMSecurityCycleCount, &h_securityCycleCount, sizeof(int));
 
     float h_localSizeToNodeShift = 1.0 / 25.0;
-    cudaMemcpyToSymbol(LocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
+    cudaMemcpyToSymbol(NMLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
 
 
-    printf("I -> CUDA \tLocal Optimisation smoother installed\n");
+    printf("I -> CUDA \tNelder Mead smoother installed\n");
 }

@@ -30,7 +30,6 @@
         <file>glsl/compute/Rendering/QualityGradient.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/SpringLaplace.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/QualityLaplace.glsl</file>
-        <file>glsl/compute/Smoothing/VertexWise/LocalOptimisation.glsl</file>
         <file>glsl/compute/Smoothing/ElementWise/GETMe.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/SmoothVertices.glsl</file>
         <file>glsl/compute/Smoothing/ElementWise/SmoothElements.glsl</file>
@@ -52,5 +51,7 @@
         <file>glsl/compute/Sampling/Local.glsl</file>
         <file>glsl/vertex/BoldEdge.vert</file>
         <file>glsl/fragment/BoldEdge.frag</file>
+        <file>glsl/compute/Smoothing/VertexWise/GradientDescent.glsl</file>
+        <file>glsl/compute/Smoothing/VertexWise/NelderMead.glsl</file>
     </qresource>
 </RCC>

@@ -41,7 +41,8 @@
 #include "Serialization/StlSerializer.h"
 #include "Smoothers/VertexWise/SpringLaplaceSmoother.h"
 #include "Smoothers/VertexWise/QualityLaplaceSmoother.h"
-#include "Smoothers/VertexWise/LocalOptimisationSmoother.h"
+#include "Smoothers/VertexWise/GradientDescentSmoother.h"
+#include "Smoothers/VertexWise/NelderMeadSmoother.h"
 #include "Smoothers/ElementWise/GetmeSmoother.h"
 
 using namespace std;
@@ -107,12 +108,13 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Metric Conformity"), shared_ptr<AbstractEvaluator>(new MetricConformityEvaluator())},
     });
 
-    _availableSmoothers.setDefault("Local Optimisation");
+    _availableSmoothers.setDefault("Nelder-Mead");
     _availableSmoothers.setContent({
-        {string("Spring Laplace"),     shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
-        {string("Quality Laplace"),    shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
-        {string("Local Optimisation"), shared_ptr<AbstractSmoother>(new LocalOptimisationSmoother())},
-        {string("GETMe"),              shared_ptr<AbstractSmoother>(new GetmeSmoother())},
+        {string("Spring Laplace"),   shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
+        {string("Quality Laplace"),  shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
+        {string("Gradient Descent"), shared_ptr<AbstractSmoother>(new GradientDescentSmoother())},
+        {string("Nelder-Mead"),      shared_ptr<AbstractSmoother>(new NelderMeadSmoother())},
+        {string("GETMe"),            shared_ptr<AbstractSmoother>(new GetmeSmoother())},
     });
 
     _availableRenderers.setDefault("Surfacic");

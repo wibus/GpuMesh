@@ -1,15 +1,15 @@
-#ifndef GPUMESH_LOCALOPTIMISATIONSMOOTHER
-#define GPUMESH_LOCALOPTIMISATIONSMOOTHER
+#ifndef GPUMESH_LOCALNELDERMEADOPTIMISATIONSMOOTHER
+#define GPUMESH_LOCALNELDERMEADOPTIMISATIONSMOOTHER
 
 
 #include "AbstractVertexWiseSmoother.h"
 
 
-class LocalOptimisationSmoother : public AbstractVertexWiseSmoother
+class NelderMeadSmoother : public AbstractVertexWiseSmoother
 {
 public:
-    LocalOptimisationSmoother();
-    virtual ~LocalOptimisationSmoother();
+    NelderMeadSmoother();
+    virtual ~NelderMeadSmoother();
 
 
 protected:
@@ -30,6 +30,11 @@ protected:
 private:
     int _securityCycleCount;
     double _localSizeToNodeShift;
+
+    double _alpha;
+    double _beta;
+    double _gamma;
+    double _delta;
 };
 
-#endif // GPUMESH_LOCALOPTIMISATIONSMOOTHER
+#endif // GPUMESH_LOCALNELDERMEADOPTIMISATIONSMOOTHER

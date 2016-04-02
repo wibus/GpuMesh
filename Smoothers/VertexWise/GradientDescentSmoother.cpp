@@ -1,4 +1,4 @@
-#include "LocalOptimisationSmoother.h"
+#include "GradientDescentSmoother.h"
 
 #include <limits>
 
@@ -10,25 +10,25 @@ using namespace std;
 
 
 // CUDA Drivers
-void installCudaLocalOptimisationSmoother();
+void installCudaGradientDescentSmoother();
 
 
-LocalOptimisationSmoother::LocalOptimisationSmoother() :
+GradientDescentSmoother::GradientDescentSmoother() :
     AbstractVertexWiseSmoother(
-        {":/glsl/compute/Smoothing/VertexWise/LocalOptimisation.glsl"},
-        installCudaLocalOptimisationSmoother),
+        {":/glsl/compute/Smoothing/VertexWise/GradientDescent.glsl"},
+        installCudaGradientDescentSmoother),
     _securityCycleCount(5),
     _localSizeToNodeShift(1.0 / 25.0)
 {
 
 }
 
-LocalOptimisationSmoother::~LocalOptimisationSmoother()
+GradientDescentSmoother::~GradientDescentSmoother()
 {
 
 }
 
-void LocalOptimisationSmoother::setVertexProgramUniforms(
+void GradientDescentSmoother::setVertexProgramUniforms(
             const Mesh& mesh,
             cellar::GlProgram& program)
 {
@@ -37,7 +37,7 @@ void LocalOptimisationSmoother::setVertexProgramUniforms(
     program.setFloat("LocalSizeToNodeShift", _localSizeToNodeShift);
 }
 
-void LocalOptimisationSmoother::printSmoothingParameters(
+void GradientDescentSmoother::printSmoothingParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
@@ -47,7 +47,7 @@ void LocalOptimisationSmoother::printSmoothingParameters(
     plot.addSmoothingProperty("Security Cycle Count", to_string(_securityCycleCount));
 }
 
-void LocalOptimisationSmoother::smoothVertices(
+void GradientDescentSmoother::smoothVertices(
         Mesh& mesh,
         const MeshCrew& crew,
         const std::vector<uint>& vIds)
