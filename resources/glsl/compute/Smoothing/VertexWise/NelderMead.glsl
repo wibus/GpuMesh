@@ -82,12 +82,12 @@ void smoothVert(uint vId)
                 vec3(simplex[2]) +
                 vec3(simplex[3]));
 
-            double f = 0.0;
+            float f = 0.0;
 
             // Reflect
             verts[vId].p = vec4(c + Alpha*(c - vec3(simplex[0])), 0);
             if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
-            double fr = f = patchQuality(vId);
+            float fr = f = patchQuality(vId);
 
             vec4 xr = verts[vId].p;
 
@@ -96,7 +96,7 @@ void smoothVert(uint vId)
             {
                 verts[vId].p = vec4(c + Gamma*(vec3(verts[vId].p) - c), 0);
                 if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
-                double fe = f = patchQuality(vId);
+                float fe = f = patchQuality(vId);
 
                 if(fe <= fr)
                 {

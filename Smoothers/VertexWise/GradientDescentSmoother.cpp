@@ -9,16 +9,27 @@
 using namespace std;
 
 
+// Parameters
+const int GDSecurityCycleCount = 5;
+const double GDLocalSizeToNodeShift = 1.0 / 25.0;
+
+
 // CUDA Drivers
-void installCudaGradientDescentSmoother();
+void installCudaGradientDescentSmoother(
+        int h_securityCycleCount,
+        float h_localSizeToNodeShift);
+void installCudaGradientDescentSmoother()
+{
+    installCudaGradientDescentSmoother(
+                GDSecurityCycleCount,
+                GDLocalSizeToNodeShift);
+}
 
 
 GradientDescentSmoother::GradientDescentSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/GradientDescent.glsl"},
-        installCudaGradientDescentSmoother),
-    _securityCycleCount(5),
-    _localSizeToNodeShift(1.0 / 25.0)
+        installCudaGradientDescentSmoother)
 {
 
 }
@@ -33,8 +44,8 @@ void GradientDescentSmoother::setVertexProgramUniforms(
             cellar::GlProgram& program)
 {
     AbstractVertexWiseSmoother::setVertexProgramUniforms(mesh, program);
-    program.setInt("SecurityCycleCount", _securityCycleCount);
-    program.setFloat("LocalSizeToNodeShift", _localSizeToNodeShift);
+    program.setInt("SecurityCycleCount", GDSecurityCycleCount);
+    program.setFloat("LocalSizeToNodeShift", GDLocalSizeToNodeShift);
 }
 
 void GradientDescentSmoother::printSmoothingParameters(
@@ -43,8 +54,8 @@ void GradientDescentSmoother::printSmoothingParameters(
 {
     AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Local Optimization");
-    plot.addSmoothingProperty("Local Size to Node Shift", to_string(_localSizeToNodeShift));
-    plot.addSmoothingProperty("Security Cycle Count", to_string(_securityCycleCount));
+    plot.addSmoothingProperty("Local Size to Node Shift", to_string(GDLocalSizeToNodeShift));
+    plot.addSmoothingProperty("Security Cycle Count", to_string(GDSecurityCycleCount));
 }
 
 void GradientDescentSmoother::smoothVertices(
@@ -69,10 +80,10 @@ void GradientDescentSmoother::smoothVertices(
                 mesh, crew.sampler(), vId);
 
         // Initialize node shift distance
-        double nodeShift = localSize * _localSizeToNodeShift;
+        double nodeShift = localSize * GDLocalSizeToNodeShift;
         double originalNodeShift = nodeShift;
 
-        for(int c=0; c < _securityCycleCount; ++c)
+        for(int c=0; c < GDSecurityCycleCount; ++c)
         {
             // Define patch quality gradient samples
             glm::dvec3& pos = verts[vId].p;

@@ -1,12 +1,12 @@
 #include "Base.cuh"
 
-__device__ float NMGainThreshold;
-__device__ int NMSecurityCycleCount;
-__device__ float NMLocalSizeToNodeShift;
-__device__ float NMAlpha;
-__device__ float NMBeta;
-__device__ float NMGamma;
-__device__ float NMDelta;
+__constant__ float NMValueConvergence;
+__constant__ int NMSecurityCycleCount;
+__constant__ float NMLocalSizeToNodeShift;
+__constant__ float NMAlpha;
+__constant__ float NMBeta;
+__constant__ float NMGamma;
+__constant__ float NMDelta;
 
 
 // Smoothing Helper
@@ -81,12 +81,12 @@ __device__ void nelderMeadSmoothVert(uint vId)
                 vec3(simplex[2]) +
                 vec3(simplex[3]));
 
-            double f = 0.0;
+            float f = 0.0;
 
             // Reflect
             verts[vId].p = vec4(c + NMAlpha*(c - vec3(simplex[0])), 0);
             if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
-            double fr = f = patchQuality(vId);
+            float fr = f = patchQuality(vId);
 
             vec4 xr = verts[vId].p;
 
@@ -95,7 +95,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
             {
                 verts[vId].p = vec4(c + NMGamma*(vec3(verts[vId].p) - c), 0);
                 if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
-                double fe = f = patchQuality(vId);
+                float fe = f = patchQuality(vId);
 
                 if(fe <= fr)
                 {
@@ -134,7 +134,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
                 swap(simplex[0], vertex);
 
 
-            if( (simplex[3].w - simplex[1].w) < NMGainThreshold )
+            if( (simplex[3].w - simplex[1].w) < NMValueConvergence )
             {
                 terminated = true;
                 break;
@@ -166,7 +166,14 @@ __device__ smoothVertFct nelderMeadSmoothVertPtr = nelderMeadSmoothVert;
 
 
 // CUDA Drivers
-void installCudaNelderMeadSmoother()
+void installCudaNelderMeadSmoother(
+        float h_valueConvergence,
+        int h_securityCycleCount,
+        float h_localSizeToNodeShift,
+        float h_alpha,
+        float h_beta,
+        float h_gamma,
+        float h_delta)
 {
     smoothVertFct d_smoothVert = nullptr;
     cudaMemcpyFromSymbol(&d_smoothVert, nelderMeadSmoothVertPtr, sizeof(smoothVertFct));
@@ -174,26 +181,12 @@ void installCudaNelderMeadSmoother()
 
     // TODO wbussiere 2016-04-04 : Pass security cycle count and
     //  local size to node shift from Smoother
-
-    int h_securityCycleCount = 5;
+    cudaMemcpyToSymbol(NMValueConvergence, &h_valueConvergence, sizeof(float));
     cudaMemcpyToSymbol(NMSecurityCycleCount, &h_securityCycleCount, sizeof(int));
-
-    float h_localSizeToNodeShift = 1.0 / 25.0;
     cudaMemcpyToSymbol(NMLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
-
-    float h_gainThreshold = 0.000100;
-    cudaMemcpyToSymbol(NMGainThreshold, &h_gainThreshold, sizeof(float));
-
-    float h_alpha = 1.0;
     cudaMemcpyToSymbol(NMAlpha, &h_alpha, sizeof(float));
-
-    float h_beta = 0.5;
-    cudaMemcpyToSymbol(NMBeta, &h_beta, sizeof(float));
-
-    float h_gamma = 2.0;
+    cudaMemcpyToSymbol(NMBeta,  &h_beta,  sizeof(float));
     cudaMemcpyToSymbol(NMGamma, &h_gamma, sizeof(float));
-
-    float h_delta = 0.5;
     cudaMemcpyToSymbol(NMDelta, &h_delta, sizeof(float));
 
     printf("I -> CUDA \tNelder Mead smoother installed\n");

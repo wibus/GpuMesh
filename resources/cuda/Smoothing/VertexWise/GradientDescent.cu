@@ -1,7 +1,7 @@
 #include "Base.cuh"
 
-__device__ int GDSecurityCycleCount;
-__device__ float GDLocalSizeToNodeShift;
+__constant__ int GDSecurityCycleCount;
+__constant__ float GDLocalSizeToNodeShift;
 
 
 // Smoothing Helper
@@ -126,7 +126,9 @@ __device__ smoothVertFct gradientDescentSmoothVertPtr = gradientDescentSmoothVer
 
 
 // CUDA Drivers
-void installCudaGradientDescentSmoother()
+void installCudaGradientDescentSmoother(
+        int h_securityCycleCount,
+        float h_localSizeToNodeShift)
 {
     smoothVertFct d_smoothVert = nullptr;
     cudaMemcpyFromSymbol(&d_smoothVert, gradientDescentSmoothVertPtr, sizeof(smoothVertFct));
@@ -135,12 +137,8 @@ void installCudaGradientDescentSmoother()
     // TODO wbussiere 2016-04-04 : Pass security cycle count and
     //  local size to node shift from Smoother
 
-    int h_securityCycleCount = 5;
     cudaMemcpyToSymbol(GDSecurityCycleCount, &h_securityCycleCount, sizeof(int));
-
-    float h_localSizeToNodeShift = 1.0 / 25.0;
     cudaMemcpyToSymbol(GDLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
-
 
     printf("I -> CUDA \tGradient Descent smoother installed\n");
 }

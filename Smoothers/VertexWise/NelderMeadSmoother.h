@@ -25,16 +25,6 @@ protected:
             Mesh& mesh,
             const MeshCrew& crew,
             const std::vector<uint>& vIds) override;
-
-
-private:
-    int _securityCycleCount;
-    double _localSizeToNodeShift;
-
-    double _alpha;
-    double _beta;
-    double _gamma;
-    double _delta;
 };
 
 #endif // GPUMESH_LOCALNELDERMEADOPTIMISATIONSMOOTHER

@@ -12,20 +12,41 @@ using namespace std;
 using namespace cellar;
 
 
+// Parameters
+const double NMValueConvergence = 0.000100;
+const int NMSecurityCycleCount = 12;
+const double NMLocalSizeToNodeShift = 1.0 / 24.0;
+const double NMAlpha = 1.0;
+const double NMBeta = 0.5;
+const double NMGamma = 2.0;
+const double NMDelta = 0.5;
+
 // CUDA Drivers
-void installCudaNelderMeadSmoother();
+void installCudaNelderMeadSmoother(
+        float h_valueConvergence,
+        int h_securityCycleCount,
+        float h_localSizeToNodeShift,
+        float h_alpha,
+        float h_beta,
+        float h_gamma,
+        float h_delta);
+void installCudaNelderMeadSmoother()
+{
+    installCudaNelderMeadSmoother(
+        NMValueConvergence,
+        NMSecurityCycleCount,
+        NMLocalSizeToNodeShift,
+        NMAlpha,
+        NMBeta,
+        NMGamma,
+        NMDelta);
+}
 
 
 NelderMeadSmoother::NelderMeadSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/NelderMead.glsl"},
-        installCudaNelderMeadSmoother),
-    _securityCycleCount(12),
-    _localSizeToNodeShift(1.0 / 24.0),
-    _alpha(1.0),
-    _beta(0.5),
-    _gamma(2.0),
-    _delta(0.5)
+        installCudaNelderMeadSmoother)
 {
 
 }
@@ -40,13 +61,13 @@ void NelderMeadSmoother::setVertexProgramUniforms(
             cellar::GlProgram& program)
 {
     AbstractVertexWiseSmoother::setVertexProgramUniforms(mesh, program);
-    program.setFloat("LocalSizeToNodeShift", _localSizeToNodeShift);
-    program.setInt("SecurityCycleCount", _securityCycleCount);
-    program.setInt("GainThreshold", _gainThreshold);
-    program.setFloat("Alpha", _alpha);
-    program.setFloat("Beta", _beta);
-    program.setFloat("Gamma", _gamma);
-    program.setFloat("Delta", _delta);
+    program.setFloat("ValueConvergence", NMValueConvergence);
+    program.setInt("SecurityCycleCount", NMSecurityCycleCount);
+    program.setFloat("LocalSizeToNodeShift", NMLocalSizeToNodeShift);
+    program.setFloat("Alpha", NMAlpha);
+    program.setFloat("Beta", NMBeta);
+    program.setFloat("Gamma", NMGamma);
+    program.setFloat("Delta", NMDelta);
 }
 
 void NelderMeadSmoother::printSmoothingParameters(
@@ -55,13 +76,13 @@ void NelderMeadSmoother::printSmoothingParameters(
 {
     AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Local Optimization");
-    plot.addSmoothingProperty("Local Size to Node Shift", to_string(_localSizeToNodeShift));
-    plot.addSmoothingProperty("Security Cycle Count", to_string(_securityCycleCount));
-    plot.addSmoothingProperty("Gain Threshold", to_string(_gainThreshold));
-    plot.addSmoothingProperty("Reflexion", to_string(_alpha));
-    plot.addSmoothingProperty("Contraction", to_string(_beta));
-    plot.addSmoothingProperty("Expansion", to_string(_gamma));
-    plot.addSmoothingProperty("Shrinkage", to_string(_delta));
+    plot.addSmoothingProperty("Value Convergence", to_string(NMValueConvergence));
+    plot.addSmoothingProperty("Security Cycle Count", to_string(NMSecurityCycleCount));
+    plot.addSmoothingProperty("Local Size to Node Shift", to_string(NMLocalSizeToNodeShift));
+    plot.addSmoothingProperty("Reflexion", to_string(NMAlpha));
+    plot.addSmoothingProperty("Contraction", to_string(NMBeta));
+    plot.addSmoothingProperty("Expansion", to_string(NMGamma));
+    plot.addSmoothingProperty("Shrinkage", to_string(NMDelta));
 }
 
 void NelderMeadSmoother::smoothVertices(
@@ -88,7 +109,7 @@ void NelderMeadSmoother::smoothVertices(
 
 
         // Initialize node shift distance
-        double nodeShift = localSize * _localSizeToNodeShift;
+        double nodeShift = localSize * NMLocalSizeToNodeShift;
 
 
         glm::dvec3& pos = verts[vId].p;
@@ -112,10 +133,9 @@ void NelderMeadSmoother::smoothVertices(
             {
                 // Since 'pos' is a reference on vertex's position
                 // modifing its value here should be seen by the evaluator
+                pos = glm::dvec3(simplex[p]);
                 if(topo.isBoundary)
-                    pos = (*topo.snapToBoundary)(glm::dvec3(simplex[p]));
-                else
-                    pos = glm::dvec3(simplex[p]);
+                    pos = (*topo.snapToBoundary)(pos);
 
 
                 // Compute patch quality
@@ -139,7 +159,7 @@ void NelderMeadSmoother::smoothVertices(
                 std::swap(simplex[0], simplex[1]);
 
 
-            for(; cycle < _securityCycleCount; ++cycle)
+            for(; cycle < NMSecurityCycleCount; ++cycle)
             {
                 // Centroid
                 glm::dvec3 c = 1/3.0 * (
@@ -150,7 +170,7 @@ void NelderMeadSmoother::smoothVertices(
                 double f = 0.0;
 
                 // Reflect
-                pos = c + _alpha*(c - glm::dvec3(simplex[0]));
+                pos = c + NMAlpha*(c - glm::dvec3(simplex[0]));
                 if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
                 double fr = f = crew.evaluator().patchQuality(
                     mesh, crew.sampler(), crew.measurer(), vId);
@@ -160,7 +180,7 @@ void NelderMeadSmoother::smoothVertices(
                 // Expand
                 if(simplex[3].w < fr)
                 {
-                    pos = c + _gamma*(pos - c);
+                    pos = c + NMGamma*(pos - c);
                     if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
                     double fe = f = crew.evaluator().patchQuality(
                         mesh, crew.sampler(), crew.measurer(), vId);
@@ -177,7 +197,7 @@ void NelderMeadSmoother::smoothVertices(
                     // Outside
                     if(fr > simplex[0].w)
                     {
-                        pos = c + _beta*(xr - c);
+                        pos = c + NMBeta*(xr - c);
                         if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
                         f = crew.evaluator().patchQuality(
                             mesh, crew.sampler(), crew.measurer(), vId);
@@ -185,7 +205,7 @@ void NelderMeadSmoother::smoothVertices(
                     // Inside
                     else
                     {
-                        pos = c + _beta*(glm::dvec3(simplex[0]) - c);
+                        pos = c + NMBeta*(glm::dvec3(simplex[0]) - c);
                         if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
                         f = crew.evaluator().patchQuality(
                             mesh, crew.sampler(), crew.measurer(), vId);
@@ -204,14 +224,14 @@ void NelderMeadSmoother::smoothVertices(
                     std::swap(simplex[0], vertex);
 
 
-                if( (simplex[3].w - simplex[1].w) < _gainThreshold )
+                if( (simplex[3].w - simplex[1].w) < NMValueConvergence )
                 {
                     terminated = true;
                     break;
                 }
             }
 
-            if( terminated || (cycle >= _securityCycleCount && reset) )
+            if( terminated || (cycle >= NMSecurityCycleCount && reset) )
             {
                 break;
             }
@@ -226,9 +246,8 @@ void NelderMeadSmoother::smoothVertices(
             }
         }
 
+        pos = glm::dvec3(simplex[3]);
         if(topo.isBoundary)
-            pos = (*topo.snapToBoundary)(glm::dvec3(simplex[3]));
-        else
-            pos = glm::dvec3(simplex[3]);
+            pos = (*topo.snapToBoundary)(pos);
     }
 }
