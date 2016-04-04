@@ -1,6 +1,10 @@
-uniform float MoveCoeff;
+uniform float GainThreshold;
 uniform int SecurityCycleCount;
 uniform float LocalSizeToNodeShift;
+uniform float Alpha;
+uniform float Beta;
+uniform float Gamma;
+uniform float Delta;
 
 // Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
@@ -8,117 +12,154 @@ vec3 snapToBoundary(int boundaryID, vec3 pos);
 // Smoothing Helper
 float computeLocalElementSize(in uint vId);
 float patchQuality(in uint vId);
-
+void swap(inout vec4 v1, inout vec4 v2)
+{
+    vec4 tmp = v1;
+    v1 = v2;
+    v2 = tmp;
+}
 
 // ENTRY POINT //
 void smoothVert(uint vId)
 {
+    /*
     // Compute local element size
     float localSize = computeLocalElementSize(vId);
 
     // Initialize node shift distance
     float nodeShift = localSize * LocalSizeToNodeShift;
-    float originalNodeShift = nodeShift;
 
-    for(int c=0; c < SecurityCycleCount; ++c)
+
+    Topo topo = topos[vId];
+    vec3 pos = vec3(verts[vId].p);
+    vec4 vo = vec4(pos, patchQuality(vId));
+
+    vec4 simplex[TET_VERTEX_COUNT] = {
+        vec4(pos + vec3(nodeShift, 0, 0), 0),
+        vec4(pos + vec3(0, nodeShift, 0), 0),
+        vec4(pos + vec3(0, 0, nodeShift), 0),
+        vo
+    };
+
+    int cycle = 0;
+    bool reset = false;
+    bool terminated = false;
+    while(!terminated)
     {
-        // Define patch quality gradient samples
-        vec3 pos = vec3(verts[vId].p);
-        const uint GRADIENT_SAMPLE_COUNT = 6;
-        float sampleQualities[GRADIENT_SAMPLE_COUNT] = float[]
-                (1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
-        vec3 gradSamples[GRADIENT_SAMPLE_COUNT] = vec3[](
-            pos + vec3(-nodeShift, 0.0,   0.0),
-            pos + vec3( nodeShift, 0.0,   0.0),
-            pos + vec3( 0.0,  -nodeShift, 0.0),
-            pos + vec3( 0.0,   nodeShift, 0.0),
-            pos + vec3( 0.0,   0.0,  -nodeShift),
-            pos + vec3( 0.0,   0.0,   nodeShift)
-        );
-
-        Topo topo = topos[vId];
-        if(topo.type > 0)
+        for(uint p=0; p < TET_VERTEX_COUNT-1; ++p)
         {
-            for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
-                gradSamples[p] = snapToBoundary(
-                    topo.type, gradSamples[p]);
-        }
-
-        for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
-        {
-            // Quality evaluation functions will use this updated position
-            // to compute element shape measures.
-            verts[vId].p = vec4(gradSamples[p], 0.0);
+            // Since 'pos' is a reference on vertex's position
+            // modifing its value here should be seen by the evaluator
+            if(topo.type > 0)
+                verts[vId].p = vec4(snapToBoundary(topo.type, vec3(simplex[p])), 0);
+            else
+                verts[vId].p = simplex[p];
 
             // Compute patch quality
-            sampleQualities[p] = patchQuality(vId);
-        }
-        verts[vId].p = vec4(pos, 0.0);
-
-        vec3 gradQ = vec3(
-            sampleQualities[1] - sampleQualities[0],
-            sampleQualities[3] - sampleQualities[2],
-            sampleQualities[5] - sampleQualities[4]);
-        float gradQNorm = length(gradQ);
-
-        if(gradQNorm == 0)
-            break;
-
-
-        const uint PROPOSITION_COUNT = 7;
-        const float OFFSETS[PROPOSITION_COUNT] = float[](
-            -0.25,
-             0.00,
-             0.25,
-             0.50,
-             0.75,
-             1.00,
-             1.25
-        );
-
-        vec3 shift = gradQ * (nodeShift / gradQNorm);
-        vec3 propositions[PROPOSITION_COUNT] = vec3[](
-            pos + shift * OFFSETS[0],
-            pos + shift * OFFSETS[1],
-            pos + shift * OFFSETS[2],
-            pos + shift * OFFSETS[3],
-            pos + shift * OFFSETS[4],
-            pos + shift * OFFSETS[5],
-            pos + shift * OFFSETS[6]
-        );
-
-        if(topo.type > 0)
-        {
-            for(uint p=0; p < PROPOSITION_COUNT; ++p)
-                propositions[p] = snapToBoundary(
-                    topo.type, propositions[p]);
+            simplex[p] = vec4(vec3(verts[vId].p), patchQuality(vId));
         }
 
-        uint bestProposition = 0;
-        float bestQualityMean = -1.0/0.0; // -Inf
-        for(uint p=0; p < PROPOSITION_COUNT; ++p)
+        // Mini bubble sort
+        if(simplex[0].w > simplex[1].w)
+            swap(simplex[0], simplex[1]);
+        if(simplex[1].w > simplex[2].w)
+            swap(simplex[1], simplex[2]);
+        if(simplex[2].w > simplex[3].w)
+            swap(simplex[2], simplex[3]);
+        if(simplex[0].w > simplex[1].w)
+            swap(simplex[0], simplex[1]);
+        if(simplex[1].w > simplex[2].w)
+            swap(simplex[1], simplex[2]);
+        if(simplex[0].w > simplex[1].w)
+            swap(simplex[0], simplex[1]);
+
+
+        for(; cycle < SecurityCycleCount; ++cycle)
         {
-            // Quality evaluation functions will use this updated position
-            // to compute element shape measures.
-            verts[vId].p = vec4(propositions[p], 0.0);
+            // Centroid
+            vec3 c = 1/3.0f * (
+                vec3(simplex[1]) +
+                vec3(simplex[2]) +
+                vec3(simplex[3]));
 
-            // Compute patch quality
-            float patchQuality = patchQuality(vId);
+            double f = 0.0;
 
-            if(patchQuality > bestQualityMean)
+            // Reflect
+            verts[vId].p = vec4(c + Alpha*(c - vec3(simplex[0])), 0);
+            if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+            double fr = f = patchQuality(vId);
+
+            vec4 xr = verts[vId].p;
+
+            // Expand
+            if(simplex[3].w < fr)
             {
-                bestQualityMean = patchQuality;
-                bestProposition = p;
+                verts[vId].p = vec4(c + Gamma*(vec3(verts[vId].p) - c), 0);
+                if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+                double fe = f = patchQuality(vId);
+
+                if(fe <= fr)
+                {
+                    verts[vId].p = xr;
+                    f = fr;
+                }
+            }
+            // Contract
+            else if(simplex[1].w >= fr)
+            {
+                // Outside
+                if(fr > simplex[0].w)
+                {
+                    verts[vId].p = vec4(c + Beta*(vec3(xr) - c), 0);
+                    if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+                    f = patchQuality(vId);
+                }
+                // Inside
+                else
+                {
+                    verts[vId].p = vec4(c + Beta*(vec3(simplex[0]) - c), 0);
+                    if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+                    f = patchQuality(vId);
+                }
+            }
+
+            // Insert new vertex in the working simplex
+            vec4 vertex = vec4(vec3(verts[vId].p), f);
+            if(vertex.w > simplex[3].w)
+                swap(simplex[3], vertex);
+            if(vertex.w > simplex[2].w)
+                swap(simplex[2], vertex);
+            if(vertex.w > simplex[1].w)
+                swap(simplex[1], vertex);
+            if(vertex.w > simplex[0].w)
+                swap(simplex[0], vertex);
+
+
+            if( (simplex[3].w - simplex[1].w) < GainThreshold )
+            {
+                terminated = true;
+                break;
             }
         }
 
-
-        // Update vertex's position
-        verts[vId].p = vec4(propositions[bestProposition], 0.0);
-
-        // Scale node shift and stop if it is too small
-        nodeShift *= abs(OFFSETS[bestProposition]);
-        if(nodeShift < originalNodeShift / 10.0)
+        if( terminated || (cycle >= SecurityCycleCount && reset) )
+        {
             break;
+        }
+        else
+        {
+            simplex[0] = vo - vec4(nodeShift, 0, 0, 0);
+            simplex[1] = vo - vec4(0, nodeShift, 0, 0);
+            simplex[2] = vo - vec4(0, 0, nodeShift, 0);
+            simplex[3] = vo;
+            reset = true;
+            cycle = 0;
+        }
     }
+
+    if(topo.type > 0)
+        verts[vId].p = vec4(snapToBoundary(topo.type, vec3(simplex[3])), 0);
+    else
+        verts[vId].p = simplex[3];
+    */
 }

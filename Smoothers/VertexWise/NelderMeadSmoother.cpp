@@ -112,10 +112,11 @@ void NelderMeadSmoother::smoothVertices(
             {
                 // Since 'pos' is a reference on vertex's position
                 // modifing its value here should be seen by the evaluator
-                pos = glm::dvec3(simplex[p]);
-
                 if(topo.isBoundary)
-                    pos = (*topo.snapToBoundary)(pos);
+                    pos = (*topo.snapToBoundary)(glm::dvec3(simplex[p]));
+                else
+                    pos = glm::dvec3(simplex[p]);
+
 
                 // Compute patch quality
                 simplex[p] = glm::dvec4(pos,
@@ -216,17 +217,18 @@ void NelderMeadSmoother::smoothVertices(
             }
             else
             {
-                simplex[0] = glm::dvec4(pos - glm::dvec3(nodeShift, 0, 0), 0);
-                simplex[1] = glm::dvec4(pos - glm::dvec3(0, nodeShift, 0), 0);
-                simplex[2] = glm::dvec4(pos - glm::dvec3(0, 0, nodeShift), 0);
+                simplex[0] = vo - glm::dvec4(nodeShift, 0, 0, 0);
+                simplex[1] = vo - glm::dvec4(0, nodeShift, 0, 0);
+                simplex[2] = vo - glm::dvec4(0, 0, nodeShift, 0);
                 simplex[3] = vo;
                 reset = true;
                 cycle = 0;
             }
         }
 
-        pos = glm::dvec3(simplex[3]);
         if(topo.isBoundary)
-            pos = (*topo.snapToBoundary)(pos);
+            pos = (*topo.snapToBoundary)(glm::dvec3(simplex[3]));
+        else
+            pos = glm::dvec3(simplex[3]);
     }
 }
