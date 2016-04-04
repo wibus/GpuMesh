@@ -14,7 +14,7 @@ using namespace cellar;
 
 
 AbstractSmoother::AbstractSmoother(const installCudaFct installCuda) :
-    _installCuda(installCuda),
+    _installCudaSmoother(installCuda),
     _smoothingUtilsShader(":/glsl/compute/Smoothing/Utils.glsl"),
     _implementationFuncs("Smoothing Implementations")
 {

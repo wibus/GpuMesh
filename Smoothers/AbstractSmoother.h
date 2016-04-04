@@ -100,7 +100,7 @@ protected:
     std::string smoothingUtilsShader() const;
 
 
-    installCudaFct _installCuda;
+    installCudaFct _installCudaSmoother;
 
     int _minIteration;
     double _moveCoeff;

@@ -269,7 +269,7 @@ void AbstractElementWiseSmoother::smoothMeshCuda(
         const MeshCrew& crew)
 {
     initializeProgram(mesh, crew);
-    _installCuda();
+    _installCudaSmoother();
 
     // There's no need to upload vertices again, but absurdly
     // this makes subsequent passes much more faster...

@@ -67,12 +67,13 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
 
     std::mutex mutex;
     std::condition_variable cv;
-    std::atomic<int> done( 0 );
-    std::atomic<int> step( 0 );
 
     _smoothPassId = 0;
     while(evaluateMeshQualityThread(mesh, crew))
     {
+        std::atomic<int> done( 0 );
+        std::atomic<int> step( 0 );
+
         vector<thread> workers;
         for(uint t=0; t < threadCount; ++t)
         {
@@ -168,14 +169,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
         const MeshCrew& crew)
 {
     initializeProgram(mesh, crew);
-    _installCuda();
-
-    // There's no need to upload vertices again, but absurdly
-    // this makes subsequent passes much more faster...
-    // I guess it's because the driver put buffer back on GPU.
-    // It looks like glGetBufferSubData takes it out of the GPU.
-    //mesh.updateVerticesFromCpu();
-
+    _installCudaSmoother();
 
     vector<IndependentDispatch> dispatches;
     organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
