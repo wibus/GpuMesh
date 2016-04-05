@@ -220,7 +220,7 @@ void LocalSampler::setReferenceMesh(
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _localTetsSsbo);
     size_t localTetsSize = sizeof(decltype(gpuLocalTets.front())) * gpuLocalTets.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, localTetsSize, gpuLocalTets.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, localTetsSize, gpuLocalTets.data(), GL_STREAM_COPY);
     gpuLocalTets.clear();
     gpuLocalTets.shrink_to_fit();
 
@@ -234,7 +234,7 @@ void LocalSampler::setReferenceMesh(
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _localCacheSsbo);
     size_t localCacheSize = sizeof(decltype(gpuLocalCache.front())) * gpuLocalCache.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, localCacheSize, gpuLocalCache.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, localCacheSize, gpuLocalCache.data(), GL_STREAM_COPY);
     gpuLocalCache.clear();
     gpuLocalCache.shrink_to_fit();
 
@@ -249,7 +249,7 @@ void LocalSampler::setReferenceMesh(
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
     size_t refVertsSize = sizeof(decltype(gpuRefVerts.front())) * gpuRefVerts.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STREAM_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
@@ -263,7 +263,7 @@ void LocalSampler::setReferenceMesh(
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
     size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_STREAM_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 

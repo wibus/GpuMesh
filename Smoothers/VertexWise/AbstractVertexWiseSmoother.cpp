@@ -127,7 +127,9 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     // this makes subsequent passes much more faster...
     // I guess it's because the driver put buffer back on GPU.
     // It looks like glGetBufferSubData takes it out of the GPU.
-    mesh.updateVerticesFromCpu();
+
+    // Note (2016-04-04) : This doesn't seem to be significatn anymore...
+    //mesh.updateVerticesFromCpu();
 
 
     vector<IndependentDispatch> dispatches;

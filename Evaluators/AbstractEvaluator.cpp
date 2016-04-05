@@ -462,14 +462,14 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     qualBuff[0] = GLint(MAX_INTEGER_VALUE);
     size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_DYNAMIC_READ);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
     std::vector<GLint> histBuff(histogram.bucketCount(), 0);
     size_t histSize = sizeof(decltype(histBuff.front())) * histBuff.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _histSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, histSize, histBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, histSize, histBuff.data(), GL_DYNAMIC_READ);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 

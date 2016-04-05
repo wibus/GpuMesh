@@ -213,7 +213,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
     vector<GpuVertexAccum> accumVec(mesh.verts.size());
     size_t accumSize = sizeof(decltype(accumVec.front())) * accumVec.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _accumSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, accumSize, accumVec.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, accumSize, accumVec.data(), GL_STREAM_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     vector<IndependentDispatch> dispatches;
@@ -256,7 +256,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
 
     // Clear Vertex Accum shader storage buffer
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _accumSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 

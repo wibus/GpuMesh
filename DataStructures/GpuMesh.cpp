@@ -91,7 +91,7 @@ void GpuMesh::compileTopology()
     // Allocation GPU side vertex positions storage space
     size_t vertBuffSize = sizeof(GpuVert) * verts.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_DYNAMIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     updateVerticesFromCpu();
@@ -110,7 +110,7 @@ void GpuMesh::updateGpuTopology()
     updateCudaTets(tetBuff);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
     size_t tetSize = sizeof(decltype(tetBuff.front())) * tetBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, tetSize, tetBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, tetSize, tetBuff.data(), GL_STATIC_COPY);
     tetBuff.clear();
     tetBuff.shrink_to_fit();
 
@@ -123,7 +123,7 @@ void GpuMesh::updateGpuTopology()
     updateCudaPris(priBuff);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _priSsbo);
     size_t priSize = sizeof(decltype(priBuff.front())) * priBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, priSize, priBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, priSize, priBuff.data(), GL_STATIC_COPY);
     priBuff.clear();
     priBuff.shrink_to_fit();
 
@@ -136,7 +136,7 @@ void GpuMesh::updateGpuTopology()
     updateCudaHexs(hexBuff);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _hexSsbo);
     size_t hexSize = sizeof(decltype(hexBuff.front())) * hexBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, hexSize, hexBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, hexSize, hexBuff.data(), GL_STATIC_COPY);
     hexBuff.clear();
     hexBuff.shrink_to_fit();
 
@@ -175,19 +175,19 @@ void GpuMesh::updateGpuTopology()
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
     size_t topoSize = sizeof(decltype(topoBuff.front())) * topoBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, topoSize, topoBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, topoSize, topoBuff.data(), GL_STATIC_COPY);
     topoBuff.clear();
     topoBuff.shrink_to_fit();
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigVertSsbo);
     size_t neigVertSize = sizeof(decltype(neigVertBuff.front())) * neigVertBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, neigVertSize, neigVertBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, neigVertSize, neigVertBuff.data(), GL_STATIC_COPY);
     neigVertBuff.clear();
     neigVertBuff.shrink_to_fit();
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigElemSsbo);
     size_t neigElemSize = sizeof(decltype(neigElemBuff.front())) * neigElemBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, neigElemSize, neigElemBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, neigElemSize, neigElemBuff.data(), GL_STATIC_COPY);
     neigElemBuff.clear();
     neigElemBuff.shrink_to_fit();
 
@@ -205,7 +205,7 @@ void GpuMesh::updateGpuTopology()
     updateCudaGroupMembers(groupMemberBuff);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
     size_t membersSize = sizeof(decltype(groupMemberBuff.front())) * groupMemberBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMemberBuff.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMemberBuff.data(), GL_STATIC_COPY);
     groupMemberBuff.clear();
     groupMemberBuff.shrink_to_fit();
 

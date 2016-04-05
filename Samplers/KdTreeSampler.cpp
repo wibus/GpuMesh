@@ -179,7 +179,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdTetsSsbo);
     size_t kdTetsSize = sizeof(decltype(gpuKdTets.front())) * gpuKdTets.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, kdTetsSize, gpuKdTets.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, kdTetsSize, gpuKdTets.data(), GL_STREAM_COPY);
     gpuKdTets.clear();
     gpuKdTets.shrink_to_fit();
 
@@ -187,7 +187,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
     size_t kdNodesSize = sizeof(decltype(gpuKdNodes.front())) * gpuKdNodes.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, kdNodesSize, gpuKdNodes.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, kdNodesSize, gpuKdNodes.data(), GL_STREAM_COPY);
     gpuKdNodes.clear();
     gpuKdNodes.shrink_to_fit();
 
@@ -202,7 +202,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
     size_t refVertsSize = sizeof(decltype(gpuRefVerts.front())) * gpuRefVerts.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STREAM_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
@@ -216,7 +216,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
     size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_DYNAMIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 

@@ -39,7 +39,7 @@ std::string QualityGradientPainter::generate(int width, int height, int minHeigh
     glGenBuffers(1, &lutBuff);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, lutBuff);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        lutImage.dataSize() * sizeof(GLfloat), nullptr, GL_STATIC_DRAW);
+        lutImage.dataSize() * sizeof(GLfloat), nullptr, GL_STREAM_READ);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, lutBuff);
     glDispatchCompute(width, 1, 1);
