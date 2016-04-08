@@ -16,5 +16,7 @@ void installCudaUniformSampler()
     cudaMemcpyFromSymbol(&d_metricAt, uniformMetricAtPtr, sizeof(metricAtFct));
     cudaMemcpyToSymbol(metricAt, &d_metricAt, sizeof(metricAtFct));
 
-    printf("I -> CUDA \tUniform Discritizer installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tUniform Discritizer installed\n");
 }

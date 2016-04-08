@@ -150,7 +150,9 @@ void installCudaLocalSampler()
     cudaMemcpyFromSymbol(&d_metricAt, localMetricAtPtr, sizeof(metricAtFct));
     cudaMemcpyToSymbol(metricAt, &d_metricAt, sizeof(metricAtFct));
 
-    printf("I -> CUDA \tLocal Discritizer installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tLocal Discritizer installed\n");
 }
 
 
@@ -174,7 +176,9 @@ void updateCudaLocalTets(
     }
 
     cudaMemcpy(d_localTets, localTetsBuff.data(), localTetsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tLocal Tets updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tLocal Tets updated\n");
 }
 
 size_t d_localCacheLength = 0;
@@ -197,5 +201,7 @@ void updateCudaLocalCache(
     }
 
     cudaMemcpy(d_localCache, localCacheBuff.data(), localCacheBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tlLocal Cache updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tlLocal Cache updated\n");
 }

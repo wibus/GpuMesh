@@ -69,12 +69,15 @@ void GpuMesh::clear()
     _groupMembersSsbo = 0;
 }
 
-void GpuMesh::compileTopology()
+void GpuMesh::compileTopology(bool verbose)
 {
-    Mesh::compileTopology();
+    Mesh::compileTopology(verbose);
 
-    getLog().postMessage(new Message('I', false,
-        "Generating mesh shader storage buffers", "GpuMesh"));
+    if(verbose)
+    {
+        getLog().postMessage(new Message('I', false,
+            "Generating mesh shader storage buffers", "GpuMesh"));
+    }
 
     if(_vertSsbo == 0)
     {

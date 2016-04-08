@@ -225,8 +225,7 @@ public:
 
     virtual void clear();
 
-    virtual void compileTopology();
-    virtual void updateGpuTopology();
+    virtual void compileTopology(bool verbose = true);
     virtual void updateVerticesFromCpu();
     virtual void updateVerticesFromGlsl();
     virtual void updateVerticesFromCuda();
@@ -257,6 +256,7 @@ public:
 
 
 protected:
+    virtual void updateGpuTopology();
     virtual void compileNeighborhoods();
     virtual void addEdge(int firstVert,
                          int secondVert);

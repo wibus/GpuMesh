@@ -124,7 +124,9 @@ void installCudaKdTreeSampler()
     cudaMemcpyFromSymbol(&d_metricAt, kdTreeMetricAtPtr, sizeof(metricAtFct));
     cudaMemcpyToSymbol(metricAt, &d_metricAt, sizeof(metricAtFct));
 
-    printf("I -> CUDA \tkD-Tree Discritizer installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tkD-Tree Discritizer installed\n");
 }
 
 
@@ -148,7 +150,9 @@ void updateCudaKdTets(
     }
 
     cudaMemcpy(d_kdTets, kdTetsBuff.data(), kdTetsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tkdTets updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tkdTets updated\n");
 }
 
 
@@ -172,5 +176,7 @@ void updateCudaKdNodes(
     }
 
     cudaMemcpy(d_kdNodes, kdNodesBuff.data(), kdNodesBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tkdNodes updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tkdNodes updated\n");
 }

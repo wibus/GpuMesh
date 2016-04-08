@@ -189,5 +189,7 @@ void installCudaNelderMeadSmoother(
     cudaMemcpyToSymbol(NMGamma, &h_gamma, sizeof(float));
     cudaMemcpyToSymbol(NMDelta, &h_delta, sizeof(float));
 
-    printf("I -> CUDA \tNelder Mead smoother installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tNelder Mead smoother installed\n");
 }

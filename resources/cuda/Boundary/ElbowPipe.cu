@@ -75,5 +75,7 @@ void installCudaElbowPipeBoundary()
     cudaMemcpyFromSymbol(&d_snapToBoundary, elbowPipeSnapToBoundaryPtr, sizeof(snapToBoundaryFct));
     cudaMemcpyToSymbol(snapToBoundary, &d_snapToBoundary, sizeof(snapToBoundaryFct));
 
-    printf("I -> CUDA \tElbow Pipe boundary installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tElbow Pipe boundary installed\n");
 }

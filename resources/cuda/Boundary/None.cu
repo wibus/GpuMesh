@@ -16,5 +16,7 @@ void installCudaNoneBoundary()
     cudaMemcpyFromSymbol(&d_snapToBoundary, noneSnapToBoundaryPtr, sizeof(snapToBoundaryFct));
     cudaMemcpyToSymbol(snapToBoundary, &d_snapToBoundary, sizeof(snapToBoundaryFct));
 
-    printf("I -> CUDA \tNone boundary installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tNone boundary installed\n");
 }

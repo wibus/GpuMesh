@@ -31,5 +31,7 @@ void installCudaSpringLaplaceSmoother()
     cudaMemcpyFromSymbol(&d_smoothVert, springLaplaceSmoothVertPtr, sizeof(smoothVertFct));
     cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
-    printf("I -> CUDA \tSpring Laplace smoother installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tSpring Laplace smoother installed\n");
 }

@@ -127,5 +127,7 @@ void installCudaMeanRatioEvaluator()
     cudaMemcpyFromSymbol(&d_hexQuality, meanRatioHexQualityPtr, sizeof(hexQualityFct));
     cudaMemcpyToSymbol(hexQualityImpl, &d_hexQuality, sizeof(hexQualityFct));
 
-    printf("I -> CUDA \tMean Ration Evaluator installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tMean Ration Evaluator installed\n");
 }

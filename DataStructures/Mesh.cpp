@@ -178,10 +178,13 @@ void Mesh::clear()
     independentGroups.shrink_to_fit();
 }
 
-void Mesh::compileTopology()
+void Mesh::compileTopology(bool verbose)
 {
-    getLog().postMessage(new Message('I', false,
-        modelName + ": Compiling mesh topology...", "Mesh"));
+    if(verbose)
+    {
+        getLog().postMessage(new Message('I', false,
+            modelName + ": Compiling mesh topology...", "Mesh"));
+    }
 
     // Compact verts and elems data structures
     verts.shrink_to_fit();
@@ -190,58 +193,62 @@ void Mesh::compileTopology()
     hexs.shrink_to_fit();
 
     size_t vertCount = verts.size();
-    topos.resize(vertCount);
-    topos.shrink_to_fit();
 
     auto neigBegin = chrono::high_resolution_clock::now();
+    topos.resize(vertCount);
+    topos.shrink_to_fit();
     compileNeighborhoods();
 
     auto indeBegin = chrono::high_resolution_clock::now();
+    independentGroups.clear();
     compileIndependentGroups();
 
     auto compileEnd = chrono::high_resolution_clock::now();
 
 
-    getLog().postMessage(new Message('I', false,
-        "Vertice count: " + to_string(vertCount), "Mesh"));
-
-    size_t elemCount = tets.size() + pris.size() + hexs.size();
-    getLog().postMessage(new Message('I', false,
-        "Element count: " + to_string(elemCount), "Mesh"));
-
-    double elemVertRatio = elemCount  / (double) vertCount;
-    getLog().postMessage(new Message('I', false,
-        "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
-
-    getLog().postMessage(new Message('I', false,
-        "Independent set count: " + to_string(independentGroups.size()), "Mesh"));
-
-    size_t neigVertCount = 0;
-    size_t neigElemCount = 0;
-    for(int i=0; i < vertCount; ++i)
+    if(verbose)
     {
-        neigVertCount += topos[i].neighborVerts.size();
-        neigElemCount += topos[i].neighborElems.size();
+        getLog().postMessage(new Message('I', false,
+            "Vertice count: " + to_string(vertCount), "Mesh"));
+
+        size_t elemCount = tets.size() + pris.size() + hexs.size();
+        getLog().postMessage(new Message('I', false,
+            "Element count: " + to_string(elemCount), "Mesh"));
+
+        double elemVertRatio = elemCount  / (double) vertCount;
+        getLog().postMessage(new Message('I', false,
+            "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
+
+        getLog().postMessage(new Message('I', false,
+            "Independent set count: " + to_string(independentGroups.size()), "Mesh"));
+
+        size_t neigVertCount = 0;
+        size_t neigElemCount = 0;
+        for(int i=0; i < vertCount; ++i)
+        {
+            neigVertCount += topos[i].neighborVerts.size();
+            neigElemCount += topos[i].neighborElems.size();
+        }
+
+        int64_t meshMemorySize =
+                int64_t(verts.size() * sizeof(decltype(verts.front()))) +
+                int64_t(tets.size() * sizeof(decltype(tets.front()))) +
+                int64_t(pris.size() * sizeof(decltype(pris.front()))) +
+                int64_t(hexs.size() * sizeof(decltype(hexs.front()))) +
+                int64_t(topos.size() * sizeof(decltype(topos.front()))) +
+                int64_t(neigVertCount * sizeof(MeshNeigVert)) +
+                int64_t(neigElemCount * sizeof(MeshNeigElem));
+        getLog().postMessage(new Message('I', false,
+            "Approx mesh size in memory: " + to_string(meshMemorySize) + " Bytes", "Mesh"));
+
+        int neigTime = chrono::duration_cast<chrono::milliseconds>(indeBegin - neigBegin).count();
+        getLog().postMessage(new Message('I', false,
+            "Neighborhood compilation time: " + to_string(neigTime) + "ms", "Mesh"));
+
+        int indeTime = chrono::duration_cast<chrono::milliseconds>(compileEnd - indeBegin).count();
+        getLog().postMessage(new Message('I', false,
+            "Independent groups compilation time: " + to_string(indeTime) + "ms", "Mesh"));
     }
-
-    int64_t meshMemorySize =
-            int64_t(verts.size() * sizeof(decltype(verts.front()))) +
-            int64_t(tets.size() * sizeof(decltype(tets.front()))) +
-            int64_t(pris.size() * sizeof(decltype(pris.front()))) +
-            int64_t(hexs.size() * sizeof(decltype(hexs.front()))) +
-            int64_t(topos.size() * sizeof(decltype(topos.front()))) +
-            int64_t(neigVertCount * sizeof(MeshNeigVert)) +
-            int64_t(neigElemCount * sizeof(MeshNeigElem));
-    getLog().postMessage(new Message('I', false,
-        "Approx mesh size in memory: " + to_string(meshMemorySize) + " Bytes", "Mesh"));
-
-    int neigTime = chrono::duration_cast<chrono::milliseconds>(indeBegin - neigBegin).count();
-    getLog().postMessage(new Message('I', false,
-        "Neighborhood compilation time: " + to_string(neigTime) + "ms", "Mesh"));
-
-    int indeTime = chrono::duration_cast<chrono::milliseconds>(compileEnd - indeBegin).count();
-    getLog().postMessage(new Message('I', false,
-        "Independent groups compilation time: " + to_string(indeTime) + "ms", "Mesh"));
 }
 
 void Mesh::updateGpuTopology()
@@ -321,6 +328,12 @@ void Mesh::printPropperties(OptimizationPlot& plot) const
 
 void Mesh::compileNeighborhoods()
 {
+    for(MeshTopo& topo : topos)
+    {
+        topo.neighborElems.clear();
+        topo.neighborVerts.clear();
+    }
+
     size_t tetCount = tets.size();
     for(size_t i=0; i < tetCount; ++i)
     {

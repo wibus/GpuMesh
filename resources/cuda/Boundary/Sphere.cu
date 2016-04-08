@@ -16,5 +16,7 @@ void installCudaSphereBoundary()
     cudaMemcpyFromSymbol(&d_snapToBoundary, sphereSnapToBoundaryPtr, sizeof(snapToBoundaryFct));
     cudaMemcpyToSymbol(snapToBoundary, &d_snapToBoundary, sizeof(snapToBoundaryFct));
 
-    printf("I -> CUDA \tSphere boundary installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tSphere boundary installed\n");
 }

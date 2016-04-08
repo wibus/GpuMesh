@@ -16,5 +16,7 @@ void installCudaBoxBoundary()
     cudaMemcpyFromSymbol(&d_snapToBoundary, boxSnapToBoundaryPtr, sizeof(snapToBoundaryFct));
     cudaMemcpyToSymbol(snapToBoundary, &d_snapToBoundary, sizeof(snapToBoundaryFct));
 
-    printf("I -> CUDA \tBox boundary installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tBox boundary installed\n");
 }

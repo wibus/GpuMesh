@@ -167,5 +167,7 @@ void installCudaMetricConformityEvaluator()
     cudaMemcpyFromSymbol(&d_hexQuality, metricConformityHexQualityPtr, sizeof(hexQualityFct));
     cudaMemcpyToSymbol(hexQualityImpl, &d_hexQuality, sizeof(hexQualityFct));
 
-    printf("I -> CUDA \tMetric Conformity Evaluator installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tMetric Conformity Evaluator installed\n");
 }

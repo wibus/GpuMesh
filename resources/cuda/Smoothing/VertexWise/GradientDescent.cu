@@ -140,5 +140,7 @@ void installCudaGradientDescentSmoother(
     cudaMemcpyToSymbol(GDSecurityCycleCount, &h_securityCycleCount, sizeof(int));
     cudaMemcpyToSymbol(GDLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
 
-    printf("I -> CUDA \tGradient Descent smoother installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tGradient Descent smoother installed\n");
 }

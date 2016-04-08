@@ -16,5 +16,7 @@ void installCudaDummySampler()
     cudaMemcpyFromSymbol(&d_metricAt, dummyMetricAtPtr, sizeof(metricAtFct));
     cudaMemcpyToSymbol(metricAt, &d_metricAt, sizeof(metricAtFct));
 
-    printf("I -> CUDA \tDummy Discritizer installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tDummy Discritizer installed\n");
 }

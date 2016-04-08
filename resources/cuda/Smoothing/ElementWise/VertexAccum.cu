@@ -62,7 +62,9 @@ void vertexAccumCudaInstall(size_t vertCount)
     }
 
     cudaMemcpy(d_vertexAccums, vertexAccumsBuff.data(), vertexAccumsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tVertex Accums updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tVertex Accums updated\n");
 }
 
 void vertexAccumCudaDeinstall()

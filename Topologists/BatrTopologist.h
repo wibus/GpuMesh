@@ -18,6 +18,20 @@ public:
     virtual void printOptimisationParameters(
             const Mesh& mesh,
             OptimizationPlot& plot) const override;
+
+
+protected:
+    virtual void edgeSplitting(
+            Mesh& mesh,
+            const MeshCrew& crew) const;
+
+    virtual void faceSwapping(
+            Mesh& mesh,
+            const MeshCrew& crew) const;
+
+    virtual void edgeSwapping(
+            Mesh& mesh,
+            const MeshCrew& crew) const;
 };
 
 #endif // GPUMESH_BARTTOPOLOGIST

@@ -305,5 +305,6 @@ void installCudaGetmeSmoother()
     cudaMemcpyToSymbol(Lambda, &h_lambda, sizeof(float));
 
 
-    printf("I -> CUDA \tGETMe smoother installed\n");
+    if(verboseCuda)
+        printf("I -> CUDA \tGETMe smoother installed\n");
 }

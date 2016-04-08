@@ -75,6 +75,9 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
     _smoothPassId = 0;
     while(evaluateMeshQualityThread(mesh, crew))
     {
+        if(crew.needTopologicalModifications(_smoothPassId))
+            crew.topologist().restructureMesh(mesh, crew);
+
         std::atomic<int> done( 0 );
         std::atomic<int> step( 0 );
 
@@ -147,6 +150,13 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     _smoothPassId = 0;
     while(evaluateMeshQualityGlsl(mesh, crew))
     {
+        if(crew.needTopologicalModifications(_smoothPassId))
+        {
+            mesh.updateVerticesFromGlsl();
+            crew.topologist().restructureMesh(mesh, crew);
+            mesh.updateVerticesFromCpu();
+        }
+
         mesh.bindShaderStorageBuffers();
 
         _vertSmoothProgram.pushProgram();
@@ -185,6 +195,13 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     _smoothPassId = 0;
     while(evaluateMeshQualityCuda(mesh, crew))
     {
+        if(crew.needTopologicalModifications(_smoothPassId))
+        {
+            mesh.updateVerticesFromCuda();
+            crew.topologist().restructureMesh(mesh, crew);
+            mesh.updateVerticesFromCpu();
+        }
+
         for(size_t d=0; d < dispatchCount; ++d)
         {
             const IndependentDispatch& dispatch = dispatches[d];

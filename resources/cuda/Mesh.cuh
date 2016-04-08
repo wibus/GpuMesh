@@ -128,6 +128,8 @@ extern __device__ mat4* refMetrics;
 /////////////////////////
 // CUDA Error Handling //
 /////////////////////////
+extern bool verboseCuda;
+
 #ifndef NDEBUG
 #define cudaCheckErrors(msg) \
     do { \

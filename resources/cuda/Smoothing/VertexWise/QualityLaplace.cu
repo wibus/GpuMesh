@@ -67,5 +67,7 @@ void installCudaQualityLaplaceSmoother()
     cudaMemcpyFromSymbol(&d_smoothVert, qualityLaplaceSmoothVertPtr, sizeof(smoothVertFct));
     cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
-    printf("I -> CUDA \tQuality Laplace smoother installed\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tQuality Laplace smoother installed\n");
 }

@@ -38,6 +38,10 @@ __constant__ uint refMetrics_length;
 __device__ mat4* refMetrics;
 
 
+// Debug
+bool verboseCuda = true;
+
+
 // CUDA Drivers
 size_t d_vertsLength = 0;
 GpuVert* d_verts = nullptr;
@@ -63,7 +67,9 @@ void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength)
     }
 
     cudaMemcpy(d_verts, vertsBuff, vertsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tverts updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tverts updated\n");
 }
 
 
@@ -85,7 +91,9 @@ void updateCudaTets(const std::vector<GpuTet>& tetsBuff)
     }
 
     cudaMemcpy(d_tets, tetsBuff.data(), tetsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \ttets updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \ttets updated\n");
 }
 
 
@@ -107,7 +115,9 @@ void updateCudaPris(const std::vector<GpuPri>& prisBuff)
     }
 
     cudaMemcpy(d_pris, prisBuff.data(), prisBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tpris updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tpris updated\n");
 }
 
 
@@ -129,7 +139,9 @@ void updateCudaHexs(const std::vector<GpuHex>& hexsBuff)
     }
 
     cudaMemcpy(d_hexs, hexsBuff.data(), hexsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \thexs updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \thexs updated\n");
 }
 
 
@@ -162,7 +174,9 @@ void updateCudaTopo(
     }
 
     cudaMemcpy(d_topos, toposBuff.data(), toposBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \ttopos updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \ttopos updated\n");
 
 
     // Neighbor vertices
@@ -180,7 +194,9 @@ void updateCudaTopo(
     }
 
     cudaMemcpy(d_neigVerts, neigVertsBuff.data(), neigVertsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tneigVerts updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tneigVerts updated\n");
 
 
     // Neighbor elements
@@ -198,7 +214,9 @@ void updateCudaTopo(
     }
 
     cudaMemcpy(d_neigElems, neigElemsBuff.data(), neigElemsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tneigElems updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tneigElems updated\n");
 }
 
 
@@ -221,7 +239,9 @@ void updateCudaGroupMembers(const std::vector<GLuint>& groupMembersBuff)
     }
 
     cudaMemcpy(d_groupMembers, groupMembersBuff.data(), groupMembersBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tgroupMembers updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tgroupMembers updated\n");
 }
 
 
@@ -245,7 +265,9 @@ void updateCudaRefVerts(
     }
 
     cudaMemcpy(d_refVerts, refVertsBuff.data(), refVertsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tRef Vertices updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tRef Vertices updated\n");
 }
 
 
@@ -269,5 +291,7 @@ void updateCudaRefMetrics(
     }
 
     cudaMemcpy(d_refMetrics, refMetricsBuff.data(), refMetricsBuffSize, cudaMemcpyHostToDevice);
-    printf("I -> CUDA \tRef Metrics updated\n");
+
+    if(verboseCuda)
+        printf("I -> CUDA \tRef Metrics updated\n");
 }

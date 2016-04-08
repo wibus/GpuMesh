@@ -151,5 +151,6 @@ void installCudaMetricFreeMeasurer()
     cudaMemcpyToSymbol(computeVertexEquilibrium, &d_computeVertexEquilibrium, sizeof(computeVertexEquilibriumFct));
 
 
-    printf("I -> CUDA \tMetric Free Measurer installed\n");
+    if(verboseCuda)
+        printf("I -> CUDA \tMetric Free Measurer installed\n");
 }
