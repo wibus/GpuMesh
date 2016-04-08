@@ -80,7 +80,7 @@ bool UniformSampler::isMetricWise() const
     return true;
 }
 
-void UniformSampler::setReferenceMesh(const Mesh& mesh, int density)
+void UniformSampler::setReferenceMesh(const Mesh& mesh)
 {
     _debugMesh.reset();
     if(mesh.verts.empty())
@@ -96,7 +96,7 @@ void UniformSampler::setReferenceMesh(const Mesh& mesh, int density)
 
     // Compute grid size
     size_t vertCount = mesh.verts.size();
-    double alpha = glm::pow(vertCount / (density * extents.x*extents.y*extents.z), 1/3.0);
+    double alpha = glm::pow(vertCount / (2 * extents.x*extents.y*extents.z), 1/3.0);
     glm::ivec3 gridSize(alpha * extents);
 
     getLog().postMessage(new Message('I', false,

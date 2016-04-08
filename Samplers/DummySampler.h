@@ -15,8 +15,7 @@ public:
 
 
     virtual void setReferenceMesh(
-            const Mesh& mesh,
-            int density) override;
+            const Mesh& mesh) override;
 
     virtual Metric metricAt(
             const glm::dvec3& position,

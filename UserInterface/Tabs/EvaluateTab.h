@@ -31,7 +31,6 @@ protected slots:
     virtual void enableAnisotropy(bool enabled);
 
     virtual void samplingTypeChanged(const QString& type);
-    virtual void samplingDensityChanged(int unused);
     virtual void displayDicretizationToggled(bool display);
 
 protected:

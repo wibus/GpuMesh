@@ -116,7 +116,7 @@ void KdTreeSampler::setupPluginExecution(
     glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &_metricAtSub);
 }
 
-void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
+void KdTreeSampler::setReferenceMesh(const Mesh& mesh)
 {
     size_t vertCount = mesh.verts.size();
 
@@ -137,7 +137,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh, int density)
     tetrahedrize(tets, mesh);
 
     // Compute Kd Tree depth
-    int height = (int)std::log2(vertCount/density);
+    int height = (int)std::log2(vertCount/2);
 
     getLog().postMessage(new Message('I', false,
         "Sampling mesh metric in a Kd-Tree",

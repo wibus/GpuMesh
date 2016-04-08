@@ -27,11 +27,11 @@ QualityLaplaceSmoother::~QualityLaplaceSmoother()
 
 }
 
-void QualityLaplaceSmoother::printSmoothingParameters(
+void QualityLaplaceSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
-    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Quality Laplace");
     plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
     plot.addSmoothingProperty("Line Gaps", to_string(_moveCoeff));

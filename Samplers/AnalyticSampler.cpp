@@ -25,8 +25,7 @@ bool AnalyticSampler::isMetricWise() const
 }
 
 void AnalyticSampler::setReferenceMesh(
-        const Mesh& mesh,
-        int density)
+        const Mesh& mesh)
 {
 
 }

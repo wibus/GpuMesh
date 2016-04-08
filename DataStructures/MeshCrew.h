@@ -15,6 +15,7 @@ class AbstractSampler;
 class AbstractEvaluator;
 class AbstractMeasurer;
 class AbstractSmoother;
+class AbstractTopologist;
 
 
 class MeshCrew
@@ -27,12 +28,14 @@ public:
     ~MeshCrew() = default;
 
     AbstractSampler& sampler();
-    AbstractEvaluator& evaluator();
     AbstractMeasurer& measurer();
+    AbstractEvaluator& evaluator();
+    AbstractTopologist& topologist();
 
     const AbstractSampler& sampler() const;
-    const AbstractEvaluator& evaluator() const;
     const AbstractMeasurer& measurer() const;
+    const AbstractEvaluator& evaluator() const;
+    const AbstractTopologist& topologist() const;
 
     void initialize(const Mesh& mesh);
     void terminate();
@@ -52,8 +55,9 @@ private:
     OptionMap<std::shared_ptr<AbstractMeasurer>> _availableMeasurers;
 
     std::shared_ptr<AbstractSampler> _sampler;
-    std::shared_ptr<AbstractEvaluator> _evaluator;
     std::shared_ptr<AbstractMeasurer> _measurer;
+    std::shared_ptr<AbstractEvaluator> _evaluator;
+    std::shared_ptr<AbstractTopologist> _topologist;
     bool _isInitialized;
 };
 

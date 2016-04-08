@@ -199,7 +199,7 @@ void AbstractSmoother::benchmark(
     _gainThreshold = gainThreshold;
     initializeProgram(mesh, crew);
 
-    printSmoothingParameters(mesh, outPlot);
+    printOptimisationParameters(mesh, outPlot);
     // TODO print evaluator parameters
     // TODO print sampler parameters
 

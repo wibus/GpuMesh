@@ -118,8 +118,7 @@ void LocalSampler::setupPluginExecution(
 }
 
 void LocalSampler::setReferenceMesh(
-        const Mesh& mesh,
-        int density)
+        const Mesh& mesh)
 {
     size_t vertCount = mesh.verts.size();
 

@@ -98,7 +98,6 @@ public:
     // Render
     virtual void disableAnisotropy();
     virtual void displaySamplingMesh(bool display);
-    virtual void useSamplingDensity(int density);
     virtual void useSampler(const std::string& samplerName);
     virtual void useEvaluator(const std::string& evaluatorName);
     virtual void useRenderer(const std::string& rendererName);
@@ -143,7 +142,6 @@ protected:
     double _qualityCullingMin;
     double _qualityCullingMax;
 
-    int  _samplingDensity;
     bool _displaySamplingMesh;
 
 private:
@@ -164,7 +162,7 @@ private:
     std::shared_ptr<prop2::ImageHud> _qualityLut;
 
     OptionMap<std::shared_ptr<AbstractMesher>>          _availableMeshers;
-    OptionMap<std::shared_ptr<AbstractSampler>>     _availableSamplers;
+    OptionMap<std::shared_ptr<AbstractSampler>>         _availableSamplers;
     OptionMap<std::shared_ptr<AbstractEvaluator>>       _availableEvaluators;
     OptionMap<std::shared_ptr<AbstractSmoother>>        _availableSmoothers;
     OptionMap<std::shared_ptr<AbstractRenderer>>        _availableRenderers;

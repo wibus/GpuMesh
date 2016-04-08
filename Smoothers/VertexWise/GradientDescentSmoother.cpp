@@ -48,11 +48,11 @@ void GradientDescentSmoother::setVertexProgramUniforms(
     program.setFloat("LocalSizeToNodeShift", GDLocalSizeToNodeShift);
 }
 
-void GradientDescentSmoother::printSmoothingParameters(
+void GradientDescentSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
-    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Local Optimization");
     plot.addSmoothingProperty("Local Size to Node Shift", to_string(GDLocalSizeToNodeShift));
     plot.addSmoothingProperty("Security Cycle Count", to_string(GDSecurityCycleCount));

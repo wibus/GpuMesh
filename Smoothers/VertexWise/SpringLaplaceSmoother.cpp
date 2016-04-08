@@ -24,11 +24,11 @@ SpringLaplaceSmoother::~SpringLaplaceSmoother()
 
 }
 
-void SpringLaplaceSmoother::printSmoothingParameters(
+void SpringLaplaceSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
-    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Spring Laplace");
     plot.addSmoothingProperty("Move Factor", to_string(_moveCoeff));
 }

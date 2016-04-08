@@ -12,7 +12,7 @@ public:
     virtual ~QualityLaplaceSmoother();
 
 protected:
-    virtual void printSmoothingParameters(
+    virtual void printOptimisationParameters(
             const Mesh& mesh,
             OptimizationPlot& plot) const override;
 

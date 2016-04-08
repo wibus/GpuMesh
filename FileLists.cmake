@@ -71,6 +71,10 @@ SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_ELEMENTWISE_HEADERS}
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.h)
 
+SET(GpuMesh_TOPOLOGISTS_HEADERS
+    ${GpuMesh_SRC_DIR}/Topologists/AbstractTopologist.h
+    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.h)
+
 SET(GpuMesh_DIALOGS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.h)
 
@@ -94,6 +98,7 @@ SET(GpuMesh_HEADERS
     ${GpuMesh_RENDERERS_HEADERS}
     ${GpuMesh_SERIALIZATION_HEADERS}
     ${GpuMesh_SMOOTHERS_HEADERS}
+    ${GpuMesh_TOPOLOGISTS_HEADERS}
     ${GpuMesh_USERINTERFACE_HEADERS}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
 
@@ -168,6 +173,10 @@ SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_ELEMENTWISE_SOURCES}
     ${GpuMesh_SRC_DIR}/Smoothers/AbstractSmoother.cpp)
 
+SET(GpuMesh_TOPOLOGISTS_SOURCES
+    ${GpuMesh_SRC_DIR}/Topologists/AbstractTopologist.cpp
+    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.cpp)
+
 SET(GpuMesh_UITABS_SOURCES
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.cpp
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/EvaluateTab.cpp
@@ -192,6 +201,7 @@ SET(GpuMesh_SOURCES
     ${GpuMesh_RENDERERS_SOURCES}
     ${GpuMesh_SERIALIZATION_SOURCES}
     ${GpuMesh_SMOOTHERS_SOURCES}
+    ${GpuMesh_TOPOLOGISTS_SOURCES}
     ${GpuMesh_USERINTERFACE_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp
     ${GpuMesh_SRC_DIR}/main.cpp)

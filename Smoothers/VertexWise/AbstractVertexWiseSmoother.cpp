@@ -254,7 +254,7 @@ void AbstractVertexWiseSmoother::setVertexProgramUniforms(
     program.setFloat("MoveCoeff", _moveCoeff);
 }
 
-void AbstractVertexWiseSmoother::printSmoothingParameters(
+void AbstractVertexWiseSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {

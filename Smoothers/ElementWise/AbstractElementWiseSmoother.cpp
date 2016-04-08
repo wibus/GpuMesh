@@ -391,7 +391,7 @@ void AbstractElementWiseSmoother::setVertexProgramUniforms(
 {
 }
 
-void AbstractElementWiseSmoother::printSmoothingParameters(
+void AbstractElementWiseSmoother::printOptimisationParameters(
         const Mesh& mesh,
          OptimizationPlot& plot) const
 {

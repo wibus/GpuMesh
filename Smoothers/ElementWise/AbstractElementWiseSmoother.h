@@ -47,7 +47,7 @@ protected:
             const Mesh& mesh,
             cellar::GlProgram& program);
 
-    virtual void printSmoothingParameters(
+    virtual void printOptimisationParameters(
             const Mesh& mesh,
             OptimizationPlot& plot) const override;
 

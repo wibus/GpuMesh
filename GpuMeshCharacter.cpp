@@ -72,7 +72,6 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _hexVisibility(true),
     _qualityCullingMin(-INFINITY),
     _qualityCullingMax(INFINITY),
-    _samplingDensity(2),
     _displaySamplingMesh(false),
     _mesh(new GpuMesh()),
     _meshCrew(new MeshCrew()),
@@ -621,13 +620,6 @@ void GpuMeshCharacter::displaySamplingMesh(bool display)
         _meshCrew->sampler().releaseDebugMesh();
 }
 
-void GpuMeshCharacter::useSamplingDensity(int density)
-{
-    _samplingDensity = density;
-    updateSampling();
-    updateMeshMeasures();
-}
-
 void GpuMeshCharacter::useSampler(const std::string& samplerName)
 {
     std::shared_ptr<AbstractSampler> sampler;
@@ -764,8 +756,7 @@ void GpuMeshCharacter::updateSampling()
 {
     if(_meshCrew->initialized())
     {
-        _meshCrew->sampler().setReferenceMesh(
-            *_mesh, _samplingDensity);
+        _meshCrew->sampler().setReferenceMesh(*_mesh);
 
         if(_displaySamplingMesh)
             if(_renderer.get() != nullptr)

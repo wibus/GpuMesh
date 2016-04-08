@@ -54,8 +54,7 @@ public:
 
 
     virtual void setReferenceMesh(
-            const Mesh& mesh,
-            int density) = 0;
+            const Mesh& mesh) = 0;
 
     virtual Metric metricAt(
             const glm::dvec3& position,

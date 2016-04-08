@@ -38,12 +38,6 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
             this, &EvaluateTab::samplingTypeChanged);
 
-    _character->useSamplingDensity(
-        _ui->discretizationDensitySpin->value());
-    connect(_ui->discretizationDensitySpin,
-            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            this, &EvaluateTab::samplingDensityChanged);
-
     _character->displaySamplingMesh(
         _ui->discretizationDisplayCheck->isChecked());
     connect(_ui->discretizationDisplayCheck, &QCheckBox::toggled,
@@ -101,12 +95,6 @@ void EvaluateTab::enableAnisotropy(bool enabled)
 void EvaluateTab::samplingTypeChanged(const QString& type)
 {
     _character->useSampler(type.toStdString());
-}
-
-void EvaluateTab::samplingDensityChanged(int unused)
-{
-    _character->useSamplingDensity(
-        _ui->discretizationDensitySpin->value());
 }
 
 void EvaluateTab::displayDicretizationToggled(bool display)

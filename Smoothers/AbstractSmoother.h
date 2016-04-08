@@ -76,7 +76,7 @@ protected:
             Mesh& mesh,
             const MeshCrew& crew) = 0;
 
-    virtual void printSmoothingParameters(
+    virtual void printOptimisationParameters(
             const Mesh& mesh,
             OptimizationPlot& plot) const = 0;
 

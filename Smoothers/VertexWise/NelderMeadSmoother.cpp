@@ -70,11 +70,11 @@ void NelderMeadSmoother::setVertexProgramUniforms(
     program.setFloat("Delta", NMDelta);
 }
 
-void NelderMeadSmoother::printSmoothingParameters(
+void NelderMeadSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
-    AbstractVertexWiseSmoother::printSmoothingParameters(mesh, plot);
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Local Optimization");
     plot.addSmoothingProperty("Value Convergence", to_string(NMValueConvergence));
     plot.addSmoothingProperty("Security Cycle Count", to_string(NMSecurityCycleCount));

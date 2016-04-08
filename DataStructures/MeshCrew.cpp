@@ -7,6 +7,7 @@
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/MetricFreeMeasurer.h"
 #include "Measurers/MetricWiseMeasurer.h"
+#include "Topologists/BatrTopologist.h"
 
 
 const std::string METRIC_FREE = "Metric Free";
@@ -22,6 +23,8 @@ MeshCrew::MeshCrew() :
         {METRIC_FREE, std::shared_ptr<AbstractMeasurer>(new MetricFreeMeasurer())},
         {METRIC_WISE, std::shared_ptr<AbstractMeasurer>(new MetricWiseMeasurer())}
     });
+
+    _topologist.reset(new BatrTopologist());
 }
 
 void MeshCrew::initialize(const Mesh& mesh)
@@ -45,14 +48,19 @@ AbstractSampler& MeshCrew::sampler()
     return *_sampler;
 }
 
+AbstractMeasurer& MeshCrew::measurer()
+{
+    return *_measurer;
+}
+
 AbstractEvaluator& MeshCrew::evaluator()
 {
     return *_evaluator;
 }
 
-AbstractMeasurer& MeshCrew::measurer()
+AbstractTopologist& MeshCrew::topologist()
 {
-    return *_measurer;
+    return *_topologist;
 }
 
 const AbstractSampler& MeshCrew::sampler() const
@@ -60,15 +68,21 @@ const AbstractSampler& MeshCrew::sampler() const
     return *_sampler;
 }
 
+const AbstractMeasurer& MeshCrew::measurer() const
+{
+    return *_measurer;
+}
+
 const AbstractEvaluator& MeshCrew::evaluator() const
 {
     return *_evaluator;
 }
 
-const AbstractMeasurer& MeshCrew::measurer() const
+const AbstractTopologist& MeshCrew::topologist() const
 {
-    return *_measurer;
+    return *_topologist;
 }
+
 
 void MeshCrew::setSampler(const Mesh& mesh, const std::shared_ptr<AbstractSampler>& sampler)
 {

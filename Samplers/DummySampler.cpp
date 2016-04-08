@@ -25,8 +25,7 @@ bool DummySampler::isMetricWise() const
 }
 
 void DummySampler::setReferenceMesh(
-        const Mesh& mesh,
-        int density)
+        const Mesh& mesh)
 {
 
 }

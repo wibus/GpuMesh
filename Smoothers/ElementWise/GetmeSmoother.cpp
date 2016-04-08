@@ -42,11 +42,11 @@ void GetmeSmoother::setVertexProgramUniforms(
     program.setFloat("Lambda", 0.78);
 }
 
-void GetmeSmoother::printSmoothingParameters(
+void GetmeSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
-    AbstractElementWiseSmoother::printSmoothingParameters(mesh, plot);
+    AbstractElementWiseSmoother::printOptimisationParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "GETMe");
     plot.addSmoothingProperty("Lambda", to_string(_lambda));
 }
