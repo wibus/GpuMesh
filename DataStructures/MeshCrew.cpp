@@ -140,6 +140,23 @@ void MeshCrew::setupPluginExecution(const Mesh& mesh, const cellar::GlProgram& p
     _measurer->setupPluginExecution(mesh, program);
 }
 
+bool MeshCrew::needTopologicalModifications(int pass) const
+{
+        return (pass > 1) &&
+               (_topologist->isEnabled()) &&
+               ((pass-1) % _topologist->frequency() == 0);
+}
+
+void MeshCrew::enableTopologyModifications(bool enable)
+{
+    _topologist->setEnabled(enable);
+}
+
+void MeshCrew::setTopologyModificationsFrequency(int frequency)
+{
+    _topologist->setFrequency(frequency);
+}
+
 void MeshCrew::reinitCrew(const Mesh& mesh)
 {
     if(_isInitialized)

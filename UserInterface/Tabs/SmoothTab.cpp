@@ -45,6 +45,15 @@ SmoothTab::SmoothTab(Ui::MainWindow* ui,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &SmoothTab::smoothMesh);
 
+    modifyTopology(_ui->modifyTopologyCheck->isChecked());
+    topoFrequency(_ui->topoFrequencySpin->value());
+    connect(_ui->modifyTopologyCheck, &QCheckBox::toggled,
+            this, &SmoothTab::modifyTopology);
+
+    connect(_ui->topoFrequencySpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &SmoothTab::topoFrequency);
+
     connect(_ui->smoothBenchmarkImplButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &SmoothTab::benchmarkImplementations);
@@ -73,6 +82,18 @@ void SmoothTab::smoothMesh()
         _ui->smoothMinIterationSpin->value(),
         _ui->smoothMoveFactorSpin->value(),
         _ui->smoothGainThresholdSpin->value());
+}
+
+void SmoothTab::modifyTopology(bool enable)
+{
+    _character->enableTopologyModifications(enable);
+    _ui->topoFrequencyLabel->setEnabled(enable);
+    _ui->topoFrequencySpin->setEnabled(enable);
+}
+
+void SmoothTab::topoFrequency(int frequency)
+{
+    _character->setTopologyModificationsFrequency(frequency);
 }
 
 void SmoothTab::benchmarkImplementations()

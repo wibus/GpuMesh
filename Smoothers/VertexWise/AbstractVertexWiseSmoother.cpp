@@ -9,8 +9,9 @@
 
 #include "DataStructures/MeshCrew.h"
 #include "Samplers/AbstractSampler.h"
-#include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
+#include "Evaluators/AbstractEvaluator.h"
+#include "Topologists/AbstractTopologist.h"
 
 using namespace std;
 using namespace cellar;
@@ -51,6 +52,9 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
     _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, crew))
     {
+        if(crew.needTopologicalModifications(_smoothPassId))
+            crew.topologist().restructureMesh(mesh, crew);
+
         smoothVertices(mesh, crew, vIds);
     }
 
@@ -128,7 +132,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     // I guess it's because the driver put buffer back on GPU.
     // It looks like glGetBufferSubData takes it out of the GPU.
 
-    // Note (2016-04-04) : This doesn't seem to be significatn anymore...
+    // Note (2016-04-04) : This trick doesn't seem to be significant anymore...
     //mesh.updateVerticesFromCpu();
 
 

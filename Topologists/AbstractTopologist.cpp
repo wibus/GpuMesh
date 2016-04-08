@@ -1,7 +1,9 @@
 #include "AbstractTopologist.h"
 
 
-AbstractTopologist::AbstractTopologist()
+AbstractTopologist::AbstractTopologist() :
+    _isEnabled(false),
+    _frequency(1)
 {
 
 }
@@ -9,4 +11,14 @@ AbstractTopologist::AbstractTopologist()
 AbstractTopologist::~AbstractTopologist()
 {
 
+}
+
+void AbstractTopologist::setEnabled(bool enabled)
+{
+    _isEnabled = enabled;
+}
+
+void AbstractTopologist::setFrequency(int frequency)
+{
+    _frequency = frequency;
 }

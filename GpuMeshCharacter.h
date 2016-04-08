@@ -100,6 +100,8 @@ public:
     virtual void displaySamplingMesh(bool display);
     virtual void useSampler(const std::string& samplerName);
     virtual void useEvaluator(const std::string& evaluatorName);
+    virtual void enableTopologyModifications(bool enable);
+    virtual void setTopologyModificationsFrequency(int frequency);
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
     virtual void useCameraMan(const std::string& cameraManName);

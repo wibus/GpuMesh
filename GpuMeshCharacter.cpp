@@ -641,6 +641,16 @@ void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)
     }
 }
 
+void GpuMeshCharacter::enableTopologyModifications(bool enable)
+{
+    _meshCrew->enableTopologyModifications(enable);
+}
+
+void GpuMeshCharacter::setTopologyModificationsFrequency(int frequency)
+{
+    _meshCrew->setTopologyModificationsFrequency(frequency);
+}
+
 void GpuMeshCharacter::useRenderer(const std::string& rendererName)
 {
     std::shared_ptr<AbstractRenderer> renderer;

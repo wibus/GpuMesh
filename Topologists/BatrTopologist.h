@@ -13,7 +13,7 @@ public:
 
     virtual void restructureMesh(
             Mesh& mesh,
-            const MeshCrew& crew) override;
+            const MeshCrew& crew) const override;
 
     virtual void printOptimisationParameters(
             const Mesh& mesh,

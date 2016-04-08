@@ -376,6 +376,42 @@
          </widget>
         </item>
         <item>
+         <widget class="QGroupBox" name="topologyGroup">
+          <property name="title">
+           <string>Topology</string>
+          </property>
+          <layout class="QFormLayout" name="formLayout_6">
+           <item row="0" column="0" colspan="2">
+            <widget class="QCheckBox" name="modifyTopologyCheck">
+             <property name="text">
+              <string>Modify topology</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="topoFrequencyLabel">
+             <property name="text">
+              <string>Frequency</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="topoFrequencySpin">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>100</number>
+             </property>
+             <property name="value">
+              <number>3</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="smoothBenchmarkGroup">
           <property name="title">
            <string>Benchmarking</string>
@@ -655,7 +691,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>27</height>
     </rect>
    </property>
   </widget>
