@@ -65,6 +65,7 @@ public:
             Mesh& mesh,
             const MeshCrew& crew,
             const std::map<std::string, bool>& activeImpls,
+            bool toggleTopologyModifications,
             int minIteration,
             double moveFactor,
             double gainThreshold,

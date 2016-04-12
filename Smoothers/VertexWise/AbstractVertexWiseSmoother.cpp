@@ -18,6 +18,7 @@ using namespace cellar;
 
 
 // CUDA Drivers
+extern bool verboseCuda;
 void smoothCudaVertices(
         const IndependentDispatch& dispatch,
         size_t workgroupSize,
@@ -53,7 +54,11 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
     while(evaluateMeshQualitySerial(mesh, crew))
     {
         if(crew.needTopologicalModifications(_smoothPassId))
+        {
+            verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
+            verboseCuda = true;
+        }
 
         smoothVertices(mesh, crew, vIds);
     }
@@ -76,7 +81,11 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
     while(evaluateMeshQualityThread(mesh, crew))
     {
         if(crew.needTopologicalModifications(_smoothPassId))
+        {
+            verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
+            verboseCuda = true;
+        }
 
         std::atomic<int> done( 0 );
         std::atomic<int> step( 0 );
@@ -152,9 +161,11 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     {
         if(crew.needTopologicalModifications(_smoothPassId))
         {
+            verboseCuda = false;
             mesh.updateVerticesFromGlsl();
             crew.topologist().restructureMesh(mesh, crew);
             mesh.updateVerticesFromCpu();
+            verboseCuda = true;
         }
 
         mesh.bindShaderStorageBuffers();
@@ -197,9 +208,11 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     {
         if(crew.needTopologicalModifications(_smoothPassId))
         {
+            verboseCuda = false;
             mesh.updateVerticesFromCuda();
             crew.topologist().restructureMesh(mesh, crew);
             mesh.updateVerticesFromCpu();
+            verboseCuda = true;
         }
 
         for(size_t d=0; d < dispatchCount; ++d)

@@ -520,6 +520,8 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     histogram.setAverageQuality(
         qualSum / (MAX_QUALITY_VALUE * elemCount));
 
+    histogram.setSampleCount(elemCount);
+
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 
@@ -562,6 +564,8 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
     evaluateCudaMeshQuality(MAX_QUALITY_VALUE * elemCount,
                             WORKGROUP_SIZE, workgroupCount,
                             histogram);
+
+    histogram.setSampleCount(elemCount);
 }
 
 struct EvalBenchmarkStats

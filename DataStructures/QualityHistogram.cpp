@@ -34,6 +34,17 @@ void QualityHistogram::clear()
     std::fill(_buckets.begin(), _buckets.end(), 0);
 }
 
+void QualityHistogram::setSampleCount(std::size_t count)
+{
+    _sampleCount = count;
+}
+
+void QualityHistogram::setBucketCount(std::size_t count)
+{
+    _buckets.resize(count);
+    clear();
+}
+
 void QualityHistogram::setBucket(std::size_t i, int count)
 {
     _buckets[i] = count;
@@ -47,12 +58,6 @@ void QualityHistogram::setMinimumQuality(double minimum)
 void QualityHistogram::setAverageQuality(double average)
 {
     _averageQuality = average;
-}
-
-void QualityHistogram::setBucketCount(std::size_t count)
-{
-    _buckets.resize(count);
-    clear();
 }
 
 void QualityHistogram::add(double value)

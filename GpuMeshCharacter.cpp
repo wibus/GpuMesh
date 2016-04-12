@@ -573,6 +573,7 @@ void GpuMeshCharacter::smoothMesh(
 OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
         const std::string& smootherName,
         const map<string, bool>& activeImpls,
+        bool toggleTopologyModifications,
         size_t minIterationCount,
         double moveFactor,
         double gainThreshold)
@@ -592,6 +593,7 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
             *_mesh,
             *_meshCrew,
             activeImpls,
+            toggleTopologyModifications,
             minIterationCount,
             moveFactor,
             gainThreshold,

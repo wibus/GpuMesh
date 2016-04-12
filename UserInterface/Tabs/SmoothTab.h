@@ -31,7 +31,9 @@ protected slots:
     virtual void implementationChanged(const QString&);
     virtual void smoothMesh();
 
-    virtual void modifyTopology(bool enable);
+    virtual void disableTopology(bool checked);
+    virtual void enableTopology(bool checked);
+    virtual void compareTopology(bool checked);
     virtual void topoFrequency(int frequency);
 
     virtual void benchmarkImplementations();

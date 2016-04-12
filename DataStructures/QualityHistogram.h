@@ -11,9 +11,15 @@ public:
     QualityHistogram(std::size_t bucketCount);
     virtual ~QualityHistogram();
 
+
     virtual void clear();
 
+
     std::size_t sampleCount() const;
+    void setSampleCount(std::size_t count);
+
+    std::size_t bucketCount() const;
+    virtual void setBucketCount(std::size_t count);
 
     const std::vector<int>& buckets() const;
     void setBucket(std::size_t i, int count);
@@ -24,8 +30,6 @@ public:
     double averageQuality() const;
     void setAverageQuality(double average);
 
-    std::size_t bucketCount() const;
-    virtual void setBucketCount(std::size_t count);
 
     virtual void add(double value);
 
@@ -48,6 +52,11 @@ inline std::size_t QualityHistogram::sampleCount() const
     return _sampleCount;
 }
 
+inline std::size_t QualityHistogram::bucketCount() const
+{
+    return _buckets.size();
+}
+
 inline const std::vector<int>& QualityHistogram::buckets() const
 {
     return _buckets;
@@ -61,11 +70,6 @@ inline double QualityHistogram::minimumQuality() const
 inline double QualityHistogram::averageQuality() const
 {
     return _averageQuality;
-}
-
-inline std::size_t QualityHistogram::bucketCount() const
-{
-    return _buckets.size();
 }
 
 #endif // GPUMESH_QUALITYHISTOGRAM

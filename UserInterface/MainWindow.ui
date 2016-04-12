@@ -381,24 +381,14 @@
            <string>Topology</string>
           </property>
           <layout class="QFormLayout" name="formLayout_6">
-           <item row="0" column="0" colspan="2">
-            <widget class="QCheckBox" name="modifyTopologyCheck">
-             <property name="text">
-              <string>Modify topology</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
+           <item row="3" column="0">
             <widget class="QLabel" name="topoFrequencyLabel">
              <property name="text">
               <string>Frequency</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
+           <item row="3" column="1">
             <widget class="QSpinBox" name="topoFrequencySpin">
              <property name="minimum">
               <number>1</number>
@@ -408,6 +398,30 @@
              </property>
              <property name="value">
               <number>3</number>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="QRadioButton" name="disableTopologyRadio">
+             <property name="text">
+              <string>Disable</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QRadioButton" name="enableTopologyRadio">
+             <property name="text">
+              <string>Enable</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QRadioButton" name="compareTopologyRadio">
+             <property name="text">
+              <string>Compare</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
             </widget>
            </item>

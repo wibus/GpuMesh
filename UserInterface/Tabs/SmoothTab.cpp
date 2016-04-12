@@ -45,10 +45,19 @@ SmoothTab::SmoothTab(Ui::MainWindow* ui,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &SmoothTab::smoothMesh);
 
-    modifyTopology(_ui->modifyTopologyCheck->isChecked());
+    disableTopology(_ui->disableTopologyRadio->isChecked());
+    enableTopology(_ui->enableTopologyRadio->isChecked());
+    compareTopology(_ui->compareTopologyRadio->isChecked());
     topoFrequency(_ui->topoFrequencySpin->value());
-    connect(_ui->modifyTopologyCheck, &QCheckBox::toggled,
-            this, &SmoothTab::modifyTopology);
+
+    connect(_ui->disableTopologyRadio, &QRadioButton::toggled,
+            this, &SmoothTab::disableTopology);
+
+    connect(_ui->enableTopologyRadio, &QRadioButton::toggled,
+            this, &SmoothTab::enableTopology);
+
+    connect(_ui->compareTopologyRadio, &QRadioButton::toggled,
+            this, &SmoothTab::compareTopology);
 
     connect(_ui->topoFrequencySpin,
             static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
@@ -84,11 +93,34 @@ void SmoothTab::smoothMesh()
         _ui->smoothGainThresholdSpin->value());
 }
 
-void SmoothTab::modifyTopology(bool enable)
+void SmoothTab::disableTopology(bool checked)
 {
-    _character->enableTopologyModifications(enable);
-    _ui->topoFrequencyLabel->setEnabled(enable);
-    _ui->topoFrequencySpin->setEnabled(enable);
+    if(checked)
+    {
+        _character->enableTopologyModifications(false);
+        _ui->topoFrequencyLabel->setEnabled(false);
+        _ui->topoFrequencySpin->setEnabled(false);
+    }
+}
+
+void SmoothTab::enableTopology(bool checked)
+{
+    if(checked)
+    {
+        _character->enableTopologyModifications(true);
+        _ui->topoFrequencyLabel->setEnabled(true);
+        _ui->topoFrequencySpin->setEnabled(true);
+    }
+}
+
+void SmoothTab::compareTopology(bool checked)
+{
+    if(checked)
+    {
+        _character->enableTopologyModifications(true);
+        _ui->topoFrequencyLabel->setEnabled(true);
+        _ui->topoFrequencySpin->setEnabled(true);
+    }
 }
 
 void SmoothTab::topoFrequency(int frequency)
@@ -110,6 +142,7 @@ void SmoothTab::benchmarkImplementations()
         _character->benchmarkSmoother(
             _ui->smoothingTechniqueMenu->currentText().toStdString(),
             _activeImpls,
+            _ui->compareTopologyRadio->isChecked(),
             _ui->smoothMinIterationSpin->value(),
             _ui->smoothMoveFactorSpin->value(),
             _ui->smoothGainThresholdSpin->value());

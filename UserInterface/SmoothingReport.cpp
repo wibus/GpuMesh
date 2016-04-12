@@ -464,19 +464,23 @@ void SmoothingReport::printHistogramPlot(QPixmap& pixmap) const
         QBrush(Qt::blue),
         QBrush(Qt::green),
         QBrush(Qt::darkRed),
-        QBrush(Qt::cyan)
+        QBrush(Qt::cyan),
+        QBrush(Qt::magenta),
+        QBrush(Qt::yellow),
+        QBrush(Qt::gray)
     };
 
-    int maxElemCount = 0;
+    double maxElemRatio = 0.0;
     const QualityHistogram initHist = _plot.initialHistogram();
     for(int bucket : initHist.buckets())
-        maxElemCount = glm::max(maxElemCount, bucket);
+        maxElemRatio = glm::max(maxElemRatio, bucket / double(initHist.sampleCount()));
     for(const OptimizationImpl& impl : _plot.implementations())
     {
-        for(int bucket : impl.passes.back().histogram.buckets())
-            maxElemCount = glm::max(maxElemCount, bucket);
+        const QualityHistogram& histogram = impl.passes.back().histogram;
+        for(int bucket : histogram.buckets())
+            maxElemRatio = glm::max(maxElemRatio, bucket / double(histogram.sampleCount()));
     }
-    double scaleY = 0.80 / maxElemCount;
+    double scaleY = 0.80 / maxElemRatio;
 
     std::vector<const QualityHistogram*> hists;
     hists.push_back(&_plot.initialHistogram());
@@ -491,11 +495,14 @@ void SmoothingReport::printHistogramPlot(QPixmap& pixmap) const
     {
         for(size_t i=0; i < bucketCount; ++i)
         {
+            double ratio = hists[h]->buckets()[i] /
+                    double(hists[h]->sampleCount());
+
             scene.addRect(
                 sceneWidth * double(i) / (bucketCount) + offset,
                 sceneHeight,
                 bandWidth,
-                -sceneHeight * (double(hists[h]->buckets()[i]) * scaleY),
+                -sceneHeight * (ratio * scaleY),
                 QPen(brushes[h],0), brushes[h]);
         }
 

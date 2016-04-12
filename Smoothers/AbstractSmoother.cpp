@@ -8,6 +8,7 @@
 #include "DataStructures/MeshCrew.h"
 #include "DataStructures/QualityHistogram.h"
 #include "Evaluators/AbstractEvaluator.h"
+#include "Topologists/AbstractTopologist.h"
 
 using namespace std;
 using namespace cellar;
@@ -189,6 +190,7 @@ void AbstractSmoother::benchmark(
         Mesh& mesh,
         const MeshCrew& crew,
         const map<string, bool>& activeImpls,
+        bool toggleTopologyModifications,
         int minIteration,
         double moveFactor,
         double gainThreshold,
@@ -212,11 +214,11 @@ void AbstractSmoother::benchmark(
 
     // We must make a copy of the vertices in order to
     // restore mesh's vertices after each implementation.
-    auto verticesBackup = mesh.verts;
+    Mesh meshBackup = mesh;
 
     // Make a copy of the smoothed vertices from the firts valid
     // implementation to show the results of the smoothing process.
-    vector<MeshVert> smoothedVertices;
+    Mesh smoothedMesh;
 
     std::vector<SmoothBenchmarkStats> statsVec;
     for(auto& impl : _implementationFuncs.details().options)
@@ -241,36 +243,63 @@ void AbstractSmoother::benchmark(
         ImplementationFunc implementationFunc;
         if(_implementationFuncs.select(impl, implementationFunc))
         {
-            getLog().postMessage(new Message('I', false,
-               "Benchmarking "+ impl +" implementation",
-               "AbstractSmoother"));
+            AbstractTopologist& topologist = const_cast<AbstractTopologist&>(crew.topologist());
+            if(toggleTopologyModifications)
+                topologist.setEnabled(false);
 
-            _currentImplementation = OptimizationImpl();
-            _currentImplementation.name = impl;
+            bool implCompleted = false;
+            while(!implCompleted)
+            {
+                std::string topo = " (topo=";
+                if(topologist.isEnabled())
+                    topo += "on)";
+                else
+                    topo += "off)";
 
-            implementationFunc(mesh, crew);
-
-            SmoothBenchmarkStats stats;
-            crew.evaluator().evaluateMeshQualityThread(
-                mesh, crew.sampler(), crew.measurer(),
-                stats.histogram);
-
-            outPlot.addImplementation(_currentImplementation);
-
-            stats.impl = impl;
-            stats.totalSeconds = _currentImplementation.passes.back().timeStamp -
-                                 _currentImplementation.passes.front().timeStamp;
-            stats.qualityGain = stats.histogram.computeGain(initialHistogram);
-            statsVec.push_back(stats);
+                getLog().postMessage(new Message('I', false,
+                   "Benchmarking "+ impl + topo +" implementation",
+                   "AbstractSmoother"));
 
 
-            // Keep a copy of the smoothed vertices
-            if(smoothedVertices.empty())
-                smoothedVertices = mesh.verts;
+                _currentImplementation = OptimizationImpl();
+                _currentImplementation.name = impl + topo;
 
-            // Restore mesh vertices' initial position
-            mesh.verts = verticesBackup;
-            mesh.updateVerticesFromCpu();
+                implementationFunc(mesh, crew);
+
+                SmoothBenchmarkStats stats;
+                crew.evaluator().evaluateMeshQualityThread(
+                    mesh, crew.sampler(), crew.measurer(),
+                    stats.histogram);
+
+                outPlot.addImplementation(_currentImplementation);
+
+                stats.impl = impl;
+                stats.totalSeconds = _currentImplementation.passes.back().timeStamp -
+                                     _currentImplementation.passes.front().timeStamp;
+                stats.qualityGain = stats.histogram.computeGain(initialHistogram);
+                statsVec.push_back(stats);
+
+                if(smoothedMesh.verts.empty())
+                    smoothedMesh = mesh;
+
+                // Restore mesh vertices' initial position
+                mesh = meshBackup;
+                mesh.updateVerticesFromCpu();
+                if(topologist.isEnabled())
+                    mesh.updateGpuTopology();
+
+                if(toggleTopologyModifications)
+                {
+                    if(!topologist.isEnabled())
+                        topologist.setEnabled(true);
+                    else
+                        implCompleted = true;
+                }
+                else
+                {
+                    implCompleted = true;
+                }
+            }
         }
         else
         {
@@ -280,10 +309,11 @@ void AbstractSmoother::benchmark(
         }
     }
 
-    if(!smoothedVertices.empty())
+    if(!smoothedMesh.verts.empty())
     {
-        mesh.verts = smoothedVertices;
+        mesh = smoothedMesh;
         mesh.updateVerticesFromCpu();
+        mesh.updateGpuTopology();
     }
 
     // Get minimums for ratio computations

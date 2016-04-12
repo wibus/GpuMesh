@@ -89,15 +89,17 @@ void GpuMesh::compileTopology(bool verbose)
         glGenBuffers(1, &_neigVertSsbo);
         glGenBuffers(1, &_neigElemSsbo);
         glGenBuffers(1, &_groupMembersSsbo);
+
+
+        // Allocation GPU side vertex positions storage space
+        size_t vertBuffSize = sizeof(GpuVert) * verts.size();
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_DYNAMIC_COPY);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+        updateVerticesFromCpu();
     }
 
-    // Allocation GPU side vertex positions storage space
-    size_t vertBuffSize = sizeof(GpuVert) * verts.size();
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_DYNAMIC_COPY);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    updateVerticesFromCpu();
     updateGpuTopology();
 }
 

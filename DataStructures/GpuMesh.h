@@ -187,6 +187,7 @@ public:
     virtual void clear() override;
 
     virtual void compileTopology(bool verbose = true) override;
+    virtual void updateGpuTopology() override;
     virtual void updateVerticesFromCpu() override;
     virtual void updateVerticesFromGlsl() override;
     virtual void updateVerticesFromCuda() override;
@@ -199,7 +200,6 @@ public:
 
 
 protected:
-    virtual void updateGpuTopology() override;
     virtual void uploadElement(
             cellar::GlProgram& program,
             const std::string& prefix,

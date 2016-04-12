@@ -142,9 +142,9 @@ void MeshCrew::setupPluginExecution(const Mesh& mesh, const cellar::GlProgram& p
 
 bool MeshCrew::needTopologicalModifications(int pass) const
 {
-        return (pass > 1) &&
-               (_topologist->isEnabled()) &&
-               ((pass-1) % _topologist->frequency() == 0);
+    return (pass > 1) &&
+           (_topologist->isEnabled()) &&
+           ((pass-1) % _topologist->frequency() == 0);
 }
 
 void MeshCrew::enableTopologyModifications(bool enable)
