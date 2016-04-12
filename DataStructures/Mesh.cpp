@@ -178,9 +178,9 @@ void Mesh::clear()
     independentGroups.shrink_to_fit();
 }
 
-void Mesh::compileTopology(bool verbose)
+void Mesh::compileTopology(bool updateGpu)
 {
-    if(verbose)
+    if(updateGpu)
     {
         getLog().postMessage(new Message('I', false,
             modelName + ": Compiling mesh topology...", "Mesh"));
@@ -206,7 +206,7 @@ void Mesh::compileTopology(bool verbose)
     auto compileEnd = chrono::high_resolution_clock::now();
 
 
-    if(verbose)
+    if(updateGpu)
     {
         getLog().postMessage(new Message('I', false,
             "Vertice count: " + to_string(vertCount), "Mesh"));

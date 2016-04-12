@@ -225,7 +225,7 @@ public:
 
     virtual void clear();
 
-    virtual void compileTopology(bool verbose = true);
+    virtual void compileTopology(bool updateGpu = true);
     virtual void updateGpuTopology();
     virtual void updateVerticesFromCpu();
     virtual void updateVerticesFromGlsl();

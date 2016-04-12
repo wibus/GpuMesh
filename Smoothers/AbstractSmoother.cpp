@@ -69,6 +69,7 @@ void AbstractSmoother::organizeDispatches(
         size_t workgroupSize,
         std::vector<IndependentDispatch>& dispatches) const
 {
+    dispatches.clear();
     size_t groupCount = mesh.independentGroups.size();
 
     size_t base = 0;
@@ -76,7 +77,7 @@ void AbstractSmoother::organizeDispatches(
     {
         size_t count = mesh.independentGroups[i].size();
         size_t wg = glm::ceil(count / double(workgroupSize));
-        dispatches.push_back(IndependentDispatch(base, count, wg));
+        dispatches.emplace_back(base, count, wg);
 
         base += count;
     }

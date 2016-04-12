@@ -69,38 +69,38 @@ void GpuMesh::clear()
     _groupMembersSsbo = 0;
 }
 
-void GpuMesh::compileTopology(bool verbose)
+void GpuMesh::compileTopology(bool updateGpu)
 {
-    Mesh::compileTopology(verbose);
+    Mesh::compileTopology(updateGpu);
 
-    if(verbose)
+    if(updateGpu)
     {
-        getLog().postMessage(new Message('I', false,
-            "Generating mesh shader storage buffers", "GpuMesh"));
+        if(_vertSsbo == 0)
+        {
+            getLog().postMessage(new Message('I', false,
+                "Generating mesh shader storage buffers", "GpuMesh"));
+
+            glGenBuffers(1, &_vertSsbo);
+            glGenBuffers(1, &_tetSsbo);
+            glGenBuffers(1, &_priSsbo);
+            glGenBuffers(1, &_hexSsbo);
+            glGenBuffers(1, &_topoSsbo);
+            glGenBuffers(1, &_neigVertSsbo);
+            glGenBuffers(1, &_neigElemSsbo);
+            glGenBuffers(1, &_groupMembersSsbo);
+
+
+            // Allocation GPU side vertex positions storage space
+            size_t vertBuffSize = sizeof(GpuVert) * verts.size();
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_DYNAMIC_COPY);
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+            updateVerticesFromCpu();
+        }
+
+        updateGpuTopology();
     }
-
-    if(_vertSsbo == 0)
-    {
-        glGenBuffers(1, &_vertSsbo);
-        glGenBuffers(1, &_tetSsbo);
-        glGenBuffers(1, &_priSsbo);
-        glGenBuffers(1, &_hexSsbo);
-        glGenBuffers(1, &_topoSsbo);
-        glGenBuffers(1, &_neigVertSsbo);
-        glGenBuffers(1, &_neigElemSsbo);
-        glGenBuffers(1, &_groupMembersSsbo);
-
-
-        // Allocation GPU side vertex positions storage space
-        size_t vertBuffSize = sizeof(GpuVert) * verts.size();
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_DYNAMIC_COPY);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-        updateVerticesFromCpu();
-    }
-
-    updateGpuTopology();
 }
 
 

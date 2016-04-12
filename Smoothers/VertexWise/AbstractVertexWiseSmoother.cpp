@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <numeric>
 #include <fstream>
+#include <chrono>
 
 #include "DataStructures/MeshCrew.h"
 #include "Samplers/AbstractSampler.h"
@@ -70,8 +71,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    // TODO : Use a thread pool    
-    size_t groupCount = mesh.independentGroups.size();
+    // TODO : Use a thread pool
     uint threadCount = thread::hardware_concurrency();
 
     std::mutex mutex;
@@ -94,6 +94,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         for(uint t=0; t < threadCount; ++t)
         {
             workers.push_back(thread([&, t]() {
+                size_t groupCount = mesh.independentGroups.size();
                 for(size_t g=0; g < groupCount; ++g)
                 {
                     const std::vector<uint>& group =
@@ -165,7 +166,11 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
             mesh.updateVerticesFromGlsl();
             crew.topologist().restructureMesh(mesh, crew);
             mesh.updateVerticesFromCpu();
+            mesh.updateGpuTopology();
             verboseCuda = true;
+
+            organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
+            dispatchCount = dispatches.size();
         }
 
         mesh.bindShaderStorageBuffers();
@@ -212,7 +217,11 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
             mesh.updateVerticesFromCuda();
             crew.topologist().restructureMesh(mesh, crew);
             mesh.updateVerticesFromCpu();
+            mesh.updateGpuTopology();
             verboseCuda = true;
+
+            organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
+            dispatchCount = dispatches.size();
         }
 
         for(size_t d=0; d < dispatchCount; ++d)

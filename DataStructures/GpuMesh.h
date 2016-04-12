@@ -186,7 +186,7 @@ public:
 
     virtual void clear() override;
 
-    virtual void compileTopology(bool verbose = true) override;
+    virtual void compileTopology(bool updateGpu = true) override;
     virtual void updateGpuTopology() override;
     virtual void updateVerticesFromCpu() override;
     virtual void updateVerticesFromGlsl() override;
