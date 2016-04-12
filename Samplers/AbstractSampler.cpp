@@ -61,12 +61,6 @@ void AbstractSampler::setPluginUniforms(
 
 }
 
-void AbstractSampler::setupPluginExecution(
-        const Mesh& mesh,
-        const cellar::GlProgram& program) const
-{
-}
-
 Metric AbstractSampler::interpolateMetrics(
         const Metric& m1,
         const Metric& m2,

@@ -331,7 +331,7 @@ void AbstractElementWiseSmoother::initializeProgram(
 
 
     // Element Smoothing Program
-    _elemSmoothProgram.clearShaders();
+    _elemSmoothProgram.reset();
     crew.installPlugins(mesh, _elemSmoothProgram);
     _elemSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
@@ -354,7 +354,7 @@ void AbstractElementWiseSmoother::initializeProgram(
 
 
     // Update Vertex Positions Program
-    _vertUpdateProgram.clearShaders();
+    _vertUpdateProgram.reset();
     crew.installPlugins(mesh, _vertUpdateProgram);
     _vertUpdateProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),

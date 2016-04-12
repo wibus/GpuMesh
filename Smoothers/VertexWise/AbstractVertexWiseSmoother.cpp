@@ -173,10 +173,9 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
             dispatchCount = dispatches.size();
         }
 
-        mesh.bindShaderStorageBuffers();
 
         _vertSmoothProgram.pushProgram();
-        crew.setupPluginExecution(mesh, _vertSmoothProgram);
+        mesh.bindShaderStorageBuffers();
 
         for(size_t d=0; d < dispatchCount; ++d)
         {
@@ -256,7 +255,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();
 
-    _vertSmoothProgram.clearShaders();
+    _vertSmoothProgram.reset();
     crew.installPlugins(mesh, _vertSmoothProgram);
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),

@@ -22,7 +22,6 @@ void swap(inout vec4 v1, inout vec4 v2)
 // ENTRY POINT //
 void smoothVert(uint vId)
 {
-    /*
     // Compute local element size
     float localSize = computeLocalElementSize(vId);
 
@@ -161,5 +160,4 @@ void smoothVert(uint vId)
         verts[vId].p = vec4(snapToBoundary(topo.type, vec3(simplex[3])), 0);
     else
         verts[vId].p = simplex[3];
-    */
 }

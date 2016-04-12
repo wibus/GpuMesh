@@ -29,9 +29,9 @@ public:
             const Mesh& mesh,
             cellar::GlProgram& program) const override;
 
-    virtual void setupPluginExecution(
+    virtual void setPluginUniforms(
             const Mesh& mesh,
-            const cellar::GlProgram& program) const override;
+            cellar::GlProgram& program) const override;
 
 
     virtual void setReferenceMesh(
@@ -74,7 +74,6 @@ private:
     GLuint _kdNodesSsbo;
     GLuint _refVertsSsbo;
     GLuint _refMetricsSsbo;
-    GLuint _metricAtSub;
 };
 
 #endif // GPUMESH_KDTREESAMPLER

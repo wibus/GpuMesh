@@ -45,10 +45,6 @@ public:
             const Mesh& mesh,
             cellar::GlProgram& program) const;
 
-    virtual void setupPluginExecution(
-            const Mesh& mesh,
-            const cellar::GlProgram& program) const;
-
 
     // Distances
     virtual double riemannianDistance(

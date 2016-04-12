@@ -3,6 +3,7 @@
 #include <array>
 
 #include <CellarWorkbench/Misc/Log.h>
+#include <CellarWorkbench/GL/GlProgram.h>
 
 #include <DataStructures/GpuMesh.h>
 #include <DataStructures/TriSet.h>
@@ -53,8 +54,7 @@ LocalSampler::LocalSampler() :
     _localTetsSsbo(0),
     _localCacheSsbo(0),
     _refVertsSsbo(0),
-    _refMetricsSsbo(0),
-    _metricAtSub(0)
+    _refMetricsSsbo(0)
 {
     _debugMesh->modelName = "Local sampling mesh";
 }
@@ -108,13 +108,12 @@ void LocalSampler::installPlugin(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
 }
 
-void LocalSampler::setupPluginExecution(
+void LocalSampler::setPluginUniforms(
         const Mesh& mesh,
-        const cellar::GlProgram& program) const
+        cellar::GlProgram& program) const
 {
-    AbstractSampler::setupPluginExecution(mesh, program);
-
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &_metricAtSub);
+    AbstractSampler::setPluginUniforms(mesh, program);
+    program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
 }
 
 void LocalSampler::setReferenceMesh(

@@ -108,7 +108,7 @@ void AbstractEvaluator::initialize(
     _measureShader == crew.measurer().measureShader();
 
     // Shader setup
-    _evaluationProgram.clearShaders();
+    _evaluationProgram.reset();
     crew.installPlugins(mesh, _evaluationProgram);
 
     _evaluationProgram.addShader(GL_COMPUTE_SHADER, {
@@ -165,13 +165,7 @@ void AbstractEvaluator::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-
-}
-
-void AbstractEvaluator::setupPluginExecution(
-        const Mesh& mesh,
-        const GlProgram& program) const
-{
+    program.setSubroutine(GL_COMPUTE_SHADER, "patchQualityUni", "patchQualityImpl");
 }
 
 double AbstractEvaluator::tetQuality(
@@ -476,8 +470,6 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     _evaluationProgram.pushProgram();
 
     mesh.bindShaderStorageBuffers();
-    sampler.setupPluginExecution(mesh, _evaluationProgram);
-    measurer.setupPluginExecution(mesh, _evaluationProgram);
     GLuint qualsBinding = mesh.bufferBinding(
         EBufferBinding::EVALUATE_QUAL_BUFFER_BINDING);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, qualsBinding, _qualSsbo);

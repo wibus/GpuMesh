@@ -57,13 +57,6 @@ void AbstractMeasurer::setPluginUniforms(
 
 }
 
-void AbstractMeasurer::setupPluginExecution(
-        const Mesh& mesh,
-        const cellar::GlProgram& program) const
-{
-
-}
-
 double AbstractMeasurer::tetVolume(
         const Mesh& mesh,
         const AbstractSampler& sampler,

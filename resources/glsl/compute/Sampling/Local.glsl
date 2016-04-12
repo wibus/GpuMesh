@@ -19,7 +19,8 @@ bool tetParams(in uint v[4], in vec3 p, out float coor[4]);
 
 
 subroutine mat3 metricAtSub(in vec3 position, in uint vId);
-layout(location=0) subroutine uniform metricAtSub metricAtUni;
+layout(location=METRIC_AT_SUBROUTINE_LOC)
+subroutine uniform metricAtSub metricAtUni;
 
 mat3 metricAt(in vec3 position, in uint vId)
 {
@@ -40,7 +41,7 @@ bool isTaboo(uint tId, uint taboo[MAX_TABOO], uint count)
     return false;
 }
 
-layout(index=0) subroutine(metricAtSub)
+layout(index=METRIC_AT_SUBROUTINE_IDX) subroutine(metricAtSub)
 mat3 metricAtImpl(in vec3 position, in uint cacheId)
 {
     // Taboo search structures

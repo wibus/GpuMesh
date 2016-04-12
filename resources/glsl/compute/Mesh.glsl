@@ -83,6 +83,11 @@ const uint KD_NODES_BUFFER_BINDING          = 14;
 const uint LOCAL_TETS_BUFFER_BINDING        = 15;
 const uint LOCAL_CACHE_BUFFER_BINDING       = 16;
 
+const uint METRIC_AT_SUBROUTINE_LOC         = 0;
+const uint METRIC_AT_SUBROUTINE_IDX         = 0;
+const uint PATCH_QUALITY_SUBROUTINE_LOC     = 1;
+const uint PATCH_QUALITY_SUBROUTINE_IDX     = 1;
+
 
 layout(std140, binding = 0) buffer Verts
 {

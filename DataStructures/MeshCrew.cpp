@@ -129,17 +129,6 @@ void MeshCrew::setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) c
     _measurer->setPluginUniforms(mesh, program);
 }
 
-void MeshCrew::setupPluginExecution(const Mesh& mesh, const cellar::GlProgram& program) const
-{
-    // Mesh's uniforms
-    mesh.bindShaderStorageBuffers();
-
-    // Crew members' buffers
-    _sampler->setupPluginExecution(mesh, program);
-    _evaluator->setupPluginExecution(mesh, program);
-    _measurer->setupPluginExecution(mesh, program);
-}
-
 bool MeshCrew::needTopologicalModifications(int pass) const
 {
     return (pass > 1) &&

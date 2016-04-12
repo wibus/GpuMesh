@@ -48,10 +48,6 @@ public:
             const Mesh& mesh,
             cellar::GlProgram& program) const;
 
-    virtual void setupPluginExecution(
-            const Mesh& mesh,
-            const cellar::GlProgram& program) const;
-
 
     virtual void setReferenceMesh(
             const Mesh& mesh) = 0;

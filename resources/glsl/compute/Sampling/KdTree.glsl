@@ -24,7 +24,8 @@ bool tetParams(in uint vi[4], in vec3 p, out float coor[4]);
 
 
 subroutine mat3 metricAtSub(in vec3 position, in uint cacheId);
-layout(location=0) subroutine uniform metricAtSub metricAtUni;
+layout(location=METRIC_AT_SUBROUTINE_LOC)
+subroutine uniform metricAtSub metricAtUni;
 
 mat3 metricAt(in vec3 position, in uint cacheId)
 {
@@ -32,7 +33,7 @@ mat3 metricAt(in vec3 position, in uint cacheId)
 }
 
 
-layout(index=0) subroutine(metricAtSub)
+layout(index=METRIC_AT_SUBROUTINE_IDX) subroutine(metricAtSub)
 mat3 metricAtImpl(in vec3 position, in uint cacheId)
 {
     const mat3 METRIC_ERROR = mat3(0.0);

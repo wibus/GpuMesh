@@ -85,7 +85,19 @@ float finalizePatchQuality(in double patchQuality, in double patchWeight)
     */
 }
 
+
+subroutine float patchQualitySub(in uint vId);
+layout(location=PATCH_QUALITY_SUBROUTINE_LOC)
+subroutine uniform patchQualitySub patchQualityUni;
+
 float patchQuality(in uint vId)
+{
+    return patchQualityUni(vId);
+}
+
+
+layout(index=PATCH_QUALITY_SUBROUTINE_IDX) subroutine(patchQualitySub)
+float patchQualityImpl(in uint vId)
 {
     Topo topo = topos[vId];
 

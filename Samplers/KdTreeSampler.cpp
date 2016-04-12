@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include <CellarWorkbench/Misc/Log.h>
+#include <CellarWorkbench/GL/GlProgram.h>
 
 #include "DataStructures/GpuMesh.h"
 #include "DataStructures/Tetrahedralizer.h"
@@ -53,8 +54,7 @@ KdTreeSampler::KdTreeSampler() :
     _kdTetsSsbo(0),
     _kdNodesSsbo(0),
     _refVertsSsbo(0),
-    _refMetricsSsbo(0),
-    _metricAtSub(0)
+    _refMetricsSsbo(0)
 {
 }
 
@@ -107,13 +107,12 @@ void KdTreeSampler::installPlugin(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
 }
 
-void KdTreeSampler::setupPluginExecution(
+void KdTreeSampler::setPluginUniforms(
         const Mesh& mesh,
-        const cellar::GlProgram& program) const
+        cellar::GlProgram& program) const
 {
-    AbstractSampler::setupPluginExecution(mesh, program);
-
-    glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &_metricAtSub);
+    AbstractSampler::setPluginUniforms(mesh, program);
+    program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
 }
 
 void KdTreeSampler::setReferenceMesh(const Mesh& mesh)

@@ -188,6 +188,7 @@ void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
     double padding = 1.0 - 1.0/glm::pow(vertexCount, 1/3.0);
 
     size_t surfVertCount = glm::sqrt(vertexCount) * 10;
+    surfVertCount = glm::min(surfVertCount, vertexCount);
 
     vertices.resize(vertexCount);
     for(int v=0; v < surfVertCount; ++v)
