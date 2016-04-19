@@ -32,7 +32,7 @@ void DummySampler::setReferenceMesh(
 
 Metric DummySampler::metricAt(
         const glm::dvec3& position,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     // Constant isotropic metric
     return Metric(1.0);

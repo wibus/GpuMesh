@@ -21,7 +21,7 @@ public:
 
     virtual Metric metricAt(
             const glm::dvec3& position,
-            uint cacheId) const override;
+            uint& cachedRefTet) const override;
 
 
     virtual void releaseDebugMesh() override;

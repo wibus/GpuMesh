@@ -36,10 +36,10 @@ protected:
             const glm::dvec3& v1,
             const glm::dvec3& v2,
             const glm::dvec3& v3,
-            uint vId) const;
+            uint& cachedRefTet) const;
     double metricConformity(
             const glm::dmat3& Fk,
-            const Metric& avrgMetric) const;
+            const Metric& Ms) const;
 };
 
 #endif // GPUMESH_METRICCONFORMITYEVALUATOR

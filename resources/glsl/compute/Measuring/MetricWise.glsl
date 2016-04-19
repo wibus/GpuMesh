@@ -1,11 +1,11 @@
-mat3 metricAt(in vec3 position, in uint cacheId);
+mat3 metricAt(in vec3 position, inout uint cachedRefTet);
 
 // Distances
-float riemannianDistance(in vec3 a, in vec3 b, in uint cacheId)
+float riemannianDistance(in vec3 a, in vec3 b, inout uint cachedRefTet)
 {
     vec3 abDiff = b - a;
     vec3 middle = (a + b) / 2.0;
-    float dist = sqrt(dot(abDiff, metricAt(middle, cacheId) * abDiff));
+    float dist = sqrt(dot(abDiff, metricAt(middle, cachedRefTet) * abDiff));
 
     int segmentCount = 1;
     float err = 1.0;
@@ -19,7 +19,7 @@ float riemannianDistance(in vec3 a, in vec3 b, in uint cacheId)
         float newDist = 0.0;
         for(int i=0; i < segmentCount; ++i)
         {
-            mat3 metric = metricAt(segBeg + half_ds, cacheId);
+            mat3 metric = metricAt(segBeg + half_ds, cachedRefTet);
             newDist += sqrt(dot(ds, metric * ds));
             segBeg += ds;
         }
@@ -31,31 +31,31 @@ float riemannianDistance(in vec3 a, in vec3 b, in uint cacheId)
     return dist;
 }
 
-vec3 riemannianSegment(in vec3 a, in vec3 b, in uint cacheId)
+vec3 riemannianSegment(in vec3 a, in vec3 b, inout uint cachedRefTet)
 {
     return normalize(b - a) *
-        riemannianDistance(a, b, cacheId);
+        riemannianDistance(a, b, cachedRefTet);
 }
 
 
 // Element Volume
-float tetVolume(in vec3 vp[TET_VERTEX_COUNT], in Tet tet)
+float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
 {
     float detSum = determinant(mat3(
-        riemannianSegment(vp[0], vp[3], tet.v[0]),
-        riemannianSegment(vp[1], vp[3], tet.v[1]),
-        riemannianSegment(vp[2], vp[3], tet.v[2])));
+        riemannianSegment(vp[0], vp[3], tet.c[0]),
+        riemannianSegment(vp[1], vp[3], tet.c[0]),
+        riemannianSegment(vp[2], vp[3], tet.c[0])));
 
     return detSum / 6.0;
 }
 
-float priVolume(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri)
+float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
 {
-    vec3 e02 = riemannianSegment(vp[0], vp[2], pri.v[0]);
-    vec3 e12 = riemannianSegment(vp[1], vp[2], pri.v[1]);
-    vec3 e32 = riemannianSegment(vp[3], vp[2], pri.v[3]);
-    vec3 e42 = riemannianSegment(vp[4], vp[2], pri.v[4]);
-    vec3 e52 = riemannianSegment(vp[5], vp[2], pri.v[5]);
+    vec3 e02 = riemannianSegment(vp[0], vp[2], pri.c[0]);
+    vec3 e12 = riemannianSegment(vp[1], vp[2], pri.c[1]);
+    vec3 e32 = riemannianSegment(vp[3], vp[2], pri.c[3]);
+    vec3 e42 = riemannianSegment(vp[4], vp[2], pri.c[4]);
+    vec3 e52 = riemannianSegment(vp[5], vp[2], pri.c[5]);
 
     float detSum = 0.0;
     detSum += determinant(mat3(e32, e52, e42));
@@ -65,41 +65,41 @@ float priVolume(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri)
     return detSum / 6.0;
 }
 
-float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex)
+float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
-        riemannianSegment(vp[1], vp[0], hex.v[1]),
-        riemannianSegment(vp[4], vp[0], hex.v[4]),
-        riemannianSegment(vp[3], vp[0], hex.v[3])));
+        riemannianSegment(vp[1], vp[0], hex.c[1]),
+        riemannianSegment(vp[4], vp[0], hex.c[4]),
+        riemannianSegment(vp[3], vp[0], hex.c[3])));
     detSum += determinant(mat3(
-        riemannianSegment(vp[1], vp[2], hex.v[1]),
-        riemannianSegment(vp[3], vp[2], hex.v[3]),
-        riemannianSegment(vp[6], vp[2], hex.v[6])));
+        riemannianSegment(vp[1], vp[2], hex.c[1]),
+        riemannianSegment(vp[3], vp[2], hex.c[3]),
+        riemannianSegment(vp[6], vp[2], hex.c[6])));
     detSum += determinant(mat3(
-        riemannianSegment(vp[4], vp[5], hex.v[4]),
-        riemannianSegment(vp[1], vp[5], hex.v[1]),
-        riemannianSegment(vp[6], vp[5], hex.v[6])));
+        riemannianSegment(vp[4], vp[5], hex.c[4]),
+        riemannianSegment(vp[1], vp[5], hex.c[1]),
+        riemannianSegment(vp[6], vp[5], hex.c[6])));
     detSum += determinant(mat3(
-        riemannianSegment(vp[4], vp[7], hex.v[4]),
-        riemannianSegment(vp[6], vp[7], hex.v[6]),
-        riemannianSegment(vp[3], vp[7], hex.v[3])));
+        riemannianSegment(vp[4], vp[7], hex.c[4]),
+        riemannianSegment(vp[6], vp[7], hex.c[6]),
+        riemannianSegment(vp[3], vp[7], hex.c[3])));
     detSum += determinant(mat3(
-        riemannianSegment(vp[1], vp[4], hex.v[1]),
-        riemannianSegment(vp[6], vp[4], hex.v[6]),
-        riemannianSegment(vp[3], vp[4], hex.v[3])));
+        riemannianSegment(vp[1], vp[4], hex.c[1]),
+        riemannianSegment(vp[6], vp[4], hex.c[6]),
+        riemannianSegment(vp[3], vp[4], hex.c[3])));
 
     return detSum / 6.0;
 }
 
 
 // High level measurement
-vec3 computeSpringForce(in vec3 pi, in vec3 pj, in uint vId)
+vec3 computeSpringForce(in vec3 pi, in vec3 pj, inout uint cachedRefTet)
 {
     if(pi == pj)
         return vec3(0.0);
 
-    float d = riemannianDistance(pi, pj, vId);
+    float d = riemannianDistance(pi, pj, cachedRefTet);
     vec3 u = (pi - pj) / d;
 
     float d2 = d * d;
@@ -115,16 +115,16 @@ vec3 computeSpringForce(in vec3 pi, in vec3 pj, in uint vId)
 vec3 computeVertexEquilibrium(in uint vId)
 {
     Topo topo = topos[vId];
-    vec3 pos = vec3(verts[vId].p);
+    vec3 pos = verts[vId].p;
 
     vec3 forceTotal = vec3(0.0);
     uint neigVertCount = topo.neigVertCount;
     for(uint i=0, n = topo.neigVertBase; i < neigVertCount; ++i, ++n)
     {
         NeigVert neigVert = neigVerts[n];
-        vec3 npos = vec3(verts[neigVert.v].p);
+        vec3 npos = verts[neigVert.v].p;
 
-        forceTotal += computeSpringForce(pos, npos, vId);
+        forceTotal += computeSpringForce(pos, npos, verts[vId].c);
     }
 
     vec3 equilibrium = pos + forceTotal;

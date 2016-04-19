@@ -110,8 +110,6 @@ void MeshCrew::installPlugins(const Mesh& mesh, cellar::GlProgram& program) cons
         mesh.meshGeometryShaderName(),
         mesh.modelBoundsShaderName().c_str()});
 
-    mesh.modelBoundsCudaFct()();
-
     // Crew members' plugin
     _sampler->installPlugin(mesh, program);
     _evaluator->installPlugin(mesh, program);
@@ -127,23 +125,6 @@ void MeshCrew::setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) c
     _sampler->setPluginUniforms(mesh, program);
     _evaluator->setPluginUniforms(mesh, program);
     _measurer->setPluginUniforms(mesh, program);
-}
-
-bool MeshCrew::needTopologicalModifications(int pass) const
-{
-    return (pass > 1) &&
-           (_topologist->isEnabled()) &&
-           ((pass-1) % _topologist->frequency() == 0);
-}
-
-void MeshCrew::enableTopologyModifications(bool enable)
-{
-    _topologist->setEnabled(enable);
-}
-
-void MeshCrew::setTopologyModificationsFrequency(int frequency)
-{
-    _topologist->setFrequency(frequency);
 }
 
 void MeshCrew::reinitCrew(const Mesh& mesh)

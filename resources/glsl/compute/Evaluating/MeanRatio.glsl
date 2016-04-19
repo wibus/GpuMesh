@@ -1,4 +1,4 @@
-vec3 riemannianSegment(in vec3 a, in vec3 b, in uint cacheId);
+vec3 riemannianSegment(in vec3 a, in vec3 b, inout uint cachedRefTet);
 
 
 const mat3 Fr_TET_INV = mat3(
@@ -25,11 +25,11 @@ float cornerQuality(in mat3 Fk)
     return sign(Fk_det) * 3.0 * pow(abs(Fk_det), 2.0/3.0) / Fk_frobenius2;
 }
 
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], in Tet tet)
+float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
 {
-    vec3 e03 = riemannianSegment(vp[0], vp[3], tet.v[0]);
-    vec3 e13 = riemannianSegment(vp[1], vp[3], tet.v[1]);
-    vec3 e23 = riemannianSegment(vp[2], vp[3], tet.v[2]);
+    vec3 e03 = riemannianSegment(vp[0], vp[3], tet.c[0]);
+    vec3 e13 = riemannianSegment(vp[1], vp[3], tet.c[0]);
+    vec3 e23 = riemannianSegment(vp[2], vp[3], tet.c[0]);
 
     mat3 Fk0 = mat3(e03, e13, e23) * Fr_TET_INV;
 
@@ -39,17 +39,18 @@ float tetQuality(in vec3 vp[TET_VERTEX_COUNT], in Tet tet)
     return qual0;
 }
 
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri)
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
 {
-    vec3 e03 = riemannianSegment(vp[0], vp[3], pri.v[0]);
-    vec3 e14 = riemannianSegment(vp[1], vp[4], pri.v[1]);
-    vec3 e25 = riemannianSegment(vp[2], vp[5], pri.v[2]);
-    vec3 e01 = riemannianSegment(vp[0], vp[1], pri.v[0]);
-    vec3 e12 = riemannianSegment(vp[1], vp[2], pri.v[1]);
-    vec3 e20 = riemannianSegment(vp[2], vp[0], pri.v[2]);
-    vec3 e34 = riemannianSegment(vp[3], vp[4], pri.v[3]);
-    vec3 e45 = riemannianSegment(vp[4], vp[5], pri.v[4]);
-    vec3 e53 = riemannianSegment(vp[5], vp[3], pri.v[5]);
+    vec3 e03 = riemannianSegment(vp[0], vp[3], pri.c[0]);
+    vec3 e14 = riemannianSegment(vp[1], vp[4], pri.c[1]);
+    vec3 e25 = riemannianSegment(vp[2], vp[5], pri.c[2]);
+    vec3 e01 = riemannianSegment(vp[0], vp[1], pri.c[0]);
+    vec3 e12 = riemannianSegment(vp[1], vp[2], pri.c[1]);
+    vec3 e20 = riemannianSegment(vp[2], vp[0], pri.c[2]);
+    vec3 e34 = riemannianSegment(vp[3], vp[4], pri.c[3]);
+    vec3 e45 = riemannianSegment(vp[4], vp[5], pri.c[4]);
+    vec3 e53 = riemannianSegment(vp[5], vp[3], pri.c[5]);
+
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two cross product
@@ -70,22 +71,22 @@ float priQuality(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri)
     return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
 }
 
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex)
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
 {
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_HEX_INV.
-    vec3 e01 = riemannianSegment(vp[0], vp[1], hex.v[0]);
-    vec3 e03 = riemannianSegment(vp[0], vp[3], hex.v[0]);
-    vec3 e04 = riemannianSegment(vp[0], vp[4], hex.v[0]);
-    vec3 e12 = riemannianSegment(vp[1], vp[2], hex.v[1]);
-    vec3 e15 = riemannianSegment(vp[1], vp[5], hex.v[1]);
-    vec3 e23 = riemannianSegment(vp[2], vp[3], hex.v[3]);
-    vec3 e26 = riemannianSegment(vp[2], vp[6], hex.v[2]);
-    vec3 e37 = riemannianSegment(vp[3], vp[7], hex.v[3]);
-    vec3 e45 = riemannianSegment(vp[4], vp[5], hex.v[4]);
-    vec3 e47 = riemannianSegment(vp[4], vp[7], hex.v[4]);
-    vec3 e56 = riemannianSegment(vp[5], vp[6], hex.v[5]);
-    vec3 e67 = riemannianSegment(vp[6], vp[7], hex.v[6]);
+    vec3 e01 = riemannianSegment(vp[0], vp[1], hex.c[0]);
+    vec3 e03 = riemannianSegment(vp[0], vp[3], hex.c[0]);
+    vec3 e04 = riemannianSegment(vp[0], vp[4], hex.c[0]);
+    vec3 e12 = riemannianSegment(vp[1], vp[2], hex.c[1]);
+    vec3 e15 = riemannianSegment(vp[1], vp[5], hex.c[1]);
+    vec3 e23 = riemannianSegment(vp[2], vp[3], hex.c[3]);
+    vec3 e26 = riemannianSegment(vp[2], vp[6], hex.c[2]);
+    vec3 e37 = riemannianSegment(vp[3], vp[7], hex.c[3]);
+    vec3 e45 = riemannianSegment(vp[4], vp[5], hex.c[4]);
+    vec3 e47 = riemannianSegment(vp[4], vp[7], hex.c[4]);
+    vec3 e56 = riemannianSegment(vp[5], vp[6], hex.c[5]);
+    vec3 e67 = riemannianSegment(vp[6], vp[7], hex.c[6]);
 
     mat3 Fk0 = mat3(e01,  e04, -e03);
     mat3 Fk1 = mat3(e01,  e12,  e15);

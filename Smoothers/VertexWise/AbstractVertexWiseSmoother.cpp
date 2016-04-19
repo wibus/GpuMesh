@@ -54,7 +54,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
     _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, crew))
     {
-        if(crew.needTopologicalModifications(_smoothPassId))
+        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
         {
             verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
@@ -80,7 +80,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
     _smoothPassId = 0;
     while(evaluateMeshQualityThread(mesh, crew))
     {
-        if(crew.needTopologicalModifications(_smoothPassId))
+        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
         {
             verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
@@ -160,7 +160,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     _smoothPassId = 0;
     while(evaluateMeshQualityGlsl(mesh, crew))
     {
-        if(crew.needTopologicalModifications(_smoothPassId))
+        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
         {
             verboseCuda = false;
             mesh.updateVerticesFromGlsl();
@@ -199,7 +199,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    initializeProgram(mesh, crew);
+    mesh.modelBoundsCudaFct()();
     _installCudaSmoother();
 
     vector<IndependentDispatch> dispatches;
@@ -210,7 +210,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     _smoothPassId = 0;
     while(evaluateMeshQualityCuda(mesh, crew))
     {
-        if(crew.needTopologicalModifications(_smoothPassId))
+        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
         {
             verboseCuda = false;
             mesh.updateVerticesFromCuda();
@@ -271,7 +271,9 @@ void AbstractVertexWiseSmoother::initializeProgram(
     }
 
     _vertSmoothProgram.link();
+    _vertSmoothProgram.pushProgram();
     crew.setPluginUniforms(mesh, _vertSmoothProgram);
+    _vertSmoothProgram.popProgram();
 
     /*
     const GlProgramBinary& binary = _vertSmoothProgram.getBinary();

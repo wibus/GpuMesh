@@ -19,13 +19,22 @@ BatrTopologist::~BatrTopologist()
 
 }
 
+bool BatrTopologist::needTopologicalModifications(
+            int vertRelocationPassCount,
+            const Mesh& mesh) const
+{
+    if(mesh.tets.empty() || !(mesh.pris.empty() && mesh.hexs.empty()))
+        return false;
+
+    return isEnabled() &&
+           (vertRelocationPassCount > 1) &&
+           ((vertRelocationPassCount-1) % frequency() == 0);
+}
+
 void BatrTopologist::restructureMesh(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
-    if(mesh.tets.empty() || !(mesh.pris.empty() && mesh.hexs.empty()))
-        return;
-
     getLog().postMessage(new Message('I', false,
         "Performing new BATR topology modifications",
         "BatrTopologist"));
@@ -139,9 +148,9 @@ void BatrTopologist::faceSwapping(
                         minQual = glm::min(minQual, crew.evaluator().tetQuality(
                             mesh, crew.sampler(), crew.measurer(), ntet));
 
-                        MeshTet newTet0(tOp, tri[0], tri[1], nOp);
-                        MeshTet newTet1(tOp, tri[1], tri[2], nOp);
-                        MeshTet newTet2(tOp, tri[2], tri[0], nOp);
+                        MeshTet newTet0(tOp, tri[0], tri[1], nOp, tet.c[0]);
+                        MeshTet newTet1(tOp, tri[1], tri[2], nOp, tet.c[0]);
+                        MeshTet newTet2(tOp, tri[2], tri[0], nOp, tet.c[0]);
 
                         if(minQual < crew.evaluator().tetQuality(mesh,
                                 crew.sampler(), crew.measurer(), newTet0) &&

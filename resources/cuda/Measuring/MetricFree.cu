@@ -2,12 +2,12 @@
 
 
 // Distance
-__device__ float metricFreeRiemannianDistance(const vec3& a, const vec3& b, uint cacheId)
+__device__ float metricFreeRiemannianDistance(const vec3& a, const vec3& b, uint& cachedRefTet)
 {
     return distance(a, b);
 }
 
-__device__ vec3 metricFreeRiemannianSegment(const vec3& a, const vec3& b, uint cacheId)
+__device__ vec3 metricFreeRiemannianSegment(const vec3& a, const vec3& b, uint& cachedRefTet)
 {
     return b - a;
 }
@@ -86,24 +86,24 @@ __device__ vec3 metricFreeComputeVertexEquilibrium(uint vId)
         case TET_ELEMENT_TYPE:
             totalVertCount += TET_VERTEX_COUNT - 1;
             for(uint i=0; i < TET_VERTEX_COUNT; ++i)
-                patchCenter += vec3(verts[tets[neigElem.id].v[i]].p);
+                patchCenter += verts[tets[neigElem.id].v[i]].p;
             break;
 
         case PRI_ELEMENT_TYPE:
             totalVertCount += PRI_VERTEX_COUNT - 1;
             for(uint i=0; i < PRI_VERTEX_COUNT; ++i)
-                patchCenter += vec3(verts[pris[neigElem.id].v[i]].p);
+                patchCenter += verts[pris[neigElem.id].v[i]].p;
             break;
 
         case HEX_ELEMENT_TYPE:
             totalVertCount += HEX_VERTEX_COUNT - 1;
             for(uint i=0; i < HEX_VERTEX_COUNT; ++i)
-                patchCenter += vec3(verts[hexs[neigElem.id].v[i]].p);
+                patchCenter += verts[hexs[neigElem.id].v[i]].p;
             break;
         }
     }
 
-    vec3 pos = vec3(verts[vId].p);
+    vec3 pos = verts[vId].p;
     patchCenter = (patchCenter - pos * float(neigElemCount))
                     / float(totalVertCount);
     return patchCenter;

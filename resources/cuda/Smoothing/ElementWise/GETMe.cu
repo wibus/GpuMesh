@@ -11,7 +11,7 @@ __device__ void addPosition(uint vId, vec3 pos, float weight);
 // ENTRY POINTS //
 __device__ void getmeSmoothTet(uint eId)
 {
-    Tet tet = tets[eId];
+    const Tet& tet = tets[eId];
 
     uint vi[] = {
         tet.v[0],
@@ -21,10 +21,10 @@ __device__ void getmeSmoothTet(uint eId)
     };
 
     vec3 vp[] = {
-        vec3(verts[vi[0]].p),
-        vec3(verts[vi[1]].p),
-        vec3(verts[vi[2]].p),
-        vec3(verts[vi[3]].p)
+        verts[vi[0]].p,
+        verts[vi[1]].p,
+        verts[vi[2]].p,
+        verts[vi[3]].p
     };
 
     vec3 n[] = {
@@ -72,7 +72,7 @@ __device__ void getmeSmoothTet(uint eId)
 
 __device__ void getmeSmoothPri(uint eId)
 {
-    Pri pri = pris[eId];
+    const Pri& pri = pris[eId];
 
     uint vi[] = {
         pri.v[0],
@@ -84,12 +84,12 @@ __device__ void getmeSmoothPri(uint eId)
     };
 
     vec3 vp[] = {
-        vec3(verts[vi[0]].p),
-        vec3(verts[vi[1]].p),
-        vec3(verts[vi[2]].p),
-        vec3(verts[vi[3]].p),
-        vec3(verts[vi[4]].p),
-        vec3(verts[vi[5]].p)
+        verts[vi[0]].p,
+        verts[vi[1]].p,
+        verts[vi[2]].p,
+        verts[vi[3]].p,
+        verts[vi[4]].p,
+        verts[vi[5]].p
     };
 
     vec3 aux[] = {
@@ -169,7 +169,7 @@ __device__ void getmeSmoothPri(uint eId)
 
 __device__ void getmeSmoothHex(uint eId)
 {
-    Hex hex = hexs[eId];
+    const Hex& hex = hexs[eId];
 
     uint vi[] = {
         hex.v[0],
@@ -183,14 +183,14 @@ __device__ void getmeSmoothHex(uint eId)
     };
 
     vec3 vp[] = {
-        vec3(verts[vi[0]].p),
-        vec3(verts[vi[1]].p),
-        vec3(verts[vi[2]].p),
-        vec3(verts[vi[3]].p),
-        vec3(verts[vi[4]].p),
-        vec3(verts[vi[5]].p),
-        vec3(verts[vi[6]].p),
-        vec3(verts[vi[7]].p)
+        verts[vi[0]].p,
+        verts[vi[1]].p,
+        verts[vi[2]].p,
+        verts[vi[3]].p,
+        verts[vi[4]].p,
+        verts[vi[5]].p,
+        verts[vi[6]].p,
+        verts[vi[7]].p
     };
 
     vec3 aux[] = {

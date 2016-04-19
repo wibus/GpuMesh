@@ -54,7 +54,7 @@ public:
 
     virtual Metric metricAt(
             const glm::dvec3& position,
-            uint cacheId) const = 0;
+            uint& cachedRefTet) const = 0;
 
 
     // Debug mesh

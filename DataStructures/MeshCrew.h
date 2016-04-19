@@ -47,10 +47,6 @@ public:
     void installPlugins(const Mesh& mesh, cellar::GlProgram& program) const;
     void setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
 
-    bool needTopologicalModifications(int pass) const;
-    void enableTopologyModifications(bool enable);
-    void setTopologyModificationsFrequency(int frequency);
-
 
 private:
     void reinitCrew(const Mesh& mesh);

@@ -3,7 +3,7 @@
 
 __device__ mat3 vertMetric(const vec3& position);
 
-__device__ mat3 analyticMetricAt(const vec3& position, uint cacheId)
+__device__ mat3 analyticMetricAt(const vec3& position, uint& cachedRefTet)
 {
     return vertMetric(position);
 }

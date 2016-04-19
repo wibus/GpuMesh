@@ -37,9 +37,9 @@ double MeanRatioEvaluator::tetQuality(
         const dvec3 vp[],
         const MeshTet& tet) const
 {
-    glm::dvec3 e03 = measurer.riemannianSegment(sampler, vp[0], vp[3], tet.v[0]);
-    glm::dvec3 e13 = measurer.riemannianSegment(sampler, vp[1], vp[3], tet.v[1]);
-    glm::dvec3 e23 = measurer.riemannianSegment(sampler, vp[2], vp[3], tet.v[2]);
+    glm::dvec3 e03 = measurer.riemannianSegment(sampler, vp[0], vp[3], tet.c[0]);
+    glm::dvec3 e13 = measurer.riemannianSegment(sampler, vp[1], vp[3], tet.c[0]);
+    glm::dvec3 e23 = measurer.riemannianSegment(sampler, vp[2], vp[3], tet.c[0]);
 
     dmat3 Fk0 = dmat3(e03, e13, e23) * Fr_TET_INV;
 
@@ -55,15 +55,15 @@ double MeanRatioEvaluator::priQuality(
         const glm::dvec3 vp[],
         const MeshPri& pri) const
 {
-    glm::dvec3 e03 = measurer.riemannianSegment(sampler, vp[0], vp[3], pri.v[0]);
-    glm::dvec3 e14 = measurer.riemannianSegment(sampler, vp[1], vp[4], pri.v[1]);
-    glm::dvec3 e25 = measurer.riemannianSegment(sampler, vp[2], vp[5], pri.v[2]);
-    glm::dvec3 e01 = measurer.riemannianSegment(sampler, vp[0], vp[1], pri.v[0]);
-    glm::dvec3 e12 = measurer.riemannianSegment(sampler, vp[1], vp[2], pri.v[1]);
-    glm::dvec3 e20 = measurer.riemannianSegment(sampler, vp[2], vp[0], pri.v[2]);
-    glm::dvec3 e34 = measurer.riemannianSegment(sampler, vp[3], vp[4], pri.v[3]);
-    glm::dvec3 e45 = measurer.riemannianSegment(sampler, vp[4], vp[5], pri.v[4]);
-    glm::dvec3 e53 = measurer.riemannianSegment(sampler, vp[5], vp[3], pri.v[5]);
+    glm::dvec3 e03 = measurer.riemannianSegment(sampler, vp[0], vp[3], pri.c[0]);
+    glm::dvec3 e14 = measurer.riemannianSegment(sampler, vp[1], vp[4], pri.c[1]);
+    glm::dvec3 e25 = measurer.riemannianSegment(sampler, vp[2], vp[5], pri.c[2]);
+    glm::dvec3 e01 = measurer.riemannianSegment(sampler, vp[0], vp[1], pri.c[0]);
+    glm::dvec3 e12 = measurer.riemannianSegment(sampler, vp[1], vp[2], pri.c[1]);
+    glm::dvec3 e20 = measurer.riemannianSegment(sampler, vp[2], vp[0], pri.c[2]);
+    glm::dvec3 e34 = measurer.riemannianSegment(sampler, vp[3], vp[4], pri.c[3]);
+    glm::dvec3 e45 = measurer.riemannianSegment(sampler, vp[4], vp[5], pri.c[4]);
+    glm::dvec3 e53 = measurer.riemannianSegment(sampler, vp[5], vp[3], pri.c[5]);
 
     // Prism corner quality is not invariant under edge swap
     // Third edge is the expected to be colinear with the first two cross product
@@ -92,18 +92,18 @@ double MeanRatioEvaluator::hexQuality(
 {
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_HEX_INV.
-    glm::dvec3 e01 = measurer.riemannianSegment(sampler, vp[0], vp[1], hex.v[0]);
-    glm::dvec3 e03 = measurer.riemannianSegment(sampler, vp[0], vp[3], hex.v[0]);
-    glm::dvec3 e04 = measurer.riemannianSegment(sampler, vp[0], vp[4], hex.v[0]);
-    glm::dvec3 e12 = measurer.riemannianSegment(sampler, vp[1], vp[2], hex.v[1]);
-    glm::dvec3 e15 = measurer.riemannianSegment(sampler, vp[1], vp[5], hex.v[1]);
-    glm::dvec3 e23 = measurer.riemannianSegment(sampler, vp[2], vp[3], hex.v[3]);
-    glm::dvec3 e26 = measurer.riemannianSegment(sampler, vp[2], vp[6], hex.v[2]);
-    glm::dvec3 e37 = measurer.riemannianSegment(sampler, vp[3], vp[7], hex.v[3]);
-    glm::dvec3 e45 = measurer.riemannianSegment(sampler, vp[4], vp[5], hex.v[4]);
-    glm::dvec3 e47 = measurer.riemannianSegment(sampler, vp[4], vp[7], hex.v[4]);
-    glm::dvec3 e56 = measurer.riemannianSegment(sampler, vp[5], vp[6], hex.v[5]);
-    glm::dvec3 e67 = measurer.riemannianSegment(sampler, vp[6], vp[7], hex.v[6]);
+    glm::dvec3 e01 = measurer.riemannianSegment(sampler, vp[0], vp[1], hex.c[0]);
+    glm::dvec3 e03 = measurer.riemannianSegment(sampler, vp[0], vp[3], hex.c[0]);
+    glm::dvec3 e04 = measurer.riemannianSegment(sampler, vp[0], vp[4], hex.c[0]);
+    glm::dvec3 e12 = measurer.riemannianSegment(sampler, vp[1], vp[2], hex.c[1]);
+    glm::dvec3 e15 = measurer.riemannianSegment(sampler, vp[1], vp[5], hex.c[1]);
+    glm::dvec3 e23 = measurer.riemannianSegment(sampler, vp[2], vp[3], hex.c[3]);
+    glm::dvec3 e26 = measurer.riemannianSegment(sampler, vp[2], vp[6], hex.c[2]);
+    glm::dvec3 e37 = measurer.riemannianSegment(sampler, vp[3], vp[7], hex.c[3]);
+    glm::dvec3 e45 = measurer.riemannianSegment(sampler, vp[4], vp[5], hex.c[4]);
+    glm::dvec3 e47 = measurer.riemannianSegment(sampler, vp[4], vp[7], hex.c[4]);
+    glm::dvec3 e56 = measurer.riemannianSegment(sampler, vp[5], vp[6], hex.c[5]);
+    glm::dvec3 e67 = measurer.riemannianSegment(sampler, vp[6], vp[7], hex.c[6]);
 
     dmat3 Fk0 = dmat3(e01,  e04, -e03);
     dmat3 Fk1 = dmat3(e01,  e12,  e15);

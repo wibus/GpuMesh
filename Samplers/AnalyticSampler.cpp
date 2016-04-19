@@ -32,7 +32,7 @@ void AnalyticSampler::setReferenceMesh(
 
 Metric AnalyticSampler::metricAt(
         const glm::dvec3& position,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     return vertMetric(position);
 }

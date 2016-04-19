@@ -15,6 +15,11 @@ protected:
 public:
     virtual ~AbstractTopologist();
 
+
+    virtual bool needTopologicalModifications(
+            int vertRelocationPassCount,
+            const Mesh& mesh) const = 0;
+
     virtual void restructureMesh(
             Mesh& mesh,
             const MeshCrew& crew) const = 0;
@@ -22,6 +27,7 @@ public:
     virtual void printOptimisationParameters(
             const Mesh& mesh,
             OptimizationPlot& plot) const = 0;
+
 
     bool isEnabled() const;
     void setEnabled(bool isEnabled);

@@ -2,12 +2,12 @@ uniform float Lambda;
 
 
 // Quality Interface
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], in Tet tet);
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri);
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex);
-float tetVolume(in vec3 vp[TET_VERTEX_COUNT], in Tet tet);
-float priVolume(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri);
-float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex);
+float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
+float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
+float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
+float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
 
 // Boundaries
 vec3 snapToBoundary(int boundaryID, vec3 pos);
@@ -39,7 +39,7 @@ void smoothTet(uint eId)
         cross(vp[3]-vp[1], vp[2]-vp[1]),
         cross(vp[3]-vp[2], vp[0]-vp[2]),
         cross(vp[1]-vp[3], vp[0]-vp[3]),
-        cross(vp[1]-vp[0], vp[2]-vp[0]),
+        cross(vp[1]-vp[0], vp[2]-vp[0])
     );
 
     vec3 vpp[] = vec3[](
@@ -105,7 +105,7 @@ void smoothPri(uint eId)
         (vp[0] + vp[1] + vp[4] + vp[3]) / 4.0,
         (vp[1] + vp[2] + vp[5] + vp[4]) / 4.0,
         (vp[2] + vp[0] + vp[3] + vp[5]) / 4.0,
-        (vp[3] + vp[4] + vp[5]) / 3.0,
+        (vp[3] + vp[4] + vp[5]) / 3.0
     );
 
     vec3 n[] = vec3[](
@@ -114,7 +114,7 @@ void smoothPri(uint eId)
         cross(aux[3] - aux[0], aux[2] - aux[0]),
         cross(aux[3] - aux[4], aux[1] - aux[4]),
         cross(aux[1] - aux[4], aux[2] - aux[4]),
-        cross(aux[2] - aux[4], aux[3] - aux[4]),
+        cross(aux[2] - aux[4], aux[3] - aux[4])
     );
 
     float t = (4.0/5.0) * (1.0 - pow(4.0/39.0, 0.25) * Lambda);
@@ -125,7 +125,7 @@ void smoothPri(uint eId)
         it * aux[0] + t * (aux[2] + aux[3]) / 2.0,
         it * aux[4] + t * (aux[3] + aux[1]) / 2.0,
         it * aux[4] + t * (aux[1] + aux[2]) / 2.0,
-        it * aux[4] + t * (aux[2] + aux[3]) / 2.0,
+        it * aux[4] + t * (aux[2] + aux[3]) / 2.0
     );
 
 
@@ -207,7 +207,7 @@ void smoothHex(uint eId)
         (vp[1] + vp[5] + vp[6] + vp[2]) / 4.0,
         (vp[2] + vp[6] + vp[7] + vp[3]) / 4.0,
         (vp[0] + vp[3] + vp[7] + vp[4]) / 4.0,
-        (vp[4] + vp[7] + vp[6] + vp[5]) / 4.0,
+        (vp[4] + vp[7] + vp[6] + vp[5]) / 4.0
     );
 
     vec3 n[] = vec3[](
@@ -218,7 +218,7 @@ void smoothHex(uint eId)
         cross(aux[4] - aux[5], aux[1] - aux[5]),
         cross(aux[1] - aux[5], aux[2] - aux[5]),
         cross(aux[2] - aux[5], aux[3] - aux[5]),
-        cross(aux[3] - aux[5], aux[4] - aux[5]),
+        cross(aux[3] - aux[5], aux[4] - aux[5])
     );
 
     vec3 bases[] = vec3[](
@@ -229,7 +229,7 @@ void smoothHex(uint eId)
         (aux[5] + aux[4] + aux[1]) / 3.0,
         (aux[5] + aux[1] + aux[2]) / 3.0,
         (aux[5] + aux[2] + aux[3]) / 3.0,
-        (aux[5] + aux[3] + aux[4]) / 3.0,
+        (aux[5] + aux[3] + aux[4]) / 3.0
     );
 
 

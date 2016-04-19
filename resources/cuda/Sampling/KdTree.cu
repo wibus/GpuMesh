@@ -30,7 +30,7 @@ __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4]);
 //////////////////////////////
 //   Function definitions   //
 //////////////////////////////
-__device__ mat3 kdTreeMetricAt(const vec3& position, uint cacheId)
+__device__ mat3 kdTreeMetricAt(const vec3& position, uint& cachedRefTet)
 {
     int nodeId = 0;
     int childId = 0;

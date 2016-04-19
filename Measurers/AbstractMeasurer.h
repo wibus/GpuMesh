@@ -51,13 +51,13 @@ public:
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint cacheId) const = 0;
+            uint& cachedRefTet) const = 0;
 
     virtual glm::dvec3 riemannianSegment(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint cacheId) const = 0;
+            uint& cachedRefTet) const = 0;
 
 
     // Volumes
@@ -92,7 +92,6 @@ public:
 
     virtual double computeLocalElementSize(
             const Mesh& mesh,
-            const AbstractSampler& sampler,
             uint vId) const;
 
 

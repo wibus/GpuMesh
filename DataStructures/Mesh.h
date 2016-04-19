@@ -19,12 +19,14 @@ namespace cellar
 struct MeshVert
 {
     glm::dvec3 p;
+    mutable uint c;
 
 
     inline MeshVert() : p(0) {}
-    inline MeshVert(const glm::dvec3 p) : p(p){}
-    inline double& operator[] (int c) { return p[c]; }
-    inline const double& operator[] (int c) const { return p[c]; }
+    inline MeshVert(const glm::dvec3 p) : p(p), c(0){}
+    inline MeshVert(const glm::dvec3 p, uint c) : p(p), c(c){}
+    inline double& operator[] (int d) { return p[d]; }
+    inline const double& operator[] (int d) const { return p[d]; }
     inline operator glm::dvec3() const { return p; }
 };
 
@@ -58,12 +60,22 @@ struct MeshTri
 struct MeshTet
 {
     uint v[4];
-    double value;
+    double value;    
+    mutable uint c[1];
 
 
-	inline MeshTet() : v{0, 0, 0, 0} {}
+    inline MeshTet() :
+        v{0, 0, 0, 0},
+        c{0}
+    {}
 	inline MeshTet(uint v0, uint v1, uint v2, uint v3) : 
-		v{v0, v1, v2, v3} {}
+        v{v0, v1, v2, v3},
+        c{0}
+    {}
+    inline MeshTet(uint v0, uint v1, uint v2, uint v3, uint c) :
+        v{v0, v1, v2, v3},
+        c{c}
+    {}
 
     inline uint& operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
@@ -83,12 +95,25 @@ struct MeshPri
 {
     uint v[6];
     double value;
+    mutable uint c[6];
 
 
-	inline MeshPri() : v{0, 0, 0, 0, 0, 0} {}
+    inline MeshPri() :
+        v{0, 0, 0, 0, 0, 0},
+        c{0, 0, 0, 0, 0, 0}
+    {}
 	inline MeshPri(uint v0, uint v1, uint v2,
-		           uint v3, uint v4, uint v5) :
-		v{ v0, v1, v2, v3, v4, v5 } {}
+                   uint v3, uint v4, uint v5) :
+        v{v0, v1, v2, v3, v4, v5},
+        c{0, 0, 0, 0, 0, 0}
+    {}
+    inline MeshPri(uint v0, uint v1, uint v2,
+                   uint v3, uint v4, uint v5,
+                   uint c0, uint c1, uint c2,
+                   uint c3, uint c4, uint c5) :
+        v{v0, v1, v2, v3, v4, v5},
+        c{c0, c1, c2, c3, c4, c5}
+    {}
 
     inline uint operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
@@ -108,12 +133,25 @@ struct MeshHex
 {
     uint v[8];
     double value;
+    mutable uint c[8];
 
 
-	inline MeshHex() : v{0, 0, 0, 0, 0, 0, 0, 0} {}
+    inline MeshHex() :
+        v{0, 0, 0, 0, 0, 0, 0, 0},
+        c{0, 0, 0, 0, 0, 0, 0, 0}
+    {}
 	inline MeshHex(uint v0, uint v1, uint v2, uint v3,
 		           uint v4, uint v5, uint v6, uint v7) :
-		v{ v0, v1, v2, v3, v4, v5, v6, v7 } {}
+        v{v0, v1, v2, v3, v4, v5, v6, v7},
+        c{0, 0, 0, 0, 0, 0, 0, 0}
+    {}
+    inline MeshHex(uint v0, uint v1, uint v2, uint v3,
+                   uint v4, uint v5, uint v6, uint v7,
+                   uint c0, uint c1, uint c2, uint c3,
+                   uint c4, uint c5, uint c6, uint c7) :
+        v{v0, v1, v2, v3, v4, v5, v6, v7},
+        c{c0, c1, c2, c3, c4, c5, c6, c7}
+    {}
 
     inline uint operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
@@ -200,8 +238,7 @@ enum class EBufferBinding
     REF_METRICS_BUFFER_BINDING,
     KD_TETS_BUFFER_BINDING,
     KD_NODES_BUFFER_BINDING,
-    LOCAL_TETS_BUFFER_BINDING,
-    LOCAL_CACHE_BUFFER_BINDING
+    LOCAL_TETS_BUFFER_BINDING
 };
 
 enum class ECutType

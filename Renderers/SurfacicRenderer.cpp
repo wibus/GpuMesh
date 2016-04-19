@@ -591,6 +591,17 @@ void SurfacicRenderer::clearResources()
 
 
     _buffFaceElemCount = 0;
+
+
+    _litShader.reset();
+    _unlitShader.reset();
+    _edgeShader.reset();
+    _shadowShader.reset();
+    _bloomBlurShader.reset();
+    _bloomBlendShader.reset();
+    _screenShader.reset();
+    _brushShader.reset();
+    _grainShader.reset();
 }
 
 void SurfacicRenderer::resetResources()

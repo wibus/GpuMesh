@@ -268,7 +268,7 @@ void AbstractElementWiseSmoother::smoothMeshCuda(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    initializeProgram(mesh, crew);
+    mesh.modelBoundsCudaFct()();
     _installCudaSmoother();
 
     // There's no need to upload vertices again, but absurdly
@@ -350,7 +350,9 @@ void AbstractElementWiseSmoother::initializeProgram(
     }
 
     _elemSmoothProgram.link();
+    _elemSmoothProgram.pushProgram();
     crew.setPluginUniforms(mesh, _elemSmoothProgram);
+    _elemSmoothProgram.popProgram();
 
 
     // Update Vertex Positions Program
@@ -367,7 +369,9 @@ void AbstractElementWiseSmoother::initializeProgram(
         ":/glsl/compute/Smoothing/ElementWise/UpdateVertices.glsl"});
 
     _vertUpdateProgram.link();
+    _vertUpdateProgram.pushProgram();
     crew.setPluginUniforms(mesh, _vertUpdateProgram);
+    _vertUpdateProgram.popProgram();
 
 
     // Shader storage vertex accum blocks

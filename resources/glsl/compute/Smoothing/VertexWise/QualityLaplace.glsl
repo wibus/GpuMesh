@@ -16,7 +16,7 @@ void smoothVert(uint vId)
 {
     // Compute patch center
     vec3 patchCenter = computeVertexEquilibrium(vId);
-    vec3 pos = vec3(verts[vId].p);
+    vec3 pos = verts[vId].p;
     vec3 centerDist = patchCenter - pos;
 
 
@@ -45,7 +45,7 @@ void smoothVert(uint vId)
     {
         // Quality evaluation functions will use this updated position
         // to compute element shape measures.
-        verts[vId].p = vec4(propositions[p], 0.0);
+        verts[vId].p = propositions[p];
 
         float patchQuality = patchQuality(vId);
 
@@ -58,5 +58,5 @@ void smoothVert(uint vId)
 
 
     // Update vertex's position
-    verts[vId].p = vec4(propositions[bestProposition], 0.0);
+    verts[vId].p = propositions[bestProposition];
 }

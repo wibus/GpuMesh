@@ -2,12 +2,12 @@
 
 
 // Riemannian distance
-typedef float (*riemannianDistanceFct)(const vec3& a, const vec3& b, uint cacheId);
+typedef float (*riemannianDistanceFct)(const vec3& a, const vec3& b, uint& cachedRefTet);
 extern __device__ riemannianDistanceFct riemannianDistanceImpl;
 
 
 // Riemannian segment
-typedef vec3 (*riemannianSegmentFct)(const vec3& a, const vec3& b, uint cacheId);
+typedef vec3 (*riemannianSegmentFct)(const vec3& a, const vec3& b, uint& cachedRefTet);
 extern __device__ riemannianSegmentFct riemannianSegmentImpl;
 
 

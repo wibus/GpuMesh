@@ -47,7 +47,7 @@ __device__ mat3 vertMetric(const vec3& position)
 
 __device__ mat3 vertMetric(uint vId)
 {
-    return vertMetric(vec3(verts[vId].p));
+    return vertMetric(verts[vId].p);
 }
 
 __device__ void boundingBox(vec3& minBounds, vec3& maxBounds)
@@ -57,7 +57,7 @@ __device__ void boundingBox(vec3& minBounds, vec3& maxBounds)
     uint vertCount = verts_length;
     for(uint v=0; v < vertCount; ++v)
     {
-        vec3 vertPos = vec3(verts[v].p);
+        vec3 vertPos = verts[v].p;
         minBounds = min(minBounds, vertPos);
         maxBounds = max(maxBounds, vertPos);
     }

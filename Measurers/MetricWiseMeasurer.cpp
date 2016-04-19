@@ -27,11 +27,11 @@ double MetricWiseMeasurer::riemannianDistance(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     glm::dvec3 abDiff = b - a;
     glm::dvec3 middle = (a + b) / 2.0;
-    Metric origMetric = sampler.metricAt(middle, cacheId);
+    Metric origMetric = sampler.metricAt(middle, cachedRefTet);
     double dist = glm::sqrt(glm::dot(abDiff, origMetric * abDiff));
 
     int segmentCount = 1;
@@ -46,7 +46,7 @@ double MetricWiseMeasurer::riemannianDistance(
         double newDist = 0.0;
         for(int i=0; i < segmentCount; ++i)
         {
-            Metric metric = sampler.metricAt(segBeg + half_ds, cacheId);
+            Metric metric = sampler.metricAt(segBeg + half_ds, cachedRefTet);
             newDist += glm::sqrt(glm::dot(ds, metric * ds));
             segBeg += ds;
         }
@@ -62,10 +62,10 @@ glm::dvec3 MetricWiseMeasurer::riemannianSegment(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
         const glm::dvec3& b,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     return glm::normalize(b - a) *
-            riemannianDistance(sampler, a, b, cacheId);
+            riemannianDistance(sampler, a, b, cachedRefTet);
 }
 
 double MetricWiseMeasurer::tetVolume(
@@ -74,9 +74,9 @@ double MetricWiseMeasurer::tetVolume(
         const MeshTet& tet) const
 {
     double detSum = glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[0], vp[3], tet.v[0]),
-        riemannianSegment(sampler, vp[1], vp[3], tet.v[1]),
-        riemannianSegment(sampler, vp[2], vp[3], tet.v[2])));
+        riemannianSegment(sampler, vp[0], vp[3], tet.c[0]),
+        riemannianSegment(sampler, vp[1], vp[3], tet.c[0]),
+        riemannianSegment(sampler, vp[2], vp[3], tet.c[0])));
 
     return detSum / 6.0;
 }
@@ -86,11 +86,11 @@ double MetricWiseMeasurer::priVolume(
         const glm::dvec3 vp[],
         const MeshPri& pri) const
 {
-    glm::dvec3 e02 = riemannianSegment(sampler, vp[0], vp[2], pri.v[0]);
-    glm::dvec3 e12 = riemannianSegment(sampler, vp[1], vp[2], pri.v[1]);
-    glm::dvec3 e32 = riemannianSegment(sampler, vp[3], vp[2], pri.v[3]);
-    glm::dvec3 e42 = riemannianSegment(sampler, vp[4], vp[2], pri.v[4]);
-    glm::dvec3 e52 = riemannianSegment(sampler, vp[5], vp[2], pri.v[5]);
+    glm::dvec3 e02 = riemannianSegment(sampler, vp[0], vp[2], pri.c[0]);
+    glm::dvec3 e12 = riemannianSegment(sampler, vp[1], vp[2], pri.c[1]);
+    glm::dvec3 e32 = riemannianSegment(sampler, vp[3], vp[2], pri.c[3]);
+    glm::dvec3 e42 = riemannianSegment(sampler, vp[4], vp[2], pri.c[4]);
+    glm::dvec3 e52 = riemannianSegment(sampler, vp[5], vp[2], pri.c[5]);
 
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(e32, e52, e42));
@@ -107,25 +107,25 @@ double MetricWiseMeasurer::hexVolume(
 {
     double detSum = 0.0;
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[1], vp[0], hex.v[1]),
-        riemannianSegment(sampler, vp[4], vp[0], hex.v[4]),
-        riemannianSegment(sampler, vp[3], vp[0], hex.v[3])));
+        riemannianSegment(sampler, vp[1], vp[0], hex.c[1]),
+        riemannianSegment(sampler, vp[4], vp[0], hex.c[4]),
+        riemannianSegment(sampler, vp[3], vp[0], hex.c[3])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[1], vp[2], hex.v[1]),
-        riemannianSegment(sampler, vp[3], vp[2], hex.v[3]),
-        riemannianSegment(sampler, vp[6], vp[2], hex.v[6])));
+        riemannianSegment(sampler, vp[1], vp[2], hex.c[1]),
+        riemannianSegment(sampler, vp[3], vp[2], hex.c[3]),
+        riemannianSegment(sampler, vp[6], vp[2], hex.c[6])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[4], vp[5], hex.v[4]),
-        riemannianSegment(sampler, vp[1], vp[5], hex.v[1]),
-        riemannianSegment(sampler, vp[6], vp[5], hex.v[6])));
+        riemannianSegment(sampler, vp[4], vp[5], hex.c[4]),
+        riemannianSegment(sampler, vp[1], vp[5], hex.c[1]),
+        riemannianSegment(sampler, vp[6], vp[5], hex.c[6])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[4], vp[7], hex.v[4]),
-        riemannianSegment(sampler, vp[6], vp[7], hex.v[6]),
-        riemannianSegment(sampler, vp[3], vp[7], hex.v[3])));
+        riemannianSegment(sampler, vp[4], vp[7], hex.c[4]),
+        riemannianSegment(sampler, vp[6], vp[7], hex.c[6]),
+        riemannianSegment(sampler, vp[3], vp[7], hex.c[3])));
     detSum += glm::determinant(glm::dmat3(
-        riemannianSegment(sampler, vp[1], vp[4], hex.v[1]),
-        riemannianSegment(sampler, vp[6], vp[4], hex.v[6]),
-        riemannianSegment(sampler, vp[3], vp[4], hex.v[3])));
+        riemannianSegment(sampler, vp[1], vp[4], hex.c[1]),
+        riemannianSegment(sampler, vp[6], vp[4], hex.c[6]),
+        riemannianSegment(sampler, vp[3], vp[4], hex.c[3])));
 
     return detSum / 6.0;
 }
@@ -139,6 +139,7 @@ glm::dvec3 MetricWiseMeasurer::computeVertexEquilibrium(
 
     const MeshTopo& topo = mesh.topos[vId];
     const glm::dvec3& pos = verts[vId].p;
+    uint& cachedRefTet = verts[vId].c;
 
     glm::dvec3 forceTotal(0.0);
     uint neigVertCount = topo.neighborVerts.size();
@@ -147,7 +148,7 @@ glm::dvec3 MetricWiseMeasurer::computeVertexEquilibrium(
         const MeshNeigVert& neigVert = topo.neighborVerts[n];
         const glm::dvec3& npos = verts[neigVert.v];
 
-        forceTotal += computeSpringForce(sampler, pos, npos, vId);
+        forceTotal += computeSpringForce(sampler, pos, npos, cachedRefTet);
     }
 
     glm::dvec3 equilibrium = pos + forceTotal;
@@ -158,12 +159,12 @@ glm::dvec3 MetricWiseMeasurer::computeSpringForce(
         const AbstractSampler& sampler,
         const glm::dvec3& pi,
         const glm::dvec3& pj,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     if(pi == pj)
         return glm::dvec3();
 
-    double d = riemannianDistance(sampler, pi, pj, cacheId);
+    double d = riemannianDistance(sampler, pi, pj, cachedRefTet);
     glm::dvec3 u = (pi - pj) / d;
 
     double d2 = d * d;

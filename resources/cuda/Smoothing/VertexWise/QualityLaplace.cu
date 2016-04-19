@@ -11,8 +11,8 @@ __device__ float patchQuality(uint vId);
 __device__ void qualityLaplaceSmoothVert(uint vId)
 {
     // Compute patch center
+    vec3 pos = verts[vId].p;
     vec3 patchCenter = computeVertexEquilibrium(vId);
-    vec3 pos = vec3(verts[vId].p);
     vec3 centerDist = patchCenter - pos;
 
 
@@ -41,7 +41,7 @@ __device__ void qualityLaplaceSmoothVert(uint vId)
     {
         // Quality evaluation functions will use this updated position
         // to compute element shape measures.
-        verts[vId].p = vec4(propositions[p], 0.0);
+        verts[vId].p = propositions[p];
 
         float pq = patchQuality(vId);
 
@@ -54,7 +54,7 @@ __device__ void qualityLaplaceSmoothVert(uint vId)
 
 
     // Update vertex's position
-    verts[vId].p = vec4(propositions[bestProposition], 0.0);
+    verts[vId].p = propositions[bestProposition];
 }
 
 __device__ smoothVertFct qualityLaplaceSmoothVertPtr = qualityLaplaceSmoothVert;

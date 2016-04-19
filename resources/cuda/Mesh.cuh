@@ -12,7 +12,8 @@ using namespace glm;
 
 struct Vert
 {
-    vec4 p;
+    vec3 p;
+    mutable uint c;
 };
 
 struct Edge
@@ -28,16 +29,19 @@ struct Tri
 struct Tet
 {
     uint v[4];
+    mutable uint c[1];
 };
 
 struct Pri
 {
     uint v[6];
+    mutable uint c[6];
 };
 
 struct Hex
 {
     uint v[8];
+    mutable uint c[8];
 };
 
 struct NeigVert

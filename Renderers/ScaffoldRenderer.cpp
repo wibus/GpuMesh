@@ -378,6 +378,11 @@ void ScaffoldRenderer::clearResources()
 
     glDeleteBuffers(1, &_eibo);
     _eibo = 0;
+
+
+    _scaffoldJointProgram.reset();
+    _scaffoldTubeProgram.reset();
+    _wireframeProgram.reset();
 }
 
 void ScaffoldRenderer::resetResources()

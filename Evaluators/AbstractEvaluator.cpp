@@ -165,7 +165,12 @@ void AbstractEvaluator::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-    program.setSubroutine(GL_COMPUTE_SHADER, "patchQualityUni", "patchQualityImpl");
+    // Seems to be a driver bug with inactive subroutines (NVIDIA GTX 780Ti )
+    // The query API return correct info (omitting inactive subroutines uniforms),
+    // but GlSubroutineUniformsiv() generate an error when it receives the deisred
+    // number of subroutine nuiform locations (GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS).
+
+    //program.setSubroutine(GL_COMPUTE_SHADER, "patchQualityUni", "patchQualityImpl");
 }
 
 double AbstractEvaluator::tetQuality(

@@ -13,7 +13,7 @@ void smoothVert(uint vId)
 {
     vec3 patchCenter = computeVertexEquilibrium(vId);
 
-    vec3 pos = vec3(verts[vId].p);
+    vec3 pos = verts[vId].p;
     pos = mix(pos, patchCenter, MoveCoeff);
 
 
@@ -25,5 +25,5 @@ void smoothVert(uint vId)
 
 
     // Write
-    verts[vId].p = vec4(pos, 0.0);
+    verts[vId].p = pos;
 }

@@ -18,7 +18,7 @@ __global__ void updateVerticesCudaMain()
 
     if(isSmoothableVertex(vId))
     {
-        vec3 pos = vec3(verts[vId].p);
+        vec3 pos = verts[vId].p;
         vec3 posPrim = pos;
 
         if(assignAverage(vId, posPrim))
@@ -30,13 +30,13 @@ __global__ void updateVerticesCudaMain()
             float prePatchQuality =
                 patchQuality(vId);
 
-            verts[vId].p = vec4(posPrim, 0.0);
+            verts[vId].p = posPrim;
 
             float patchQualityPrime =
                 patchQuality(vId);
 
             if(patchQualityPrime < prePatchQuality)
-                verts[vId].p = vec4(pos, 0.0);
+                verts[vId].p = pos;
         }
 
         reinitAccum(vId);

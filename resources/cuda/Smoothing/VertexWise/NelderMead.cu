@@ -30,7 +30,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
 
 
     Topo topo = topos[vId];
-    vec3 pos = vec3(verts[vId].p);
+    vec3 pos = verts[vId].p;
     vec4 vo(pos, patchQuality(vId));
 
     vec4 simplex[TET_VERTEX_COUNT] = {
@@ -50,12 +50,12 @@ __device__ void nelderMeadSmoothVert(uint vId)
             // Since 'pos' is a reference on vertex's position
             // modifing its value here should be seen by the evaluator
             if(topo.type > 0)
-                verts[vId].p = vec4(snapToBoundary(topo.type, vec3(simplex[p])), 0);
+                verts[vId].p = snapToBoundary(topo.type, vec3(simplex[p]));
             else
-                verts[vId].p = simplex[p];
+                verts[vId].p = vec3(simplex[p]);
 
             // Compute patch quality
-            simplex[p] = vec4(vec3(verts[vId].p), patchQuality(vId));
+            simplex[p] = vec4(verts[vId].p, patchQuality(vId));
         }
 
         // Mini bubble sort
@@ -84,17 +84,17 @@ __device__ void nelderMeadSmoothVert(uint vId)
             float f = 0.0;
 
             // Reflect
-            verts[vId].p = vec4(c + NMAlpha*(c - vec3(simplex[0])), 0);
-            if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+            verts[vId].p = c + NMAlpha*(c - vec3(simplex[0]));
+            if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
             float fr = f = patchQuality(vId);
 
-            vec4 xr = verts[vId].p;
+            vec3 xr = verts[vId].p;
 
             // Expand
             if(simplex[3].w < fr)
             {
-                verts[vId].p = vec4(c + NMGamma*(vec3(verts[vId].p) - c), 0);
-                if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+                verts[vId].p = c + NMGamma*(verts[vId].p - c);
+                if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                 float fe = f = patchQuality(vId);
 
                 if(fe <= fr)
@@ -109,21 +109,21 @@ __device__ void nelderMeadSmoothVert(uint vId)
                 // Outside
                 if(fr > simplex[0].w)
                 {
-                    verts[vId].p = vec4(c + NMBeta*(vec3(xr) - c), 0);
-                    if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+                    verts[vId].p = c + NMBeta*(vec3(xr) - c);
+                    if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                     f = patchQuality(vId);
                 }
                 // Inside
                 else
                 {
-                    verts[vId].p = vec4(c + NMBeta*(vec3(simplex[0]) - c), 0);
-                    if(topo.type > 0) verts[vId].p = vec4(snapToBoundary(topo.type, vec3(verts[vId].p)), 0);
+                    verts[vId].p = c + NMBeta*(vec3(simplex[0]) - c), 0;
+                    if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                     f = patchQuality(vId);
                 }
             }
 
             // Insert new vertex in the working simplex
-            vec4 vertex(vec3(verts[vId].p), f);
+            vec4 vertex(verts[vId].p, f);
             if(vertex.w > simplex[3].w)
                 swap(simplex[3], vertex);
             if(vertex.w > simplex[2].w)
@@ -157,9 +157,9 @@ __device__ void nelderMeadSmoothVert(uint vId)
     }
 
     if(topo.type > 0)
-        verts[vId].p = vec4(snapToBoundary(topo.type, vec3(simplex[3])), 0);
+        verts[vId].p = snapToBoundary(topo.type, vec3(simplex[3]));
     else
-        verts[vId].p = simplex[3];
+        verts[vId].p = vec3(simplex[3]);
 }
 
 __device__ smoothVertFct nelderMeadSmoothVertPtr = nelderMeadSmoothVert;

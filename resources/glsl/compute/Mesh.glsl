@@ -12,7 +12,8 @@
 
 struct Vert
 {
-    vec4 p;
+    vec3 p;
+    uint c;
 };
 
 struct Edge
@@ -28,16 +29,19 @@ struct Tri
 struct Tet
 {
     uint v[4];
+    uint c[1];
 };
 
 struct Pri
 {
     uint v[6];
+    uint c[6];
 };
 
 struct Hex
 {
     uint v[8];
+    uint c[8];
 };
 
 struct NeigVert
@@ -81,7 +85,6 @@ const uint REF_METRICS_BUFFER_BINDING       = 12;
 const uint KD_TETS_BUFFER_BINDING           = 13;
 const uint KD_NODES_BUFFER_BINDING          = 14;
 const uint LOCAL_TETS_BUFFER_BINDING        = 15;
-const uint LOCAL_CACHE_BUFFER_BINDING       = 16;
 
 const uint METRIC_AT_SUBROUTINE_LOC         = 0;
 const uint METRIC_AT_SUBROUTINE_IDX         = 0;
@@ -89,7 +92,7 @@ const uint PATCH_QUALITY_SUBROUTINE_LOC     = 1;
 const uint PATCH_QUALITY_SUBROUTINE_IDX     = 1;
 
 
-layout(std140, binding = 0) buffer Verts
+layout(shared, binding = 0) buffer Verts
 {
     Vert verts[];
 };

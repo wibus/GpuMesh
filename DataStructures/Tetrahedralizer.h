@@ -51,12 +51,22 @@ void tetrahedrize(
 
     // Tets
     for(const MeshTet& tet : mesh.tets)
+    {
+        tet.c[0] = tets.size();
         tets.push_back(Tet(tet));
+    }
 
 
     // Prisms
     for(const MeshPri& pri : mesh.pris)
     {
+        pri.c[0] = tets.size();
+        pri.c[1] = tets.size();
+        pri.c[2] = tets.size();
+        pri.c[3] = tets.size();
+        pri.c[4] = tets.size();
+        pri.c[5] = tets.size();
+
         uint smallestId = 0;
         if(pri.v[1] < pri.v[smallestId]) smallestId = 1;
         if(pri.v[2] < pri.v[smallestId]) smallestId = 2;
@@ -91,6 +101,15 @@ void tetrahedrize(
     // Hexs
     for(const MeshHex& hex : mesh.hexs)
     {
+        hex.c[0] = tets.size();
+        hex.c[1] = tets.size();
+        hex.c[2] = tets.size();
+        hex.c[3] = tets.size();
+        hex.c[4] = tets.size();
+        hex.c[5] = tets.size();
+        hex.c[6] = tets.size();
+        hex.c[7] = tets.size();
+
         uint smallestId = 0;
         if(hex.v[1] < hex.v[smallestId]) smallestId = 1;
         if(hex.v[2] < hex.v[smallestId]) smallestId = 2;

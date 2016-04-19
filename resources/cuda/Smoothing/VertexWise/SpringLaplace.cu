@@ -6,7 +6,7 @@ __device__ void springLaplaceSmoothVert(uint vId)
 {
     vec3 patchCenter = computeVertexEquilibrium(vId);
 
-    vec3 pos = vec3(verts[vId].p);
+    vec3 pos = verts[vId].p;
     pos = mix(pos, patchCenter, MoveCoeff);
 
 
@@ -18,7 +18,7 @@ __device__ void springLaplaceSmoothVert(uint vId)
 
 
     // Write
-    verts[vId].p = vec4(pos, 0.0);
+    verts[vId].p = pos;
 }
 
 __device__ smoothVertFct springLaplaceSmoothVertPtr = springLaplaceSmoothVert;

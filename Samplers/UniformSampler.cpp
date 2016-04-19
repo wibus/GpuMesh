@@ -223,7 +223,7 @@ void UniformSampler::setReferenceMesh(const Mesh& mesh)
 
 Metric UniformSampler::metricAt(
         const glm::dvec3& position,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     glm::dvec3 cs = _grid->extents / glm::dvec3(_grid->size);
     glm::dvec3 minB = _grid->minBounds;

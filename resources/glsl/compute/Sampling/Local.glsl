@@ -10,21 +10,16 @@ layout(shared, binding = LOCAL_TETS_BUFFER_BINDING) buffer LocalTets
     LocalTet localTets[];
 };
 
-layout(shared, binding = LOCAL_CACHE_BUFFER_BINDING) buffer LocalCache
-{
-    uint localCache[];
-};
-
 bool tetParams(in uint v[4], in vec3 p, out float coor[4]);
 
 
-subroutine mat3 metricAtSub(in vec3 position, in uint vId);
+subroutine mat3 metricAtSub(in vec3 position, inout uint cachedRefTet);
 layout(location=METRIC_AT_SUBROUTINE_LOC)
 subroutine uniform metricAtSub metricAtUni;
 
-mat3 metricAt(in vec3 position, in uint vId)
+mat3 metricAt(in vec3 position, inout uint cachedRefTet)
 {
-    return metricAtUni(position, vId);
+    return metricAtUni(position, cachedRefTet);
 }
 
 
@@ -42,14 +37,13 @@ bool isTaboo(uint tId, uint taboo[MAX_TABOO], uint count)
 }
 
 layout(index=METRIC_AT_SUBROUTINE_IDX) subroutine(metricAtSub)
-mat3 metricAtImpl(in vec3 position, in uint cacheId)
+mat3 metricAtImpl(in vec3 position, inout uint cachedRefTet)
 {
     // Taboo search structures
     uint tabooCount = 0;
     uint taboo[MAX_TABOO];
 
-    uint tetId = localCache[cacheId];
-    LocalTet tet = localTets[tetId];
+    LocalTet tet = localTets[cachedRefTet];
 
     float coor[4];
     while(!tetParams(tet.v, position, coor))
@@ -88,12 +82,12 @@ mat3 metricAtImpl(in vec3 position, in uint cacheId)
                 if(tabooCount < MAX_TABOO)
                 {
                     // Add last tet to taboo list
-                    taboo[tabooCount] = tetId;
+                    taboo[tabooCount] = cachedRefTet;
                     ++tabooCount;
 
                     // Fetch the next local tet
                     tet = localTets[nextTet];
-                    tetId = nextTet;
+                    cachedRefTet = nextTet;
                 }
                 else
                 {
@@ -135,10 +129,6 @@ mat3 metricAtImpl(in vec3 position, in uint cacheId)
             break;
         }
     }
-
-    // TODO wbussiere 2016-03-07 :
-    //  Verify potential race conditions issues
-    localCache[cacheId] = tetId;
 
     return coor[0] * mat3(refMetrics[tet.v[0]]) +
            coor[1] * mat3(refMetrics[tet.v[1]]) +

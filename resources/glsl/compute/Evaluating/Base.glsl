@@ -3,14 +3,14 @@
 ///////////////////////////////
 
 // Externally defined
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], in Tet tet);
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT], in Pri pri);
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], in Hex hex);
+float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
 
 // Internally defined
-float tetQuality(in Tet tet);
-float priQuality(in Pri pri);
-float hexQuality(in Hex hex);
+float tetQuality(inout Tet tet);
+float priQuality(inout Pri pri);
+float hexQuality(inout Hex hex);
 
 float patchQuality(in uint vId);
 
@@ -20,7 +20,7 @@ float patchQuality(in uint vId);
 //////////////////////////////
 
 // Element Quality
-float tetQuality(in Tet tet)
+float tetQuality(inout Tet tet)
 {
     const vec3 vp[] = vec3[](
         verts[tet.v[0]].p,
@@ -32,7 +32,7 @@ float tetQuality(in Tet tet)
     return tetQuality(vp, tet);
 }
 
-float priQuality(in Pri pri)
+float priQuality(inout Pri pri)
 {
     const vec3 vp[] = vec3[](
         verts[pri.v[0]].p,
@@ -46,7 +46,7 @@ float priQuality(in Pri pri)
     return priQuality(vp, pri);
 }
 
-float hexQuality(in Hex hex)
+float hexQuality(inout Hex hex)
 {
     const vec3 vp[] = vec3[](
         verts[hex.v[0]].p,

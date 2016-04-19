@@ -11,6 +11,11 @@ public:
 
     virtual ~BatrTopologist();
 
+
+    virtual bool needTopologicalModifications(
+            int vertRelocationPassCount,
+            const Mesh& mesh) const override;
+
     virtual void restructureMesh(
             Mesh& mesh,
             const MeshCrew& crew) const override;

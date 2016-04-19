@@ -44,6 +44,7 @@
 #include "Smoothers/VertexWise/GradientDescentSmoother.h"
 #include "Smoothers/VertexWise/NelderMeadSmoother.h"
 #include "Smoothers/ElementWise/GetmeSmoother.h"
+#include "Topologists/AbstractTopologist.h"
 
 using namespace std;
 using namespace cellar;
@@ -92,7 +93,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableSamplers.setDefault("Analytic");
+    _availableSamplers.setDefault("Local");
     _availableSamplers.setContent({
         {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new DummySampler())},
         {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
@@ -645,12 +646,12 @@ void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)
 
 void GpuMeshCharacter::enableTopologyModifications(bool enable)
 {
-    _meshCrew->enableTopologyModifications(enable);
+    _meshCrew->topologist().setEnabled(enable);
 }
 
 void GpuMeshCharacter::setTopologyModificationsFrequency(int frequency)
 {
-    _meshCrew->setTopologyModificationsFrequency(frequency);
+    _meshCrew->topologist().setFrequency(frequency);
 }
 
 void GpuMeshCharacter::useRenderer(const std::string& rendererName)
@@ -769,6 +770,9 @@ void GpuMeshCharacter::updateSampling()
     if(_meshCrew->initialized())
     {
         _meshCrew->sampler().setReferenceMesh(*_mesh);
+
+        // In the event that sampler updated element caches
+        _mesh->updateGpuTopology();
 
         if(_displaySamplingMesh)
             if(_renderer.get() != nullptr)

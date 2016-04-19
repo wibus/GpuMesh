@@ -50,21 +50,17 @@ void updateCudaRefMetrics(
 
 LocalSampler::LocalSampler() :
     AbstractSampler("Local", ":/glsl/compute/Sampling/Local.glsl", installCudaLocalSampler),
-    _debugMesh(new Mesh()),
+    _debugMesh(nullptr),
     _localTetsSsbo(0),
-    _localCacheSsbo(0),
     _refVertsSsbo(0),
     _refMetricsSsbo(0)
 {
-    _debugMesh->modelName = "Local sampling mesh";
 }
 
 LocalSampler::~LocalSampler()
 {
     glDeleteBuffers(1, &_localTetsSsbo);
     _localTetsSsbo = 0;
-    glDeleteBuffers(1, &_localCacheSsbo);
-    _localCacheSsbo = 0;
     glDeleteBuffers(1, &_refVertsSsbo);
     _refVertsSsbo = 0;
     glDeleteBuffers(1, &_refMetricsSsbo);
@@ -81,9 +77,6 @@ void LocalSampler::initialize()
     if(_localTetsSsbo == 0)
         glGenBuffers(1, &_localTetsSsbo);
 
-    if(_localCacheSsbo == 0)
-        glGenBuffers(1, &_localCacheSsbo);
-
     if(_refVertsSsbo == 0)
         glGenBuffers(1, &_refVertsSsbo);
 
@@ -98,12 +91,10 @@ void LocalSampler::installPlugin(
     AbstractSampler::installPlugin(mesh, program);
 
     GLuint localTets  = mesh.bufferBinding(EBufferBinding::LOCAL_TETS_BUFFER_BINDING);
-    GLuint localCache = mesh.bufferBinding(EBufferBinding::LOCAL_CACHE_BUFFER_BINDING);
     GLuint refVerts   = mesh.bufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
     GLuint refMetrics = mesh.bufferBinding(EBufferBinding::REF_METRICS_BUFFER_BINDING);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, localTets,  _localTetsSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, localCache, _localCacheSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refVerts,   _refVertsSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
 }
@@ -112,8 +103,7 @@ void LocalSampler::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-    AbstractSampler::setPluginUniforms(mesh, program);
-    program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
+    //program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
 }
 
 void LocalSampler::setReferenceMesh(
@@ -122,12 +112,8 @@ void LocalSampler::setReferenceMesh(
     size_t vertCount = mesh.verts.size();
 
     // Clear resources
-    _debugMesh->clear();
-
     _localTets.clear();
     _localTets.shrink_to_fit();
-    _localCache.resize(mesh.verts.size());
-    _localCache.shrink_to_fit();
     _refVerts = mesh.verts;
     _refVerts.shrink_to_fit();
     _refMetrics.resize(mesh.verts.size());
@@ -177,38 +163,29 @@ void LocalSampler::setReferenceMesh(
             }
         }
 
-        // At the end, the cache will be initialized with
-        // the last tetrahedron for witch the vertex is node
-        _localCache[tet.v[0]] = t;
-        _localCache[tet.v[1]] = t;
-        _localCache[tet.v[2]] = t;
-        _localCache[tet.v[3]] = t;
+        mesh.verts[tet.v[0]].c = t;
+        mesh.verts[tet.v[1]].c = t;
+        mesh.verts[tet.v[2]].c = t;
+        mesh.verts[tet.v[3]].c = t;
     }
 
-    const std::vector<Triangle>& surfTri = triSet.gather();
-    size_t remTriCount = surfTri.size();
-
-    for(const Triangle& tri : surfTri)
-    {
-        size_t vertBase = _debugMesh->verts.size();
-        _debugMesh->verts.push_back(mesh.verts[tri.v[0]]);
-        _debugMesh->verts.push_back(mesh.verts[tri.v[1]]);
-        _debugMesh->verts.push_back(mesh.verts[tri.v[2]]);
-        _debugMesh->verts.push_back((mesh.verts[tri.v[0]].p +
-            mesh.verts[tri.v[1]].p + mesh.verts[tri.v[2]].p)/3.0);
-
-        _debugMesh->tets.push_back(MeshTet(vertBase, vertBase+1, vertBase+2, vertBase+3));
-    }
-
-
+    _surfTris = triSet.gather();
+    size_t remTriCount = _surfTris.size();
     getLog().postMessage(new Message('I', false,
         "Surface triangle count: " + std::to_string(remTriCount) +
         " / " + std::to_string(triCount), "LocalSampler"));
     triSet.releaseMemoryPool();
 
+    _failedSamples.clear();
+    if(_debugMesh.get() != nullptr)
+    {
+        releaseDebugMesh();
+        debugMesh();
+    }
 
 
 
+    // Reference Mesh Tetrahedra
     std::vector<GpuLocalTet> gpuLocalTets;
     gpuLocalTets.reserve(_localTets.size());
     for(const auto& t : _localTets)
@@ -221,20 +198,6 @@ void LocalSampler::setReferenceMesh(
     glBufferData(GL_SHADER_STORAGE_BUFFER, localTetsSize, gpuLocalTets.data(), GL_STREAM_COPY);
     gpuLocalTets.clear();
     gpuLocalTets.shrink_to_fit();
-
-
-    std::vector<GLuint> gpuLocalCache;
-    gpuLocalCache.reserve(_localCache.size());
-    for(const auto& i : _localCache)
-        gpuLocalCache.push_back(i);
-
-    updateCudaLocalCache(gpuLocalCache);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _localCacheSsbo);
-    size_t localCacheSize = sizeof(decltype(gpuLocalCache.front())) * gpuLocalCache.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, localCacheSize, gpuLocalCache.data(), GL_STREAM_COPY);
-    gpuLocalCache.clear();
-    gpuLocalCache.shrink_to_fit();
 
 
     // Reference Mesh Vertices
@@ -263,6 +226,9 @@ void LocalSampler::setReferenceMesh(
     size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
     glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_STREAM_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+    _maxSearchDepth = 0;
 }
 
 const size_t MAX_TABOO = 32;
@@ -280,14 +246,13 @@ bool isTaboo(uint tId, uint taboo[], size_t count)
 
 Metric LocalSampler::metricAt(
         const glm::dvec3& position,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     // Taboo search structures
     size_t tabooCount = 0;
     uint taboo[MAX_TABOO];
 
-    uint tetId = _localCache[cacheId];
-    const LocalTet* tet = &_localTets[tetId];
+    const LocalTet* tet = &_localTets[cachedRefTet];
 
     double coor[4];
     while(!tetParams(_refVerts, *tet, position, coor))
@@ -326,12 +291,12 @@ Metric LocalSampler::metricAt(
                 if(tabooCount < MAX_TABOO)
                 {
                     // Add last tet to taboo list
-                    taboo[tabooCount] = tetId;
+                    taboo[tabooCount] = cachedRefTet;
                     ++tabooCount;
 
                     // Fetch the next local tet
                     tet = &_localTets[nextTet];
-                    tetId = nextTet;
+                    cachedRefTet = nextTet;
                 }
                 else
                 {
@@ -340,6 +305,8 @@ Metric LocalSampler::metricAt(
                     clipCurrentTet = true;
                     getLog().postMessage(new Message('E', false,
                        "Visited to many tets during local search", "LocalSampler"));
+
+                    _failedSamples.push_back(glm::dvec4(position, 1.0));
                 }
             }
             else
@@ -357,6 +324,8 @@ Metric LocalSampler::metricAt(
             clipCurrentTet = true;
             getLog().postMessage(new Message('E', false,
                "Surrounded by taboo tets during local search", "LocalSampler"));
+
+            _failedSamples.push_back(glm::dvec4(position, 0.5));
         }
 
 
@@ -378,9 +347,13 @@ Metric LocalSampler::metricAt(
         }
     }
 
-    // TODO wbussiere 2016-03-07 :
-    //  Verify potential race conditions issues
-    _localCache[cacheId] = tetId;
+    if(_maxSearchDepth < tabooCount)
+    {
+        _maxSearchDepth = tabooCount;
+        getLog().postMessage(new Message('I', false,
+           "New search depth record : " + std::to_string(_maxSearchDepth),
+           "LocalSampler"));
+    }
 
     return coor[0] * _refMetrics[tet->v[0]] +
            coor[1] * _refMetrics[tet->v[1]] +
@@ -390,9 +363,41 @@ Metric LocalSampler::metricAt(
 
 void LocalSampler::releaseDebugMesh()
 {
+    _debugMesh.reset();
 }
 
 const Mesh& LocalSampler::debugMesh()
 {
+    if(_debugMesh.get() == nullptr)
+    {
+        _debugMesh.reset(new Mesh());
+
+        if(!_surfTris.empty())
+        {
+            for(const Triangle& tri : _surfTris)
+            {
+                size_t vertBase = _debugMesh->verts.size();
+                _debugMesh->verts.push_back(_refVerts[tri.v[0]]);
+                _debugMesh->verts.push_back(_refVerts[tri.v[1]]);
+                _debugMesh->verts.push_back(_refVerts[tri.v[2]]);
+                _debugMesh->verts.push_back((_refVerts[tri.v[0]].p +
+                    _refVerts[tri.v[1]].p + _refVerts[tri.v[2]].p)/3.0);
+
+                _debugMesh->tets.push_back(MeshTet(vertBase, vertBase+1, vertBase+2, vertBase+3));
+            }
+
+            for(const glm::dvec4& s : _failedSamples)
+            {
+                uint v = _debugMesh->verts.size();
+                _debugMesh->verts.push_back(glm::dvec3(s));
+                _debugMesh->tets.push_back(MeshTet(v, v, v, v));
+                _debugMesh->tets.back().value = s.w;
+            }
+
+            _debugMesh->modelName = "Local Sampling Mesh";
+            _debugMesh->compileTopology();
+        }
+    }
+
     return *_debugMesh;
 }

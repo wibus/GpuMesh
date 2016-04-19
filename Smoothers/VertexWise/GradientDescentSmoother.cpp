@@ -76,8 +76,7 @@ void GradientDescentSmoother::smoothVertices(
 
         // Compute local element size
         double localSize =
-            crew.measurer().computeLocalElementSize(
-                mesh, crew.sampler(), vId);
+            crew.measurer().computeLocalElementSize(mesh, vId);
 
         // Initialize node shift distance
         double nodeShift = localSize * GDLocalSizeToNodeShift;

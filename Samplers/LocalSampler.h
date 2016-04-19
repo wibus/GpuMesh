@@ -6,6 +6,7 @@
 #include "AbstractSampler.h"
 
 class LocalTet;
+class Triangle;
 
 
 class LocalSampler : public AbstractSampler
@@ -34,7 +35,7 @@ public:
 
     virtual Metric metricAt(
             const glm::dvec3& position,
-            uint cacheId) const override;
+            uint& cachedRefTet) const override;
 
 
     virtual void releaseDebugMesh() override;
@@ -48,11 +49,13 @@ private:
     std::vector<MeshVert> _refVerts;
 
     GLuint _localTetsSsbo;
-    GLuint _localCacheSsbo;
     GLuint _refVertsSsbo;
     GLuint _refMetricsSsbo;
 
-    mutable std::vector<uint> _localCache;
+    // Debug structures
+    mutable int _maxSearchDepth;
+    std::vector<Triangle> _surfTris;
+    mutable std::vector<glm::dvec4> _failedSamples;
 };
 
 #endif // GPUMESH_LOCALSAMPLER

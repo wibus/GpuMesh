@@ -112,6 +112,8 @@ void AbstractRenderer::tearDown()
 
     GlToolkit::deleteTextureId(_filterTex);
     _filterTex = 0;
+
+    _gradientShader.reset();
 }
 
 void AbstractRenderer::notifyMeshUpdate()

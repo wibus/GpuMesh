@@ -32,11 +32,6 @@ mat3 vertMetric(in vec3 position)
         vec3(0,  0,  rz));
 }
 
-mat3 vertMetric(in uint cacheId)
-{
-    return vertMetric(vec3(verts[cacheId].p));
-}
-
 void boundingBox(out vec3 minBounds, out vec3 maxBounds)
 {
     minBounds = vec3(1.0/0.0);
@@ -44,7 +39,7 @@ void boundingBox(out vec3 minBounds, out vec3 maxBounds)
     uint vertCount = verts.length();
     for(uint v=0; v < vertCount; ++v)
     {
-        vec3 vertPos = vec3(verts[v].p);
+        vec3 vertPos = verts[v].p;
         minBounds = min(minBounds, vertPos);
         maxBounds = max(maxBounds, vertPos);
     }

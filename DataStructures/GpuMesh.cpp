@@ -295,7 +295,6 @@ std::string GpuMesh::meshGeometryShaderName() const
 
 void GpuMesh::uploadGeometry(cellar::GlProgram& program) const
 {
-    program.pushProgram();
     uploadElement(program, "TET",
         MeshTet::EDGE_COUNT, MeshTet::edges,
         MeshTet::TRI_COUNT,  MeshTet::tris,
@@ -310,7 +309,6 @@ void GpuMesh::uploadGeometry(cellar::GlProgram& program) const
         MeshHex::EDGE_COUNT, MeshHex::edges,
         MeshHex::TRI_COUNT,  MeshHex::tris,
         MeshHex::TET_COUNT,  MeshHex::tets);
-    program.popProgram();
 }
 
 void GpuMesh::uploadElement(
@@ -354,7 +352,6 @@ unsigned int GpuMesh::bufferBinding(EBufferBinding binding) const
     case EBufferBinding::KD_TETS_BUFFER_BINDING :           return 13;
     case EBufferBinding::KD_NODES_BUFFER_BINDING :          return 14;
     case EBufferBinding::LOCAL_TETS_BUFFER_BINDING :        return 15;
-    case EBufferBinding::LOCAL_CACHE_BUFFER_BINDING:        return 16;
     }
 
     return 0;

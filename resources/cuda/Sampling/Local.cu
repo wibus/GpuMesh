@@ -12,9 +12,6 @@ struct LocalTet
 __constant__ uint localTets_length;
 __device__ LocalTet* localTets;
 
-__constant__ uint localCache_length;
-__device__ uint* localCache;
-
 
 
 ///////////////////////////////
@@ -36,14 +33,13 @@ __device__ bool isTaboo(uint tId, uint taboo[MAX_TABOO], uint count)
     return false;
 }
 
-__device__ mat3 localMetricAt(const vec3& position, uint cacheId)
+__device__ mat3 localMetricAt(const vec3& position, uint& cachedRefTet)
 {
     // Taboo search structures
     uint tabooCount = 0;
     uint taboo[MAX_TABOO];
 
-    uint tetId = localCache[cacheId];
-    LocalTet tet = localTets[tetId];
+    LocalTet tet = localTets[cachedRefTet];
 
     float coor[4];
     while(!tetParams(tet.v, position, coor))
@@ -82,12 +78,12 @@ __device__ mat3 localMetricAt(const vec3& position, uint cacheId)
                 if(tabooCount < MAX_TABOO)
                 {
                     // Add last tet to taboo list
-                    taboo[tabooCount] = tetId;
+                    taboo[tabooCount] = cachedRefTet;
                     ++tabooCount;
 
                     // Fetch the next local tet
                     tet = localTets[nextTet];
-                    tetId = nextTet;
+                    cachedRefTet = nextTet;
                 }
                 else
                 {
@@ -129,10 +125,6 @@ __device__ mat3 localMetricAt(const vec3& position, uint cacheId)
             break;
         }
     }
-
-    // TODO wbussiere 2016-03-07 :
-    //  Verify potential race conditions issues
-    localCache[cacheId] = tetId;
 
     return coor[0] * mat3(refMetrics[tet.v[0]]) +
            coor[1] * mat3(refMetrics[tet.v[1]]) +
@@ -179,29 +171,4 @@ void updateCudaLocalTets(
 
     if(verboseCuda)
         printf("I -> CUDA \tLocal Tets updated\n");
-}
-
-size_t d_localCacheLength = 0;
-uint* d_localCache = nullptr;
-void updateCudaLocalCache(
-        const std::vector<GLuint>& localCacheBuff)
-{
-    // kD-Tree Nodes
-    uint localCacheLength = localCacheBuff.size();
-    size_t localCacheBuffSize = sizeof(decltype(localCacheBuff.front())) * localCacheLength;
-    if(d_localCache == nullptr || d_localCacheLength != localCacheLength)
-    {
-        cudaFree(d_localCache);
-        if(!localCacheLength) d_localCache = nullptr;
-        else cudaMalloc(&d_localCache, localCacheBuffSize);
-        cudaMemcpyToSymbol(localCache, &d_localCache, sizeof(d_localCache));
-
-        d_localCacheLength = localCacheLength;
-        cudaMemcpyToSymbol(localCache_length, &localCacheLength, sizeof(uint));
-    }
-
-    cudaMemcpy(d_localCache, localCacheBuff.data(), localCacheBuffSize, cudaMemcpyHostToDevice);
-
-    if(verboseCuda)
-        printf("I -> CUDA \tlLocal Cache updated\n");
 }

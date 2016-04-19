@@ -22,7 +22,7 @@ __device__ void gradientDescentSmoothVert(uint vId)
     for(int c=0; c < GDSecurityCycleCount; ++c)
     {
         // Define patch quality gradient samples
-        vec3 pos = vec3(verts[vId].p);
+        vec3 pos = verts[vId].p;
         const uint GRADIENT_SAMPLE_COUNT = 6;
         float sampleQualities[GRADIENT_SAMPLE_COUNT] =
             {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
@@ -47,12 +47,12 @@ __device__ void gradientDescentSmoothVert(uint vId)
         {
             // Quality evaluation functions will use this updated position
             // to compute element shape measures.
-            verts[vId].p = vec4(gradSamples[p], 0.0);
+            verts[vId].p = gradSamples[p];
 
             // Compute patch quality
             sampleQualities[p] = patchQuality(vId);
         }
-        verts[vId].p = vec4(pos, 0.0);
+        verts[vId].p = pos, 0.0;
 
         vec3 gradQ = vec3(
             sampleQualities[1] - sampleQualities[0],
@@ -99,7 +99,7 @@ __device__ void gradientDescentSmoothVert(uint vId)
         {
             // Quality evaluation functions will use this updated position
             // to compute element shape measures.
-            verts[vId].p = vec4(propositions[p], 0.0);
+            verts[vId].p = propositions[p];
 
             // Compute patch quality
             float pq = patchQuality(vId);
@@ -113,7 +113,7 @@ __device__ void gradientDescentSmoothVert(uint vId)
 
 
         // Update vertex's position
-        verts[vId].p = vec4(propositions[bestProposition], 0.0);
+        verts[vId].p = propositions[bestProposition];
 
         // Scale node shift and stop if it is too small
         nodeShift *= abs(OFFSETS[bestProposition]);

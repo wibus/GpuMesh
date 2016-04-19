@@ -111,8 +111,7 @@ void KdTreeSampler::setPluginUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program) const
 {
-    AbstractSampler::setPluginUniforms(mesh, program);
-    program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
+    //program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
 }
 
 void KdTreeSampler::setReferenceMesh(const Mesh& mesh)
@@ -221,7 +220,7 @@ void KdTreeSampler::setReferenceMesh(const Mesh& mesh)
 
 Metric KdTreeSampler::metricAt(
         const glm::dvec3& position,
-        uint cacheId) const
+        uint& cachedRefTet) const
 {
     const Metric METRIC_ERROR(0.0);
 
@@ -523,14 +522,12 @@ void KdTreeSampler::buildGpuBuffers(
 
 void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
 {
-    static int cellId = 0;
+    uint dummyCache = 0;
 
     if(node->left == nullptr ||
        node->right == nullptr)
     {
         {
-            cellId = 0;
-
             uint baseVert = mesh.verts.size();
             mesh.verts.push_back(glm::dvec3(node->minBox.x, node->minBox.y, node->minBox.z));
             mesh.verts.push_back(glm::dvec3(node->maxBox.x, node->minBox.y, node->minBox.z));
@@ -543,7 +540,7 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
 
             MeshHex hex(baseVert + 0, baseVert + 1, baseVert + 2, baseVert + 3,
                         baseVert + 4, baseVert + 5, baseVert + 6, baseVert + 7);
-            hex.value = metricAt((node->minBox + node->maxBox) / 2.0, -1)[0][0];
+            hex.value = metricAt((node->minBox + node->maxBox) / 2.0, dummyCache)[0][0];
             mesh.hexs.push_back(hex);
         }
     }

@@ -23,18 +23,18 @@ layout(shared, binding = KD_TETS_BUFFER_BINDING) buffer KdTets
 bool tetParams(in uint vi[4], in vec3 p, out float coor[4]);
 
 
-subroutine mat3 metricAtSub(in vec3 position, in uint cacheId);
+subroutine mat3 metricAtSub(in vec3 position, inout uint cachedRefTet);
 layout(location=METRIC_AT_SUBROUTINE_LOC)
 subroutine uniform metricAtSub metricAtUni;
 
-mat3 metricAt(in vec3 position, in uint cacheId)
+mat3 metricAt(in vec3 position, inout uint cachedRefTet)
 {
-    return metricAtUni(position, cacheId);
+    return metricAtUni(position, cachedRefTet);
 }
 
 
 layout(index=METRIC_AT_SUBROUTINE_IDX) subroutine(metricAtSub)
-mat3 metricAtImpl(in vec3 position, in uint cacheId)
+mat3 metricAtImpl(in vec3 position, inout uint cachedRefTet)
 {
     const mat3 METRIC_ERROR = mat3(0.0);
 

@@ -16,13 +16,13 @@ public:
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint cacheId) const override;
+            uint& cachedRefTet) const override;
 
     virtual glm::dvec3 riemannianSegment(
             const AbstractSampler& sampler,
             const glm::dvec3& a,
             const glm::dvec3& b,
-            uint cacheId) const override;
+            uint& cachedRefTet) const override;
 
 
     // Volumes

@@ -16,9 +16,9 @@ uniform float hists_length;
 const int MIN_MAX = 2147483647;
 const float MEAN_MAX = MIN_MAX / (gl_WorkGroupSize.x * 3);
 
-float tetQuality(Tet tet);
-float priQuality(Pri pri);
-float hexQuality(Hex hex);
+float tetQuality(inout Tet tet);
+float priQuality(inout Pri pri);
+float hexQuality(inout Hex hex);
 
 
 

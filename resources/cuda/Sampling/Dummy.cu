@@ -1,7 +1,7 @@
 #include "Base.cuh"
 
 
-__device__ mat3 dummyMetricAt(const vec3& position, uint cacheId)
+__device__ mat3 dummyMetricAt(const vec3& position, uint& cachedRefTet)
 {
     return mat3(1.0);
 }

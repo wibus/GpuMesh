@@ -15,10 +15,10 @@ __device__ hexQualityFct hexQualityImpl;
 __device__ float tetQuality(const Tet& tet)
 {
     const vec3 vp[] = {
-        vec3(verts[tet.v[0]].p),
-        vec3(verts[tet.v[1]].p),
-        vec3(verts[tet.v[2]].p),
-        vec3(verts[tet.v[3]].p)
+        verts[tet.v[0]].p,
+        verts[tet.v[1]].p,
+        verts[tet.v[2]].p,
+        verts[tet.v[3]].p
     };
 
     return (*tetQualityImpl)(vp, tet);
@@ -27,12 +27,12 @@ __device__ float tetQuality(const Tet& tet)
 __device__ float priQuality(const Pri& pri)
 {
     const vec3 vp[] = {
-        vec3(verts[pri.v[0]].p),
-        vec3(verts[pri.v[1]].p),
-        vec3(verts[pri.v[2]].p),
-        vec3(verts[pri.v[3]].p),
-        vec3(verts[pri.v[4]].p),
-        vec3(verts[pri.v[5]].p)
+        verts[pri.v[0]].p,
+        verts[pri.v[1]].p,
+        verts[pri.v[2]].p,
+        verts[pri.v[3]].p,
+        verts[pri.v[4]].p,
+        verts[pri.v[5]].p
     };
 
     return (*priQualityImpl)(vp, pri);
@@ -41,14 +41,14 @@ __device__ float priQuality(const Pri& pri)
 __device__ float hexQuality(const Hex& hex)
 {
     const vec3 vp[] = {
-        vec3(verts[hex.v[0]].p),
-        vec3(verts[hex.v[1]].p),
-        vec3(verts[hex.v[2]].p),
-        vec3(verts[hex.v[3]].p),
-        vec3(verts[hex.v[4]].p),
-        vec3(verts[hex.v[5]].p),
-        vec3(verts[hex.v[6]].p),
-        vec3(verts[hex.v[7]].p)
+        verts[hex.v[0]].p,
+        verts[hex.v[1]].p,
+        verts[hex.v[2]].p,
+        verts[hex.v[3]].p,
+        verts[hex.v[4]].p,
+        verts[hex.v[5]].p,
+        verts[hex.v[6]].p,
+        verts[hex.v[7]].p
     };
 
     return (*hexQualityImpl)(vp, hex);
