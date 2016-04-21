@@ -60,7 +60,13 @@ public:
             uint& cachedRefTet) const = 0;
 
 
-    // Volumes
+    // Volumes    
+    static double tetEuclideanVolume(
+            const Mesh& mesh,
+            const MeshTet& tet);
+    static double tetEuclideanVolume(
+            const glm::dvec3 vp[]);
+
     virtual double tetVolume(
             const Mesh& mesh,
             const AbstractSampler& sampler,

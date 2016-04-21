@@ -93,7 +93,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableSamplers.setDefault("Local");
+    _availableSamplers.setDefault("Analytic");
     _availableSamplers.setContent({
         {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new DummySampler())},
         {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
@@ -605,6 +605,15 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
     }
 
     return plot;
+}
+
+void GpuMeshCharacter::restructureMesh()
+{
+    _meshCrew->topologist().restructureMesh(
+        *_mesh, *_meshCrew);
+
+    updateSampling();
+    updateMeshMeasures();
 }
 
 void GpuMeshCharacter::disableAnisotropy()

@@ -96,6 +96,9 @@ public:
             double moveFactor,
             double gainThreshold);
 
+    // Topology
+    virtual void restructureMesh();
+
     // Render
     virtual void disableAnisotropy();
     virtual void displaySamplingMesh(bool display);

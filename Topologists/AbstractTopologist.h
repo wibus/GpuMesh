@@ -29,28 +29,47 @@ public:
             OptimizationPlot& plot) const = 0;
 
 
-    bool isEnabled() const;
-    void setEnabled(bool isEnabled);
-
     int frequency() const;
     void setFrequency(int frequency);
 
+    bool isEnabled() const;
+    void setEnabled(bool isEnabled);
+
+    double minEdgeLength() const;
+    void setMinEdgeLength(double length);
+
+    double maxEdgeLength() const;
+    void setMaxEdgeLength(double length);
+
+
 private:
-    bool _isEnabled;
     int _frequency;
+    bool _isEnabled;
+    double _minEdgeLength;
+    double _maxEdgeLength;
 };
 
 
 
 // IMPLEMENTATION //
+inline int AbstractTopologist::frequency() const
+{
+    return _frequency;
+}
+
 inline bool AbstractTopologist::isEnabled() const
 {
     return _isEnabled;
 }
 
-inline int AbstractTopologist::frequency() const
+inline double AbstractTopologist::minEdgeLength() const
 {
-    return _frequency;
+    return _minEdgeLength;
+}
+
+inline double AbstractTopologist::maxEdgeLength() const
+{
+    return _maxEdgeLength;
 }
 
 #endif // GPUMESH_ABSTRACTTOPOLOGIST

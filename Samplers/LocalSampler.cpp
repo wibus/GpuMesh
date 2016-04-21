@@ -347,13 +347,13 @@ Metric LocalSampler::metricAt(
         }
     }
 
-    if(_maxSearchDepth < tabooCount)
-    {
-        _maxSearchDepth = tabooCount;
-        getLog().postMessage(new Message('I', false,
-           "New search depth record : " + std::to_string(_maxSearchDepth),
-           "LocalSampler"));
-    }
+//    if(_maxSearchDepth < tabooCount)
+//    {
+//        _maxSearchDepth = tabooCount;
+//        getLog().postMessage(new Message('I', false,
+//           "New search depth record : " + std::to_string(_maxSearchDepth),
+//           "LocalSampler"));
+//    }
 
     return coor[0] * _refMetrics[tet->v[0]] +
            coor[1] * _refMetrics[tet->v[1]] +

@@ -57,6 +57,31 @@ void AbstractMeasurer::setPluginUniforms(
 
 }
 
+double AbstractMeasurer::tetEuclideanVolume(
+        const Mesh& mesh,
+        const MeshTet& tet)
+{
+    glm::dvec3 vp[] = {
+        mesh.verts[tet.v[0]].p,
+        mesh.verts[tet.v[1]].p,
+        mesh.verts[tet.v[2]].p,
+        mesh.verts[tet.v[3]].p,
+    };
+
+    return tetEuclideanVolume(vp);
+}
+
+double AbstractMeasurer::tetEuclideanVolume(
+        const glm::dvec3 vp[])
+{
+    double detSum = glm::determinant(glm::dmat3(
+        vp[3] - vp[0],
+        vp[3] - vp[1],
+        vp[3] - vp[2]));
+
+    return detSum / 6.0;
+}
+
 double AbstractMeasurer::tetVolume(
         const Mesh& mesh,
         const AbstractSampler& sampler,

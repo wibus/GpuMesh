@@ -35,6 +35,7 @@ protected slots:
     virtual void enableTopology(bool checked);
     virtual void compareTopology(bool checked);
     virtual void topoFrequency(int frequency);
+    virtual void restructureMesh();
 
     virtual void benchmarkImplementations();
 

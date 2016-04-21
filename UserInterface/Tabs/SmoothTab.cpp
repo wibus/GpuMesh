@@ -59,6 +59,10 @@ SmoothTab::SmoothTab(Ui::MainWindow* ui,
     connect(_ui->compareTopologyRadio, &QRadioButton::toggled,
             this, &SmoothTab::compareTopology);
 
+    connect(_ui->restructureMeshButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &SmoothTab::restructureMesh);
+
     connect(_ui->topoFrequencySpin,
             static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this, &SmoothTab::topoFrequency);
@@ -126,6 +130,11 @@ void SmoothTab::compareTopology(bool checked)
 void SmoothTab::topoFrequency(int frequency)
 {
     _character->setTopologyModificationsFrequency(frequency);
+}
+
+void SmoothTab::restructureMesh()
+{
+    _character->restructureMesh();
 }
 
 void SmoothTab::benchmarkImplementations()

@@ -25,8 +25,8 @@ public:
             OptimizationPlot& plot) const override;
 
 
-protected:
-    virtual void edgeSplitting(
+protected:    
+    virtual void edgeManagement(
             Mesh& mesh,
             const MeshCrew& crew) const;
 
