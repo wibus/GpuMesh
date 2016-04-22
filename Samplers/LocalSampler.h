@@ -5,7 +5,7 @@
 
 #include "AbstractSampler.h"
 
-class LocalTet;
+class MeshLocalTet;
 class Triangle;
 
 
@@ -44,9 +44,10 @@ public:
 
 private:
     std::shared_ptr<Mesh> _debugMesh;
-    std::vector<Metric>   _refMetrics;
-    std::vector<LocalTet> _localTets;
+
     std::vector<MeshVert> _refVerts;
+    std::vector<Metric>   _refMetrics;
+    std::vector<MeshLocalTet> _localTets;
 
     GLuint _localTetsSsbo;
     GLuint _refVertsSsbo;

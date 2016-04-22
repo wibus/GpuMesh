@@ -1,7 +1,12 @@
 #ifndef GPUMESH_BARTTOPOLOGIST
 #define GPUMESH_BARTTOPOLOGIST
 
+#include <set>
+
 #include "AbstractTopologist.h"
+
+class MeshTet;
+typedef std::pair<uint, uint> LocalEdge;
 
 
 class BatrTopologist : public AbstractTopologist
@@ -26,7 +31,7 @@ public:
 
 
 protected:    
-    virtual void edgeManagement(
+    virtual void edgeSplitMerge(
             Mesh& mesh,
             const MeshCrew& crew) const;
 
@@ -37,6 +42,12 @@ protected:
     virtual void edgeSwapping(
             Mesh& mesh,
             const MeshCrew& crew) const;
+
+
+    // Helper methods
+    void buildBoundaryEdgeSet(
+            std::vector<MeshTet>& tets,
+            std::set<LocalEdge>& edges) const;
 };
 
 #endif // GPUMESH_BARTTOPOLOGIST

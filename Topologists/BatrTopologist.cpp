@@ -4,6 +4,7 @@
 
 #include "DataStructures/Mesh.h"
 #include "DataStructures/MeshCrew.h"
+#include "DataStructures/TriSet.h"
 #include "Measurers/AbstractMeasurer.h"
 #include "Evaluators/AbstractEvaluator.h"
 
@@ -15,6 +16,14 @@ inline std::vector<T> concat(const std::vector<T>& a, const std::vector<N>& b)
     std::vector<T> c(a.begin(), a.end());
     c.insert(c.end(), b.begin(), b.end());
     return std::move(c);
+}
+
+inline LocalEdge toEdge(uint v0, uint v1)
+{
+    if(v0 < v1)
+        return LocalEdge(v0, v1);
+    else
+        return LocalEdge(v1, v0);
 }
 
 BatrTopologist::BatrTopologist()
@@ -44,10 +53,10 @@ void BatrTopologist::restructureMesh(
         const MeshCrew& crew) const
 {
     getLog().postMessage(new Message('I', false,
-        "Performing new BATR topology modifications",
+        "Performing BATR topology modifications...",
         "BatrTopologist"));
 
-    edgeManagement(mesh, crew);
+    edgeSplitMerge(mesh, crew);
     faceSwapping(mesh, crew);
     edgeSwapping(mesh, crew);
 }
@@ -60,409 +69,477 @@ void BatrTopologist::printOptimisationParameters(
 }
 
 
-void BatrTopologist::edgeManagement(
+void BatrTopologist::edgeSplitMerge(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
+    std::vector<MeshTet>& tets = mesh.tets;
+    std::set<std::pair<uint, uint>> boundEdges;
+    buildBoundaryEdgeSet(tets, boundEdges);
+
     std::vector<MeshVert>& verts = mesh.verts;
     std::vector<MeshTopo>& topos = mesh.topos;
-    std::vector<MeshTet>& tets = mesh.tets;
 
     std::vector<bool> aliveTets(tets.size(), true);
     std::vector<bool> aliveVerts(verts.size(), true);
     std::vector<bool> vertsToTry(verts.size(), true);
 
+    size_t passCount = 0;
+    size_t vertMergeCount = 0;
+    size_t edgeSplitCount = 0;
     bool stillVertsToTry = true;
     while(stillVertsToTry)
     {
+        ++passCount;
         stillVertsToTry = false;
-        size_t vertMergeCount = 0;
-        size_t edgeSplitCount = 0;
+
 
         for(size_t vId=0; vId < verts.size(); ++vId)
         {
             if(!aliveVerts[vId])
+            {
                 continue;
+            }
 
             vertsToTry[vId] = false;
+
+            double minDist = INFINITY;
+            size_t minId = 0;
+
+            double maxDist = -INFINITY;
+            size_t maxId = 0;
+
+            for(size_t nAr = 0; nAr < topos[vId].neighborVerts.size(); ++nAr)
+            {
+                MeshNeigVert nId = topos[vId].neighborVerts[nAr];
+
+                if(nId < vId)
+                {
+                    continue;
+                }
+
+                MeshVert vert = verts[vId];
+                MeshTopo& vTopo = topos[vId];
+
+                MeshVert neig = verts[nId];
+                MeshTopo& nTopo = topos[nId];
+
+                if((vTopo.isFixed && (nTopo.isFixed || nTopo.isBoundary)) ||
+                   (nTopo.isFixed && (vTopo.isFixed || vTopo.isBoundary)) ||
+                   (vTopo.isBoundary && nTopo.isBoundary &&
+                    vTopo.snapToBoundary != nTopo.snapToBoundary))
+                {
+                    continue;
+                }
+
+
+                double dist = crew.measurer().riemannianDistance(
+                            crew.sampler(), vert.p, neig.p, vert.c);
+
+                if(dist < minEdgeLength() && dist < minDist)
+                {
+                    minDist = dist;
+                    minId = nId;
+                }
+
+                if(dist > maxEdgeLength() && dist > maxDist)
+                {
+                    maxDist = dist;
+                    maxId = nId;
+                }
+            }
+
+            uint nId;
+            double dist;
+            if(maxDist != -INFINITY)
+            {
+                dist = maxDist;
+                nId = maxId;
+            }
+            else if(minDist != INFINITY)
+            {
+                dist = minDist;
+                nId = minId;
+            }
+            else
+            {
+                continue;
+            }
+
+
             MeshVert vert = verts[vId];
             MeshTopo& vTopo = topos[vId];
 
+            MeshVert neig = verts[nId];
+            MeshTopo& nTopo = topos[nId];
 
-            for(MeshNeigVert nId : vTopo.neighborVerts)
+
+            // Merging vertices
+            std::vector<MeshNeigElem>& vElems = vTopo.neighborElems;
+            std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
+            std::vector<MeshNeigElem> intersectionElems;
+
+            // Element intersection
+            for(const MeshNeigElem& vElem : vElems)
             {
-                if(vId < nId)
+                for(const MeshNeigElem& nElem : nElems)
                 {
-                    MeshVert neig = verts[nId];
-                    MeshTopo& nTopo = topos[nId];
-
-                    if(vTopo.isFixed && (nTopo.isFixed || nTopo.isBoundary))
-                        continue;
-                    else if(nTopo.isFixed && vTopo.isBoundary)
-                        continue;
-
-                    if(vTopo.isBoundary && nTopo.isBoundary &&
-                       vTopo.snapToBoundary != nTopo.snapToBoundary)
-                        continue;
-
-
-                    double dist = crew.measurer().riemannianDistance(
-                                crew.sampler(), vert.p, neig.p, vert.c);
-                    if(dist > minEdgeLength() && dist < maxEdgeLength())
-                        continue;
-
-
-                    // Merging vertices
-                    std::vector<MeshNeigElem>& vElems = vTopo.neighborElems;
-                    std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
-                    std::vector<MeshNeigElem> intersectionElems;
-
-                    // Element intersection
-                    for(const MeshNeigElem& vElem : vElems)
+                    if(vElem.id == nElem.id)
                     {
-                        for(const MeshNeigElem& nElem : nElems)
-                        {
-                            if(vElem.id == nElem.id)
-                            {
-                                intersectionElems.push_back(vElem);
-                                break;
-                            }
-                        }
-                    }
-
-                    // Elements from v not in intersection
-                    std::vector<MeshNeigElem> vExclusiveElems;
-                    for(const MeshNeigElem& vElem : vElems)
-                    {
-                        bool isIntersection = false;
-                        for(const MeshNeigElem& iElem : intersectionElems)
-                        {
-                            if(vElem.id == iElem.id)
-                            {
-                                isIntersection = true;
-                                break;
-                            }
-                        }
-
-                        if(!isIntersection)
-                            vExclusiveElems.push_back(vElem);
-                    }
-
-                    // Elements from n not in intersection
-                    std::vector<MeshNeigElem> nExclusiveElems;
-                    for(const MeshNeigElem& nElem : nElems)
-                    {
-                        bool isIntersection = false;
-                        for(const MeshNeigElem& iElem : intersectionElems)
-                        {
-                            if(nElem.id == iElem.id)
-                            {
-                                isIntersection = true;
-                                break;
-                            }
-                        }
-
-                        if(!isIntersection)
-                            nExclusiveElems.push_back(nElem);
-                    }
-
-
-                    if(dist < minEdgeLength())
-                    {
-                        glm::dvec3 middle = (vert.p + neig.p) /2.0;
-                        if(vTopo.isBoundary)
-                            middle = (*vTopo.snapToBoundary)(middle);
-                        else if(nTopo.isBoundary)
-                            middle = (*nTopo.snapToBoundary)(middle);
-                        else if(vTopo.isFixed)
-                            middle = vert.p;
-                        else if(nTopo.isFixed)
-                            middle = neig.p;
-
-                        verts[vId].p = verts[nId].p = middle;
-
-
-                        std::vector<MeshNeigElem> allExclusiveElems(
-                                vExclusiveElems.begin(),
-                                vExclusiveElems.end());
-                        allExclusiveElems.insert(
-                                allExclusiveElems.end(),
-                                nExclusiveElems.begin(),
-                                nExclusiveElems.end());
-
-                        bool isConformal = true;
-                        for(const MeshNeigElem& dElem : allExclusiveElems)
-                        {
-                            if(crew.measurer().tetEuclideanVolume(
-                                mesh, tets[dElem.id]) <= 0.0)
-                            {
-                                isConformal = false;
-                                break;
-                            }
-                        }
-
-                        if(!isConformal)
-                        {
-                            // Rollback modifications
-                            verts[vId].p = vert;
-                            verts[nId].p = neig;
-                            continue;
-                        }
-
-
-                        // Mark geometry as deleted
-                        aliveVerts[nId] = false;
-                        for(const MeshNeigElem& cElem : intersectionElems)
-                            aliveTets[cElem.id] = false;
-
-                        std::vector<MeshNeigVert>& vVerts = vTopo.neighborVerts;
-                        std::vector<MeshNeigVert>& nVerts = nTopo.neighborVerts;
-
-
-                        // Find intersection and n's exclusive vertices
-                        std::vector<uint> nExclusiveVerts;
-                        std::vector<uint> intersectionVerts;
-                        for(const MeshNeigVert& nVert : nVerts)
-                        {
-                            if(nVert != vId)
-                            {
-                                bool isExclusive = true;
-                                for(const MeshNeigVert& vVert : vTopo.neighborVerts)
-                                    if(nVert.v == vVert.v) {isExclusive = false; break;}
-
-                                if(isExclusive)
-                                    nExclusiveVerts.push_back(nVert);
-                                else
-                                    intersectionVerts.push_back(nVert);
-                            }
-                        }
-
-                        // Find v's exclusive vertices
-                        std::vector<uint> vExclusiveVerts;
-                        for(const MeshNeigVert& vVert : vVerts)
-                        {
-                            if(vVert != nId)
-                            {
-                                bool isExclusive = true;
-                                for(const MeshNeigVert& iVert : intersectionVerts)
-                                    if(vVert.v == iVert.v) {isExclusive = false; break;}
-
-                                if(isExclusive)
-                                    vExclusiveVerts.push_back(vVert);
-                            }
-                        }
-
-                        // Replace n for v in n's exclusive elements
-                        for(const MeshNeigElem& ndElem : nExclusiveElems)
-                        {
-                            MeshTet& tet = tets[ndElem.id];
-                            if(tet.v[0] == nId)      tet.v[0] = vId;
-                            else if(tet.v[1] == nId) tet.v[1] = vId;
-                            else if(tet.v[2] == nId) tet.v[2] = vId;
-                            else if(tet.v[3] == nId) tet.v[3] = vId;
-                        }
-
-                        // Replace n for v in n's exclusive vertices
-                        for(uint nVert : nExclusiveVerts)
-                        {
-                            for(MeshNeigVert& neVert : topos[nVert].neighborVerts)
-                                if(neVert.v == nId.v) {neVert.v = vId; break;}
-                        }
-
-
-                        // Rebuild v vert neighborhood
-                        size_t vCopyVerts = 0;
-                        for(size_t i=0; i < vVerts.size(); ++i)
-                        {
-                            if(vVerts[i] != nId)
-                            {
-                                vVerts[vCopyVerts] = vVerts[i];
-                                ++vCopyVerts;
-                            }
-                        }
-                        vVerts.resize(vCopyVerts);
-                        vVerts = concat(vVerts, nExclusiveVerts);
-                        vVerts.shrink_to_fit();
-
-                        // Rebuild v elem neighborhood
-                        vElems = allExclusiveElems;
-                        vElems.shrink_to_fit();
-
-
-                        // Update intersection vertices' topo
-                        std::set<uint> interSet;
-                        for(const MeshNeigElem& iElem : intersectionElems)
-                            interSet.insert(iElem.id);
-
-                        for(uint iId : intersectionVerts)
-                        {
-                            // Remove intersection elems from intersection verts
-                            size_t elemCopyId = 0;
-                            std::vector<MeshNeigElem>& elemsCopy = topos[iId].neighborElems;
-                            for(size_t i=0; i < elemsCopy.size(); ++i)
-                            {
-                                if(interSet.find(elemsCopy[i].id) == interSet.end())
-                                {
-                                    elemsCopy[elemCopyId] = elemsCopy[i];
-                                    ++elemCopyId;
-                                }
-                            }
-                            elemsCopy.resize(elemCopyId);
-                            elemsCopy.shrink_to_fit();
-
-                            // Remove n from intersection verts
-                            size_t vertCopyId = 0;
-                            std::vector<MeshNeigVert>& vertCopy = topos[iId].neighborVerts;
-                            for(size_t i=0; i < vertCopy.size(); ++i)
-                            {
-                                if(vertCopy[i] != nId)
-                                {
-                                    vertCopy[vertCopyId] = vertCopy[i];
-                                    ++vertCopyId;
-                                }
-                            }
-                            vertCopy.resize(vertCopyId);
-                            vertCopy.shrink_to_fit();
-                        }
-
-
-                        // Update boundary status
-                        if(nTopo.isFixed)
-                            vTopo.isFixed = true;
-                        else if(!vTopo.isBoundary && nTopo.isBoundary)
-                        {
-                            vTopo.isBoundary = true;
-                            vTopo.snapToBoundary = nTopo.snapToBoundary;
-                        }
-
-
-                        ++vertMergeCount;
-                        stillVertsToTry = true;
-                        vertsToTry[vId] = true;
-                        for(const MeshNeigVert vVert : vTopo.neighborVerts)
-                            vertsToTry[vVert.v] = true;
-
-                        --vId;
-                        break;
-                    }
-                    else if(dist > maxEdgeLength())
-                    {
-                        continue;
-
-                        // Splitting the edge
-                        glm::dvec3 middle = (vert.p + neig.p) /2.0;
-                        if(vTopo.isBoundary && nTopo.isBoundary)
-                            middle = (*vTopo.snapToBoundary)(middle);
-
-                        uint wId = verts.size();
-                        verts.push_back(MeshVert(middle, vert.c));
-                        vertsToTry.push_back(true);
-                        aliveVerts.push_back(true);
-
-                        MeshTopo wTopo;
-                        if(vTopo.isBoundary && nTopo.isBoundary)
-                            wTopo = MeshTopo(vTopo.snapToBoundary);
-
-                        std::vector<MeshNeigElem>& wElems = wTopo.neighborElems;
-
-                        for(MeshNeigVert& vVert : vTopo.neighborVerts)
-                        {
-                            if(vVert == nId)
-                            {
-                                vVert.v = wId;
-                                break;
-                            }
-                        }
-
-                        for(MeshNeigVert& nVert : nTopo.neighborVerts)
-                        {
-                            if(nVert == vId)
-                            {
-                                nVert.v = wId;
-                                break;
-                            }
-                        }
-
-                        nElems = nExclusiveElems;
-                        for(const MeshNeigElem& iElem : intersectionElems)
-                        {
-                            MeshNeigElem newNeigElem(MeshTet::ELEMENT_TYPE, tets.size());
-                            nElems.push_back(newNeigElem);
-                            wElems.push_back(newNeigElem);
-                            wElems.push_back(iElem);
-
-                            int o = -1;
-                            uint others[] = {0, 0};
-                            const MeshTet& tet = tets[iElem.id];
-                            if(tet.v[0] != vId && tet.v[0] != nId) others[++o] = tet.v[0];
-                            if(tet.v[1] != vId && tet.v[1] != nId) others[++o] = tet.v[1];
-                            if(tet.v[2] != vId && tet.v[2] != nId) others[++o] = tet.v[2];
-                            if(tet.v[3] != vId && tet.v[3] != nId) others[++o] = tet.v[3];
-
-                            MeshTet newTetV(vId, wId, others[0], others[1]);
-                            if(AbstractMeasurer::tetEuclideanVolume(mesh, newTetV) < 0.0)
-                                std::swap(newTetV.v[0], newTetV.v[1]);
-                            tets[iElem.id] = newTetV;
-
-                            MeshTet newTetN(nId, wId, others[0], others[1]);
-                            if(AbstractMeasurer::tetEuclideanVolume(mesh, newTetN) < 0.0)
-                                std::swap(newTetN.v[0], newTetN.v[1]);
-                            tets.push_back(newTetN);
-                            aliveTets.push_back(true);
-                        }
-
-
-                        std::set<MeshNeigVert> nNeigVerts;
-                        for(const MeshNeigElem& nElem : nElems)
-                        {
-                            const MeshTet& tet = tets[nElem.id];
-                            if(tet.v[0] != nId) nNeigVerts.insert(tet.v[0]);
-                            if(tet.v[1] != nId) nNeigVerts.insert(tet.v[1]);
-                            if(tet.v[2] != nId) nNeigVerts.insert(tet.v[2]);
-                            if(tet.v[3] != nId) nNeigVerts.insert(tet.v[3]);
-                        }
-                        nTopo.neighborVerts = std::vector<MeshNeigVert>(
-                            nNeigVerts.begin(), nNeigVerts.end());
-
-                        std::set<MeshNeigVert> wNeigVerts;
-                        for(const MeshNeigElem& wElem : wElems)
-                        {
-                            const MeshTet& tet = tets[wElem.id];
-                            if(tet.v[0] != wId) wNeigVerts.insert(tet.v[0]);
-                            if(tet.v[1] != wId) wNeigVerts.insert(tet.v[1]);
-                            if(tet.v[2] != wId) wNeigVerts.insert(tet.v[2]);
-                            if(tet.v[3] != wId) wNeigVerts.insert(tet.v[3]);
-                        }
-                        wTopo.neighborVerts = std::vector<MeshNeigVert>(
-                            wNeigVerts.begin(), wNeigVerts.end());
-
-
-                        ++edgeSplitCount;
-                        stillVertsToTry = true;
-                        for(const MeshNeigVert vVert : vTopo.neighborVerts)
-                            vertsToTry[vVert.v] = true;
-                        for(const MeshNeigVert nVert : nTopo.neighborVerts)
-                            vertsToTry[nVert.v] = true;
-
-                        topos.push_back(wTopo);
-
-
-                        //--vId;
+                        intersectionElems.push_back(vElem);
                         break;
                     }
                 }
             }
+
+            // Elements from v not in intersection
+            std::vector<MeshNeigElem> vExclusiveElems;
+            for(const MeshNeigElem& vElem : vElems)
+            {
+                bool isIntersection = false;
+                for(const MeshNeigElem& iElem : intersectionElems)
+                {
+                    if(vElem.id == iElem.id)
+                    {
+                        isIntersection = true;
+                        break;
+                    }
+                }
+
+                if(!isIntersection)
+                    vExclusiveElems.push_back(vElem);
+            }
+
+            // Elements from n not in intersection
+            std::vector<MeshNeigElem> nExclusiveElems;
+            for(const MeshNeigElem& nElem : nElems)
+            {
+                bool isIntersection = false;
+                for(const MeshNeigElem& iElem : intersectionElems)
+                {
+                    if(nElem.id == iElem.id)
+                    {
+                        isIntersection = true;
+                        break;
+                    }
+                }
+
+                if(!isIntersection)
+                    nExclusiveElems.push_back(nElem);
+            }
+
+
+            std::vector<MeshNeigVert>& vVerts = vTopo.neighborVerts;
+            std::vector<MeshNeigVert>& nVerts = nTopo.neighborVerts;
+
+            // Find intersection and n's exclusive vertices
+            std::vector<uint> nExclusiveVerts;
+            std::vector<uint> intersectionVerts;
+            for(const MeshNeigVert& nVert : nVerts)
+            {
+                if(nVert != vId)
+                {
+                    bool isExclusive = true;
+                    for(const MeshNeigVert& vVert : vVerts)
+                        if(nVert.v == vVert.v) {isExclusive = false; break;}
+
+                    if(isExclusive)
+                        nExclusiveVerts.push_back(nVert);
+                    else
+                        intersectionVerts.push_back(nVert);
+                }
+            }
+
+
+            if(dist < minEdgeLength())
+            {
+                glm::dvec3 middle = (vert.p + neig.p) /2.0;
+                if(vTopo.isBoundary)
+                    middle = (*vTopo.snapToBoundary)(middle);
+                else if(nTopo.isBoundary)
+                    middle = (*nTopo.snapToBoundary)(middle);
+                else if(vTopo.isFixed)
+                    middle = vert.p;
+                else if(nTopo.isFixed)
+                    middle = neig.p;
+
+                verts[vId].p = verts[nId].p = middle;
+
+
+                std::vector<MeshNeigElem> allExclusiveElems(
+                        vExclusiveElems.begin(),
+                        vExclusiveElems.end());
+                allExclusiveElems.insert(
+                        allExclusiveElems.end(),
+                        nExclusiveElems.begin(),
+                        nExclusiveElems.end());
+
+                bool isConformal = true;
+                for(const MeshNeigElem& dElem : allExclusiveElems)
+                {
+                    if(crew.measurer().tetEuclideanVolume(
+                        mesh, tets[dElem.id]) <= 0.0)
+                    {
+                        isConformal = false;
+                        break;
+                    }
+                }
+
+                if(!isConformal)
+                {
+                    // Rollback modifications
+                    verts[vId].p = vert;
+                    verts[nId].p = neig;
+                    continue;
+                }
+
+
+                // Mark geometry as deleted
+                aliveVerts[nId] = false;
+                for(const MeshNeigElem& cElem : intersectionElems)
+                    aliveTets[cElem.id] = false;
+
+                // Remove boundary edges steming from n
+                if(nTopo.isBoundary)
+                {
+                    for(const MeshNeigVert& nVert : nExclusiveVerts)
+                    {
+                        if(topos[nVert].isBoundary)
+                        {
+                            if(boundEdges.erase(toEdge(nId, nVert)))
+                            {
+                                boundEdges.insert(toEdge(vId, nVert));
+                            }
+                        }
+                    }
+
+                    for(const MeshNeigVert& iVert : intersectionVerts)
+                    {
+                        if(topos[iVert].isBoundary)
+                        {
+                            boundEdges.erase(toEdge(nId, iVert));
+                        }
+                    }
+                }
+
+                // Find v's exclusive vertices
+                std::vector<uint> vExclusiveVerts;
+                for(const MeshNeigVert& vVert : vVerts)
+                {
+                    if(vVert != nId)
+                    {
+                        bool isExclusive = true;
+                        for(const MeshNeigVert& iVert : intersectionVerts)
+                            if(vVert.v == iVert.v) {isExclusive = false; break;}
+
+                        if(isExclusive)
+                            vExclusiveVerts.push_back(vVert);
+                    }
+                }
+
+                // Replace n for v in n's exclusive elements
+                for(const MeshNeigElem& ndElem : nExclusiveElems)
+                {
+                    MeshTet& tet = tets[ndElem.id];
+                    if(tet.v[0] == nId)      tet.v[0] = vId;
+                    else if(tet.v[1] == nId) tet.v[1] = vId;
+                    else if(tet.v[2] == nId) tet.v[2] = vId;
+                    else if(tet.v[3] == nId) tet.v[3] = vId;
+                }
+
+                // Replace n for v in n's exclusive vertices
+                for(uint nVert : nExclusiveVerts)
+                {
+                    for(MeshNeigVert& neVert : topos[nVert].neighborVerts)
+                        if(neVert.v == nId) {neVert.v = vId; break;}
+                }
+
+
+                // Rebuild v vert neighborhood
+                size_t vCopyVerts = 0;
+                for(size_t i=0; i < vVerts.size(); ++i)
+                {
+                    if(vVerts[i] != nId)
+                    {
+                        vVerts[vCopyVerts] = vVerts[i];
+                        ++vCopyVerts;
+                    }
+                }
+                vVerts.resize(vCopyVerts);
+                vVerts = concat(vVerts, nExclusiveVerts);
+                vVerts.shrink_to_fit();
+
+                // Rebuild v elem neighborhood
+                vElems = allExclusiveElems;
+                vElems.shrink_to_fit();
+
+
+                // Update intersection vertices' topo
+                std::set<uint> interSet;
+                for(const MeshNeigElem& iElem : intersectionElems)
+                    interSet.insert(iElem.id);
+
+                for(uint iId : intersectionVerts)
+                {
+                    // Remove intersection elems from intersection verts
+                    size_t elemCopyId = 0;
+                    std::vector<MeshNeigElem>& elemsCopy = topos[iId].neighborElems;
+                    for(size_t i=0; i < elemsCopy.size(); ++i)
+                    {
+                        if(interSet.find(elemsCopy[i].id) == interSet.end())
+                        {
+                            elemsCopy[elemCopyId] = elemsCopy[i];
+                            ++elemCopyId;
+                        }
+                    }
+                    elemsCopy.resize(elemCopyId);
+                    elemsCopy.shrink_to_fit();
+
+                    // Remove n from intersection verts
+                    size_t vertCopyId = 0;
+                    std::vector<MeshNeigVert>& vertCopy = topos[iId].neighborVerts;
+                    for(size_t i=0; i < vertCopy.size(); ++i)
+                    {
+                        if(vertCopy[i] != nId)
+                        {
+                            vertCopy[vertCopyId] = vertCopy[i];
+                            ++vertCopyId;
+                        }
+                    }
+                    vertCopy.resize(vertCopyId);
+                    vertCopy.shrink_to_fit();
+                }
+
+
+                // Update boundary status
+                if(nTopo.isFixed)
+                {
+                    vTopo.isFixed = true;
+                }
+                else if(!vTopo.isBoundary && nTopo.isBoundary)
+                {
+                    vTopo.isBoundary = true;
+                    vTopo.snapToBoundary = nTopo.snapToBoundary;
+                }
+
+
+                // Notify to check neighbor verts
+                ++vertMergeCount;
+                stillVertsToTry = true;
+                vertsToTry[vId] = true;
+                for(const MeshNeigVert vVert : vTopo.neighborVerts)
+                    vertsToTry[vVert.v] = true;
+            }
+            else if(dist > maxEdgeLength())
+            {
+                // Splitting the edge
+                uint wId = verts.size();
+                glm::dvec3 middle = (vert.p + neig.p) /2.0;
+                verts.push_back(MeshVert(middle, vert.c));
+
+                MeshTopo wTopo;
+                if(vTopo.isBoundary && nTopo.isBoundary)
+                {
+                    auto edge = toEdge(vId, nId);
+                    auto edgeIt = boundEdges.find(edge);
+                    if(edgeIt != boundEdges.end())
+                    {
+                        wTopo.isBoundary = true;
+                        wTopo.snapToBoundary = vTopo.snapToBoundary;
+                        verts[wId].p = (*vTopo.snapToBoundary)(middle);
+
+                        boundEdges.erase(edgeIt);
+                    }
+                }
+
+                // Replace n for w in v's neighbor verts
+                for(MeshNeigVert& vVert : vTopo.neighborVerts)
+                    if(vVert == nId) { vVert.v = wId; break; }
+
+                // Replace v for w in n's neighbor verts
+                for(MeshNeigVert& nVert : nTopo.neighborVerts)
+                    if(nVert == vId) { nVert.v = wId; break; }
+
+                // Build new elements
+                nElems = nExclusiveElems;
+                std::vector<MeshNeigElem>& wElems = wTopo.neighborElems;
+                for(const MeshNeigElem& iElem : intersectionElems)
+                {
+                    int o = -1;
+                    uint others[] = {0, 0};
+                    MeshTet& tet = tets[iElem.id];
+                    if(tet.v[0] != vId)
+                        if(tet.v[0] == nId) tet.v[0] = wId;
+                        else others[++o] = tet.v[0];
+                    if(tet.v[1] != vId)
+                        if(tet.v[1] == nId) tet.v[1] = wId;
+                        else others[++o] = tet.v[1];
+                    if(tet.v[2] != vId)
+                        if(tet.v[2] == nId) tet.v[2] = wId;
+                        else others[++o] = tet.v[2];
+                    if(tet.v[3] != vId)
+                        if(tet.v[3] == nId) tet.v[3] = wId;
+                        else others[++o] = tet.v[3];
+
+
+                    MeshNeigElem newNeigElem(MeshTet::ELEMENT_TYPE, tets.size());
+                    nElems.push_back(newNeigElem);
+                    wElems.push_back(newNeigElem);
+                    wElems.push_back(iElem);
+
+                    topos[others[0]].neighborElems.push_back(newNeigElem);
+                    topos[others[1]].neighborElems.push_back(newNeigElem);
+
+
+                    MeshTet newTetN(nId, wId, others[0], others[1]);
+                    if(AbstractMeasurer::tetEuclideanVolume(mesh, newTetN) < 0.0)
+                        std::swap(newTetN.v[0], newTetN.v[1]);
+                    if(AbstractMeasurer::tetEuclideanVolume(mesh, tet) < 0.0)
+                        std::swap(tet.v[0], tet.v[1]);
+
+                    tets.push_back(newTetN);
+                    aliveTets.push_back(true);
+                }
+
+                // Add w to intersection nodes' neighbors
+                for(uint iVert : intersectionVerts)
+                    topos[iVert].neighborVerts.push_back(wId);
+
+                // Build w's vert neighbors list
+                std::vector<MeshNeigVert>& wVerts = wTopo.neighborVerts;
+                wVerts = concat(wVerts, intersectionVerts);
+                wVerts.push_back(vId);
+                wVerts.push_back(nId);
+
+
+                // Add new boundary edges
+                if(wTopo.isBoundary)
+                {
+                    for(MeshNeigVert& wVert : wVerts)
+                    {
+                        if(topos[wVert].isBoundary)
+                            boundEdges.insert(toEdge(wId, wVert));
+                    }
+                }
+
+
+                // Notify to check neighbor verts
+                ++edgeSplitCount;
+                stillVertsToTry = true;
+                for(const MeshNeigVert vVert : vTopo.neighborVerts)
+                    vertsToTry[vVert.v] = true;
+                for(const MeshNeigVert nVert : nTopo.neighborVerts)
+                    vertsToTry[nVert.v] = true;
+
+                // Push back only at the end cause we have
+                // lots of active references to topo all around
+                // (prevent vector from reallocating its buffer)
+                aliveVerts.push_back(true);
+                vertsToTry.push_back(true);
+                topos.push_back(wTopo);
+            }
         }
-
-        getLog().postMessage(new Message('I', false,
-            "Vert merge count: " + std::to_string(vertMergeCount),
-            "BatrTopologist"));
-
-        getLog().postMessage(new Message('I', false,
-            "Edge split count: " + std::to_string(edgeSplitCount),
-            "BatrTopologist"));
     }
-
 
     // Remove deleted verts
     size_t copyVertId = 0;
@@ -517,6 +594,13 @@ void BatrTopologist::edgeManagement(
         }
     }
     tets.resize(copyTetId);
+
+    getLog().postMessage(new Message('I', false,
+        "Edge split/merge: " +
+        std::to_string(passCount) + " passes \t(" +
+        std::to_string(edgeSplitCount) + " split, " +
+        std::to_string(vertMergeCount) + " merge)",
+        "BatrTopologist"));
 }
 
 void BatrTopologist::faceSwapping(
@@ -526,12 +610,15 @@ void BatrTopologist::faceSwapping(
     std::vector<MeshTet>& tets = mesh.tets;
     std::vector<MeshTopo>& topos = mesh.topos;
 
+    size_t passCount = 0;
+    size_t faceSwapCount = 0;
     bool stillTetsToTry = true;
+
     std::vector<bool> tetsToTry(tets.size(), true);
     while(stillTetsToTry)
     {
+        ++passCount;
         stillTetsToTry = false;
-        size_t faceSwapCount = 0;
 
         for(size_t t=0; t < tets.size(); ++t)
         {
@@ -650,11 +737,13 @@ void BatrTopologist::faceSwapping(
                 }
             }
         }
-
-        getLog().postMessage(new Message('I', false,
-            "Face swap count: " + std::to_string(faceSwapCount),
-            "BatrTopologist"));
     }
+
+    getLog().postMessage(new Message('I', false,
+        "Face swap:        " +
+        std::to_string(passCount) + " passes \t(" +
+        std::to_string(faceSwapCount) + " swap)",
+        "BatrTopologist"));
 
     mesh.compileTopology(false);
 }
@@ -664,4 +753,50 @@ void BatrTopologist::edgeSwapping(
         const MeshCrew& crew) const
 {
 
+}
+
+void BatrTopologist::buildBoundaryEdgeSet(
+        std::vector<MeshTet>& tets,
+        std::set<LocalEdge>& edges) const
+{
+    size_t tetCount = tets.size();
+    size_t triCount = tetCount * 4;
+
+    std::vector<MeshLocalTet> localTets;
+    localTets.reserve(tets.size());
+    for(size_t tId=0; tId < tetCount; ++tId)
+        localTets.push_back(tets[tId]);
+
+    TriSet triSet;
+    triSet.reset(glm::max(10.0,
+        pow(double(triCount), 2.0/3.0)));
+
+    for(size_t t=0; t < tetCount; ++t)
+    {
+        MeshLocalTet& tet = localTets[t];
+        for(uint s=0; s < MeshTet::TRI_COUNT; ++s)
+        {
+            Triangle tri(tet.v[MeshTet::tris[s][0]],
+                         tet.v[MeshTet::tris[s][1]],
+                         tet.v[MeshTet::tris[s][2]]);
+            glm::uvec2 con = triSet.xOrTri(tri, t, s);
+
+            uint owner = con[0];
+            uint side = con[1];
+            tet.n[s] = owner;
+
+            if(owner != TriSet::NO_OWNER)
+            {
+                localTets[owner].n[side] = t;
+            }
+        }
+    }
+
+    const std::vector<Triangle>& surfTris = triSet.gather();
+    for(const Triangle& tri : surfTris)
+    {
+        edges.insert(toEdge(tri.v[0], tri.v[1]));
+        edges.insert(toEdge(tri.v[1], tri.v[2]));
+        edges.insert(toEdge(tri.v[2], tri.v[0]));
+    }
 }

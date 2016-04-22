@@ -18,6 +18,8 @@ DebugMesher::DebugMesher()
         {string("Singles"), ModelFunc(bind(&DebugMesher::genSingles, this, _1, _2))},
         {string("Squish"),  ModelFunc(bind(&DebugMesher::genSquish,  this, _1, _2))},
         {string("Grid"),    ModelFunc(bind(&DebugMesher::genGrid,    this, _1, _2))},
+        {string("Cube"),    ModelFunc(bind(&DebugMesher::genCube,    this, _1, _2))},
+        {string("Tet"),     ModelFunc(bind(&DebugMesher::genTet,    this, _1, _2))},
     });
 }
 
@@ -204,6 +206,50 @@ void DebugMesher::genGrid(Mesh& mesh, size_t vertexCount)
             }
         }
     }
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/None.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaNoneBoundary);
+}
+
+void DebugMesher::genCube(Mesh& mesh, size_t vertexCount)
+{
+    glm::dvec3 cubeMin(-0.5);
+    glm::dvec3 cubeMax( 0.5);
+
+    mesh.verts.push_back(glm::dvec3(cubeMin.x, cubeMin.y, cubeMin.z));
+    mesh.verts.push_back(glm::dvec3(cubeMax.x, cubeMin.y, cubeMin.z));
+    mesh.verts.push_back(glm::dvec3(cubeMax.x, cubeMax.y, cubeMin.z));
+    mesh.verts.push_back(glm::dvec3(cubeMin.x, cubeMax.y, cubeMin.z));
+    mesh.verts.push_back(glm::dvec3(cubeMin.x, cubeMin.y, cubeMax.z));
+    mesh.verts.push_back(glm::dvec3(cubeMax.x, cubeMin.y, cubeMax.z));
+    mesh.verts.push_back(glm::dvec3(cubeMax.x, cubeMax.y, cubeMax.z));
+    mesh.verts.push_back(glm::dvec3(cubeMin.x, cubeMax.y, cubeMax.z));
+
+    for(uint t=0; t < MeshHex::TET_COUNT; ++t)
+        mesh.tets.push_back(MeshHex::tets[t]);
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/None.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaNoneBoundary);
+}
+
+void DebugMesher::genTet(Mesh& mesh, size_t vertexCount)
+{
+    mesh.tets.push_back(MeshTet(0, 1, 2, 3));
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
+    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
+
+    glm::dvec4 centerw;
+    for(const MeshVert& v : mesh.verts)
+        centerw += glm::dvec4(v.p, 1.0);
+    glm::dvec3 center = glm::dvec3(centerw) / centerw.w;
+    for(MeshVert& v : mesh.verts)
+        v.p -= center;
 
     mesh.setModelBoundsShaderName(
         ":/glsl/compute/Boundary/None.glsl");

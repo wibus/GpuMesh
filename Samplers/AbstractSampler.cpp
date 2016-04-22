@@ -79,7 +79,7 @@ Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
     glm::dvec3 vp = position * glm::dvec3(7);
 
     double localElemSize = 0.0;
-    localElemSize = 1.0 / glm::pow(10000, 1.0/3.0);
+    localElemSize = 1.0 / glm::pow(100, 1.0/3.0);
 
     double elemSize = localElemSize;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);

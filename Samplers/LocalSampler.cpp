@@ -12,30 +12,6 @@
 using namespace cellar;
 
 
-struct LocalTet
-{
-    inline LocalTet()
-        { v[0] = -1; v[1] = -1; v[2] = -1; v[3] = -1;
-          n[0] = -1; n[1] = -1; n[2] = -1; n[3] = -1;}
-
-    inline LocalTet(uint v0, uint v1, uint v2, uint v3)
-        { v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3;
-          n[0] = -1; n[1] = -1; n[2] = -1; n[3] = -1;}
-
-    inline LocalTet(const MeshTet& t)
-        { v[0] = t.v[0]; v[1] = t.v[1]; v[2] = t.v[2]; v[3] = t.v[3];
-          n[0] = -1;     n[1] = -1;     n[2] = -1;     n[3] = -1;     }
-
-    // Vertices of the tetrahedron
-    uint v[4];
-
-    // Neighbors of the tetrahedron
-    //   n[0] is the neighbor tetrahedron
-    //   at the oposite face of vertex v[0]
-    uint n[4];
-};
-
-
 // CUDA Drivers Interface
 void installCudaLocalSampler();
 void updateCudaLocalTets(
@@ -145,7 +121,7 @@ void LocalSampler::setReferenceMesh(
 
     for(size_t t=0; t < tetCount; ++t)
     {
-        LocalTet& tet = _localTets[t];
+        MeshLocalTet& tet = _localTets[t];
         for(uint s=0; s < MeshTet::TRI_COUNT; ++s)
         {
             Triangle tri(tet.v[MeshTet::tris[s][0]],
@@ -252,7 +228,7 @@ Metric LocalSampler::metricAt(
     size_t tabooCount = 0;
     uint taboo[MAX_TABOO];
 
-    const LocalTet* tet = &_localTets[cachedRefTet];
+    const MeshLocalTet* tet = &_localTets[cachedRefTet];
 
     double coor[4];
     while(!tetParams(_refVerts, *tet, position, coor))
@@ -380,10 +356,8 @@ const Mesh& LocalSampler::debugMesh()
                 _debugMesh->verts.push_back(_refVerts[tri.v[0]]);
                 _debugMesh->verts.push_back(_refVerts[tri.v[1]]);
                 _debugMesh->verts.push_back(_refVerts[tri.v[2]]);
-                _debugMesh->verts.push_back((_refVerts[tri.v[0]].p +
-                    _refVerts[tri.v[1]].p + _refVerts[tri.v[2]].p)/3.0);
 
-                _debugMesh->tets.push_back(MeshTet(vertBase, vertBase+1, vertBase+2, vertBase+3));
+                _debugMesh->tets.push_back(MeshTet(vertBase, vertBase+1, vertBase+2, vertBase));
             }
 
             for(const glm::dvec4& s : _failedSamples)

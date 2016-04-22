@@ -222,7 +222,16 @@ void GpuMesh::updateVerticesFromCpu()
     size_t vertCount = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
+    // Grow GLSL buffer if we<ve added some vertices
+    GLint buffSize = 0;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+    glGetBufferParameteriv(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, &buffSize);
+    GLint cpuBuffSize = sizeof(decltype(verts.front())) * verts.size();
+
+    if(buffSize != cpuBuffSize)
+        glBufferData(GL_SHADER_STORAGE_BUFFER, cpuBuffSize, nullptr, GL_DYNAMIC_COPY);
+
+
     GpuVert* glslVerts = (GpuVert*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);

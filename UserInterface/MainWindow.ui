@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>672</height>
+    <height>715</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="meshTab">
        <attribute name="title">

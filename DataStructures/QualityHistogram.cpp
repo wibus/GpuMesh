@@ -75,6 +75,9 @@ void QualityHistogram::merge(const QualityHistogram& histogram)
 {
     assert(_buckets.size() == histogram._buckets.size());
 
+    if(histogram.sampleCount() == 0)
+        return;
+
     _sampleCount += histogram._sampleCount;
     _minimumQuality = glm::min(_minimumQuality, histogram._minimumQuality);
     _averageQuality = glm::mix(_averageQuality, histogram._averageQuality,

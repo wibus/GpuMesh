@@ -60,8 +60,15 @@ double MetricConformityEvaluator::metricConformity(
             glm::dot(tNc[1], tNc[1]) +
             glm::dot(tNc[2], tNc[2]);
 
-    double Fk_sign = sign(determinant(Fk));
-    return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
+    if(!std::isnan(tNc_frobenius2))
+    {
+        double Fk_sign = sign(determinant(Fk));
+        return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
+    }
+    else
+    {
+        return 0.0;
+    }
 }
 
 double MetricConformityEvaluator::tetQuality(

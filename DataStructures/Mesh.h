@@ -90,6 +90,28 @@ struct MeshTet
     static const MeshTet tets[TET_COUNT];
 };
 
+struct MeshLocalTet
+{
+    inline MeshLocalTet()
+        { v[0] = -1; v[1] = -1; v[2] = -1; v[3] = -1;
+          n[0] = -1; n[1] = -1; n[2] = -1; n[3] = -1;}
+
+    inline MeshLocalTet(uint v0, uint v1, uint v2, uint v3)
+        { v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3;
+          n[0] = -1; n[1] = -1; n[2] = -1; n[3] = -1;}
+
+    inline MeshLocalTet(const MeshTet& t)
+        { v[0] = t.v[0]; v[1] = t.v[1]; v[2] = t.v[2]; v[3] = t.v[3];
+          n[0] = -1;     n[1] = -1;     n[2] = -1;     n[3] = -1;     }
+
+    // Vertices of the tetrahedron
+    uint v[4];
+
+    // Neighbors of the tetrahedron
+    //   n[0] is the neighbor tetrahedron
+    //   at the oposite face of vertex v[0]
+    uint n[4];
+};
 
 struct MeshPri
 {
