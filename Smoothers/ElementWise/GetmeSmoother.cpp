@@ -2,10 +2,10 @@
 
 #include <mutex>
 
+#include "VertexAccum.h"
 #include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
-#include "DataStructures/VertexAccum.h"
 
 using namespace std;
 

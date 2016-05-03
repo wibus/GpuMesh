@@ -13,8 +13,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.h
     ${GpuMesh_SRC_DIR}/DataStructures/Triangle.h
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.h
-    ${GpuMesh_SRC_DIR}/DataStructures/QualityHistogram.h
-    ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.h)
+    ${GpuMesh_SRC_DIR}/DataStructures/QualityHistogram.h)
 
 SET(GpuMesh_SAMPLERS_HEADERS
     ${GpuMesh_SRC_DIR}/Samplers/AbstractSampler.h
@@ -64,7 +63,8 @@ SET(GpuMesh_VERTEXWISE_HEADERS
 
 SET(GpuMesh_ELEMENTWISE_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/AbstractElementWiseSmoother.h
-    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/GetmeSmoother.h)
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/GetmeSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/VertexAccum.h)
 
 SET(GpuMesh_SMOOTHERS_HEADERS
     ${GpuMesh_VERTEXWISE_HEADERS}
@@ -73,7 +73,8 @@ SET(GpuMesh_SMOOTHERS_HEADERS
 
 SET(GpuMesh_TOPOLOGISTS_HEADERS
     ${GpuMesh_SRC_DIR}/Topologists/AbstractTopologist.h
-    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.h)
+    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.h
+    ${GpuMesh_SRC_DIR}/Topologists/TriangularBoundary.h)
 
 SET(GpuMesh_DIALOGS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.h)
@@ -114,8 +115,7 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp
-    ${GpuMesh_SRC_DIR}/DataStructures/QualityHistogram.cpp
-    ${GpuMesh_SRC_DIR}/DataStructures/VertexAccum.cpp)
+    ${GpuMesh_SRC_DIR}/DataStructures/QualityHistogram.cpp)
 
 SET(GpuMesh_SAMPLERS_SOURCES
     ${GpuMesh_SRC_DIR}/Samplers/AbstractSampler.cpp
@@ -166,7 +166,8 @@ SET(GpuMesh_VERTEXWISE_SOURCES
 
 SET(GpuMesh_ELEMENTWISE_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/AbstractElementWiseSmoother.cpp
-    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/GetmeSmoother.cpp)
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/GetmeSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/ElementWise/VertexAccum.cpp)
 
 SET(GpuMesh_SMOOTHERS_SOURCES
     ${GpuMesh_VERTEXWISE_SOURCES}
@@ -175,7 +176,8 @@ SET(GpuMesh_SMOOTHERS_SOURCES
 
 SET(GpuMesh_TOPOLOGISTS_SOURCES
     ${GpuMesh_SRC_DIR}/Topologists/AbstractTopologist.cpp
-    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.cpp)
+    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.cpp
+    ${GpuMesh_SRC_DIR}/Topologists/TriangularBoundary.cpp)
 
 SET(GpuMesh_UITABS_SOURCES
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.cpp
