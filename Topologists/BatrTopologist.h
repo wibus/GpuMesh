@@ -26,15 +26,15 @@ public:
 
 
 protected:    
-    virtual void edgeSplitMerge(
+    virtual bool edgeSplitMerge(
             Mesh& mesh,
             const MeshCrew& crew) const;
 
-    virtual void faceSwapping(
+    virtual bool faceSwapping(
             Mesh& mesh,
             const MeshCrew& crew) const;
 
-    virtual void edgeSwapping(
+    virtual bool edgeSwapping(
             Mesh& mesh,
             const MeshCrew& crew) const;
 };

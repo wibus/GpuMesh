@@ -48,9 +48,12 @@ void BatrTopologist::restructureMesh(
         "Performing BATR topology modifications...",
         "BatrTopologist"));
 
-    edgeSplitMerge(mesh, crew);
-    faceSwapping(mesh, crew);
-    edgeSwapping(mesh, crew);
+    while(true)
+    {
+        if(!edgeSplitMerge(mesh, crew)) break;
+        if(!faceSwapping(mesh, crew))   break;
+        if(!edgeSwapping(mesh, crew))   break;
+    }
 }
 
 void BatrTopologist::printOptimisationParameters(
@@ -60,7 +63,7 @@ void BatrTopologist::printOptimisationParameters(
 
 }
 
-void BatrTopologist::edgeSplitMerge(
+bool BatrTopologist::edgeSplitMerge(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
@@ -74,13 +77,16 @@ void BatrTopologist::edgeSplitMerge(
     std::vector<bool> aliveTets(mesh.tets.size(), true);
 
     size_t passCount = 0;
+    size_t maxPassCount = 20;
     size_t vertMergeCount = 0;
     size_t edgeSplitCount = 0;
     bool stillVertsToTry = true;
-    while(stillVertsToTry)
+    for(;passCount < maxPassCount && stillVertsToTry; ++passCount)
     {
-        ++passCount;
         stillVertsToTry = false;
+
+        size_t passVertMergeCount = 0;
+        size_t passEdgeSplitCount = 0;
 
 
         for(size_t vId=0; vId < verts.size(); ++vId)
@@ -102,10 +108,10 @@ void BatrTopologist::edgeSplitMerge(
             {
                 MeshNeigVert nId = topos[vId].neighborVerts[nAr];
 
-                //if(nId < vId)
-                //{
-                //    continue;
-                //}
+                if(nId < vId)
+                {
+                    continue;
+                }
 
                 MeshVert vert = verts[vId];
                 MeshTopo& vTopo = topos[vId];
@@ -397,7 +403,7 @@ void BatrTopologist::edgeSplitMerge(
 
 
                 // Notify to check neighbor verts
-                ++vertMergeCount;
+                ++passVertMergeCount;
                 stillVertsToTry = true;
                 vertsToTry[vId] = true;
                 for(const MeshNeigVert vVert : vTopo.neighborVerts)
@@ -489,7 +495,7 @@ void BatrTopologist::edgeSplitMerge(
 
 
                 // Notify to check neighbor verts
-                ++edgeSplitCount;
+                ++passEdgeSplitCount;
                 stillVertsToTry = true;
                 for(const MeshNeigVert vVert : vTopo.neighborVerts)
                     vertsToTry[vVert.v] = true;
@@ -504,6 +510,17 @@ void BatrTopologist::edgeSplitMerge(
                 topos.push_back(wTopo);
             }
         }
+
+
+        getLog().postMessage(new Message('I', false,
+            "Edge split/merge: " +
+            std::to_string(passCount) + " passes \t(" +
+            std::to_string(passEdgeSplitCount) + " split, " +
+            std::to_string(passVertMergeCount) + " merge)",
+            "BatrTopologist"));
+
+        vertMergeCount += passVertMergeCount;
+        edgeSplitCount += passEdgeSplitCount;
     }
 
 
@@ -570,9 +587,11 @@ void BatrTopologist::edgeSplitMerge(
         std::to_string(edgeSplitCount) + " split, " +
         std::to_string(vertMergeCount) + " merge)",
         "BatrTopologist"));
+
+    return edgeSplitCount | vertMergeCount;
 }
 
-void BatrTopologist::faceSwapping(
+bool BatrTopologist::faceSwapping(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
@@ -715,11 +734,13 @@ void BatrTopologist::faceSwapping(
         "BatrTopologist"));
 
     mesh.compileTopology(false);
+
+    return faceSwapCount;
 }
 
-void BatrTopologist::edgeSwapping(
+bool BatrTopologist::edgeSwapping(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
-
+    return true;
 }
