@@ -18,7 +18,7 @@ MESSAGE(STATUS "${GpuMesh_PROJECT} src dir: ${GpuMesh_SRC_DIR}")
 SET(GpuMesh_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 MESSAGE(STATUS "${GpuMesh_PROJECT} bin dir: ${GpuMesh_BIN_DIR}")
 
-ADD_DEFINITIONS(-std=gnu++14)
+ADD_DEFINITIONS(-std=gnu++11)
 
 INCLUDE(LibLists.cmake)
 INCLUDE(FileLists.cmake)
