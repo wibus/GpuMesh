@@ -104,6 +104,8 @@ struct MeshLocalTet
         { v[0] = t.v[0]; v[1] = t.v[1]; v[2] = t.v[2]; v[3] = t.v[3];
           n[0] = -1;     n[1] = -1;     n[2] = -1;     n[3] = -1;     }
 
+    operator MeshTet () const {return MeshTet(v[0], v[1], v[2], v[3]);}
+
     // Vertices of the tetrahedron
     uint v[4];
 
@@ -231,8 +233,8 @@ struct MeshTopo
     static const MeshBound NO_BOUNDARY;
 
     MeshTopo();
-    MeshTopo(bool isFixed);
-    MeshTopo(const MeshBound* snapToBoundary);
+    explicit MeshTopo(bool isFixed);
+    explicit MeshTopo(const MeshBound* snapToBoundary);
 };
 
 

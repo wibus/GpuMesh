@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <numeric>
 
+#include "VertexAccum.h"
 #include "DataStructures/MeshCrew.h"
-#include "DataStructures/VertexAccum.h"
 #include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"

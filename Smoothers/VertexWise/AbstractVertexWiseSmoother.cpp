@@ -48,6 +48,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
         const MeshCrew& crew)
 {
     std::vector<uint> vIds(mesh.verts.size());
+    std::iota(std::begin(vIds), std::end(vIds), 0);
 
     _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, crew))
@@ -57,10 +58,10 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
             verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
             verboseCuda = true;
-        }
 
-        vIds.resize(mesh.verts.size());
-        std::iota(std::begin(vIds), std::end(vIds), 0);
+            vIds.resize(mesh.verts.size());
+            std::iota(std::begin(vIds), std::end(vIds), 0);
+        }
 
         smoothVertices(mesh, crew, vIds);
     }

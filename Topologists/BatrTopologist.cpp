@@ -1,10 +1,13 @@
 #include "BatrTopologist.h"
 
+#include <list>
+#include <iostream>
+
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "TriangularBoundary.h"
 #include "DataStructures/Mesh.h"
 #include "DataStructures/MeshCrew.h"
-#include "DataStructures/TriSet.h"
 #include "Measurers/AbstractMeasurer.h"
 #include "Evaluators/AbstractEvaluator.h"
 
@@ -16,14 +19,6 @@ inline std::vector<T> concat(const std::vector<T>& a, const std::vector<N>& b)
     std::vector<T> c(a.begin(), a.end());
     c.insert(c.end(), b.begin(), b.end());
     return std::move(c);
-}
-
-inline LocalEdge toEdge(uint v0, uint v1)
-{
-    if(v0 < v1)
-        return LocalEdge(v0, v1);
-    else
-        return LocalEdge(v1, v0);
 }
 
 BatrTopologist::BatrTopologist()
@@ -56,9 +51,12 @@ void BatrTopologist::restructureMesh(
         "Performing BATR topology modifications...",
         "BatrTopologist"));
 
-    edgeSplitMerge(mesh, crew);
-    faceSwapping(mesh, crew);
-    edgeSwapping(mesh, crew);
+    while(true)
+    {
+        if(!edgeSplitMerge(mesh, crew)) break;
+        if(!faceSwapping(mesh, crew))   break;
+        if(!edgeSwapping(mesh, crew))   break;
+    }
 }
 
 void BatrTopologist::printOptimisationParameters(
@@ -68,30 +66,30 @@ void BatrTopologist::printOptimisationParameters(
 
 }
 
-
-void BatrTopologist::edgeSplitMerge(
+bool BatrTopologist::edgeSplitMerge(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
-    std::vector<MeshTet>& tets = mesh.tets;
-    std::set<std::pair<uint, uint>> boundEdges;
-    buildBoundaryEdgeSet(tets, boundEdges);
+    TriangularBoundary bounds(mesh.tets);
 
     std::vector<MeshVert>& verts = mesh.verts;
     std::vector<MeshTopo>& topos = mesh.topos;
 
-    std::vector<bool> aliveTets(tets.size(), true);
+    bool stillVertsToTry = true;
     std::vector<bool> aliveVerts(verts.size(), true);
     std::vector<bool> vertsToTry(verts.size(), true);
+    std::vector<bool> aliveTets(mesh.tets.size(), true);
 
     size_t passCount = 0;
+    size_t maxPassCount = 20;
     size_t vertMergeCount = 0;
     size_t edgeSplitCount = 0;
-    bool stillVertsToTry = true;
-    while(stillVertsToTry)
+    for(;passCount < maxPassCount && stillVertsToTry; ++passCount)
     {
-        ++passCount;
         stillVertsToTry = false;
+
+        size_t passVertMergeCount = 0;
+        size_t passEdgeSplitCount = 0;
 
 
         for(size_t vId=0; vId < verts.size(); ++vId)
@@ -151,15 +149,15 @@ void BatrTopologist::edgeSplitMerge(
 
             uint nId;
             double dist;
-            if(maxDist != -INFINITY)
-            {
-                dist = maxDist;
-                nId = maxId;
-            }
-            else if(minDist != INFINITY)
+            if(minDist != INFINITY)
             {
                 dist = minDist;
                 nId = minId;
+            }
+            else if(maxDist != -INFINITY)
+            {
+                dist = maxDist;
+                nId = maxId;
             }
             else
             {
@@ -278,7 +276,7 @@ void BatrTopologist::edgeSplitMerge(
                 for(const MeshNeigElem& dElem : allExclusiveElems)
                 {
                     if(crew.measurer().tetEuclideanVolume(
-                        mesh, tets[dElem.id]) <= 0.0)
+                        mesh, bounds.tet(dElem.id)) <= 0.0)
                     {
                         isConformal = false;
                         break;
@@ -297,29 +295,9 @@ void BatrTopologist::edgeSplitMerge(
                 // Mark geometry as deleted
                 aliveVerts[nId] = false;
                 for(const MeshNeigElem& cElem : intersectionElems)
-                    aliveTets[cElem.id] = false;
-
-                // Remove boundary edges steming from n
-                if(nTopo.isBoundary)
                 {
-                    for(const MeshNeigVert& nVert : nExclusiveVerts)
-                    {
-                        if(topos[nVert].isBoundary)
-                        {
-                            if(boundEdges.erase(toEdge(nId, nVert)))
-                            {
-                                boundEdges.insert(toEdge(vId, nVert));
-                            }
-                        }
-                    }
-
-                    for(const MeshNeigVert& iVert : intersectionVerts)
-                    {
-                        if(topos[iVert].isBoundary)
-                        {
-                            boundEdges.erase(toEdge(nId, iVert));
-                        }
-                    }
+                    aliveTets[cElem.id] = false;
+                    bounds.removeTet(cElem.id);
                 }
 
                 // Find v's exclusive vertices
@@ -339,12 +317,16 @@ void BatrTopologist::edgeSplitMerge(
 
                 // Replace n for v in n's exclusive elements
                 for(const MeshNeigElem& ndElem : nExclusiveElems)
+                    bounds.removeTet(ndElem.id);
+
+                for(const MeshNeigElem& ndElem : nExclusiveElems)
                 {
-                    MeshTet& tet = tets[ndElem.id];
+                    MeshTet tet = bounds.tet(ndElem.id);
                     if(tet.v[0] == nId)      tet.v[0] = vId;
                     else if(tet.v[1] == nId) tet.v[1] = vId;
                     else if(tet.v[2] == nId) tet.v[2] = vId;
                     else if(tet.v[3] == nId) tet.v[3] = vId;
+                    bounds.insertTet(tet, ndElem.id);
                 }
 
                 // Replace n for v in n's exclusive vertices
@@ -424,7 +406,7 @@ void BatrTopologist::edgeSplitMerge(
 
 
                 // Notify to check neighbor verts
-                ++vertMergeCount;
+                ++passVertMergeCount;
                 stillVertsToTry = true;
                 vertsToTry[vId] = true;
                 for(const MeshNeigVert vVert : vTopo.neighborVerts)
@@ -440,15 +422,11 @@ void BatrTopologist::edgeSplitMerge(
                 MeshTopo wTopo;
                 if(vTopo.isBoundary && nTopo.isBoundary)
                 {
-                    auto edge = toEdge(vId, nId);
-                    auto edgeIt = boundEdges.find(edge);
-                    if(edgeIt != boundEdges.end())
+                    if(bounds.isBoundary(vId, nId))
                     {
                         wTopo.isBoundary = true;
                         wTopo.snapToBoundary = vTopo.snapToBoundary;
                         verts[wId].p = (*vTopo.snapToBoundary)(middle);
-
-                        boundEdges.erase(edgeIt);
                     }
                 }
 
@@ -460,6 +438,12 @@ void BatrTopologist::edgeSplitMerge(
                 for(MeshNeigVert& nVert : nTopo.neighborVerts)
                     if(nVert == vId) { nVert.v = wId; break; }
 
+
+                // Remove intersection tets from bounds
+                for(const MeshNeigElem& iElem : intersectionElems)
+                    bounds.removeTet(iElem.id);
+
+
                 // Build new elements
                 nElems = nExclusiveElems;
                 std::vector<MeshNeigElem>& wElems = wTopo.neighborElems;
@@ -467,7 +451,7 @@ void BatrTopologist::edgeSplitMerge(
                 {
                     int o = -1;
                     uint others[] = {0, 0};
-                    MeshTet& tet = tets[iElem.id];
+                    MeshTet tet = bounds.tet(iElem.id);
                     if(tet.v[0] != vId)
                         if(tet.v[0] == nId) tet.v[0] = wId;
                         else others[++o] = tet.v[0];
@@ -482,7 +466,7 @@ void BatrTopologist::edgeSplitMerge(
                         else others[++o] = tet.v[3];
 
 
-                    MeshNeigElem newNeigElem(MeshTet::ELEMENT_TYPE, tets.size());
+                    MeshNeigElem newNeigElem(MeshTet::ELEMENT_TYPE, bounds.tetCount());
                     nElems.push_back(newNeigElem);
                     wElems.push_back(newNeigElem);
                     wElems.push_back(iElem);
@@ -497,7 +481,8 @@ void BatrTopologist::edgeSplitMerge(
                     if(AbstractMeasurer::tetEuclideanVolume(mesh, tet) < 0.0)
                         std::swap(tet.v[0], tet.v[1]);
 
-                    tets.push_back(newTetN);
+                    bounds.insertTet(tet, iElem.id);
+                    bounds.insertTet(newTetN);
                     aliveTets.push_back(true);
                 }
 
@@ -512,20 +497,11 @@ void BatrTopologist::edgeSplitMerge(
                 wVerts.push_back(nId);
 
 
-                // Add new boundary edges
-                if(wTopo.isBoundary)
-                {
-                    for(MeshNeigVert& wVert : wVerts)
-                    {
-                        if(topos[wVert].isBoundary)
-                            boundEdges.insert(toEdge(wId, wVert));
-                    }
-                }
-
-
                 // Notify to check neighbor verts
-                ++edgeSplitCount;
+                ++passEdgeSplitCount;
                 stillVertsToTry = true;
+                aliveVerts.push_back(true);
+                vertsToTry.push_back(true);
                 for(const MeshNeigVert vVert : vTopo.neighborVerts)
                     vertsToTry[vVert.v] = true;
                 for(const MeshNeigVert nVert : nTopo.neighborVerts)
@@ -534,12 +510,46 @@ void BatrTopologist::edgeSplitMerge(
                 // Push back only at the end cause we have
                 // lots of active references to topo all around
                 // (prevent vector from reallocating its buffer)
-                aliveVerts.push_back(true);
-                vertsToTry.push_back(true);
                 topos.push_back(wTopo);
             }
         }
+
+/*
+        getLog().postMessage(new Message('I', false,
+            "Edge split/merge: " +
+            std::to_string(passCount) + " passes \t(" +
+            std::to_string(passEdgeSplitCount) + " split, " +
+            std::to_string(passVertMergeCount) + " merge)",
+            "BatrTopologist"));
+*/
+        vertMergeCount += passVertMergeCount;
+        edgeSplitCount += passEdgeSplitCount;
     }
+
+
+    // Remove deleted tets
+    size_t copyTetId = 0;
+    size_t tetCount = bounds.tetCount();
+    std::vector<MeshTet>& tets = mesh.tets;
+    tets.resize(tetCount);
+    for(size_t tId=0; tId < tetCount; ++tId)
+    {
+        if(aliveTets[tId])
+        {
+            const MeshLocalTet& tet = bounds.tet(tId);
+            for(uint i=0; i < 4; ++i)
+            {
+                MeshTopo& topo = topos[tet.v[i]];
+                for(MeshNeigElem& ne : topo.neighborElems)
+                    if(ne.id == tId) {ne.id = copyTetId; break;}
+            }
+
+            tets[copyTetId] = tet;
+            ++copyTetId;
+        }
+    }
+    tets.resize(copyTetId);
+
 
     // Remove deleted verts
     size_t copyVertId = 0;
@@ -573,27 +583,6 @@ void BatrTopologist::edgeSplitMerge(
     verts.resize(copyVertId);
     topos.resize(copyVertId);
 
-    // Remove deleted tets
-    size_t copyTetId = 0;
-    for(size_t tId=0; tId < tets.size(); ++tId)
-    {
-        if(aliveTets[tId])
-        {
-            if(copyTetId != tId)
-            {
-                for(uint i=0; i < 4; ++i)
-                {
-                    MeshTopo& topo = topos[tets[tId].v[i]];
-                    for(MeshNeigElem& ne : topo.neighborElems)
-                        if(ne.id == tId) {ne.id = copyTetId; break;}
-                }
-
-                tets[copyTetId] = tets[tId];
-            }
-            ++copyTetId;
-        }
-    }
-    tets.resize(copyTetId);
 
     getLog().postMessage(new Message('I', false,
         "Edge split/merge: " +
@@ -601,9 +590,11 @@ void BatrTopologist::edgeSplitMerge(
         std::to_string(edgeSplitCount) + " split, " +
         std::to_string(vertMergeCount) + " merge)",
         "BatrTopologist"));
+
+    return edgeSplitCount | vertMergeCount;
 }
 
-void BatrTopologist::faceSwapping(
+bool BatrTopologist::faceSwapping(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
@@ -632,6 +623,7 @@ void BatrTopologist::faceSwapping(
                 const MeshTri& refTri = MeshTet::tris[f];
                 MeshTri tri(tet.v[refTri[0]], tet.v[refTri[1]], tet.v[refTri[2]]);
 
+                // Process only counter-clockwise winded triangles
                 if(tri.v[0] < tri.v[1] && tri.v[1] < tri.v[2] ||
                    tri.v[1] < tri.v[2] && tri.v[2] < tri.v[0] ||
                    tri.v[2] < tri.v[0] && tri.v[0] < tri.v[1])
@@ -746,57 +738,351 @@ void BatrTopologist::faceSwapping(
         "BatrTopologist"));
 
     mesh.compileTopology(false);
+
+    return faceSwapCount;
 }
 
-void BatrTopologist::edgeSwapping(
+bool BatrTopologist::edgeSwapping(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
+    std::vector<MeshTet>& tets = mesh.tets;
+    std::vector<MeshVert>& verts = mesh.verts;
+    std::vector<MeshTopo>& topos = mesh.topos;
 
-}
+    bool stillVertsToTry = true;
+    std::vector<bool> vertsToTry(verts.size(), true);
+    std::vector<bool> aliveTets(tets.size(), true);
 
-void BatrTopologist::buildBoundaryEdgeSet(
-        std::vector<MeshTet>& tets,
-        std::set<LocalEdge>& edges) const
-{
-    size_t tetCount = tets.size();
-    size_t triCount = tetCount * 4;
+    std::map<int, int> ringSizeCounters;
+    std::map<double, int> edgeSwapCount;
+    size_t passCount = 0;
 
-    std::vector<MeshLocalTet> localTets;
-    localTets.reserve(tets.size());
-    for(size_t tId=0; tId < tetCount; ++tId)
-        localTets.push_back(tets[tId]);
-
-    TriSet triSet;
-    triSet.reset(glm::max(10.0,
-        pow(double(triCount), 2.0/3.0)));
-
-    for(size_t t=0; t < tetCount; ++t)
+    while(stillVertsToTry)
     {
-        MeshLocalTet& tet = localTets[t];
-        for(uint s=0; s < MeshTet::TRI_COUNT; ++s)
+        ++passCount;
+        stillVertsToTry = false;
+
+        for(size_t vId=0; vId < verts.size(); ++vId)
         {
-            Triangle tri(tet.v[MeshTet::tris[s][0]],
-                         tet.v[MeshTet::tris[s][1]],
-                         tet.v[MeshTet::tris[s][2]]);
-            glm::uvec2 con = triSet.xOrTri(tri, t, s);
+            if(!vertsToTry[vId])
+                continue;
 
-            uint owner = con[0];
-            uint side = con[1];
-            tet.n[s] = owner;
+            vertsToTry[vId] = false;
+            MeshTopo& vTopo = topos[vId];
+            std::vector<MeshNeigElem>& vElems = vTopo.neighborElems;
+            std::vector<MeshNeigVert>& vVerts = vTopo.neighborVerts;
 
-            if(owner != TriSet::NO_OWNER)
+            for(size_t nAr = 0; nAr < vVerts.size(); ++nAr)
             {
-                localTets[owner].n[side] = t;
+                uint nId = vVerts[nAr];
+
+                if(nId < vId)
+                {
+                    continue;
+                }
+
+                MeshTopo& nTopo = topos[nId];
+                std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
+                std::vector<MeshNeigVert>& nVerts = nTopo.neighborVerts;
+
+                std::vector<uint> interElems;
+                for(const MeshNeigElem& vElem : vElems)
+                {
+                    for(const MeshNeigElem& nElem : nElems)
+                    {
+                        if(vElem.id == nElem.id)
+                        {
+                            interElems.push_back(vElem.id);
+                            break;
+                        }
+                    }
+                }
+
+                std::set<uint> ringSet;
+                for(uint iElem : interElems)
+                {
+                    const MeshTet& tet = tets[iElem];
+                    if(tet.v[0] != vId && tet.v[0] != nId) ringSet.insert(tet.v[0]);
+                    if(tet.v[1] != vId && tet.v[1] != nId) ringSet.insert(tet.v[1]);
+                    if(tet.v[2] != vId && tet.v[2] != nId) ringSet.insert(tet.v[2]);
+                    if(tet.v[3] != vId && tet.v[3] != nId) ringSet.insert(tet.v[3]);
+                }
+                std::vector<uint> ring(ringSet.begin(), ringSet.end());
+
+                std::cout << "vId(" << vId << "), nId(" << nId << "):\n";
+                std::cout << "Ring (" << ring.size() << "): ";
+                for(uint rId : ring)
+                    std::cout << rId << (topos[rId].isBoundary ? "*, " : ", ");
+                std::cout << "\niElems (" << interElems.size() << "): ";
+                for(uint iElem : interElems)
+                {
+                    const MeshTet& tet = tets[iElem];
+                    std::cout << "(" << tet.v[0] << ", " << tet.v[1]
+                        << ", " << tet.v[2] << ", " << tet.v[3] << "); ";
+                }
+                std::cout << std::endl << std::endl;
+
+                if(ring.size()-1 > interElems.size())
+                    continue;
+
+
+                // Sort ring verts
+                std::vector<uint> elemPool = interElems;
+
+                auto rIt = ring.begin();
+                auto nIt = ++ring.begin();
+                while(nIt != ring.end())
+                {
+                    bool found = false;
+                    for(size_t i=0; i < elemPool.size() && !found; ++i)
+                    {
+                        const MeshTet& tet = tets[elemPool[i]];
+                        for(size_t j=0; j < 4 && !found; ++j)
+                        {
+                            if(tet.v[j] == *rIt)
+                            {
+                                for(size_t k=0; k < 4 && !found; ++k)
+                                {
+                                    if(k!=j && tet.v[k]!=vId && tet.v[k]!=nId)
+                                    {
+                                        auto wIt = nIt;
+                                        while(wIt != ring.end() && !found)
+                                        {
+                                            if(*wIt == tet.v[k])
+                                            {
+                                                std::swap(elemPool[i], elemPool.back());
+                                                elemPool.pop_back();
+
+                                                std::swap(*wIt, *nIt);
+                                                found = true;
+                                            }
+
+                                            ++wIt;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // We've reached a bound
+                    if(!found)
+                    {
+                        auto cbIt = ring.begin();
+                        auto cfIt = rIt;
+
+                        while(cbIt < cfIt)
+                        {
+                            std::swap(*cbIt, *cfIt);
+                            ++cbIt; --cfIt;
+                        }
+
+                        continue;
+                    }
+                    ++rIt;
+                    ++nIt;
+                }
+
+                // Enforce counter clockwise order around segment V-N
+                glm::dvec3 vn = verts[nId].p - verts[vId].p;
+                glm::dvec3 vb = verts[ring[0]].p - verts[vId].p;
+                glm::dvec3 vf = verts[ring[1]].p - verts[vId].p;
+                if(glm::dot(glm::cross(vb, vf), vn) < 0.0)
+                {
+                    int i=0, j = ring.size()-1;
+                    while(i < j)
+                    {
+                        std::swap(ring[i], ring[j]);
+                        ++i; --j;
+                    }
+                }
+
+                size_t ringSize = ring.size();
+                ++ringSizeCounters[ringSize];
+
+                double minQual = INFINITY;
+                for(uint eId : interElems)
+                {
+                    minQual = glm::min(minQual, crew.evaluator().tetQuality(
+                        mesh, crew.sampler(), crew.measurer(), tets[eId]));
+                }
+
+                if(ringSize == 3)
+                {
+                    MeshTet tetUp(ring[0], ring[1], ring[2], nId);
+                    MeshTet tetDown(ring[2], ring[1], ring[0], vId);
+
+                    if(minQual < crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), tetUp) &&
+                       minQual < crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), tetDown))
+                    {
+                        /*
+                        for(size_t i=0; i < vVerts.size(); ++i)
+                        {
+                            if(vVerts[i] == nId)
+                            {
+                                std::swap(vVerts[i], vVerts.back());
+                                vVerts.pop_back();
+                                break;
+                            }
+                        }
+                        for(size_t i=0; i < vElems.size(); ++i)
+                        {
+                            if(vElems[i].id == interElems[1])
+                            {
+                                std::swap(vElems[i], vElems.back());
+                                vElems.pop_back();
+                                break;
+                            }
+                        }
+
+                        for(size_t i=0; i < nVerts.size(); ++i)
+                        {
+                            if(nVerts[i] == vId)
+                            {
+                                std::swap(nVerts[i], nVerts.back());
+                                nVerts.pop_back();
+                                break;
+                            }
+                        }
+                        for(size_t i=0; i < nElems.size(); ++i)
+                        {
+                            if(nElems[i].id == interElems[0])
+                            {
+                                std::swap(nElems[i], nElems.back());
+                                nElems.pop_back();
+                                break;
+                            }
+                        }
+                        */
+
+                        if(interElems.size() > 2)
+                        {
+                            /*
+                            for(size_t i=0; i < vElems.size(); ++i)
+                            {
+                                if(vElems[i].id == interElems[2])
+                                {
+                                    std::swap(vElems[i], vElems.back());
+                                    vElems.pop_back();
+                                    break;
+                                }
+                            }
+
+                            for(size_t i=0; i < nElems.size(); ++i)
+                            {
+                                if(nElems[i].id == interElems[2])
+                                {
+                                    std::swap(nElems[i], nElems.back());
+                                    nElems.pop_back();
+                                    break;
+                                }
+                            }
+
+                            for(size_t i=0; i < ring.size(); ++i)
+                            {
+                                std::vector<MeshNeigElem>& rElems =
+                                        topos[ring[i]].neighborElems;
+
+                                bool removed = false;
+                                for(size_t i=0; i < rElems.size(); ++i)
+                                {
+                                    if(rElems[i].id == interElems[2])
+                                    {
+                                        std::swap(rElems[i], rElems.back());
+                                        rElems.pop_back();
+                                        removed = true;
+                                        break;
+                                    }
+                                }
+
+                                if(!removed)
+                                {
+                                    for(size_t i=0; i < rElems.size(); ++i)
+                                    {
+                                        if(rElems[i].id == interElems[0])
+                                        {
+                                            rElems.push_back(MeshNeigElem(
+                                                MeshTet::ELEMENT_TYPE, interElems[1]));
+                                            break;
+                                        }
+                                        else if(rElems[i].id == interElems[1])
+                                        {
+                                            rElems.push_back(MeshNeigElem(
+                                                MeshTet::ELEMENT_TYPE, interElems[0]));
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            aliveTets[interElems[2]] = false;
+                            */
+                            ++edgeSwapCount[3];
+                        }
+                        else
+                        {
+                            // TODO wbussiere 2016-05-04 :
+                            //  connect unconnected rind verts
+                            ++edgeSwapCount[3.5];
+                        }
+/*
+                        tets[interElems[0]] = tetDown;
+                        tets[interElems[1]] = tetUp;
+
+                        // Verify neighbor verts
+                        stillVertsToTry = true;
+*/
+                    }
+                    else
+                    {
+                        ++edgeSwapCount[-3];
+                    }
+                }
+                else
+                {
+                    ++edgeSwapCount[0];
+                }
             }
         }
     }
 
-    const std::vector<Triangle>& surfTris = triSet.gather();
-    for(const Triangle& tri : surfTris)
+
+    // Remove deleted tets
+    size_t copyTetId = 0;
+    for(size_t tId=0; tId < tets.size(); ++tId)
     {
-        edges.insert(toEdge(tri.v[0], tri.v[1]));
-        edges.insert(toEdge(tri.v[1], tri.v[2]));
-        edges.insert(toEdge(tri.v[2], tri.v[0]));
+        if(aliveTets[tId])
+        {
+            if(tId != copyTetId)
+            {
+                const MeshLocalTet& tet = tets[tId];
+                for(uint i=0; i < 4; ++i)
+                {
+                    MeshTopo& topo = topos[tet.v[i]];
+                    for(MeshNeigElem& ne : topo.neighborElems)
+                        if(ne.id == tId) {ne.id = copyTetId; break;}
+                }
+
+                tets[copyTetId] = tet;
+            }
+            ++copyTetId;
+        }
     }
+    tets.resize(copyTetId);
+
+
+    for(auto rIt = edgeSwapCount.begin();
+        rIt != edgeSwapCount.end(); ++rIt)
+    {
+        getLog().postMessage(new Message('I', false,
+            "Ring of " + std::to_string(rIt->first) +
+            " verts count: " + std::to_string(rIt->second),
+            "BatrTopologist"));
+    }
+
+    return false;
+    return edgeSwapCount.size() > 1;
 }

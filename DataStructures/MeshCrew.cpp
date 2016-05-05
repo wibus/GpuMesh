@@ -131,9 +131,9 @@ void MeshCrew::reinitCrew(const Mesh& mesh)
 {
     if(_isInitialized)
     {
-        if(_sampler.get() != nullptr &&
-           _measurer.get()    != nullptr &&
-           _evaluator.get()   != nullptr)
+        if(_sampler.get()   != nullptr &&
+           _measurer.get()  != nullptr &&
+           _evaluator.get() != nullptr)
         {
             _sampler->initialize();
             _measurer->initialize();
