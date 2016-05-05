@@ -1,5 +1,8 @@
 #include "BatrTopologist.h"
 
+#include <list>
+#include <iostream>
+
 #include <CellarWorkbench/Misc/Log.h>
 
 #include "TriangularBoundary.h"
@@ -72,6 +75,7 @@ bool BatrTopologist::edgeSplitMerge(
     std::vector<MeshVert>& verts = mesh.verts;
     std::vector<MeshTopo>& topos = mesh.topos;
 
+    bool stillVertsToTry = true;
     std::vector<bool> aliveVerts(verts.size(), true);
     std::vector<bool> vertsToTry(verts.size(), true);
     std::vector<bool> aliveTets(mesh.tets.size(), true);
@@ -80,7 +84,6 @@ bool BatrTopologist::edgeSplitMerge(
     size_t maxPassCount = 20;
     size_t vertMergeCount = 0;
     size_t edgeSplitCount = 0;
-    bool stillVertsToTry = true;
     for(;passCount < maxPassCount && stillVertsToTry; ++passCount)
     {
         stillVertsToTry = false;
@@ -497,6 +500,8 @@ bool BatrTopologist::edgeSplitMerge(
                 // Notify to check neighbor verts
                 ++passEdgeSplitCount;
                 stillVertsToTry = true;
+                aliveVerts.push_back(true);
+                vertsToTry.push_back(true);
                 for(const MeshNeigVert vVert : vTopo.neighborVerts)
                     vertsToTry[vVert.v] = true;
                 for(const MeshNeigVert nVert : nTopo.neighborVerts)
@@ -505,20 +510,18 @@ bool BatrTopologist::edgeSplitMerge(
                 // Push back only at the end cause we have
                 // lots of active references to topo all around
                 // (prevent vector from reallocating its buffer)
-                aliveVerts.push_back(true);
-                vertsToTry.push_back(true);
                 topos.push_back(wTopo);
             }
         }
 
-
+/*
         getLog().postMessage(new Message('I', false,
             "Edge split/merge: " +
             std::to_string(passCount) + " passes \t(" +
             std::to_string(passEdgeSplitCount) + " split, " +
             std::to_string(passVertMergeCount) + " merge)",
             "BatrTopologist"));
-
+*/
         vertMergeCount += passVertMergeCount;
         edgeSplitCount += passEdgeSplitCount;
     }
@@ -620,6 +623,7 @@ bool BatrTopologist::faceSwapping(
                 const MeshTri& refTri = MeshTet::tris[f];
                 MeshTri tri(tet.v[refTri[0]], tet.v[refTri[1]], tet.v[refTri[2]]);
 
+                // Process only counter-clockwise winded triangles
                 if(tri.v[0] < tri.v[1] && tri.v[1] < tri.v[2] ||
                    tri.v[1] < tri.v[2] && tri.v[2] < tri.v[0] ||
                    tri.v[2] < tri.v[0] && tri.v[0] < tri.v[1])
@@ -742,5 +746,343 @@ bool BatrTopologist::edgeSwapping(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
-    return true;
+    std::vector<MeshTet>& tets = mesh.tets;
+    std::vector<MeshVert>& verts = mesh.verts;
+    std::vector<MeshTopo>& topos = mesh.topos;
+
+    bool stillVertsToTry = true;
+    std::vector<bool> vertsToTry(verts.size(), true);
+    std::vector<bool> aliveTets(tets.size(), true);
+
+    std::map<int, int> ringSizeCounters;
+    std::map<double, int> edgeSwapCount;
+    size_t passCount = 0;
+
+    while(stillVertsToTry)
+    {
+        ++passCount;
+        stillVertsToTry = false;
+
+        for(size_t vId=0; vId < verts.size(); ++vId)
+        {
+            if(!vertsToTry[vId])
+                continue;
+
+            vertsToTry[vId] = false;
+            MeshTopo& vTopo = topos[vId];
+            std::vector<MeshNeigElem>& vElems = vTopo.neighborElems;
+            std::vector<MeshNeigVert>& vVerts = vTopo.neighborVerts;
+
+            for(size_t nAr = 0; nAr < vVerts.size(); ++nAr)
+            {
+                uint nId = vVerts[nAr];
+
+                if(nId < vId)
+                {
+                    continue;
+                }
+
+                MeshTopo& nTopo = topos[nId];
+                std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
+                std::vector<MeshNeigVert>& nVerts = nTopo.neighborVerts;
+
+                std::vector<uint> interElems;
+                for(const MeshNeigElem& vElem : vElems)
+                {
+                    for(const MeshNeigElem& nElem : nElems)
+                    {
+                        if(vElem.id == nElem.id)
+                        {
+                            interElems.push_back(vElem.id);
+                            break;
+                        }
+                    }
+                }
+
+                std::set<uint> ringSet;
+                for(uint iElem : interElems)
+                {
+                    const MeshTet& tet = tets[iElem];
+                    if(tet.v[0] != vId && tet.v[0] != nId) ringSet.insert(tet.v[0]);
+                    if(tet.v[1] != vId && tet.v[1] != nId) ringSet.insert(tet.v[1]);
+                    if(tet.v[2] != vId && tet.v[2] != nId) ringSet.insert(tet.v[2]);
+                    if(tet.v[3] != vId && tet.v[3] != nId) ringSet.insert(tet.v[3]);
+                }
+                std::vector<uint> ring(ringSet.begin(), ringSet.end());
+
+                std::cout << "vId(" << vId << "), nId(" << nId << "):\n";
+                std::cout << "Ring (" << ring.size() << "): ";
+                for(uint rId : ring)
+                    std::cout << rId << (topos[rId].isBoundary ? "*, " : ", ");
+                std::cout << "\niElems (" << interElems.size() << "): ";
+                for(uint iElem : interElems)
+                {
+                    const MeshTet& tet = tets[iElem];
+                    std::cout << "(" << tet.v[0] << ", " << tet.v[1]
+                        << ", " << tet.v[2] << ", " << tet.v[3] << "); ";
+                }
+                std::cout << std::endl << std::endl;
+
+                if(ring.size()-1 > interElems.size())
+                    continue;
+
+
+                // Sort ring verts
+                std::vector<uint> elemPool = interElems;
+
+                auto rIt = ring.begin();
+                auto nIt = ++ring.begin();
+                while(nIt != ring.end())
+                {
+                    bool found = false;
+                    for(size_t i=0; i < elemPool.size() && !found; ++i)
+                    {
+                        const MeshTet& tet = tets[elemPool[i]];
+                        for(size_t j=0; j < 4 && !found; ++j)
+                        {
+                            if(tet.v[j] == *rIt)
+                            {
+                                for(size_t k=0; k < 4 && !found; ++k)
+                                {
+                                    if(k!=j && tet.v[k]!=vId && tet.v[k]!=nId)
+                                    {
+                                        auto wIt = nIt;
+                                        while(wIt != ring.end() && !found)
+                                        {
+                                            if(*wIt == tet.v[k])
+                                            {
+                                                std::swap(elemPool[i], elemPool.back());
+                                                elemPool.pop_back();
+
+                                                std::swap(*wIt, *nIt);
+                                                found = true;
+                                            }
+
+                                            ++wIt;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // We've reached a bound
+                    if(!found)
+                    {
+                        auto cbIt = ring.begin();
+                        auto cfIt = rIt;
+
+                        while(cbIt < cfIt)
+                        {
+                            std::swap(*cbIt, *cfIt);
+                            ++cbIt; --cfIt;
+                        }
+
+                        continue;
+                    }
+                    ++rIt;
+                    ++nIt;
+                }
+
+                // Enforce counter clockwise order around segment V-N
+                glm::dvec3 vn = verts[nId].p - verts[vId].p;
+                glm::dvec3 vb = verts[ring[0]].p - verts[vId].p;
+                glm::dvec3 vf = verts[ring[1]].p - verts[vId].p;
+                if(glm::dot(glm::cross(vb, vf), vn) < 0.0)
+                {
+                    int i=0, j = ring.size()-1;
+                    while(i < j)
+                    {
+                        std::swap(ring[i], ring[j]);
+                        ++i; --j;
+                    }
+                }
+
+                size_t ringSize = ring.size();
+                ++ringSizeCounters[ringSize];
+
+                double minQual = INFINITY;
+                for(uint eId : interElems)
+                {
+                    minQual = glm::min(minQual, crew.evaluator().tetQuality(
+                        mesh, crew.sampler(), crew.measurer(), tets[eId]));
+                }
+
+                if(ringSize == 3)
+                {
+                    MeshTet tetUp(ring[0], ring[1], ring[2], nId);
+                    MeshTet tetDown(ring[2], ring[1], ring[0], vId);
+
+                    if(minQual < crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), tetUp) &&
+                       minQual < crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), tetDown))
+                    {
+                        /*
+                        for(size_t i=0; i < vVerts.size(); ++i)
+                        {
+                            if(vVerts[i] == nId)
+                            {
+                                std::swap(vVerts[i], vVerts.back());
+                                vVerts.pop_back();
+                                break;
+                            }
+                        }
+                        for(size_t i=0; i < vElems.size(); ++i)
+                        {
+                            if(vElems[i].id == interElems[1])
+                            {
+                                std::swap(vElems[i], vElems.back());
+                                vElems.pop_back();
+                                break;
+                            }
+                        }
+
+                        for(size_t i=0; i < nVerts.size(); ++i)
+                        {
+                            if(nVerts[i] == vId)
+                            {
+                                std::swap(nVerts[i], nVerts.back());
+                                nVerts.pop_back();
+                                break;
+                            }
+                        }
+                        for(size_t i=0; i < nElems.size(); ++i)
+                        {
+                            if(nElems[i].id == interElems[0])
+                            {
+                                std::swap(nElems[i], nElems.back());
+                                nElems.pop_back();
+                                break;
+                            }
+                        }
+                        */
+
+                        if(interElems.size() > 2)
+                        {
+                            /*
+                            for(size_t i=0; i < vElems.size(); ++i)
+                            {
+                                if(vElems[i].id == interElems[2])
+                                {
+                                    std::swap(vElems[i], vElems.back());
+                                    vElems.pop_back();
+                                    break;
+                                }
+                            }
+
+                            for(size_t i=0; i < nElems.size(); ++i)
+                            {
+                                if(nElems[i].id == interElems[2])
+                                {
+                                    std::swap(nElems[i], nElems.back());
+                                    nElems.pop_back();
+                                    break;
+                                }
+                            }
+
+                            for(size_t i=0; i < ring.size(); ++i)
+                            {
+                                std::vector<MeshNeigElem>& rElems =
+                                        topos[ring[i]].neighborElems;
+
+                                bool removed = false;
+                                for(size_t i=0; i < rElems.size(); ++i)
+                                {
+                                    if(rElems[i].id == interElems[2])
+                                    {
+                                        std::swap(rElems[i], rElems.back());
+                                        rElems.pop_back();
+                                        removed = true;
+                                        break;
+                                    }
+                                }
+
+                                if(!removed)
+                                {
+                                    for(size_t i=0; i < rElems.size(); ++i)
+                                    {
+                                        if(rElems[i].id == interElems[0])
+                                        {
+                                            rElems.push_back(MeshNeigElem(
+                                                MeshTet::ELEMENT_TYPE, interElems[1]));
+                                            break;
+                                        }
+                                        else if(rElems[i].id == interElems[1])
+                                        {
+                                            rElems.push_back(MeshNeigElem(
+                                                MeshTet::ELEMENT_TYPE, interElems[0]));
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            aliveTets[interElems[2]] = false;
+                            */
+                            ++edgeSwapCount[3];
+                        }
+                        else
+                        {
+                            // TODO wbussiere 2016-05-04 :
+                            //  connect unconnected rind verts
+                            ++edgeSwapCount[3.5];
+                        }
+/*
+                        tets[interElems[0]] = tetDown;
+                        tets[interElems[1]] = tetUp;
+
+                        // Verify neighbor verts
+                        stillVertsToTry = true;
+*/
+                    }
+                    else
+                    {
+                        ++edgeSwapCount[-3];
+                    }
+                }
+                else
+                {
+                    ++edgeSwapCount[0];
+                }
+            }
+        }
+    }
+
+
+    // Remove deleted tets
+    size_t copyTetId = 0;
+    for(size_t tId=0; tId < tets.size(); ++tId)
+    {
+        if(aliveTets[tId])
+        {
+            if(tId != copyTetId)
+            {
+                const MeshLocalTet& tet = tets[tId];
+                for(uint i=0; i < 4; ++i)
+                {
+                    MeshTopo& topo = topos[tet.v[i]];
+                    for(MeshNeigElem& ne : topo.neighborElems)
+                        if(ne.id == tId) {ne.id = copyTetId; break;}
+                }
+
+                tets[copyTetId] = tet;
+            }
+            ++copyTetId;
+        }
+    }
+    tets.resize(copyTetId);
+
+
+    for(auto rIt = edgeSwapCount.begin();
+        rIt != edgeSwapCount.end(); ++rIt)
+    {
+        getLog().postMessage(new Message('I', false,
+            "Ring of " + std::to_string(rIt->first) +
+            " verts count: " + std::to_string(rIt->second),
+            "BatrTopologist"));
+    }
+
+    return false;
+    return edgeSwapCount.size() > 1;
 }
