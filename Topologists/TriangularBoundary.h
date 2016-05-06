@@ -24,6 +24,7 @@ public:
     void removeTet(uint tetId);
 
     size_t tetCount() const;
+    MeshLocalTet& tet(uint tetId);
     const MeshLocalTet& tet(uint tetId) const;
     bool isBoundary(uint vId, uint nId) const;
 
@@ -68,6 +69,11 @@ inline bool TriangularBoundary::Edge::operator<(const Edge& e) const
 inline size_t TriangularBoundary::tetCount() const
 {
     return _tets.size();
+}
+
+inline MeshLocalTet& TriangularBoundary::tet(uint tetId)
+{
+    return _tets[tetId];
 }
 
 inline const MeshLocalTet& TriangularBoundary::tet(uint tetId) const

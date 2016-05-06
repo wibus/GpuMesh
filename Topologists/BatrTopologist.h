@@ -47,6 +47,9 @@ private:
     template<typename T, typename V>
     static bool popOut(std::vector<T>& vec, const std::vector<V>& val);
 
+    template<typename T>
+    static bool intersects(const std::vector<T>& a, const std::vector<T>& b);
+
     void findRing(
             const TriangularBoundary& bounds,
             const Mesh& mesh,
@@ -64,18 +67,6 @@ private:
             uint vId, uint nId,
             const std::vector<uint>& ringVerts,
             std::vector<uint>& exVerts) const;
-
-
-    void findOuterVerts(
-            const Mesh& mesh,
-            uint vId, uint nId,
-            const std::vector<uint>& ringVerts,
-            std::vector<uint>& outerVerts) const;
-
-    void findInnerVerts(const Mesh& mesh,
-            const std::vector<uint>& ringVerts,
-            const std::vector<uint>& outerVerts,
-            std::vector<uint>& innerVerts) const;
 };
 
 #endif // GPUMESH_BARTTOPOLOGIST

@@ -53,7 +53,7 @@ std::ostream& printTet(std::ostream& os, const Mesh& mesh, uint tId, const std::
         os << "(", mesh, tet.v[0], ", "),
                    mesh, tet.v[1], ", "),
                    mesh, tet.v[2], ", "),
-                   mesh, tet.v[3], ") ") << sep;
+                   mesh, tet.v[3], ")") << sep;
 }
 
 std::ostream& printRing(std::ostream& os, Mesh& mesh, uint vId, uint nId,
@@ -126,6 +126,8 @@ void BatrTopologist::restructureMesh(
         if(!faceSwapping(mesh, crew))   break;
         if(!edgeSwapping(mesh, crew))   break;
     }
+
+    mesh.compileTopology(false);
 }
 
 void BatrTopologist::printOptimisationParameters(
@@ -267,6 +269,7 @@ bool BatrTopologist::edgeSplitMerge(
 
                 verts[vId].p = verts[nId].p = middle;
 
+
                 // Elements from v not in ring
                 std::vector<uint> vExElems;
                 findExclusiveElems(mesh, vId, ringElems, vExElems);
@@ -300,33 +303,17 @@ bool BatrTopologist::edgeSplitMerge(
                 std::vector<uint> nExVerts;
                 findExclusiveVerts(mesh, nId, vId, ringVerts, nExVerts);
 
-                // Outer verts (shared by v and n but not in ring verts)
-                std::vector<uint> outerVerts;
-                findOuterVerts(mesh, vId, nId, ringVerts, outerVerts);
-
-                // Inner verts (verts squeazed by v and n merge)
-                std::vector<uint> innerVerts;
-                findInnerVerts(mesh, ringVerts, outerVerts, innerVerts);
-
-                if(innerVerts.size() > 0)
-                {
-                    getLog().postMessage(new Message('E', true,
-                        "Inner verts founds during vert merge",
-                        "BatrTopologist"));
-
-                    // Rollback modifications
-                    verts[vId].p = vert;
-                    verts[nId].p = neig;
-                    continue;
-                }
-
 
                 // Mark geometry as deleted
                 aliveVerts[nId] = false;
-                for(uint cElem : ringElems)
+                for(uint rElem : ringElems)
                 {
-                    aliveTets[cElem] = false;
-                    bounds.removeTet(cElem);
+                    aliveTets[rElem] = false;
+                    bounds.removeTet(rElem);
+
+                    MeshLocalTet& tet = bounds.tet(rElem);
+                    tet.v[0] = -1; tet.v[1] = -1;
+                    tet.v[2] = -1; tet.v[3] = -1;
                 }
 
                 // Replace n for v in n's exclusive elements
@@ -350,11 +337,20 @@ bool BatrTopologist::edgeSplitMerge(
                         if(neVert.v == nId) {neVert.v = vId; break;}
                 }
 
+                // Remove n from ring verts
+                // Remove ring elems from ring verts
+                for(uint rVert : ringVerts)
+                {
+                    popOut(topos[rVert].neighborVerts, MeshNeigVert(nId));
+                    popOut(topos[rVert].neighborElems, ringElems);
+                }
+
 
                 // Rebuild v vert neighborhood
                 std::vector<MeshNeigVert>& vVerts = vTopo.neighborVerts;
                 vVerts.clear();
                 appendVerts(vVerts, vExVerts);
+                appendVerts(vVerts, ringVerts);
                 appendVerts(vVerts, nExVerts);
                 vVerts.shrink_to_fit();
 
@@ -415,7 +411,6 @@ bool BatrTopologist::edgeSplitMerge(
                 // Remove intersection tets from bounds
                 for(uint iElem : ringElems)
                     bounds.removeTet(iElem);
-
 
                 // Build new elements
                 std::vector<MeshNeigVert>& wVerts = wTopo.neighborVerts;
@@ -484,13 +479,7 @@ bool BatrTopologist::edgeSplitMerge(
                 // Push back only at the end cause we have
                 // lots of active references to topo all around
                 // (prevent vector from reallocating its buffer)
-                if(wTopo.neighborElems.size() > 0)
-                    topos.push_back(wTopo);
-                else
-                {
-                    printRing(std::cout, mesh, vId, nId, ringVerts, ringElems);
-                    exit(0);
-                }
+                topos.push_back(wTopo);
             }
         }
 
@@ -1082,21 +1071,46 @@ bool BatrTopologist::popOut(std::vector<T>& vec,
 {
     size_t count = 0;
 
-    for(size_t i=0; i < vec.size(); ++i)
+    size_t i=0;
+    while(i < vec.size())
     {
+        bool found = false;
         for(const V& val : vals)
         {
             if(vec[i] == val)
             {
                 std::swap(vec[i], vec.back());
                 vec.pop_back();
+                found = true;
                 ++count;
                 break;
             }
         }
+
+        if(!found)
+            ++i;
     }
 
     return count == vals.size();
+}
+
+template<typename T>
+bool BatrTopologist::intersects(
+        const std::vector<T>& a,
+        const std::vector<T>& b)
+{
+    for(const T av : a)
+    {
+        for(const T& bv : b)
+        {
+            if(av == bv)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void BatrTopologist::findRing(
@@ -1191,69 +1205,5 @@ void BatrTopologist::findExclusiveVerts(
 
         if(!isIntersection)
             exVerts.push_back(vVert.v);
-    }
-}
-
-void BatrTopologist::findOuterVerts(
-        const Mesh& mesh,
-        uint vId, uint nId,
-        const std::vector<uint>& ringVerts,
-        std::vector<uint>& outerVerts) const
-{
-    const std::vector<MeshNeigVert>& vVerts = mesh.topos[vId].neighborVerts;
-    const std::vector<MeshNeigVert>& nVerts = mesh.topos[nId].neighborVerts;
-
-    for(const MeshNeigVert& vVert : vVerts)
-    {
-        bool found = false;
-        for(uint rVert : ringVerts)
-        {
-            if(vVert.v == rVert)
-            {
-                found = true;
-                break;
-            }
-        }
-
-        if(found)
-            continue;
-
-       for(const MeshNeigVert& nVert : nVerts)
-       {
-           if(vVert.v == nVert.v)
-           {
-               outerVerts.push_back(vVert);
-               break;
-           }
-       }
-    }
-}
-
-void BatrTopologist::findInnerVerts(
-        const Mesh& mesh,
-        const std::vector<uint>& ringVerts,
-        const std::vector<uint>& outerVerts,
-        std::vector<uint>& innerVerts) const
-{
-    for(uint rId : ringVerts)
-    {
-        bool isInner = false;
-
-        const std::vector<MeshNeigVert>& rVerts = mesh.topos[rId].neighborVerts;
-        for(const MeshNeigVert& rVert : rVerts)
-        {
-            for(uint sVert : outerVerts)
-            {
-                if(rVert.v == sVert)
-                {
-                    innerVerts.push_back(rId);
-                    isInner = true;
-                    break;
-                }
-            }
-
-            if(isInner)
-                break;
-        }
     }
 }
