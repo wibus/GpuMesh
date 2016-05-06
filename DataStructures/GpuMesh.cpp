@@ -219,6 +219,7 @@ void GpuMesh::updateGpuTopology()
 
 void GpuMesh::updateVerticesFromCpu()
 {
+#ifdef NDEBUG
     size_t vertCount = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
@@ -242,6 +243,7 @@ void GpuMesh::updateVerticesFromCpu()
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+#endif
 }
 
 void GpuMesh::updateVerticesFromGlsl()

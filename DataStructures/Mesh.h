@@ -220,6 +220,7 @@ struct MeshNeigElem
 
     inline MeshNeigElem() : type(-1), id(0) {}
     inline MeshNeigElem(int type, uint id) : type(type), id(id) {}
+    inline operator uint() const {return id;}
 };
 
 struct MeshTopo

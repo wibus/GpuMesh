@@ -85,7 +85,7 @@ void TriangularBoundary::removeTet(uint tetId)
 }
 
 bool TriangularBoundary::isBoundary(
-        uint vId, uint nId)
+        uint vId, uint nId) const
 {
     return _edges.find(Edge(vId, nId)) != _edges.end();
 }
