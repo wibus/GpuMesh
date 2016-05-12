@@ -106,7 +106,13 @@ std::ostream& printRing(std::ostream& os, Mesh& mesh, uint vId, uint nId,
 
 BatrTopologist::BatrTopologist()
 {
-
+    _ringConfigDictionary = {
+      {/* 0 */ {}},
+      {/* 1 */ {}},
+      {/* 2 */ {}},
+      {/* 3 */ RingConfig(1, {MeshTri(0, 1, 2)})},
+      {/* 4 */ RingConfig(2, {MeshTri(0, 1, 2) , MeshTri(0, 2, 3)})}
+    };
 }
 
 BatrTopologist::~BatrTopologist()
@@ -768,7 +774,8 @@ bool BatrTopologist::edgeSwapping(
     std::vector<bool> aliveTets(tets.size(), true);
 
     std::map<int, int> ringSizeCounters;
-    std::map<double, int> edgeSwapCount;
+    std::map<int, int> edgeSwapCounters;
+    size_t totalEdgeSwapCount = 0;
     size_t passCount = 0;
 
     while(stillVertsToTry)
@@ -869,6 +876,7 @@ bool BatrTopologist::edgeSwapping(
                 if(nIt != ringVerts.end())
                     continue;
 
+
                 // Enforce counter clockwise order around segment V-N
                 glm::dvec3 vn = verts[nId].p - verts[vId].p;
                 glm::dvec3 vb = verts[ringVerts[0]].p - verts[vId].p;
@@ -886,6 +894,14 @@ bool BatrTopologist::edgeSwapping(
                 size_t ringSize = ringVerts.size();
                 ++ringSizeCounters[ringSize];
 
+
+                // Verify that edge swaps are define for this ring size
+                if(ringSize < 3 || ringSize >= _ringConfigDictionary.size())
+                {
+                    ++edgeSwapCounters[0];
+                    continue;
+                }
+
                 double minQual = INFINITY;
                 for(uint eId : ringElems)
                 {
@@ -893,77 +909,155 @@ bool BatrTopologist::edgeSwapping(
                         mesh, crew.sampler(), crew.measurer(), tets[eId]));
                 }
 
+                int bestRingConfig = -1;
+                int bestRingConfigRot = -1;
+                const std::vector<RingConfig>& ringConfigs =
+                        _ringConfigDictionary[ringVerts.size()];
+
+                size_t ringConfigCount = ringConfigs.size();
+                for(size_t conf = 0; conf < ringConfigCount; ++conf)
+                {
+                    const RingConfig& ringConfig = ringConfigs[conf];
+                    for(uint rot = 0; rot < ringConfig.rotCount; ++rot)
+                    {
+                        double configRotMinQual = INFINITY;
+                        for(const MeshTri& refTri : ringConfig.tris)
+                        {
+                            MeshTri tri(
+                                ringVerts[(refTri.v[0] + rot) % ringSize],
+                                ringVerts[(refTri.v[1] + rot) % ringSize],
+                                ringVerts[(refTri.v[2] + rot) % ringSize]);
+
+                            double tetVQual = crew.evaluator().tetQuality(
+                                mesh, crew.sampler(), crew.measurer(),
+                                MeshTet(tri.v[1], tri.v[0], tri.v[2], vId));
+
+                            configRotMinQual = glm::min(configRotMinQual, tetVQual);
+                            if(tetVQual < minQual) break;
+
+                            double tetNQual = crew.evaluator().tetQuality(
+                                mesh, crew.sampler(), crew.measurer(),
+                                MeshTet(tri.v[0], tri.v[1], tri.v[2], nId));
+
+                            configRotMinQual = glm::min(configRotMinQual, tetNQual);
+                            if(tetNQual < minQual) break;
+                        }
+
+                        if(configRotMinQual > minQual)
+                        {
+                            bestRingConfig = conf;
+                            bestRingConfigRot = rot;
+                            minQual = configRotMinQual;
+                        }
+                    }
+                }
+
+
+                // Check if we found a better configuration
+                if(bestRingConfig >= 0)
+                {
+                    int key = ringSize * 1000;
+                    key += bestRingConfig * 100;
+                    key += bestRingConfigRot * 10;
+                    if(ringElems.size() < ringVerts.size())
+                        key += 5;
+
+                    ++edgeSwapCounters[key];
+                }
+                else
+                {
+                    ++edgeSwapCounters[-int(ringSize)];
+                    continue;
+                }
+
                 MeshTopo& nTopo = topos[nId];
                 std::vector<MeshNeigVert>& nVerts = nTopo.neighborVerts;
                 std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
 
-                if(ringSize == 3)
+                popOut(vVerts, nId);
+                popOut(vElems, ringElems);
+
+                popOut(nVerts, vId);
+                popOut(nElems, ringElems);
+
+                for(size_t i=0; i < ringVerts.size(); ++i)
                 {
-                    MeshTet tetV(ringVerts[2], ringVerts[1], ringVerts[0], vId);
-                    MeshTet tetN(ringVerts[0], ringVerts[1], ringVerts[2], nId);
+                    MeshTopo& rTopo = topos[ringVerts[i]];
+                    popOut(rTopo.neighborVerts, ringVerts);
+                    popOut(rTopo.neighborElems, ringElems);
+                }
 
-                    if(minQual < crew.evaluator().tetQuality(mesh,
-                            crew.sampler(), crew.measurer(), tetN) &&
-                       minQual < crew.evaluator().tetQuality(mesh,
-                            crew.sampler(), crew.measurer(), tetV))
+                const RingConfig& besConfig = ringConfigs[bestRingConfig];
+                for(const MeshTri& refTri : besConfig.tris)
+                {
+                    MeshTri tri(
+                        ringVerts[(refTri.v[0] + bestRingConfigRot) % ringSize],
+                        ringVerts[(refTri.v[1] + bestRingConfigRot) % ringSize],
+                        ringVerts[(refTri.v[2] + bestRingConfigRot) % ringSize]);
+
+                    uint tetVId;
+                    MeshTet tetV(tri.v[1], tri.v[0], tri.v[2], vId);
+                    if(ringElems.size())
                     {
-                        tets[ringElems[0]] = tetV;
-                        tets[ringElems[1]] = tetN;
-
-                        popOut(vVerts, nId);
-                        popOut(vElems, ringElems[1]);
-
-                        popOut(nVerts, vId);
-                        popOut(nElems, ringElems[0]);
-
-                        for(size_t i=0; i < ringVerts.size(); ++i)
-                        {
-                            popOut(topos[ringVerts[i]].neighborElems, ringElems);
-                        }
-
-
-                        if(ringElems.size() > 2)
-                        {
-                            popOut(vElems, ringElems[2]);
-                            popOut(nElems, ringElems[2]);
-
-                            aliveTets[ringElems[2]] = false;
-                            ringElems.pop_back();
-                            ++edgeSwapCount[3];
-                        }
-                        else
-                        {
-                            ++edgeSwapCount[3.5];
-                        }
-
-                        for(size_t i=0; i < ringVerts.size(); ++i)
-                        {
-                            MeshTopo& rTopo = topos[ringVerts[i]];
-                            std::vector<uint> rNewVerts = ringVerts;
-
-                            popOut(rNewVerts, ringVerts[i]);
-                            popOut(rNewVerts, rTopo.neighborVerts);
-                            appendVerts(rTopo.neighborVerts, rNewVerts);
-                            appendElems(rTopo.neighborElems, ringElems);
-                        }
-
-
-                        // Verify neighbor verts
-                        stillVertsToTry = true;
-                        for(const MeshNeigVert& vVert : vTopo.neighborVerts)
-                            vertsToTry[vVert.v] = true;
-                        for(const MeshNeigVert& nVert : nTopo.neighborVerts)
-                            vertsToTry[nVert.v] = true;
+                        tetVId = ringElems.back();
+                        ringElems.pop_back();
+                        tets[tetVId] = tetV;
                     }
                     else
                     {
-                        ++edgeSwapCount[-3];
+                        tetVId = tets.size();
+                        tets.push_back(tetV);
                     }
+
+                    MeshNeigElem elemV(MeshTet::ELEMENT_TYPE, tetVId);
+                    topos[tetV.v[0]].neighborElems.push_back(elemV);
+                    topos[tetV.v[1]].neighborElems.push_back(elemV);
+                    topos[tetV.v[2]].neighborElems.push_back(elemV);
+                    topos[tetV.v[3]].neighborElems.push_back(elemV);
+
+
+                    uint tetNId;
+                    MeshTet tetN(tri.v[0], tri.v[1], tri.v[2], nId);
+                    if(ringElems.size())
+                    {
+                        tetNId = ringElems.back();
+                        ringElems.pop_back();
+                        tets[tetNId] = tetN;
+                    }
+                    else
+                    {
+                        tetNId = tets.size();
+                        tets.push_back(tetN);
+                    }
+
+                    MeshNeigElem elemN(MeshTet::ELEMENT_TYPE, tetNId);
+                    topos[tetN.v[0]].neighborElems.push_back(elemN);
+                    topos[tetN.v[1]].neighborElems.push_back(elemN);
+                    topos[tetN.v[2]].neighborElems.push_back(elemN);
+                    topos[tetN.v[3]].neighborElems.push_back(elemN);
+
+                    make_union(topos[tri.v[0]].neighborVerts, tri.v[1]);
+                    make_union(topos[tri.v[0]].neighborVerts, tri.v[2]);
+                    make_union(topos[tri.v[1]].neighborVerts, tri.v[0]);
+                    make_union(topos[tri.v[1]].neighborVerts, tri.v[2]);
+                    make_union(topos[tri.v[2]].neighborVerts, tri.v[0]);
+                    make_union(topos[tri.v[2]].neighborVerts, tri.v[1]);
                 }
-                else
+
+                for(uint rElem : ringElems)
                 {
-                    ++edgeSwapCount[0];
+                    aliveTets[rElem] = false;
                 }
+
+
+                ++totalEdgeSwapCount;
+
+                // Verify neighbor verts
+                stillVertsToTry = true;
+                for(const MeshNeigVert& vVert : vTopo.neighborVerts)
+                    vertsToTry[vVert.v] = true;
+                for(const MeshNeigVert& nVert : nTopo.neighborVerts)
+                    vertsToTry[nVert.v] = true;
             }
         }
     }
@@ -993,8 +1087,8 @@ bool BatrTopologist::edgeSwapping(
     tets.resize(copyTetId);
 
 
-    for(auto rIt = edgeSwapCount.begin();
-        rIt != edgeSwapCount.end(); ++rIt)
+    for(auto rIt = edgeSwapCounters.begin();
+        rIt != edgeSwapCounters.end(); ++rIt)
     {
         getLog().postMessage(new Message('I', false,
             "Ring of " + std::to_string(rIt->first) +
@@ -1002,7 +1096,7 @@ bool BatrTopologist::edgeSwapping(
             "BatrTopologist"));
     }
 
-    return edgeSwapCount[3] > 0;
+    return totalEdgeSwapCount;
 }
 
 template<typename T, typename V>
@@ -1049,6 +1143,22 @@ bool BatrTopologist::popOut(std::vector<T>& vec,
     }
 
     return count == vals.size();
+}
+
+template<typename T, typename V>
+bool BatrTopologist::make_union(std::vector<T>& vec, const V& val)
+{
+    size_t vecCount = vec.size();
+    for(size_t i=0; i < vecCount; ++i)
+    {
+        if(vec[i] == val)
+        {
+            return false;
+        }
+    }
+
+    vec.push_back(val);
+    return true;
 }
 
 template<typename T>

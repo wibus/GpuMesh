@@ -3,6 +3,7 @@
 
 #include "AbstractTopologist.h"
 
+class MeshTri;
 class MeshTopo;
 
 
@@ -47,6 +48,9 @@ private:
     template<typename T, typename V>
     static bool popOut(std::vector<T>& vec, const std::vector<V>& val);
 
+    template<typename T, typename V>
+    static bool make_union(std::vector<T>& vec, const V& val);
+
     template<typename T>
     void findRing(
             const std::vector<T>& tets,
@@ -65,6 +69,17 @@ private:
             uint vId, uint nId,
             const std::vector<uint>& ringVerts,
             std::vector<uint>& exVerts) const;
+
+
+    struct RingConfig
+    {
+        RingConfig(uint rotCount, const std::vector<MeshTri>& tris) :
+            rotCount(rotCount), tris(tris) {}
+        std::vector<MeshTri> tris;
+        uint rotCount;
+    };
+
+    std::vector<std::vector<RingConfig>> _ringConfigDictionary;
 };
 
 #endif // GPUMESH_BARTTOPOLOGIST
