@@ -19,6 +19,8 @@ public:
 
     TriangularBoundary(const std::vector<MeshTet>& tets);
 
+    const std::vector<MeshLocalTet>& tets() const;
+
     void insertTet(const MeshTet& tet, uint tetId = APPEND);
 
     void removeTet(uint tetId);
@@ -64,6 +66,11 @@ inline bool TriangularBoundary::Edge::operator<(const Edge& e) const
         else
             return false;
     }
+}
+
+inline const std::vector<MeshLocalTet>& TriangularBoundary::tets() const
+{
+    return _tets;
 }
 
 inline size_t TriangularBoundary::tetCount() const

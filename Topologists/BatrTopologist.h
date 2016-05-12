@@ -3,7 +3,7 @@
 
 #include "AbstractTopologist.h"
 
-class TriangularBoundary;
+class MeshTopo;
 
 
 class BatrTopologist : public AbstractTopologist
@@ -41,18 +41,16 @@ protected:
             const MeshCrew& crew) const;
 
 private:
-    template<typename T>
-    static bool popOut(std::vector<T>& vec, const T& val);
+    template<typename T, typename V>
+    static bool popOut(std::vector<T>& vec, const V& val);
 
     template<typename T, typename V>
     static bool popOut(std::vector<T>& vec, const std::vector<V>& val);
 
     template<typename T>
-    static bool intersects(const std::vector<T>& a, const std::vector<T>& b);
-
     void findRing(
-            const TriangularBoundary& bounds,
-            const Mesh& mesh,
+            const std::vector<T>& tets,
+            const std::vector<MeshTopo>& topos,
             uint vId, uint nId,
             std::vector<uint>& ringVerts,
             std::vector<uint>& ringElems) const;
