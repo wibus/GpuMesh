@@ -111,7 +111,18 @@ BatrTopologist::BatrTopologist()
       {/* 1 */ {}},
       {/* 2 */ {}},
       {/* 3 */ RingConfig(1, {MeshTri(0, 1, 2)})},
-      {/* 4 */ RingConfig(2, {MeshTri(0, 1, 2) , MeshTri(0, 2, 3)})}
+      {/* 4 */ RingConfig(2, {MeshTri(0, 1, 2), MeshTri(0, 2, 3)})},
+      {/* 5 */ RingConfig(5, {MeshTri(0, 1, 3), MeshTri(0, 3, 4), MeshTri(1, 2, 3)})},
+      {/* 6 */ RingConfig(6, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5)}),
+               RingConfig(3, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 5), MeshTri(3, 4, 5)}),
+               RingConfig(3, {MeshTri(0, 1, 3), MeshTri(1, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5)}),
+               RingConfig(2, {MeshTri(0, 1, 2), MeshTri(0, 2, 4), MeshTri(2, 3, 4), MeshTri(0, 4, 5)})},
+      {/* 7 */ RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
+               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 6), MeshTri(3, 4, 6), MeshTri(4, 5, 6)}),
+               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 6), MeshTri(4, 5, 6)}),
+               RingConfig(7, {MeshTri(0, 1, 3), MeshTri(1, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
+               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 4), MeshTri(2, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
+               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 5), MeshTri(3, 4, 5), MeshTri(0, 5, 6)})}
     };
 }
 
@@ -1007,6 +1018,7 @@ bool BatrTopologist::edgeSwapping(
                     {
                         tetVId = tets.size();
                         tets.push_back(tetV);
+                        aliveTets.push_back(true);
                     }
 
                     MeshNeigElem elemV(MeshTet::ELEMENT_TYPE, tetVId);
@@ -1028,6 +1040,7 @@ bool BatrTopologist::edgeSwapping(
                     {
                         tetNId = tets.size();
                         tets.push_back(tetN);
+                        aliveTets.push_back(true);
                     }
 
                     MeshNeigElem elemN(MeshTet::ELEMENT_TYPE, tetNId);
