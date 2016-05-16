@@ -288,6 +288,14 @@ bool BatrTopologist::edgeSplitMerge(
 
             if(dist < minEdgeLength())
             {
+                // Elements from v not in ring
+                std::vector<uint> vExElems;
+                findExclusiveElems(mesh, vId, ringElems, vExElems);
+
+                std::vector<uint> allExElems(vExElems.begin(), vExElems.end());
+                allExElems.insert(allExElems.end(), nExElems.begin(), nExElems.end());
+
+
                 glm::dvec3 middle = (vert.p + neig.p) /2.0;
                 if(vTopo.isBoundary)
                     middle = (*vTopo.snapToBoundary)(middle);
@@ -299,14 +307,6 @@ bool BatrTopologist::edgeSplitMerge(
                     middle = neig.p;
 
                 verts[vId].p = verts[nId].p = middle;
-
-
-                // Elements from v not in ring
-                std::vector<uint> vExElems;
-                findExclusiveElems(mesh, vId, ringElems, vExElems);
-
-                std::vector<uint> allExElems(vExElems.begin(), vExElems.end());
-                allExElems.insert(allExElems.end(), nExElems.begin(), nExElems.end());
 
                 bool isConformal = true;
                 for(uint dElem : allExElems)
@@ -326,7 +326,6 @@ bool BatrTopologist::edgeSplitMerge(
                     verts[nId].p = neig;
                     continue;
                 }
-
 
                 std::vector<uint> vExVerts;
                 findExclusiveVerts(mesh, vId, nId, ringVerts, vExVerts);
@@ -412,6 +411,7 @@ bool BatrTopologist::edgeSplitMerge(
                 for(const MeshNeigVert vVert : vTopo.neighborVerts)
                     vertsToTry[vVert.v] = true;
 
+
                 for(const MeshNeigElem& vElem : vTopo.neighborElems)
                     if(!aliveTets[vElem.id])
                         exit(1);
@@ -422,8 +422,8 @@ bool BatrTopologist::edgeSplitMerge(
                     for(const MeshNeigElem& nElem : topos[vVert.v].neighborElems)
                         if(!aliveTets[nElem.id])
                             exit(3);
-                    for(const MeshNeigElem& nElem : topos[vVert.v].neighborElems)
-                        if(!aliveTets[nElem.id])
+                    for(const MeshNeigVert& nVert : topos[vVert.v].neighborVerts)
+                        if(!aliveVerts[nVert.v])
                             exit(4);
                 }
             }
@@ -537,8 +537,8 @@ bool BatrTopologist::edgeSplitMerge(
                     for(const MeshNeigElem& nElem : topos[wVert.v].neighborElems)
                         if(!aliveTets[nElem.id])
                             exit(7);
-                    for(const MeshNeigElem& nElem : topos[wVert.v].neighborElems)
-                        if(!aliveTets[nElem.id])
+                    for(const MeshNeigVert& nVert : topos[wVert.v].neighborVerts)
+                        if(!aliveVerts[nVert.v])
                             exit(8);
                 }
             }
@@ -783,6 +783,7 @@ bool BatrTopologist::edgeSwapping(
     bool stillVertsToTry = true;
     std::vector<bool> vertsToTry(verts.size(), true);
     std::vector<bool> aliveTets(tets.size(), true);
+    std::vector<uint> deadTets;
 
     std::map<int, int> ringSizeCounters;
     std::map<int, int> edgeSwapCounters;
@@ -862,7 +863,7 @@ bool BatrTopologist::edgeSwapping(
                     {
                         ++notFoundCount;
 
-                        if(notFoundCount > 2)
+                        if(notFoundCount >= 2)
                         {
                             printRing(std::cout, mesh, vId, nId, ringVerts, ringElems);
                             break;
@@ -888,11 +889,30 @@ bool BatrTopologist::edgeSwapping(
                     continue;
 
 
+                // Verify that that this ring size can be handled
+                size_t ringSize = ringVerts.size();
+                ++ringSizeCounters[ringSize];
+                if(ringSize < 3 || ringSize >= _ringConfigDictionary.size())
+                {
+                    ++edgeSwapCounters[0];
+                    continue;
+                }
+
+
                 // Enforce counter clockwise order around segment V-N
-                glm::dvec3 vn = verts[nId].p - verts[vId].p;
-                glm::dvec3 vb = verts[ringVerts[0]].p - verts[vId].p;
-                glm::dvec3 vf = verts[ringVerts[1]].p - verts[vId].p;
-                if(glm::dot(glm::cross(vb, vf), vn) < 0.0)
+                glm::dvec3 ringAir;
+                glm::dvec3 ring0Pos = verts[ringVerts[0]].p;
+                for(int i=2; i < ringSize; ++i)
+                {
+                    ringAir += glm::cross(
+                        verts[ringVerts[i-1]].p - ring0Pos,
+                        verts[ringVerts[i]].p   - ring0Pos);
+                }
+
+                glm::dvec3 vPos = verts[vId].p;
+                glm::dvec3 nPos = verts[nId].p;
+                glm::dvec3 vn = nPos - vPos;
+                if(glm::dot(ringAir, vn) < 0.0)
                 {
                     int i=0, j = ringVerts.size()-1;
                     while(i < j)
@@ -902,17 +922,8 @@ bool BatrTopologist::edgeSwapping(
                     }
                 }
 
-                size_t ringSize = ringVerts.size();
-                ++ringSizeCounters[ringSize];
 
-
-                // Verify that edge swaps are define for this ring size
-                if(ringSize < 3 || ringSize >= _ringConfigDictionary.size())
-                {
-                    ++edgeSwapCounters[0];
-                    continue;
-                }
-
+                // Compute current ring quality
                 double minQual = INFINITY;
                 for(uint eId : ringElems)
                 {
@@ -920,6 +931,40 @@ bool BatrTopologist::edgeSwapping(
                         mesh, crew.sampler(), crew.measurer(), tets[eId]));
                 }
 
+
+                // Check for outsider tets
+                bool outsidersOk = true;
+                std::vector<MeshTet> outsiderTets;
+                for(int i=1; i <= ringSize; ++i)
+                {
+                    uint aId = ringVerts[i-1];
+                    uint bId = ringVerts[i%ringSize];
+                    glm::dvec3 normal = glm::cross(
+                                verts[aId].p - vPos,
+                                verts[bId].p - vPos);
+                    double dotNormal = glm::dot(vn, normal);
+                    if(dotNormal < 0.0)
+                    {
+                        MeshTet outsider(vId, bId, aId, nId);
+                        if(minQual < crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), outsider))
+                        {
+                            outsiderTets.push_back(outsider);
+                        }
+                        else
+                        {
+                            // Removing segment V-N can't increase ring's quality
+                            outsidersOk = false;
+                            break;
+                        }
+                    }
+                }
+
+                if(!outsidersOk)
+                    continue;
+
+
+                // Compare each ring configuration's quality to actual quality
                 int bestRingConfig = -1;
                 int bestRingConfigRot = -1;
                 const std::vector<RingConfig>& ringConfigs =
@@ -970,6 +1015,7 @@ bool BatrTopologist::edgeSwapping(
                     int key = ringSize * 1000;
                     key += bestRingConfig * 100;
                     key += bestRingConfigRot * 10;
+                    key += outsiderTets.size();
                     if(ringElems.size() < ringVerts.size())
                         key += 5;
 
@@ -981,15 +1027,11 @@ bool BatrTopologist::edgeSwapping(
                     continue;
                 }
 
+
+                // Finaly, update topology
                 MeshTopo& nTopo = topos[nId];
                 std::vector<MeshNeigVert>& nVerts = nTopo.neighborVerts;
                 std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
-
-                popOut(vVerts, nId);
-                popOut(vElems, ringElems);
-
-                popOut(nVerts, vId);
-                popOut(nElems, ringElems);
 
                 for(size_t i=0; i < ringVerts.size(); ++i)
                 {
@@ -998,6 +1040,21 @@ bool BatrTopologist::edgeSwapping(
                     popOut(rTopo.neighborElems, ringElems);
                 }
 
+                popOut(vElems, ringElems);
+                popOut(nElems, ringElems);
+                if(outsiderTets.empty())
+                {
+                    popOut(vVerts, nId);
+                    popOut(nVerts, vId);
+                }
+
+                for(uint rElem : ringElems)
+                {
+                    aliveTets[rElem] = false;
+                    deadTets.push_back(rElem);
+                }
+
+                std::vector<MeshTet> bestTets = outsiderTets;
                 const RingConfig& besConfig = ringConfigs[bestRingConfig];
                 for(const MeshTri& refTri : besConfig.tris)
                 {
@@ -1006,48 +1063,11 @@ bool BatrTopologist::edgeSwapping(
                         ringVerts[(refTri.v[1] + bestRingConfigRot) % ringSize],
                         ringVerts[(refTri.v[2] + bestRingConfigRot) % ringSize]);
 
-                    uint tetVId;
                     MeshTet tetV(tri.v[1], tri.v[0], tri.v[2], vId);
-                    if(ringElems.size())
-                    {
-                        tetVId = ringElems.back();
-                        ringElems.pop_back();
-                        tets[tetVId] = tetV;
-                    }
-                    else
-                    {
-                        tetVId = tets.size();
-                        tets.push_back(tetV);
-                        aliveTets.push_back(true);
-                    }
+                    bestTets.push_back(tetV);
 
-                    MeshNeigElem elemV(MeshTet::ELEMENT_TYPE, tetVId);
-                    topos[tetV.v[0]].neighborElems.push_back(elemV);
-                    topos[tetV.v[1]].neighborElems.push_back(elemV);
-                    topos[tetV.v[2]].neighborElems.push_back(elemV);
-                    topos[tetV.v[3]].neighborElems.push_back(elemV);
-
-
-                    uint tetNId;
                     MeshTet tetN(tri.v[0], tri.v[1], tri.v[2], nId);
-                    if(ringElems.size())
-                    {
-                        tetNId = ringElems.back();
-                        ringElems.pop_back();
-                        tets[tetNId] = tetN;
-                    }
-                    else
-                    {
-                        tetNId = tets.size();
-                        tets.push_back(tetN);
-                        aliveTets.push_back(true);
-                    }
-
-                    MeshNeigElem elemN(MeshTet::ELEMENT_TYPE, tetNId);
-                    topos[tetN.v[0]].neighborElems.push_back(elemN);
-                    topos[tetN.v[1]].neighborElems.push_back(elemN);
-                    topos[tetN.v[2]].neighborElems.push_back(elemN);
-                    topos[tetN.v[3]].neighborElems.push_back(elemN);
+                    bestTets.push_back(tetN);
 
                     make_union(topos[tri.v[0]].neighborVerts, tri.v[1]);
                     make_union(topos[tri.v[0]].neighborVerts, tri.v[2]);
@@ -1057,9 +1077,28 @@ bool BatrTopologist::edgeSwapping(
                     make_union(topos[tri.v[2]].neighborVerts, tri.v[1]);
                 }
 
-                for(uint rElem : ringElems)
+                for(const MeshTet& tet : bestTets)
                 {
-                    aliveTets[rElem] = false;
+                    uint tetId;
+                    if(!deadTets.empty())
+                    {
+                        tetId = deadTets.back();
+                        deadTets.pop_back();
+                        tets[tetId] = tet;
+                        aliveTets[tetId] = true;
+                    }
+                    else
+                    {
+                        tetId = tets.size();
+                        tets.push_back(tet);
+                        aliveTets.push_back(true);
+                    }
+
+                    MeshNeigElem elem(MeshTet::ELEMENT_TYPE, tetId);
+                    topos[tet.v[0]].neighborElems.push_back(elem);
+                    topos[tet.v[1]].neighborElems.push_back(elem);
+                    topos[tet.v[2]].neighborElems.push_back(elem);
+                    topos[tet.v[3]].neighborElems.push_back(elem);
                 }
 
 
@@ -1074,7 +1113,6 @@ bool BatrTopologist::edgeSwapping(
             }
         }
     }
-
 
     // Remove deleted tets
     size_t copyTetId = 0;
@@ -1100,14 +1138,20 @@ bool BatrTopologist::edgeSwapping(
     tets.resize(copyTetId);
 
 
-    for(auto rIt = edgeSwapCounters.begin();
-        rIt != edgeSwapCounters.end(); ++rIt)
-    {
-        getLog().postMessage(new Message('I', false,
-            "Ring of " + std::to_string(rIt->first) +
-            " verts count: " + std::to_string(rIt->second),
-            "BatrTopologist"));
-    }
+    getLog().postMessage(new Message('I', false,
+        "Edge swap:        " +
+        std::to_string(passCount) + " passes \t(" +
+        std::to_string(totalEdgeSwapCount) + " swap)",
+        "BatrTopologist"));
+
+//    for(auto rIt = edgeSwapCounters.begin();
+//        rIt != edgeSwapCounters.end(); ++rIt)
+//    {
+//        getLog().postMessage(new Message('I', false,
+//            "Ring of " + std::to_string(rIt->first) +
+//            " verts count: " + std::to_string(rIt->second),
+//            "BatrTopologist"));
+//    }
 
     return totalEdgeSwapCount;
 }

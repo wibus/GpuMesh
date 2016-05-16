@@ -13,7 +13,7 @@ void installCudaNoneBoundary();
 DebugMesher::DebugMesher()
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Singles");
+    _modelFuncs.setDefault("Cube");
     _modelFuncs.setContent({
         {string("Singles"), ModelFunc(bind(&DebugMesher::genSingles, this, _1, _2))},
         {string("Squish"),  ModelFunc(bind(&DebugMesher::genSquish,  this, _1, _2))},
