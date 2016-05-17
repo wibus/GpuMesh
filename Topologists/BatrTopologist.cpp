@@ -107,22 +107,25 @@ std::ostream& printRing(std::ostream& os, Mesh& mesh, uint vId, uint nId,
 BatrTopologist::BatrTopologist()
 {
     _ringConfigDictionary = {
-      {/* 0 */ {}},
-      {/* 1 */ {}},
-      {/* 2 */ {}},
-      {/* 3 */ RingConfig(1, {MeshTri(0, 1, 2)})},
-      {/* 4 */ RingConfig(2, {MeshTri(0, 1, 2), MeshTri(0, 2, 3)})},
-      {/* 5 */ RingConfig(5, {MeshTri(0, 1, 3), MeshTri(0, 3, 4), MeshTri(1, 2, 3)})},
-      {/* 6 */ RingConfig(6, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5)}),
-               RingConfig(3, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 5), MeshTri(3, 4, 5)}),
-               RingConfig(3, {MeshTri(0, 1, 3), MeshTri(1, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5)}),
-               RingConfig(2, {MeshTri(0, 1, 2), MeshTri(0, 2, 4), MeshTri(2, 3, 4), MeshTri(0, 4, 5)})},
-      {/* 7 */ RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
-               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 6), MeshTri(3, 4, 6), MeshTri(4, 5, 6)}),
-               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 6), MeshTri(4, 5, 6)}),
-               RingConfig(7, {MeshTri(0, 1, 3), MeshTri(1, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
-               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 4), MeshTri(2, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
-               RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 5), MeshTri(3, 4, 5), MeshTri(0, 5, 6)})}
+      {}, {}, {},
+      // 3
+      {RingConfig(1, {MeshTri(0, 1, 2)})},
+      // 4
+      {RingConfig(2, {MeshTri(0, 1, 2), MeshTri(0, 2, 3)})},
+      // 5
+      {RingConfig(5, {MeshTri(0, 1, 3), MeshTri(0, 3, 4), MeshTri(1, 2, 3)})},
+      // 6
+      {RingConfig(6, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5)}),
+       RingConfig(3, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 5), MeshTri(3, 4, 5)}),
+       RingConfig(3, {MeshTri(0, 1, 3), MeshTri(1, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5)}),
+       RingConfig(2, {MeshTri(0, 1, 2), MeshTri(0, 2, 4), MeshTri(2, 3, 4), MeshTri(0, 4, 5)})},
+      // 7
+      {RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
+       RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 6), MeshTri(3, 4, 6), MeshTri(4, 5, 6)}),
+       RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 6), MeshTri(4, 5, 6)}),
+       RingConfig(7, {MeshTri(0, 1, 3), MeshTri(1, 2, 3), MeshTri(0, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
+       RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 4), MeshTri(2, 3, 4), MeshTri(0, 4, 5), MeshTri(0, 5, 6)}),
+       RingConfig(7, {MeshTri(0, 1, 2), MeshTri(0, 2, 3), MeshTri(0, 3, 5), MeshTri(3, 4, 5), MeshTri(0, 5, 6)})}
     };
 }
 
@@ -432,7 +435,6 @@ bool BatrTopologist::edgeSplitMerge(
                 // Splitting the edge
                 uint wId = verts.size();
                 glm::dvec3 middle = (vert.p + neig.p) /2.0;
-                verts.push_back(MeshVert(middle, vert.c));
 
                 MeshTopo wTopo;
                 if(vTopo.isBoundary && nTopo.isBoundary)
@@ -441,9 +443,11 @@ bool BatrTopologist::edgeSplitMerge(
                     {
                         wTopo.isBoundary = true;
                         wTopo.snapToBoundary = vTopo.snapToBoundary;
-                        verts[wId].p = (*vTopo.snapToBoundary)(middle);
+                        middle = (*vTopo.snapToBoundary)(middle);
                     }
                 }
+
+                verts.push_back(MeshVert(middle, vert.c));
 
                 // Replace n for w in v's neighbor verts
                 for(MeshNeigVert& vVert : vTopo.neighborVerts)
@@ -805,9 +809,9 @@ bool BatrTopologist::edgeSwapping(
             std::vector<MeshNeigVert>& vVerts = vTopo.neighborVerts;
             std::vector<MeshNeigElem>& vElems = vTopo.neighborElems;
 
-            for(size_t nAr = 0; nAr < vTopo.neighborVerts.size(); ++nAr)
+            for(size_t nAr = 0; nAr < vVerts.size(); ++nAr)
             {
-                uint nId = vTopo.neighborVerts[nAr];
+                uint nId = vVerts[nAr];
 
                 if(nId < vId)
                 {
@@ -1033,19 +1037,19 @@ bool BatrTopologist::edgeSwapping(
                 std::vector<MeshNeigVert>& nVerts = nTopo.neighborVerts;
                 std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
 
-                for(size_t i=0; i < ringVerts.size(); ++i)
-                {
-                    MeshTopo& rTopo = topos[ringVerts[i]];
-                    popOut(rTopo.neighborVerts, ringVerts);
-                    popOut(rTopo.neighborElems, ringElems);
-                }
-
                 popOut(vElems, ringElems);
                 popOut(nElems, ringElems);
+
                 if(outsiderTets.empty())
                 {
                     popOut(vVerts, nId);
                     popOut(nVerts, vId);
+                }
+
+                for(size_t i=0; i < ringVerts.size(); ++i)
+                {
+                    MeshTopo& rTopo = topos[ringVerts[i]];
+                    popOut(rTopo.neighborElems, ringElems);
                 }
 
                 for(uint rElem : ringElems)
@@ -1136,7 +1140,6 @@ bool BatrTopologist::edgeSwapping(
         }
     }
     tets.resize(copyTetId);
-
 
     getLog().postMessage(new Message('I', false,
         "Edge swap:        " +
