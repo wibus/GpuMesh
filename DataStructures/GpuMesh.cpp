@@ -223,7 +223,7 @@ void GpuMesh::updateVerticesFromCpu()
     size_t vertCount = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
-    // Grow GLSL buffer if we<ve added some vertices
+    // Grow GLSL buffer if we've added some vertices
     GLint buffSize = 0;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
     glGetBufferParameteriv(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, &buffSize);

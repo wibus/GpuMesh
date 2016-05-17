@@ -67,6 +67,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
     }
 
     mesh.updateVerticesFromCpu();
+    mesh.updateGpuTopology();
 }
 
 void AbstractVertexWiseSmoother::smoothMeshThread(
@@ -134,6 +135,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
     }
 
     mesh.updateVerticesFromCpu();
+    mesh.updateGpuTopology();
 }
 
 void AbstractVertexWiseSmoother::smoothMeshGlsl(

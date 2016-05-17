@@ -14,15 +14,8 @@
 
 using namespace cellar;
 
-template<typename T, typename N>
-inline std::vector<T> concat(const std::vector<T>& a, const std::vector<N>& b)
-{
-    std::vector<T> c(a.begin(), a.end());
-    c.insert(c.end(), b.begin(), b.end());
-    return std::move(c);
-}
 
-inline MeshNeigElem toElem(uint eId)
+inline MeshNeigElem toTet(uint eId)
 {
     return MeshNeigElem(MeshTet::ELEMENT_TYPE, eId);
 }
@@ -30,77 +23,13 @@ inline MeshNeigElem toElem(uint eId)
 inline void appendElems(std::vector<MeshNeigElem>& elems, const std::vector<uint>& eIds)
 {
     elems.reserve(elems.size() + eIds.size());
-    for(uint eId : eIds) elems.push_back(toElem(eId));
+    for(uint eId : eIds) elems.push_back(toTet(eId));
 }
 
 inline void appendVerts(std::vector<MeshNeigVert>& verts, const std::vector<uint>& vIds)
 {
     verts.reserve(verts.size() + vIds.size());
     for(uint vId : vIds) verts.push_back(vId);
-}
-
-std::shared_ptr<Mesh> outputMesh;
-std::ostream& printVert(std::ostream& os, const Mesh& mesh, uint vId, const std::string sep = "")
-{
-    os << vId;
-    if(mesh.topos[vId].isBoundary)
-        os << "*";
-    return os << sep;
-}
-std::ostream& printTet(std::ostream& os, const Mesh& mesh, uint tId, const std::string sep)
-{
-    const MeshTet& tet = mesh.tets[tId];
-    printVert(printVert(printVert(printVert(
-        os << "(", mesh, tet.v[0], ", "),
-                   mesh, tet.v[1], ", "),
-                   mesh, tet.v[2], ", "),
-                   mesh, tet.v[3], ")") << sep;
-}
-
-std::ostream& printRing(std::ostream& os, Mesh& mesh, uint vId, uint nId,
-                        std::vector<uint>& ring,
-                        std::vector<uint>& iElems)
-{
-    printVert(os << "vId(", mesh, vId) << "), ";
-    printVert(os << "nId(", mesh, nId) << "):\n";
-
-    os << "Ring verts(" << ring.size() << "): ";
-    for(uint rId : ring)
-        printVert(os, mesh, rId, ", ");
-    os << std::endl;
-
-    std::sort(iElems.begin(), iElems.end());
-    os << "Ring elems(" << iElems.size() << "): ";
-    for(uint nId : iElems)
-        os << nId << ", ";
-    os << std::endl;
-
-    os << "Ring elems(" << iElems.size() << "): ";
-    for(uint iElem : iElems)
-        printTet(os, mesh, iElem, "; ");
-    os << std::endl << std::endl;
-
-    std::sort(mesh.topos[vId].neighborVerts.begin(),
-              mesh.topos[vId].neighborVerts.end());
-    os << "vId neighbor verts: ";
-    for(const MeshNeigVert& vVert : mesh.topos[vId].neighborVerts)
-        printVert(os, mesh, vVert.v, ", ");
-    os << std::endl;
-    os << "vId neighbor elems: ";
-    for(const MeshNeigElem& vElem : mesh.topos[vId].neighborElems)
-        os << vElem.id << ", ";
-    os << std::endl;
-
-    std::sort(mesh.topos[nId].neighborVerts.begin(),
-              mesh.topos[nId].neighborVerts.end());
-    os << "nId neighbor verts: ";
-    for(const MeshNeigVert& nVert : mesh.topos[nId].neighborVerts)
-        printVert(os, mesh, nVert.v, ", ");
-    os << std::endl;
-    os << "nId neighbor elems: ";
-    for(const MeshNeigElem& nElem : mesh.topos[nId].neighborElems)
-        os << nElem.id << ", ";
-    os << std::endl << std::endl;
 }
 
 
@@ -413,22 +342,6 @@ bool BatrTopologist::edgeSplitMerge(
                 vertsToTry[nId] = false;
                 for(const MeshNeigVert vVert : vTopo.neighborVerts)
                     vertsToTry[vVert.v] = true;
-
-
-                for(const MeshNeigElem& vElem : vTopo.neighborElems)
-                    if(!aliveTets[vElem.id])
-                        exit(1);
-                for(const MeshNeigVert& vVert : vTopo.neighborVerts)
-                {
-                    if(!aliveVerts[vVert.v])
-                        exit(2);
-                    for(const MeshNeigElem& nElem : topos[vVert.v].neighborElems)
-                        if(!aliveTets[nElem.id])
-                            exit(3);
-                    for(const MeshNeigVert& nVert : topos[vVert.v].neighborVerts)
-                        if(!aliveVerts[nVert.v])
-                            exit(4);
-                }
             }
             else if(dist > maxEdgeLength())
             {
@@ -449,6 +362,10 @@ bool BatrTopologist::edgeSplitMerge(
 
                 verts.push_back(MeshVert(middle, vert.c));
 
+                // Remove intersection tets from bounds
+                for(uint iElem : ringElems)
+                    bounds.removeTet(iElem);
+
                 // Replace n for w in v's neighbor verts
                 for(MeshNeigVert& vVert : vTopo.neighborVerts)
                     if(vVert == nId) { vVert.v = wId; break; }
@@ -458,12 +375,7 @@ bool BatrTopologist::edgeSplitMerge(
                     if(nVert == vId) { nVert.v = wId; break; }
 
 
-                // Remove intersection tets from bounds
-                for(uint iElem : ringElems)
-                    bounds.removeTet(iElem);
-
                 // Build new elements
-                std::vector<MeshNeigVert>& wVerts = wTopo.neighborVerts;
                 std::vector<MeshNeigElem>& wElems = wTopo.neighborElems;
                 std::vector<MeshNeigElem>& nElems = nTopo.neighborElems;
 
@@ -488,8 +400,8 @@ bool BatrTopologist::edgeSplitMerge(
                         else others[++o] = tet.v[3];
 
 
-                    wElems.push_back(toElem(rElem));
-                    MeshNeigElem newElem = toElem(bounds.tetCount());
+                    wElems.push_back(toTet(rElem));
+                    MeshNeigElem newElem = toTet(bounds.tetCount());
                     nElems.push_back(newElem);
                     wElems.push_back(newElem);
 
@@ -509,6 +421,7 @@ bool BatrTopologist::edgeSplitMerge(
                 }
 
                 // Connect w to ring verts
+                std::vector<MeshNeigVert>& wVerts = wTopo.neighborVerts;
                 for(uint rVert : ringVerts)
                 {
                     topos[rVert].neighborVerts.push_back(wId);
@@ -530,32 +443,9 @@ bool BatrTopologist::edgeSplitMerge(
                 // lots of active references to topo all around
                 // (prevent vector from reallocating its buffer)
                 topos.push_back(wTopo);
-
-                for(const MeshNeigElem& wElem : wTopo.neighborElems)
-                    if(!aliveTets[wElem.id])
-                        exit(5);
-                for(const MeshNeigVert& wVert : wTopo.neighborVerts)
-                {
-                    if(!aliveVerts[wVert.v])
-                        exit(6);
-                    for(const MeshNeigElem& nElem : topos[wVert.v].neighborElems)
-                        if(!aliveTets[nElem.id])
-                            exit(7);
-                    for(const MeshNeigVert& nVert : topos[wVert.v].neighborVerts)
-                        if(!aliveVerts[nVert.v])
-                            exit(8);
-                }
             }
         }
 
-/*
-        getLog().postMessage(new Message('I', false,
-            "Edge split/merge: " +
-            std::to_string(passCount) + " passes \t(" +
-            std::to_string(passEdgeSplitCount) + " split, " +
-            std::to_string(passVertMergeCount) + " merge)",
-            "BatrTopologist"));
-*/
         vertMergeCount += passVertMergeCount;
         edgeSplitCount += passEdgeSplitCount;
     }
@@ -869,7 +759,8 @@ bool BatrTopologist::edgeSwapping(
 
                         if(notFoundCount >= 2)
                         {
-                            printRing(std::cout, mesh, vId, nId, ringVerts, ringElems);
+                            getLog().postMessage(new Message('W', false,
+                                "Cannot close tet ring", "BatrTopologist"));
                             break;
                         }
 

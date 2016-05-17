@@ -612,6 +612,9 @@ void GpuMeshCharacter::restructureMesh()
     _meshCrew->topologist().restructureMesh(
         *_mesh, *_meshCrew);
 
+    _mesh->compileTopology();
+    _mesh->updateVerticesFromCpu();
+
     updateSampling();
     updateMeshMeasures();
 }
