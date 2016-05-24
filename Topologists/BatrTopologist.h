@@ -51,10 +51,10 @@ private:
     template<typename T, typename V>
     static bool make_union(std::vector<T>& vec, const V& val);
 
-    template<typename T>
+    void buildVertNeighborhood(Mesh& mesh, uint vId) const;
+
     void findRing(
-            const std::vector<T>& tets,
-            const std::vector<MeshTopo>& topos,
+            const Mesh& mesh,
             uint vId, uint nId,
             std::vector<uint>& ringVerts,
             std::vector<uint>& ringElems) const;
@@ -64,11 +64,27 @@ private:
             const std::vector<uint>& ringElems,
             std::vector<uint>& exElems) const;
 
-    void findExclusiveVerts(
-            const Mesh& mesh,
-            uint vId, uint nId,
-            const std::vector<uint>& ringVerts,
-            std::vector<uint>& exVerts) const;
+    void trimVerts(
+            Mesh& mesh,
+            const std::vector<bool>& aliveVerts) const;
+
+    void trimTets(
+            Mesh& mesh,
+            const std::vector<bool>& aliveTets) const;
+
+    bool cureBoundaries(
+            Mesh& mesh,
+            std::vector<uint>& vertsToVerifiy,
+            std::vector<bool>& aliveVerts,
+            std::vector<uint>& deadVerts,
+            std::vector<bool>& aliveElems,
+            std::vector<uint>& deadElems) const;
+
+    void printRing(const Mesh& mesh, uint vId, uint nId) const;
+
+    bool validateMesh(const Mesh& mesh,
+                      const std::vector<bool>& aliveTets,
+                      const std::vector<bool>& aliveVerts) const;
 
 
     struct RingConfig
@@ -80,6 +96,8 @@ private:
     };
 
     std::vector<std::vector<RingConfig>> _ringConfigDictionary;
+    size_t _refinementCoarseningMaxPassCount;
+    double _minAcceptableGenQuality;
 };
 
 #endif // GPUMESH_BARTTOPOLOGIST
