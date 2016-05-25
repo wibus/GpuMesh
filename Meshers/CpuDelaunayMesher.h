@@ -38,6 +38,7 @@ public:
 
 protected:
     virtual void genBox(Mesh& mesh, size_t vertexCount);
+    virtual void genShell(Mesh& mesh, size_t vertexCount);
     virtual void genSphere(Mesh& mesh, size_t vertexCount);
 
     virtual void insertBoundingMesh();
@@ -62,7 +63,8 @@ private:
     std::unique_ptr<MeshBound> _boxXFaceBoundary;
     std::unique_ptr<MeshBound> _boxYFaceBoundary;
     std::unique_ptr<MeshBound> _boxZFaceBoundary;
-    std::unique_ptr<MeshBound> _sphereBoundary;
+    std::unique_ptr<MeshBound> _sphereInBoundary;
+    std::unique_ptr<MeshBound> _sphereOutBoundary;
 
     // Main data structures
     std::vector<Vertex> vert;

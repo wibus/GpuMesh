@@ -3,6 +3,8 @@
 #include <GLM/gtc/random.hpp>
 #include <GLM/gtc/matrix_transform.hpp>
 
+#include <DataStructures/Tetrahedralizer.h>
+
 using namespace std;
 
 
@@ -17,9 +19,10 @@ DebugMesher::DebugMesher()
     _modelFuncs.setContent({
         {string("Singles"), ModelFunc(bind(&DebugMesher::genSingles, this, _1, _2))},
         {string("Squish"),  ModelFunc(bind(&DebugMesher::genSquish,  this, _1, _2))},
-        {string("Grid"),    ModelFunc(bind(&DebugMesher::genGrid,    this, _1, _2))},
+        {string("HexGrid"), ModelFunc(bind(&DebugMesher::genHexGrid, this, _1, _2))},
+        {string("TetGrid"), ModelFunc(bind(&DebugMesher::genTetGrid, this, _1, _2))},
         {string("Cube"),    ModelFunc(bind(&DebugMesher::genCube,    this, _1, _2))},
-        {string("Tet"),     ModelFunc(bind(&DebugMesher::genTet,    this, _1, _2))},
+        {string("Tet"),     ModelFunc(bind(&DebugMesher::genTet,     this, _1, _2))},
     });
 }
 
@@ -166,7 +169,7 @@ void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
         installCudaNoneBoundary);
 }
 
-void DebugMesher::genGrid(Mesh& mesh, size_t vertexCount)
+void DebugMesher::genHexGrid(Mesh& mesh, size_t vertexCount)
 {
     glm::dvec3 gridMin(-0.5);
     glm::dvec3 gridMax( 0.5);
@@ -206,6 +209,19 @@ void DebugMesher::genGrid(Mesh& mesh, size_t vertexCount)
             }
         }
     }
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/None.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaNoneBoundary);
+}
+
+void DebugMesher::genTetGrid(Mesh& mesh, size_t vertexCount)
+{
+    genHexGrid(mesh, vertexCount);
+
+    tetrahedrize(mesh.tets, mesh);
+    mesh.hexs.clear();
 
     mesh.setModelBoundsShaderName(
         ":/glsl/compute/Boundary/None.glsl");

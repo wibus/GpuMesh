@@ -98,11 +98,25 @@ public:
 };
 
 
-class SphereBoudary : public MeshBound
+class SphereInBoudary : public MeshBound
 {
 public:
-    SphereBoudary() :
+    SphereInBoudary() :
         MeshBound(1)
+    {
+    }
+
+    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
+    {
+        return glm::normalize(pos) * 0.5;
+    }
+};
+
+class SphereOutBoudary : public MeshBound
+{
+public:
+    SphereOutBoudary() :
+        MeshBound(2)
     {
     }
 
@@ -117,12 +131,14 @@ CpuDelaunayMesher::CpuDelaunayMesher() :
     _boxXFaceBoundary(new BoxXBoudary()),
     _boxYFaceBoundary(new BoxYBoudary()),
     _boxZFaceBoundary(new BoxZBoudary()),
-    _sphereBoundary(new SphereBoudary())
+    _sphereInBoundary(new SphereInBoudary()),
+    _sphereOutBoundary(new SphereOutBoudary())
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Sphere");
+    _modelFuncs.setDefault("Shell");
     _modelFuncs.setContent({
         {string("Box"),    ModelFunc(bind(&CpuDelaunayMesher::genBox,    this, _1, _2))},
+        {string("Shell"),  ModelFunc(bind(&CpuDelaunayMesher::genShell,  this, _1, _2))},
         {string("Sphere"), ModelFunc(bind(&CpuDelaunayMesher::genSphere, this, _1, _2))},
     });
 }
@@ -181,6 +197,106 @@ void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
         installCudaBoxBoundary);
 }
 
+void CpuDelaunayMesher::genShell(Mesh& mesh, size_t vertexCount)
+{
+    std::vector<glm::dvec3> vertices;
+    double inSphereRadius = 0.5;
+    double outSphereRadius = 1.0;
+    double padding = 1.0 - 1.0/glm::pow(vertexCount, 1/3.0);
+
+    size_t inSurfVertCount = glm::sqrt(vertexCount) * 5 * inSphereRadius / outSphereRadius;
+    inSurfVertCount = glm::min(inSurfVertCount, vertexCount);
+
+    size_t outSurfVertCount = glm::sqrt(vertexCount) * 10;
+    outSurfVertCount = glm::min(outSurfVertCount, vertexCount);
+
+    if(vertexCount < inSurfVertCount + outSurfVertCount)
+    {
+        inSurfVertCount = (vertexCount * inSurfVertCount) / outSurfVertCount;
+        outSurfVertCount = vertexCount - inSurfVertCount;
+    }
+
+    size_t boundSurfCount = inSurfVertCount + outSurfVertCount;
+
+    vertices.resize(vertexCount + 1);
+    for(int v=0; v < inSurfVertCount; ++v)
+        vertices[v] = glm::sphericalRand(inSphereRadius);
+    for(int v=inSurfVertCount; v < boundSurfCount; ++v)
+        vertices[v] = glm::sphericalRand(outSphereRadius);
+    for(int v=boundSurfCount; v < vertexCount; ++v)
+    {
+        glm::dvec3 pos;
+        while(glm::length(pos) < (inSphereRadius/padding))
+            pos = glm::ballRand(outSphereRadius * padding);
+        vertices[v] = pos;
+    }
+    vertices[vertexCount] = glm::dvec3(0, 0, 0);
+
+
+    insertVertices(mesh, vertices);
+
+    mesh.compileTopology(false);
+
+    for(size_t v=0; v < inSurfVertCount; ++v)
+    {
+        MeshTopo& topo = mesh.topos[v];
+        topo.isFixed = false;
+        topo.isBoundary = true;
+        topo.snapToBoundary = _sphereInBoundary.get();
+    }
+    for(size_t v=inSurfVertCount; v < boundSurfCount; ++v)
+    {
+        MeshTopo& topo = mesh.topos[v];
+        topo.isFixed = false;
+        topo.isBoundary = true;
+        topo.snapToBoundary = _sphereOutBoundary.get();
+    }
+    for(int v=boundSurfCount; v < vertexCount; ++v)
+    {
+        MeshTopo& topo = mesh.topos[v];
+
+        bool isOnInSphere = false;
+        for(const MeshNeigVert& vert : topo.neighborVerts)
+            if(vert.v == vertexCount) {isOnInSphere=true; break;}
+
+        if(isOnInSphere)
+        {
+            topo.isFixed = false;
+            topo.isBoundary = true;
+            topo.snapToBoundary = _sphereInBoundary.get();
+            mesh.verts[v].p = (*topo.snapToBoundary)(mesh.verts[v].p);
+        }
+        else
+        {
+            topo.isFixed = false;
+            topo.isBoundary = false;
+        }
+    }
+
+    for(size_t tId=0; tId < mesh.tets.size(); ++tId)
+    {
+        const MeshTet& tet = mesh.tets[tId];
+        if(tet.v[0] == vertexCount ||
+           tet.v[1] == vertexCount ||
+           tet.v[2] == vertexCount ||
+           tet.v[3] == vertexCount)
+        {
+            std::swap(mesh.tets[tId], mesh.tets.back());
+            mesh.tets.pop_back();
+            --tId;
+        }
+    }
+
+    // Pop center vertex;
+    mesh.verts.pop_back();
+    mesh.topos.pop_back();
+
+    mesh.setModelBoundsShaderName(
+        ":/glsl/compute/Boundary/Sphere.glsl");
+    mesh.setModelBoundsCudaFct(
+        installCudaSphereBoundary);
+}
+
 void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
 {
     std::vector<glm::dvec3> vertices;
@@ -204,7 +320,7 @@ void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
         MeshTopo& topo = mesh.topos[v];
         topo.isFixed = false;
         topo.isBoundary = true;
-        topo.snapToBoundary = _sphereBoundary.get();
+        topo.snapToBoundary = _sphereOutBoundary.get();
     }
     for(int v=surfVertCount; v < vertexCount; ++v)
     {

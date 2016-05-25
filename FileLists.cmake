@@ -73,8 +73,7 @@ SET(GpuMesh_SMOOTHERS_HEADERS
 
 SET(GpuMesh_TOPOLOGISTS_HEADERS
     ${GpuMesh_SRC_DIR}/Topologists/AbstractTopologist.h
-    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.h
-    ${GpuMesh_SRC_DIR}/Topologists/TriangularBoundary.h)
+    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.h)
 
 SET(GpuMesh_DIALOGS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.h)
@@ -176,8 +175,7 @@ SET(GpuMesh_SMOOTHERS_SOURCES
 
 SET(GpuMesh_TOPOLOGISTS_SOURCES
     ${GpuMesh_SRC_DIR}/Topologists/AbstractTopologist.cpp
-    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.cpp
-    ${GpuMesh_SRC_DIR}/Topologists/TriangularBoundary.cpp)
+    ${GpuMesh_SRC_DIR}/Topologists/BatrTopologist.cpp)
 
 SET(GpuMesh_UITABS_SOURCES
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.cpp

@@ -32,6 +32,7 @@ inline void appendElems(std::vector<MeshNeigElem>& elems, const std::vector<uint
 
 BatrTopologist::BatrTopologist() :
     _refinementCoarseningMaxPassCount(10),
+    _globalLoopMaxPassCount(10),
     _minAcceptableGenQuality(1e-9)
 {
     _ringConfigDictionary = {
@@ -105,11 +106,25 @@ void BatrTopologist::restructureMesh(
         "And then start main modification loop",
         "BatrTopologist"));
 
+    size_t passCount = 0;
+    size_t lastPassOpCount = 0;
     while(true)
     {
-        if(!edgeSplitMerge(mesh, crew)) break;
-        if(!faceSwapping(mesh, crew))   break;
-        if(!edgeSwapping(mesh, crew))   break;
+        size_t passOpCount = 0;
+
+        passOpCount += faceSwapping(mesh, crew);
+        passOpCount += edgeSwapping(mesh, crew);
+        passOpCount += edgeSplitMerge(mesh, crew);
+
+        if(passOpCount == 0 ||
+           passOpCount == lastPassOpCount ||
+           passCount >= _globalLoopMaxPassCount)
+        {
+            break;
+        }
+
+        lastPassOpCount = passOpCount;
+        ++passCount;
     }
 
     mesh.compileTopology(false);
@@ -122,7 +137,7 @@ void BatrTopologist::printOptimisationParameters(
 
 }
 
-bool BatrTopologist::edgeSplitMerge(
+size_t BatrTopologist::edgeSplitMerge(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
@@ -591,12 +606,12 @@ bool BatrTopologist::edgeSplitMerge(
 
 
     if(!emergencyExit)
-        return edgeSplitCount | vertMergeCount;
+        return edgeSplitCount + vertMergeCount;
     else
-        return false;
+        return 0;
 }
 
-bool BatrTopologist::faceSwapping(
+size_t BatrTopologist::faceSwapping(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
@@ -772,10 +787,10 @@ bool BatrTopologist::faceSwapping(
     if(!emergencyExit)
         return faceSwapCount;
     else
-        return false;
+        return 0;
 }
 
-bool BatrTopologist::edgeSwapping(
+size_t BatrTopologist::edgeSwapping(
         Mesh& mesh,
         const MeshCrew& crew) const
 {
@@ -919,7 +934,7 @@ bool BatrTopologist::edgeSwapping(
                     }
 
                     trimTets(mesh, aliveTets);
-                    return false;
+                    return 0;
                 }
 
 
@@ -1202,7 +1217,7 @@ bool BatrTopologist::edgeSwapping(
     if(!emergencyExit)
         return totalEdgeSwapCount;
     else
-        return false;
+        return 0;
 }
 
 template<typename T, typename V>

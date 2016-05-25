@@ -16,7 +16,8 @@ public:
 protected:
     virtual void genSingles(Mesh& mesh, size_t vertexCount);
     virtual void genSquish(Mesh& mesh, size_t vertexCount);
-    virtual void genGrid(Mesh& mesh, size_t vertexCount);
+    virtual void genHexGrid(Mesh& mesh, size_t vertexCount);
+    virtual void genTetGrid(Mesh& mesh, size_t vertexCount);
     virtual void genCube(Mesh& mesh, size_t vertexCount);
     virtual void genTet(Mesh& mesh, size_t vertexCount);
 };

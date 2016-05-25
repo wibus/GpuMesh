@@ -29,15 +29,15 @@ public:
 
 
 protected:    
-    virtual bool edgeSplitMerge(
+    virtual size_t edgeSplitMerge(
             Mesh& mesh,
             const MeshCrew& crew) const;
 
-    virtual bool faceSwapping(
+    virtual size_t faceSwapping(
             Mesh& mesh,
             const MeshCrew& crew) const;
 
-    virtual bool edgeSwapping(
+    virtual size_t edgeSwapping(
             Mesh& mesh,
             const MeshCrew& crew) const;
 
@@ -97,6 +97,7 @@ private:
 
     std::vector<std::vector<RingConfig>> _ringConfigDictionary;
     size_t _refinementCoarseningMaxPassCount;
+    size_t _globalLoopMaxPassCount;
     double _minAcceptableGenQuality;
 };
 
