@@ -39,18 +39,3 @@ const TopologyConstraint* MeshBoundary::split(
 
     return nullptr;
 }
-
-void MeshBoundary::addSurface(const SurfaceConstraint* surface)
-{
-    _surface.push_back(surface);
-}
-
-void MeshBoundary::addEdge(const EdgeConstraint* edge)
-{
-    _edges.push_back(edge);
-}
-
-void MeshBoundary::addVertex(const VertexConstraint* vertex)
-{
-    _vertices.push_back(vertex);
-}

@@ -67,9 +67,6 @@ public:
 
     const TopologyConstraint* zPosSurface() const;
 
-
-    const TopologyConstraint* volume() const;
-
 private:
     //////////////
     // VERTICES //

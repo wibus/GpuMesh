@@ -3,7 +3,6 @@
 
 #include <vector>
 
-#include "Constraints/Constraint.h"
 #include "Constraints/VertexConstraint.h"
 #include "Constraints/EdgeConstraint.h"
 #include "Constraints/SurfaceConstraint.h"
@@ -16,7 +15,7 @@ public:
     MeshBoundary();
     virtual ~MeshBoundary();
 
-    const TopologyConstraint* volume() const;
+    const VolumeConstraint* volume() const;
 
     virtual const TopologyConstraint* merge(
         const TopologyConstraint* c1,
@@ -27,6 +26,7 @@ public:
         const TopologyConstraint* c2) const = 0;
 
 protected:
+    VolumeConstraint* volume();
     void addSurface(const SurfaceConstraint* surface);
     void addEdge(const EdgeConstraint* edge);
     void addVertex(const VertexConstraint* vertex);
@@ -34,17 +34,20 @@ protected:
 
 private:
     VolumeConstraint _volume;
-    std::vector<const SurfaceConstraint*> _surface;
-    std::vector<const EdgeConstraint*> _edges;
-    std::vector<const VertexConstraint*> _vertices;
 };
 
 
 
 // IMPLEMENTATION //
-inline const TopologyConstraint* MeshBoundary::volume() const
+inline const VolumeConstraint* MeshBoundary::volume() const
 {
     return &_volume;
 }
+
+inline VolumeConstraint* MeshBoundary::volume()
+{
+    return &_volume;
+}
+
 
 #endif // GPUMESH_BOUNDARY
