@@ -1,6 +1,21 @@
 ## Headers ##
 
 # All the header files #
+SET(GpuMesh_CONSTRAINTS_HEADERS
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/Constraint.h
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VertexConstraint.h
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/EdgeConstraint.h
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/SurfaceConstraint.h
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VolumeConstraint.h)
+
+SET(GpuMesh_BOUNDARIES_HEADERS
+    ${GpuMesh_CONSTRAINTS_HEADERS}
+    ${GpuMesh_SRC_DIR}/Boundaries/Boundary.h
+    ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.h
+    ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.h
+    ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.h
+    ${GpuMesh_SRC_DIR}/Boundaries/SphereBoundary.h)
+
 SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.h
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.h
@@ -91,6 +106,7 @@ SET(GpuMesh_USERINTERFACE_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/SmoothingReport.h)
 
 SET(GpuMesh_HEADERS
+    ${GpuMesh_BOUNDARIES_HEADERS}
     ${GpuMesh_DATASTRUCTURES_HEADERS}
     ${GpuMesh_SAMPLERS_HEADERS}
     ${GpuMesh_EVALUATORS_HEADERS}
@@ -106,6 +122,21 @@ SET(GpuMesh_HEADERS
 ## Sources ##
 
 # All the source files #
+SET(GpuMesh_CONSTRAINTS_HEADERS
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/Constraint.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VertexConstraint.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/EdgeConstraint.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/SurfaceConstraint.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VolumeConstraint.cpp)
+
+SET(GpuMesh_BOUNDARIES_SOURCES
+    ${GpuMesh_CONSTRAINTS_HEADERS}
+    ${GpuMesh_SRC_DIR}/Boundaries/Boundary.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/SphereBoundary.cpp)
+
 SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.cpp
@@ -193,6 +224,7 @@ SET(GpuMesh_USERINTERFACE_SOURCES
     ${GpuMesh_SRC_DIR}/UserInterface/SmoothingReport.cpp)
 
 SET(GpuMesh_SOURCES
+    ${GpuMesh_BOUNDARIES_SOURCES}
     ${GpuMesh_DATASTRUCTURES_SOURCES}
     ${GpuMesh_SAMPLERS_SOURCES}
     ${GpuMesh_EVALUATORS_SOURCES}
