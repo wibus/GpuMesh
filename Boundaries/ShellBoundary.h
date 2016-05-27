@@ -1,21 +1,21 @@
 #ifndef GPUMESH_SHELL_BOUNDARY
 #define GPUMESH_SHELL_BOUNDARY
 
-#include "Boundary.h"
+#include "AbstractBoundary.h"
 
 
-class ShellBoundary : public MeshBoundary
+class ShellBoundary : public AbstractBoundary
 {
 public:
     ShellBoundary();
     virtual ~ShellBoundary();
 
 
-    const TopologyConstraint* inSurface() const;
+    const AbstractConstraint* inSurface() const;
 
-    const TopologyConstraint* outSurface() const;
+    const AbstractConstraint* outSurface() const;
 
-    const TopologyConstraint* volume() const;
+    const AbstractConstraint* volume() const;
 
 private:
     class InSurface : public SurfaceConstraint
@@ -38,12 +38,12 @@ private:
 
 
 // IMPLEMENTATION //
-inline const TopologyConstraint* ShellBoundary::inSurface() const
+inline const AbstractConstraint* ShellBoundary::inSurface() const
 {
     return &_inSurface;
 }
 
-inline const TopologyConstraint* ShellBoundary::outSurface() const
+inline const AbstractConstraint* ShellBoundary::outSurface() const
 {
     return &_outSurface;
 }

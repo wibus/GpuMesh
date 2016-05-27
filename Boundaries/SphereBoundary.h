@@ -1,17 +1,17 @@
 #ifndef GPUMESH_SPHERE_BOUNDARY
 #define GPUMESH_SPHERE_BOUNDARY
 
-#include "Boundary.h"
+#include "AbstractBoundary.h"
 
 
-class SphereBoundary : public MeshBoundary
+class SphereBoundary : public AbstractBoundary
 {
 public:
     SphereBoundary();
     virtual ~SphereBoundary();
 
 
-    const TopologyConstraint* surface() const;
+    const AbstractConstraint* surface() const;
 
 private:
     class Surface : public SurfaceConstraint
@@ -26,7 +26,7 @@ private:
 
 
 // IMPLEMENTATION //
-inline const TopologyConstraint* SphereBoundary::surface() const
+inline const AbstractConstraint* SphereBoundary::surface() const
 {
     return &_surface;
 }

@@ -3,20 +3,22 @@
 
 #include <vector>
 
-#include "Constraint.h"
+#include "AbstractConstraint.h"
 
 
-class VertexConstraint : public TopologyConstraint
+class VertexConstraint : public AbstractConstraint
 {
 public:
     VertexConstraint(int id, const glm::dvec3 position);
 
     void addEdge(const EdgeConstraint* edge);
+    bool isBoundedBy(const EdgeConstraint* edge) const;
 
     virtual glm::dvec3 operator()(const glm::dvec3& pos) const override;
 
-    virtual const TopologyConstraint* split(const TopologyConstraint* c) const override;
-    virtual const TopologyConstraint* merge(const TopologyConstraint* c) const override;
+protected:
+    virtual const AbstractConstraint* split(const AbstractConstraint* c) const override;
+    virtual const AbstractConstraint* merge(const AbstractConstraint* c) const override;
 
 private:
     glm::dvec3 _pos;

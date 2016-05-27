@@ -2,7 +2,7 @@
 
 # All the header files #
 SET(GpuMesh_CONSTRAINTS_HEADERS
-    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/Constraint.h
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/AbstractConstraint.h
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VertexConstraint.h
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/EdgeConstraint.h
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/SurfaceConstraint.h
@@ -10,7 +10,7 @@ SET(GpuMesh_CONSTRAINTS_HEADERS
 
 SET(GpuMesh_BOUNDARIES_HEADERS
     ${GpuMesh_CONSTRAINTS_HEADERS}
-    ${GpuMesh_SRC_DIR}/Boundaries/Boundary.h
+    ${GpuMesh_SRC_DIR}/Boundaries/AbstractBoundary.h
     ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.h
     ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.h
     ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.h
@@ -123,7 +123,7 @@ SET(GpuMesh_HEADERS
 
 # All the source files #
 SET(GpuMesh_CONSTRAINTS_HEADERS
-    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/Constraint.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/AbstractConstraint.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VertexConstraint.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/EdgeConstraint.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/SurfaceConstraint.cpp
@@ -131,7 +131,7 @@ SET(GpuMesh_CONSTRAINTS_HEADERS
 
 SET(GpuMesh_BOUNDARIES_SOURCES
     ${GpuMesh_CONSTRAINTS_HEADERS}
-    ${GpuMesh_SRC_DIR}/Boundaries/Boundary.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/AbstractBoundary.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.cpp

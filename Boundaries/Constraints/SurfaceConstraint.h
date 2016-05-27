@@ -3,10 +3,10 @@
 
 #include <vector>
 
-#include "Constraint.h"
+#include "AbstractConstraint.h"
 
 
-class SurfaceConstraint : public TopologyConstraint
+class SurfaceConstraint : public AbstractConstraint
 {
 protected:
     SurfaceConstraint(int id);
@@ -16,8 +16,9 @@ public:
     void addVolume(const VolumeConstraint* volume);
     bool isBoundedBy(const EdgeConstraint* edge) const;
 
-    virtual const TopologyConstraint* split(const TopologyConstraint* c) const override;
-    virtual const TopologyConstraint* merge(const TopologyConstraint* c) const override;
+protected:
+    virtual const AbstractConstraint* split(const AbstractConstraint* c) const override;
+    virtual const AbstractConstraint* merge(const AbstractConstraint* c) const override;
 
 private:
     std::vector<const EdgeConstraint*> _edges;

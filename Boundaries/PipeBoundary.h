@@ -1,10 +1,10 @@
 #ifndef GPUMESH_PIPE_BOUNDARY
 #define GPUMESH_PIPE_BOUNDARY
 
-#include "Boundary.h"
+#include "AbstractBoundary.h"
 
 
-class PipeBoundary : public MeshBoundary
+class PipeBoundary : public AbstractBoundary
 {
 public:
     PipeBoundary();

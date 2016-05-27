@@ -1,71 +1,71 @@
 #ifndef GPUMESH_BOX_BOUNDARY
 #define GPUMESH_BOX_BOUNDARY
 
-#include "Boundary.h"
+#include "AbstractBoundary.h"
 
 
-class BoxBoundary : public MeshBoundary
+class BoxBoundary : public AbstractBoundary
 {
 public:
     BoxBoundary();
     virtual ~BoxBoundary();
 
 
-    const TopologyConstraint* XnYnZnVertex() const;
+    const AbstractConstraint* XnYnZnVertex() const;
 
-    const TopologyConstraint* XpYnZnVertex() const;
+    const AbstractConstraint* XpYnZnVertex() const;
 
-    const TopologyConstraint* XpYpZnVertex() const;
+    const AbstractConstraint* XpYpZnVertex() const;
 
-    const TopologyConstraint* XnYpZnVertex() const;
+    const AbstractConstraint* XnYpZnVertex() const;
 
-    const TopologyConstraint* XnYnZpVertex() const;
+    const AbstractConstraint* XnYnZpVertex() const;
 
-    const TopologyConstraint* XpYnZpVertex() const;
+    const AbstractConstraint* XpYnZpVertex() const;
 
-    const TopologyConstraint* XpYpZpVertex() const;
+    const AbstractConstraint* XpYpZpVertex() const;
 
-    const TopologyConstraint* XnYpZpVertex() const;
-
-
-    const TopologyConstraint* xNyNzEdge() const;
-
-    const TopologyConstraint* xPyNzEdge() const;
-
-    const TopologyConstraint* xNyPzEdge() const;
-
-    const TopologyConstraint* xPyPzEdge() const;
+    const AbstractConstraint* XnYpZpVertex() const;
 
 
-    const TopologyConstraint* yNxNzEdge() const;
+    const AbstractConstraint* xNyNzEdge() const;
 
-    const TopologyConstraint* yPxNzEdge() const;
+    const AbstractConstraint* xPyNzEdge() const;
 
-    const TopologyConstraint* yNxPzEdge() const;
+    const AbstractConstraint* xNyPzEdge() const;
 
-    const TopologyConstraint* yPxPzEdge() const;
-
-
-    const TopologyConstraint* zNxNxEdge() const;
-
-    const TopologyConstraint* zPxNxEdge() const;
-
-    const TopologyConstraint* zNxPxEdge() const;
-
-    const TopologyConstraint* zPxPxEdge() const;
+    const AbstractConstraint* xPyPzEdge() const;
 
 
-    const TopologyConstraint* xNegSurface() const;
+    const AbstractConstraint* yNxNzEdge() const;
 
-    const TopologyConstraint* xPosSurface() const;
+    const AbstractConstraint* yPxNzEdge() const;
 
-    const TopologyConstraint* yNegSurface() const;
+    const AbstractConstraint* yNxPzEdge() const;
 
-    const TopologyConstraint* yPosSurface() const;
+    const AbstractConstraint* yPxPzEdge() const;
 
-    const TopologyConstraint* zNegSurface() const;
 
-    const TopologyConstraint* zPosSurface() const;
+    const AbstractConstraint* zNxNxEdge() const;
+
+    const AbstractConstraint* zPxNxEdge() const;
+
+    const AbstractConstraint* zNxPxEdge() const;
+
+    const AbstractConstraint* zPxPxEdge() const;
+
+
+    const AbstractConstraint* xNegSurface() const;
+
+    const AbstractConstraint* xPosSurface() const;
+
+    const AbstractConstraint* yNegSurface() const;
+
+    const AbstractConstraint* yPosSurface() const;
+
+    const AbstractConstraint* zNegSurface() const;
+
+    const AbstractConstraint* zPosSurface() const;
 
 private:
     //////////////
@@ -114,136 +114,136 @@ private:
 
 
 // IMPLEMENTATION //
-inline const TopologyConstraint* BoxBoundary::XnYnZnVertex() const
+inline const AbstractConstraint* BoxBoundary::XnYnZnVertex() const
 {
     return &_XnYnZnVertex;
 }
 
-inline const TopologyConstraint* BoxBoundary::XpYnZnVertex() const
+inline const AbstractConstraint* BoxBoundary::XpYnZnVertex() const
 {
     return &_XpYnZnVertex;
 }
 
-inline const TopologyConstraint* BoxBoundary::XpYpZnVertex() const
+inline const AbstractConstraint* BoxBoundary::XpYpZnVertex() const
 {
     return &_XpYpZnVertex;
 }
 
-inline const TopologyConstraint* BoxBoundary::XnYpZnVertex() const
+inline const AbstractConstraint* BoxBoundary::XnYpZnVertex() const
 {
     return &_XnYpZnVertex;
 }
 
-inline const TopologyConstraint* BoxBoundary::XnYnZpVertex() const
+inline const AbstractConstraint* BoxBoundary::XnYnZpVertex() const
 {
     return &_XnYnZpVertex;
 }
 
-inline const TopologyConstraint* BoxBoundary::XpYnZpVertex() const
+inline const AbstractConstraint* BoxBoundary::XpYnZpVertex() const
 {
     return &_XpYnZpVertex;
 }
 
-inline const TopologyConstraint* BoxBoundary::XpYpZpVertex() const
+inline const AbstractConstraint* BoxBoundary::XpYpZpVertex() const
 {
     return &_XpYpZpVertex;
 }
 
-inline const TopologyConstraint* BoxBoundary::XnYpZpVertex() const
+inline const AbstractConstraint* BoxBoundary::XnYpZpVertex() const
 {
     return &_XnYpZpVertex;
 }
 
 
-inline const TopologyConstraint* BoxBoundary::xNyNzEdge() const
+inline const AbstractConstraint* BoxBoundary::xNyNzEdge() const
 {
     return &_xNyNzEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::xPyNzEdge() const
+inline const AbstractConstraint* BoxBoundary::xPyNzEdge() const
 {
     return &_xPyNzEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::xNyPzEdge() const
+inline const AbstractConstraint* BoxBoundary::xNyPzEdge() const
 {
     return &_xNyPzEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::xPyPzEdge() const
+inline const AbstractConstraint* BoxBoundary::xPyPzEdge() const
 {
     return &_xPyPzEdge;
 }
 
 
-inline const TopologyConstraint* BoxBoundary::yNxNzEdge() const
+inline const AbstractConstraint* BoxBoundary::yNxNzEdge() const
 {
     return &_yNxNzEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::yPxNzEdge() const
+inline const AbstractConstraint* BoxBoundary::yPxNzEdge() const
 {
     return &_yPxNzEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::yNxPzEdge() const
+inline const AbstractConstraint* BoxBoundary::yNxPzEdge() const
 {
     return &_yNxPzEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::yPxPzEdge() const
+inline const AbstractConstraint* BoxBoundary::yPxPzEdge() const
 {
     return &_yPxPzEdge;
 }
 
 
-inline const TopologyConstraint* BoxBoundary::zNxNxEdge() const
+inline const AbstractConstraint* BoxBoundary::zNxNxEdge() const
 {
     return &_zNxNyEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::zPxNxEdge() const
+inline const AbstractConstraint* BoxBoundary::zPxNxEdge() const
 {
     return &_zPxNyEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::zNxPxEdge() const
+inline const AbstractConstraint* BoxBoundary::zNxPxEdge() const
 {
     return &_zNxPyEdge;
 }
 
-inline const TopologyConstraint* BoxBoundary::zPxPxEdge() const
+inline const AbstractConstraint* BoxBoundary::zPxPxEdge() const
 {
     return &_zPxPyEdge;
 }
 
 
-inline const TopologyConstraint* BoxBoundary::xNegSurface() const
+inline const AbstractConstraint* BoxBoundary::xNegSurface() const
 {
     return &_xNegSurface;
 }
 
-inline const TopologyConstraint* BoxBoundary::xPosSurface() const
+inline const AbstractConstraint* BoxBoundary::xPosSurface() const
 {
     return &_xPosSurface;
 }
 
-inline const TopologyConstraint* BoxBoundary::yNegSurface() const
+inline const AbstractConstraint* BoxBoundary::yNegSurface() const
 {
     return &_yNegSurface;
 }
 
-inline const TopologyConstraint* BoxBoundary::yPosSurface() const
+inline const AbstractConstraint* BoxBoundary::yPosSurface() const
 {
     return &_yPosSurface;
 }
 
-inline const TopologyConstraint* BoxBoundary::zNegSurface() const
+inline const AbstractConstraint* BoxBoundary::zNegSurface() const
 {
     return &_zNegSurface;
 }
 
-inline const TopologyConstraint* BoxBoundary::zPosSurface() const
+inline const AbstractConstraint* BoxBoundary::zPosSurface() const
 {
     return &_zPosSurface;
 }

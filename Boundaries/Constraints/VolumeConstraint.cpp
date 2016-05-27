@@ -4,7 +4,7 @@
 
 
 VolumeConstraint::VolumeConstraint() :
-    TopologyConstraint(0, 3)
+    AbstractConstraint(0, 3)
 {
 
 }
@@ -20,14 +20,12 @@ glm::dvec3 VolumeConstraint::operator()(const glm::dvec3& pos) const
     return pos;
 }
 
-const TopologyConstraint* VolumeConstraint::split(const TopologyConstraint* c) const
+const AbstractConstraint* VolumeConstraint::split(const AbstractConstraint* c) const
 {
-    // TODO
-    return nullptr;
+    return this;
 }
 
-const TopologyConstraint* VolumeConstraint::merge(const TopologyConstraint* c) const
+const AbstractConstraint* VolumeConstraint::merge(const AbstractConstraint* c) const
 {
-    // TODO
-    return nullptr;
+    return c;
 }

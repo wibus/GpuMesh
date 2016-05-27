@@ -1,10 +1,11 @@
 #include "SurfaceConstraint.h"
 
+#include "VertexConstraint.h"
 #include "EdgeConstraint.h"
 
 
 SurfaceConstraint::SurfaceConstraint(int id) :
-    TopologyConstraint(id, 2),
+    AbstractConstraint(id, 2),
     _volumes{nullptr, nullptr}
 {
     assert(id > 0);
@@ -22,6 +23,8 @@ void SurfaceConstraint::addVolume(const VolumeConstraint* volume)
         _volumes[0] = volume;
     else if(_volumes[1] == nullptr)
         _volumes[1] = volume;
+    else
+        assert(false);
 }
 
 bool SurfaceConstraint::isBoundedBy(const EdgeConstraint* edge) const
@@ -35,16 +38,81 @@ bool SurfaceConstraint::isBoundedBy(const EdgeConstraint* edge) const
     return false;
 }
 
-const TopologyConstraint* SurfaceConstraint::split(const TopologyConstraint* c) const
+const AbstractConstraint* SurfaceConstraint::split(const AbstractConstraint* c) const
 {
-    // TODO
-    return nullptr;
+    if(c->dimension() == 3)
+    {
+        return c;
+    }
+    else if(c->dimension() == 2)
+    {
+        return SPLIT_VOLUME;
+    }
+    else if(c->dimension() == 1)
+    {
+        const EdgeConstraint* e =
+            static_cast<const EdgeConstraint*>(c);
+
+        if(isBoundedBy(e))
+            return this;
+
+        return SPLIT_VOLUME;
+    }
+    else if(c->dimension() == 0)
+    {
+        const VertexConstraint* v =
+            static_cast<const VertexConstraint*>(c);
+
+        for(const EdgeConstraint* edge : _edges)
+            if(edge->isBoundedBy(v))
+                return this;
+
+        return SPLIT_VOLUME;
+    }
+
+    return SPLIT_VOLUME;
 }
 
-const TopologyConstraint* SurfaceConstraint::merge(const TopologyConstraint* c) const
+const AbstractConstraint* SurfaceConstraint::merge(const AbstractConstraint* c) const
 {
-    // TODO
-    return nullptr;
+    if(c->dimension() == 3)
+    {
+        return this;
+    }
+    else if(c->dimension() == 2)
+    {
+        const SurfaceConstraint* s =
+            static_cast<const SurfaceConstraint*>(c);
+
+        for(const EdgeConstraint* edge : _edges)
+            if(edge->isBoundedBy(s))
+                return edge;
+
+        return MERGE_PREVENT;
+    }
+    else if(c->dimension() == 1)
+    {
+        const EdgeConstraint* e =
+            static_cast<const EdgeConstraint*>(c);
+
+        if(isBoundedBy(e))
+            return e;
+
+        return MERGE_PREVENT;
+    }
+    else if(c->dimension() == 0)
+    {
+        const VertexConstraint* v =
+            static_cast<const VertexConstraint*>(c);
+
+        for(const EdgeConstraint* edge : _edges)
+            if(edge->isBoundedBy(v))
+                return v;
+
+        return MERGE_PREVENT;
+    }
+
+    return MERGE_PREVENT;
 }
 
 

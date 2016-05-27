@@ -1,23 +1,24 @@
 #ifndef GPUMESH_EDGE_CONSTRAINT
 #define GPUMESH_EDGE_CONSTRAINT
 
-#include "Constraint.h"
+#include "AbstractConstraint.h"
 
 
-class EdgeConstraint : public TopologyConstraint
+class EdgeConstraint : public AbstractConstraint
 {
 protected:
     EdgeConstraint(int id);
 
 public:
     void addVertex(VertexConstraint* vertex);
-    bool isBoundedBy(const VertexConstraint* v) const;
+    bool isBoundedBy(const VertexConstraint* vertex) const;
 
     void addSurface(const SurfaceConstraint* surface);
-    const SurfaceConstraint* getSurface(const EdgeConstraint* edge);
+    bool isBoundedBy(const SurfaceConstraint* surface) const;
 
-    virtual const TopologyConstraint* split(const TopologyConstraint* c) const override;
-    virtual const TopologyConstraint* merge(const TopologyConstraint* c) const override;
+protected:
+    virtual const AbstractConstraint* split(const AbstractConstraint* c) const override;
+    virtual const AbstractConstraint* merge(const AbstractConstraint* c) const override;
 
 private:
     const VertexConstraint* _vertices[2];
