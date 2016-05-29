@@ -11,8 +11,11 @@ class VertexConstraint : public AbstractConstraint
 public:
     VertexConstraint(int id, const glm::dvec3 position);
 
-    void addEdge(const EdgeConstraint* edge);
+    void addEdge(EdgeConstraint* edge);
     bool isBoundedBy(const EdgeConstraint* edge) const;
+
+    void addSurface(SurfaceConstraint* surface);
+    bool isBoundedBy(const SurfaceConstraint* surface) const;
 
     virtual glm::dvec3 operator()(const glm::dvec3& pos) const override;
 
@@ -22,7 +25,8 @@ protected:
 
 private:
     glm::dvec3 _pos;
-    std::vector<const EdgeConstraint*> _edges;
+    std::vector<EdgeConstraint*> _edges;
+    std::vector<SurfaceConstraint*> _surfaces;
 };
 
 

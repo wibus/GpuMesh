@@ -14,14 +14,20 @@ EdgeConstraint::EdgeConstraint(int id) :
 
 void EdgeConstraint::addVertex(VertexConstraint *vertex)
 {
-    vertex->addEdge(this);
+    if(!isBoundedBy(vertex))
+    {
+        if(_vertices[0] == nullptr)
+            _vertices[0] = vertex;
+        else if(_vertices[1] == nullptr)
+            _vertices[1] = vertex;
+        else
+            assert(false);
 
-    if(_vertices[0] == nullptr)
-        _vertices[0] = vertex;
-    else if(_vertices[1] == nullptr)
-        _vertices[1] = vertex;
-    else
-        assert(false);
+        _surfaces[0]->addVertex(vertex);
+        _surfaces[1]->addVertex(vertex);
+
+        vertex->addEdge(this);
+    }
 }
 
 bool EdgeConstraint::isBoundedBy(const VertexConstraint* vertex) const
@@ -29,14 +35,22 @@ bool EdgeConstraint::isBoundedBy(const VertexConstraint* vertex) const
     return vertex == _vertices[0] || vertex == _vertices[1];
 }
 
-void EdgeConstraint::addSurface(const SurfaceConstraint* surface)
+void EdgeConstraint::addSurface(SurfaceConstraint* surface)
 {
-    if(_surfaces[0] == nullptr)
-        _surfaces[0] = surface;
-    else if(_surfaces[1] == nullptr)
-        _surfaces[1] = surface;
-    else
-        assert(false);
+    if(!isBoundedBy(surface))
+    {
+        if(_surfaces[0] == nullptr)
+            _surfaces[0] = surface;
+        else if(_surfaces[1] == nullptr)
+            _surfaces[1] = surface;
+        else
+            assert(false);
+
+        _vertices[0]->addSurface(surface);
+        _vertices[1]->addSurface(surface);
+
+        surface->addEdge(this);
+    }
 }
 
 bool EdgeConstraint::isBoundedBy(const SurfaceConstraint* surface) const
@@ -79,6 +93,10 @@ const AbstractConstraint* EdgeConstraint::split(const AbstractConstraint* c) con
         if(isBoundedBy(v))
             return v;
 
+        for(const SurfaceConstraint* surface : _surfaces)
+            if(surface->isBoundedBy(v))
+                return surface;
+
         return SPLIT_VOLUME;
     }
 
@@ -98,6 +116,11 @@ const AbstractConstraint* EdgeConstraint::merge(const AbstractConstraint* c) con
 
         if(isBoundedBy(s))
             return this;
+
+        if(_vertices[0]->isBoundedBy(s))
+            return _vertices[0];
+        else if(_vertices[1]->isBoundedBy(s))
+            return _vertices[1];
 
         return MERGE_PREVENT;
     }

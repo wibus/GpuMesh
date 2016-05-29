@@ -11,15 +11,39 @@ VertexConstraint::VertexConstraint(int id, const glm::dvec3 position) :
     assert(id < 0);
 }
 
-void VertexConstraint::addEdge(const EdgeConstraint* edge)
+void VertexConstraint::addEdge(EdgeConstraint* edge)
 {
-    _edges.push_back(edge);
+    if(!isBoundedBy(edge))
+    {
+        _edges.push_back(edge);
+
+        edge->addVertex(this);
+    }
 }
 
 bool VertexConstraint::isBoundedBy(const EdgeConstraint* edge) const
 {
     for(const EdgeConstraint* e : _edges)
         if(e == edge)
+            return true;
+
+    return false;
+}
+
+void VertexConstraint::addSurface(SurfaceConstraint* surface)
+{
+    if(!isBoundedBy(surface))
+    {
+        _surfaces.push_back(surface);
+
+        surface->addVertex(this);
+    }
+}
+
+bool VertexConstraint::isBoundedBy(const SurfaceConstraint* surface) const
+{
+    for(const SurfaceConstraint* s : _surfaces)
+        if(s == surface)
             return true;
 
     return false;
@@ -41,9 +65,8 @@ const AbstractConstraint* VertexConstraint::split(const AbstractConstraint* c) c
         const SurfaceConstraint* s =
             static_cast<const SurfaceConstraint*>(c);
 
-        for(const EdgeConstraint* edge : _edges)
-            if(edge->isBoundedBy(s))
-                return s;
+        if(isBoundedBy(s))
+            return s;
 
         return SPLIT_VOLUME;
     }
@@ -55,6 +78,10 @@ const AbstractConstraint* VertexConstraint::split(const AbstractConstraint* c) c
         if(isBoundedBy(e))
             return e;
 
+        for(const SurfaceConstraint* surface : _surfaces)
+            if(surface->isBoundedBy(e))
+                return surface;
+
         return SPLIT_VOLUME;
     }
     else if(c->dimension() == 0)
@@ -65,6 +92,10 @@ const AbstractConstraint* VertexConstraint::split(const AbstractConstraint* c) c
         for(const EdgeConstraint* edge : _edges)
             if(edge->isBoundedBy(v))
                 return edge;
+
+        for(const SurfaceConstraint* surface : _surfaces)
+            if(surface->isBoundedBy(v))
+                return surface;
 
         return SPLIT_VOLUME;
     }
@@ -83,9 +114,8 @@ const AbstractConstraint* VertexConstraint::merge(const AbstractConstraint* c) c
         const SurfaceConstraint* s =
             static_cast<const SurfaceConstraint*>(c);
 
-        for(const EdgeConstraint* edge : _edges)
-            if(edge->isBoundedBy(s))
-                return this;
+        if(isBoundedBy(s))
+            return this;
 
         return MERGE_PREVENT;
     }

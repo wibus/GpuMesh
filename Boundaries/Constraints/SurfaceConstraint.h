@@ -12,16 +12,22 @@ protected:
     SurfaceConstraint(int id);
 
 public:
+    void addVertex(VertexConstraint* vertex);
+    bool isBoundedBy(const VertexConstraint* vertex) const;
+
     void addEdge(EdgeConstraint* edge);
-    void addVolume(const VolumeConstraint* volume);
     bool isBoundedBy(const EdgeConstraint* edge) const;
+
+    void addVolume(VolumeConstraint* volume);
+    bool isBoundedBy(const VolumeConstraint* volume) const;
 
 protected:
     virtual const AbstractConstraint* split(const AbstractConstraint* c) const override;
     virtual const AbstractConstraint* merge(const AbstractConstraint* c) const override;
 
 private:
-    std::vector<const EdgeConstraint*> _edges;
+    std::vector<VertexConstraint*> _vertices;
+    std::vector<EdgeConstraint*> _edges;
     const VolumeConstraint* _volumes[2];
 };
 

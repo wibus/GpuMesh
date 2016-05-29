@@ -11,8 +11,21 @@ VolumeConstraint::VolumeConstraint() :
 
 void VolumeConstraint::addSurface(SurfaceConstraint *surface)
 {
-    surface->addVolume(this);
-    _surfaces.push_back(surface);
+    if(!isBoundedBy(surface))
+    {
+        _surfaces.push_back(surface);
+
+        surface->addVolume(this);
+    }
+}
+
+bool VolumeConstraint::isBoundedBy(const SurfaceConstraint* surface) const
+{
+    for(const SurfaceConstraint* s : _surfaces)
+        if(s == surface)
+            return true;
+
+    return false;
 }
 
 glm::dvec3 VolumeConstraint::operator()(const glm::dvec3& pos) const

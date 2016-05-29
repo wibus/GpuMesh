@@ -2,6 +2,7 @@
 
 #include "VertexConstraint.h"
 #include "EdgeConstraint.h"
+#include "VolumeConstraint.h"
 
 
 SurfaceConstraint::SurfaceConstraint(int id) :
@@ -11,20 +12,35 @@ SurfaceConstraint::SurfaceConstraint(int id) :
     assert(id > 0);
 }
 
-void SurfaceConstraint::addEdge(EdgeConstraint* edge)
+void SurfaceConstraint::addVertex(VertexConstraint* vertex)
 {
-    edge->addSurface(this);
-    _edges.push_back(edge);
+    if(!isBoundedBy(vertex))
+    {
+        _vertices.push_back(vertex);
+
+        vertex->addSurface(this);
+    }
 }
 
-void SurfaceConstraint::addVolume(const VolumeConstraint* volume)
+bool SurfaceConstraint::isBoundedBy(const VertexConstraint* vertex) const
 {
-    if(_volumes[0] == nullptr)
-        _volumes[0] = volume;
-    else if(_volumes[1] == nullptr)
-        _volumes[1] = volume;
-    else
-        assert(false);
+    for(const VertexConstraint* v : _vertices)
+    {
+        if(v == vertex)
+            return true;
+    }
+
+    return false;
+}
+
+void SurfaceConstraint::addEdge(EdgeConstraint* edge)
+{
+    if(!isBoundedBy(edge))
+    {
+        _edges.push_back(edge);
+
+        edge->addSurface(this);
+    }
 }
 
 bool SurfaceConstraint::isBoundedBy(const EdgeConstraint* edge) const
@@ -36,6 +52,26 @@ bool SurfaceConstraint::isBoundedBy(const EdgeConstraint* edge) const
     }
 
     return false;
+}
+
+void SurfaceConstraint::addVolume(VolumeConstraint* volume)
+{
+    if(!isBoundedBy(volume))
+    {
+        if(_volumes[0] == nullptr)
+            _volumes[0] = volume;
+        else if(_volumes[1] == nullptr)
+            _volumes[1] = volume;
+        else
+            assert(false);
+
+        volume->addSurface(this);
+    }
+}
+
+bool SurfaceConstraint::isBoundedBy(const VolumeConstraint* volume) const
+{
+    return _volumes[0] == volume || _volumes[1] == volume;
 }
 
 const AbstractConstraint* SurfaceConstraint::split(const AbstractConstraint* c) const
@@ -63,9 +99,8 @@ const AbstractConstraint* SurfaceConstraint::split(const AbstractConstraint* c) 
         const VertexConstraint* v =
             static_cast<const VertexConstraint*>(c);
 
-        for(const EdgeConstraint* edge : _edges)
-            if(edge->isBoundedBy(v))
-                return this;
+        if(isBoundedBy(v))
+            return this;
 
         return SPLIT_VOLUME;
     }
@@ -98,6 +133,10 @@ const AbstractConstraint* SurfaceConstraint::merge(const AbstractConstraint* c) 
         if(isBoundedBy(e))
             return e;
 
+        for(const VertexConstraint* vertex : _vertices)
+            if(vertex->isBoundedBy(e))
+                return vertex;
+
         return MERGE_PREVENT;
     }
     else if(c->dimension() == 0)
@@ -105,9 +144,8 @@ const AbstractConstraint* SurfaceConstraint::merge(const AbstractConstraint* c) 
         const VertexConstraint* v =
             static_cast<const VertexConstraint*>(c);
 
-        for(const EdgeConstraint* edge : _edges)
-            if(edge->isBoundedBy(v))
-                return v;
+        if(isBoundedBy(v))
+            return v;
 
         return MERGE_PREVENT;
     }

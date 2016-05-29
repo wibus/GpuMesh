@@ -12,6 +12,7 @@ public:
     VolumeConstraint();
 
     void addSurface(SurfaceConstraint* surface);
+    bool isBoundedBy(const SurfaceConstraint* surface) const;
 
     virtual glm::dvec3 operator()(const glm::dvec3& pos) const override;
 
@@ -20,7 +21,7 @@ protected:
     virtual const AbstractConstraint* merge(const AbstractConstraint* c) const override;
 
 private:
-    std::vector<const SurfaceConstraint*> _surfaces;
+    std::vector<SurfaceConstraint*> _surfaces;
 };
 
 

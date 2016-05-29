@@ -31,10 +31,6 @@ public:
 
 protected:
     VolumeConstraint* volume();
-    void addSurface(const SurfaceConstraint* surface);
-    void addEdge(const EdgeConstraint* edge);
-    void addVertex(const VertexConstraint* vertex);
-
 
 private:
     VolumeConstraint _volume;

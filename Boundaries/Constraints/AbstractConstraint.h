@@ -37,7 +37,6 @@ protected:
     friend class AbstractBoundary;
     virtual const AbstractConstraint* split(const AbstractConstraint* c) const = 0;
     virtual const AbstractConstraint* merge(const AbstractConstraint* c) const = 0;
-
 private:
     int _id;
     int _dimension;
