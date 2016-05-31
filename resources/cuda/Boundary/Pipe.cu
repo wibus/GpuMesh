@@ -1,8 +1,10 @@
 #include "Base.cuh"
 
-#define PIPE_SURFACE_ID 1
-#define PIPE_EXTREMITY_FACE_ID 2
-#define PIPE_EXTREMITY_EDGE_ID 3
+#define PIPE_CYLINDER_FACE_ID 1
+#define PIPE_YNEG_DISK_FACE_ID 2
+#define PIPE_YPOS_DISK_FACE_ID 3
+#define PIPE_YNEG_CIRCLE_EDGE_ID 4
+#define PIPE_YPOS_CIRCLE_EDGE_ID 5
 
 #define PIPE_RADIUS 0.3f
 #define EXT_NORMAL vec3(1.0, 0, 0)
@@ -49,15 +51,17 @@ __device__ vec3 snapToPipeExtremityEdge(vec3 pos)
     return center + normalize(extProj) * PIPE_RADIUS;
 }
 
-__device__ vec3 elbowPipeSnapToBoundary(int boundaryID, vec3 pos)
+__device__ vec3 pipeSnapToBoundary(int boundaryID, vec3 pos)
 {
     switch(boundaryID)
     {
-    case PIPE_SURFACE_ID :
+    case PIPE_CYLINDER_FACE_ID :
         return snapToPipeSurface(pos);
-    case PIPE_EXTREMITY_FACE_ID :
+    case PIPE_YNEG_DISK_FACE_ID :
+    case PIPE_YPOS_DISK_FACE_ID :
         return snapToPipeExtremityFace(pos);
-    case PIPE_EXTREMITY_EDGE_ID :
+    case PIPE_YNEG_CIRCLE_EDGE_ID :
+    case PIPE_YPOS_CIRCLE_EDGE_ID :
         return snapToPipeExtremityEdge(pos);
     }
 
@@ -65,17 +69,17 @@ __device__ vec3 elbowPipeSnapToBoundary(int boundaryID, vec3 pos)
 }
 
 
-__device__ snapToBoundaryFct elbowPipeSnapToBoundaryPtr = elbowPipeSnapToBoundary;
+__device__ snapToBoundaryFct pipeSnapToBoundaryPtr = pipeSnapToBoundary;
 
 
 // CUDA Drivers
-void installCudaElbowPipeBoundary()
+void installCudaPipeBoundary()
 {
     snapToBoundaryFct d_snapToBoundary = nullptr;
-    cudaMemcpyFromSymbol(&d_snapToBoundary, elbowPipeSnapToBoundaryPtr, sizeof(snapToBoundaryFct));
+    cudaMemcpyFromSymbol(&d_snapToBoundary, pipeSnapToBoundaryPtr, sizeof(snapToBoundaryFct));
     cudaMemcpyToSymbol(snapToBoundary, &d_snapToBoundary, sizeof(snapToBoundaryFct));
 
 
     if(verboseCuda)
-        printf("I -> CUDA \tElbow Pipe boundary installed\n");
+        printf("I -> CUDA \tPipe boundary installed\n");
 }

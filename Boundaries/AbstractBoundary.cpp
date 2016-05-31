@@ -2,13 +2,18 @@
 
 #include "Constraints/VertexConstraint.h"
 #include "Constraints/EdgeConstraint.h"
-#include "Constraints/SurfaceConstraint.h"
+#include "Constraints/FaceConstraint.h"
 #include "Constraints/VolumeConstraint.h"
 
 
 const AbstractConstraint* AbstractBoundary::INVALID_OPERATION = nullptr;
 
-AbstractBoundary::AbstractBoundary()
+AbstractBoundary::AbstractBoundary(const std::string& name,
+                                   const std::string& shaderName,
+                                   ModelBoundsCudaFct cudaBoundary) :
+    _name(name),
+    _shaderName(shaderName),
+    _cudaBoundary(cudaBoundary)
 {
 
 }
@@ -16,6 +21,13 @@ AbstractBoundary::AbstractBoundary()
 AbstractBoundary::~AbstractBoundary()
 {
 
+}
+
+int AbstractBoundary::supportDimension(
+    const AbstractConstraint* c1,
+    const AbstractConstraint* c2) const
+{
+    return split(c1, c2)->dimension();
 }
 
 const AbstractConstraint* AbstractBoundary::split(

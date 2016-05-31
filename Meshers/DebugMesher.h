@@ -6,6 +6,9 @@
 #include "AbstractMesher.h"
 
 
+class BoxBoundary;
+
+
 class DebugMesher : public AbstractMesher
 {
 public:
@@ -20,6 +23,9 @@ protected:
     virtual void genTetGrid(Mesh& mesh, size_t vertexCount);
     virtual void genCube(Mesh& mesh, size_t vertexCount);
     virtual void genTet(Mesh& mesh, size_t vertexCount);
+
+private:
+    std::shared_ptr<BoxBoundary> _boxBoundary;
 };
 
 #endif // GPUMESH_DEBUGMESHER

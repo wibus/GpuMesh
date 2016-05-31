@@ -1,5 +1,6 @@
 #include "QualityLaplaceSmoother.h"
 
+#include "Boundaries/Constraints/AbstractConstraint.h"
 #include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -72,7 +73,7 @@ void QualityLaplaceSmoother::smoothVertices(
         };
 
         const MeshTopo& topo = topos[vId];
-        if(topo.isBoundary)
+        if(topo.snapToBoundary->isConstrained())
         {
             for(uint p=1; p < PROPOSITION_COUNT; ++p)
                 propositions[p] = (*topo.snapToBoundary)(propositions[p]);

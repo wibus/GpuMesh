@@ -8,6 +8,7 @@
 #include <fstream>
 #include <chrono>
 
+#include "Boundaries/AbstractBoundary.h"
 #include "DataStructures/MeshCrew.h"
 #include "Samplers/AbstractSampler.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -203,7 +204,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    mesh.modelBoundsCudaFct()();
+    mesh.boundary()->installCudaPlugIn();
     _installCudaSmoother();
 
     vector<IndependentDispatch> dispatches;
@@ -244,7 +245,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
         const MeshCrew& crew)
 {
     if(_initialized &&
-       _modelBoundsShader == mesh.modelBoundsShaderName() &&
+       _modelBoundsShader == mesh.boundary()->shaderName() &&
        _samplingShader == crew.sampler().samplingShader() &&
        _evaluationShader == crew.evaluator().evaluationShader() &&
        _measureShader == crew.measurer().measureShader())
@@ -254,7 +255,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractVertexWiseSmoother"));
 
-    _modelBoundsShader = mesh.modelBoundsShaderName();
+    _modelBoundsShader = mesh.boundary()->shaderName();
     _samplingShader = crew.sampler().samplingShader();
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();

@@ -22,10 +22,8 @@
         <file>glsl/fragment/ScaffoldJoint.frag</file>
         <file>glsl/vertex/Wireframe.vert</file>
         <file>glsl/fragment/Wireframe.frag</file>
-        <file>glsl/compute/Boundary/ElbowPipe.glsl</file>
         <file>glsl/compute/Mesh.glsl</file>
         <file>glsl/compute/Boundary/Sphere.glsl</file>
-        <file>glsl/compute/Boundary/None.glsl</file>
         <file>glsl/compute/Boundary/Box.glsl</file>
         <file>glsl/compute/Rendering/QualityGradient.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/SpringLaplace.glsl</file>
@@ -53,5 +51,8 @@
         <file>glsl/fragment/BoldEdge.frag</file>
         <file>glsl/compute/Smoothing/VertexWise/GradientDescent.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/NelderMead.glsl</file>
+        <file>glsl/compute/Boundary/Free.glsl</file>
+        <file>glsl/compute/Boundary/Pipe.glsl</file>
+        <file>glsl/compute/Boundary/Shell.glsl</file>
     </qresource>
 </RCC>

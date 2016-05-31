@@ -1,7 +1,7 @@
 #include "VertexConstraint.h"
 
 #include "EdgeConstraint.h"
-#include "SurfaceConstraint.h"
+#include "FaceConstraint.h"
 
 
 VertexConstraint::VertexConstraint(int id, const glm::dvec3 position) :
@@ -30,20 +30,20 @@ bool VertexConstraint::isBoundedBy(const EdgeConstraint* edge) const
     return false;
 }
 
-void VertexConstraint::addSurface(SurfaceConstraint* surface)
+void VertexConstraint::addFace(FaceConstraint* face)
 {
-    if(!isBoundedBy(surface))
+    if(!isBoundedBy(face))
     {
-        _surfaces.push_back(surface);
+        _faces.push_back(face);
 
-        surface->addVertex(this);
+        face->addVertex(this);
     }
 }
 
-bool VertexConstraint::isBoundedBy(const SurfaceConstraint* surface) const
+bool VertexConstraint::isBoundedBy(const FaceConstraint* face) const
 {
-    for(const SurfaceConstraint* s : _surfaces)
-        if(s == surface)
+    for(const FaceConstraint* s : _faces)
+        if(s == face)
             return true;
 
     return false;
@@ -62,8 +62,8 @@ const AbstractConstraint* VertexConstraint::split(const AbstractConstraint* c) c
     }
     else if(c->dimension() == 2)
     {
-        const SurfaceConstraint* s =
-            static_cast<const SurfaceConstraint*>(c);
+        const FaceConstraint* s =
+            static_cast<const FaceConstraint*>(c);
 
         if(isBoundedBy(s))
             return s;
@@ -78,9 +78,9 @@ const AbstractConstraint* VertexConstraint::split(const AbstractConstraint* c) c
         if(isBoundedBy(e))
             return e;
 
-        for(const SurfaceConstraint* surface : _surfaces)
-            if(surface->isBoundedBy(e))
-                return surface;
+        for(const FaceConstraint* face : _faces)
+            if(face->isBoundedBy(e))
+                return face;
 
         return SPLIT_VOLUME;
     }
@@ -93,9 +93,9 @@ const AbstractConstraint* VertexConstraint::split(const AbstractConstraint* c) c
             if(edge->isBoundedBy(v))
                 return edge;
 
-        for(const SurfaceConstraint* surface : _surfaces)
-            if(surface->isBoundedBy(v))
-                return surface;
+        for(const FaceConstraint* face : _faces)
+            if(face->isBoundedBy(v))
+                return face;
 
         return SPLIT_VOLUME;
     }
@@ -111,8 +111,8 @@ const AbstractConstraint* VertexConstraint::merge(const AbstractConstraint* c) c
     }
     else if(c->dimension() == 2)
     {
-        const SurfaceConstraint* s =
-            static_cast<const SurfaceConstraint*>(c);
+        const FaceConstraint* s =
+            static_cast<const FaceConstraint*>(c);
 
         if(isBoundedBy(s))
             return this;

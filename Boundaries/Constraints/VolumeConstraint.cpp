@@ -1,6 +1,6 @@
 #include "VolumeConstraint.h"
 
-#include "SurfaceConstraint.h"
+#include "FaceConstraint.h"
 
 
 VolumeConstraint::VolumeConstraint() :
@@ -9,20 +9,20 @@ VolumeConstraint::VolumeConstraint() :
 
 }
 
-void VolumeConstraint::addSurface(SurfaceConstraint *surface)
+void VolumeConstraint::addFace(FaceConstraint* face)
 {
-    if(!isBoundedBy(surface))
+    if(!isBoundedBy(face))
     {
-        _surfaces.push_back(surface);
+        _faces.push_back(face);
 
-        surface->addVolume(this);
+        face->addVolume(this);
     }
 }
 
-bool VolumeConstraint::isBoundedBy(const SurfaceConstraint* surface) const
+bool VolumeConstraint::isBoundedBy(const FaceConstraint* face) const
 {
-    for(const SurfaceConstraint* s : _surfaces)
-        if(s == surface)
+    for(const FaceConstraint* s : _faces)
+        if(s == face)
             return true;
 
     return false;

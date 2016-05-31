@@ -1,5 +1,6 @@
 #include "SpringLaplaceSmoother.h"
 
+#include "Boundaries/Constraints/AbstractConstraint.h"
 #include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -57,7 +58,7 @@ void SpringLaplaceSmoother::smoothVertices(
         pos = glm::mix(pos, patchCenter, _moveCoeff);
 
         const MeshTopo& topo = topos[vId];
-        if(topo.isBoundary)
+        if(topo.snapToBoundary->isConstrained())
         {
             pos = (*topo.snapToBoundary)(pos);
         }

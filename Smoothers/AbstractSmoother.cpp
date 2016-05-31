@@ -5,6 +5,7 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "Boundaries/Constraints/AbstractConstraint.h"
 #include "DataStructures/MeshCrew.h"
 #include "DataStructures/QualityHistogram.h"
 #include "Evaluators/AbstractEvaluator.h"
@@ -88,7 +89,7 @@ bool AbstractSmoother::isSmoothable(
         size_t vId) const
 {
     const MeshTopo& topo = mesh.topos[vId];
-    if(topo.isFixed)
+    if(topo.snapToBoundary->isFixed())
         return false;
 
     size_t neigElemCount = topo.neighborElems.size();

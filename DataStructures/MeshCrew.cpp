@@ -3,10 +3,11 @@
 #include <CellarWorkbench/GL/GlProgram.h>
 
 #include "Mesh.h"
-#include "Samplers/AbstractSampler.h"
+#include "Boundaries/AbstractBoundary.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/MetricFreeMeasurer.h"
 #include "Measurers/MetricWiseMeasurer.h"
+#include "Samplers/AbstractSampler.h"
 #include "Topologists/BatrTopologist.h"
 
 
@@ -108,7 +109,7 @@ void MeshCrew::installPlugins(const Mesh& mesh, cellar::GlProgram& program) cons
     // Mesh's plugin
     program.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        mesh.modelBoundsShaderName().c_str()});
+        mesh.boundary()->shaderName().c_str()});
 
     // Crew members' plugin
     _sampler->installPlugin(mesh, program);

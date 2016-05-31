@@ -1,15 +1,15 @@
-#ifndef GPUMESH_SURFACE_CONSTRAINT
-#define GPUMESH_SURFACE_CONSTRAINT
+#ifndef GPUMESH_FACE_CONSTRAINT
+#define GPUMESH_FACE_CONSTRAINT
 
 #include <vector>
 
 #include "AbstractConstraint.h"
 
 
-class SurfaceConstraint : public AbstractConstraint
+class FaceConstraint : public AbstractConstraint
 {
 protected:
-    SurfaceConstraint(int id);
+    FaceConstraint(int id);
 
 public:
     void addVertex(VertexConstraint* vertex);
@@ -32,7 +32,7 @@ private:
 };
 
 
-class PlaneConstraint : public SurfaceConstraint
+class PlaneConstraint : public FaceConstraint
 {
 public:
     PlaneConstraint(int id, const glm::dvec3& p, const glm::dvec3& n);
@@ -43,4 +43,4 @@ private:
 };
 
 
-#endif // GPUMESH_SURFACE_CONSTRAINT
+#endif // GPUMESH_FACE_CONSTRAINT

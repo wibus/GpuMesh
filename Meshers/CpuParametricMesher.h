@@ -6,6 +6,9 @@
 #include "AbstractMesher.h"
 
 
+class PipeBoundary;
+
+
 class CpuParametricMesher : public AbstractMesher
 {
 public:
@@ -61,10 +64,8 @@ protected:
             int sliceCount,
             int layerCount);
 
-    // Boundaries
-    std::unique_ptr<MeshBound> _pipeSurface;
-    std::unique_ptr<MeshBound> _pipeExtFace;
-    std::unique_ptr<MeshBound> _pipeExtEdge;
+private:
+    std::shared_ptr<PipeBoundary> _pipeBoundary;
 };
 
 #endif // GPUMESH_CPUPARAMETRICMESHER

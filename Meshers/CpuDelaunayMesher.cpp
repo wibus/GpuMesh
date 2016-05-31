@@ -8,15 +8,14 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "Boundaries/BoxBoundary.h"
+#include "Boundaries/ShellBoundary.h"
+#include "Boundaries/SphereBoundary.h"
+
 #include "DataStructures/TetList.h"
 
 using namespace std;
 using namespace cellar;
-
-
-// CUDA Drivers interface
-void installCudaBoxBoundary();
-void installCudaSphereBoundary();
 
 
 struct Vertex
@@ -55,84 +54,10 @@ const glm::ivec3 DIR[DIR_COUNT] = {
 };
 
 
-class BoxXBoudary : public MeshBound
-{
-public:
-    BoxXBoudary() :
-        MeshBound(1)
-    {
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        return glm::dvec3(pos.x / glm::abs(pos.x), pos.y, pos.z);
-    }
-};
-
-class BoxYBoudary : public MeshBound
-{
-public:
-    BoxYBoudary() :
-        MeshBound(2)
-    {
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        return glm::dvec3(pos.x, pos.y / glm::abs(pos.y), pos.z);
-    }
-};
-
-class BoxZBoudary : public MeshBound
-{
-public:
-    BoxZBoudary() :
-        MeshBound(3)
-    {
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        return glm::dvec3(pos.x, pos.y, pos.z / glm::abs(pos.z));
-    }
-};
-
-
-class SphereInBoudary : public MeshBound
-{
-public:
-    SphereInBoudary() :
-        MeshBound(1)
-    {
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        return glm::normalize(pos) * 0.5;
-    }
-};
-
-class SphereOutBoudary : public MeshBound
-{
-public:
-    SphereOutBoudary() :
-        MeshBound(2)
-    {
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        return glm::normalize(pos);
-    }
-};
-
-
 CpuDelaunayMesher::CpuDelaunayMesher() :
-    _boxXFaceBoundary(new BoxXBoudary()),
-    _boxYFaceBoundary(new BoxYBoudary()),
-    _boxZFaceBoundary(new BoxZBoudary()),
-    _sphereInBoundary(new SphereInBoudary()),
-    _sphereOutBoundary(new SphereOutBoudary())
+    _boxBoundary(new BoxBoundary()),
+    _shellBoundary(new ShellBoundary()),
+    _sphereBoundary(new SphereBoundary())
 {
     using namespace std::placeholders;
     _modelFuncs.setDefault("Shell");
@@ -172,7 +97,8 @@ void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
 
     insertVertices(mesh, vertices);
 
-    const MeshBound* boxBound[] = {
+    /* Nedd Compete redo
+    const MeshTopo* boxBound[] = {
         _boxXFaceBoundary.get(),
         _boxYFaceBoundary.get(),
         _boxZFaceBoundary.get()
@@ -191,20 +117,17 @@ void CpuDelaunayMesher::genBox(Mesh& mesh, size_t vertexCount)
         topo.isFixed = false;
     }
 
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/Box.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaBoxBoundary);
+    mesh.setBoundary(_boxBoundary);
+    */
 }
 
 void CpuDelaunayMesher::genShell(Mesh& mesh, size_t vertexCount)
 {
     std::vector<glm::dvec3> vertices;
-    double inSphereRadius = 0.5;
-    double outSphereRadius = 1.0;
     double padding = 1.0 - 1.0/glm::pow(vertexCount, 1/3.0);
 
-    size_t inSurfVertCount = glm::sqrt(vertexCount) * 5 * inSphereRadius / outSphereRadius;
+    size_t inSurfVertCount = glm::sqrt(vertexCount) * 5 *
+            ShellBoundary::IN_RADIUS / ShellBoundary::OUT_RADIUS;
     inSurfVertCount = glm::min(inSurfVertCount, vertexCount);
 
     size_t outSurfVertCount = glm::sqrt(vertexCount) * 10;
@@ -220,14 +143,14 @@ void CpuDelaunayMesher::genShell(Mesh& mesh, size_t vertexCount)
 
     vertices.resize(vertexCount + 1);
     for(int v=0; v < inSurfVertCount; ++v)
-        vertices[v] = glm::sphericalRand(inSphereRadius);
+        vertices[v] = glm::sphericalRand(ShellBoundary::IN_RADIUS);
     for(int v=inSurfVertCount; v < boundSurfCount; ++v)
-        vertices[v] = glm::sphericalRand(outSphereRadius);
+        vertices[v] = glm::sphericalRand(ShellBoundary::OUT_RADIUS);
     for(int v=boundSurfCount; v < vertexCount; ++v)
     {
         glm::dvec3 pos;
-        while(glm::length(pos) < (inSphereRadius/padding))
-            pos = glm::ballRand(outSphereRadius * padding);
+        while(glm::length(pos) < (ShellBoundary::IN_RADIUS/padding))
+            pos = glm::ballRand(ShellBoundary::OUT_RADIUS * padding);
         vertices[v] = pos;
     }
     vertices[vertexCount] = glm::dvec3(0, 0, 0);
@@ -239,21 +162,15 @@ void CpuDelaunayMesher::genShell(Mesh& mesh, size_t vertexCount)
 
     for(size_t v=0; v < inSurfVertCount; ++v)
     {
-        MeshTopo& topo = mesh.topos[v];
-        topo.isFixed = false;
-        topo.isBoundary = true;
-        topo.snapToBoundary = _sphereInBoundary.get();
+        mesh.topos[v] = MeshTopo(_shellBoundary->inFace());
     }
     for(size_t v=inSurfVertCount; v < boundSurfCount; ++v)
     {
-        MeshTopo& topo = mesh.topos[v];
-        topo.isFixed = false;
-        topo.isBoundary = true;
-        topo.snapToBoundary = _sphereOutBoundary.get();
+        mesh.topos[v] = MeshTopo(_shellBoundary->outFace());
     }
     for(int v=boundSurfCount; v < vertexCount; ++v)
     {
-        MeshTopo& topo = mesh.topos[v];
+        const MeshTopo& topo = mesh.topos[v];
 
         bool isOnInSphere = false;
         for(const MeshNeigVert& vert : topo.neighborVerts)
@@ -261,15 +178,12 @@ void CpuDelaunayMesher::genShell(Mesh& mesh, size_t vertexCount)
 
         if(isOnInSphere)
         {
-            topo.isFixed = false;
-            topo.isBoundary = true;
-            topo.snapToBoundary = _sphereInBoundary.get();
-            mesh.verts[v].p = (*topo.snapToBoundary)(mesh.verts[v].p);
+            mesh.topos[v] = MeshTopo(_shellBoundary->inFace());
+            mesh.verts[v].p = (*mesh.topos[v].snapToBoundary)(mesh.verts[v].p);
         }
         else
         {
-            topo.isFixed = false;
-            topo.isBoundary = false;
+            mesh.topos[v] = MeshTopo();
         }
     }
 
@@ -291,16 +205,12 @@ void CpuDelaunayMesher::genShell(Mesh& mesh, size_t vertexCount)
     mesh.verts.pop_back();
     mesh.topos.pop_back();
 
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/Sphere.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaSphereBoundary);
+    mesh.setBoundary(_shellBoundary);
 }
 
 void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
 {
     std::vector<glm::dvec3> vertices;
-    double sphereRadius = 1.0;
     double padding = 1.0 - 1.0/glm::pow(vertexCount, 1/3.0);
 
     size_t surfVertCount = glm::sqrt(vertexCount) * 10;
@@ -308,30 +218,25 @@ void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
 
     vertices.resize(vertexCount);
     for(int v=0; v < surfVertCount; ++v)
-        vertices[v] = glm::sphericalRand(sphereRadius);
+        vertices[v] = glm::sphericalRand(SphereBoundary::RADIUS);
     for(int v=surfVertCount; v < vertexCount; ++v)
-        vertices[v] = glm::ballRand(sphereRadius * padding);
+        vertices[v] = glm::ballRand(SphereBoundary::RADIUS * padding);
 
 
     insertVertices(mesh, vertices);
 
+
     for(size_t v=0; v < surfVertCount; ++v)
     {
-        MeshTopo& topo = mesh.topos[v];
-        topo.isFixed = false;
-        topo.isBoundary = true;
-        topo.snapToBoundary = _sphereOutBoundary.get();
+        mesh.topos[v] = MeshTopo(_sphereBoundary->face());
     }
     for(int v=surfVertCount; v < vertexCount; ++v)
     {
-        MeshTopo& topo = mesh.topos[v];
-        topo.isFixed = false;
+        mesh.topos[v] = MeshTopo();
     }
 
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/Sphere.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaSphereBoundary);
+
+    mesh.setBoundary(_sphereBoundary);
 }
 
 void CpuDelaunayMesher::insertBoundingMesh()
@@ -963,15 +868,6 @@ void CpuDelaunayMesher::tearDownGrid(Mesh& mesh)
                 if(meshTet[0] < _externalVertCount || meshTet[1] < _externalVertCount ||
                    meshTet[2] < _externalVertCount || meshTet[3] < _externalVertCount)
                 {
-                    // It's a bounding tetrahedron
-                    if(meshTet[0] >= _externalVertCount)
-                        topos[meshTet[0] - _externalVertCount].isFixed = true;
-                    if(meshTet[1] >= _externalVertCount)
-                        topos[meshTet[1] - _externalVertCount].isFixed = true;
-                    if(meshTet[2] >= _externalVertCount)
-                        topos[meshTet[2] - _externalVertCount].isFixed = true;
-                    if(meshTet[3] >= _externalVertCount)
-                        topos[meshTet[3] - _externalVertCount].isFixed = true;
                 }
                 else
                 {

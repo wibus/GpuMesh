@@ -6,16 +6,14 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "Boundaries/BoundaryFree.h"
+
 #include "Evaluators/AbstractEvaluator.h"
 
 #include "OptimizationPlot.h"
 
 using namespace std;
 using namespace cellar;
-
-
-// CUDA Drivers interface
-void installCudaNoneBoundary();
 
 
 const MeshEdge MeshTet::edges[MeshTet::EDGE_COUNT] = {
@@ -108,51 +106,26 @@ const MeshTet MeshHex::tets[MeshHex::TET_COUNT] = {
 };
 
 
-MeshBound::MeshBound(int id) :
-    _id(id)
-{
-
-}
-
-MeshBound::~MeshBound()
-{
-
-}
-
-glm::dvec3 MeshBound::operator()(const glm::dvec3& pos) const
-{
-    return pos;
-}
-
-
-const MeshBound MeshTopo::NO_BOUNDARY = MeshBound(0);
+const AbstractConstraint* MeshTopo::NO_BOUNDARY = new VolumeConstraint();
 
 MeshTopo::MeshTopo() :
-    isFixed(false),
-    isBoundary(false),
-    snapToBoundary(&NO_BOUNDARY)
+    snapToBoundary(NO_BOUNDARY)
 {
 }
 
-MeshTopo::MeshTopo(
-        bool isFixed) :
-    isFixed(isFixed),
-    isBoundary(false),
-    snapToBoundary(&NO_BOUNDARY)
+MeshTopo::MeshTopo(const glm::dvec3 &fixedPosition) :
+    snapToBoundary(new VertexConstraint(-1, fixedPosition))
 {
 }
 
-MeshTopo::MeshTopo(const MeshBound* boundaryCallback) :
-    isFixed(false),
-    isBoundary(boundaryCallback != &NO_BOUNDARY),
-    snapToBoundary(boundaryCallback)
+MeshTopo::MeshTopo(const AbstractConstraint* constraint) :
+    snapToBoundary(constraint)
 {
 }
 
 
 Mesh::Mesh() :
-    _modelBoundsShaderName(":/glsl/compute/Boundary/None.glsl"),
-    _modelBoundsCudaFct(installCudaNoneBoundary)
+    _boundary(new BoundaryFree())
 {
 
 }
@@ -296,26 +269,6 @@ void Mesh::bindShaderStorageBuffers() const
 
 }
 
-std::string Mesh::modelBoundsShaderName() const
-{
-    return _modelBoundsShaderName;
-}
-
-void Mesh::setModelBoundsShaderName(const std::string& name)
-{
-    _modelBoundsShaderName = name;
-}
-
-ModelBoundsCudaFct Mesh::modelBoundsCudaFct() const
-{
-    return _modelBoundsCudaFct;
-}
-
-void Mesh::setModelBoundsCudaFct(ModelBoundsCudaFct fct)
-{
-    _modelBoundsCudaFct = fct;
-}
-
 void Mesh::printPropperties(OptimizationPlot& plot) const
 {
     plot.addMeshProperty("Model Name",        modelName);
@@ -324,6 +277,13 @@ void Mesh::printPropperties(OptimizationPlot& plot) const
     plot.addMeshProperty("Prism Count",       to_string(pris.size()));
     plot.addMeshProperty("Hex Count",         to_string(hexs.size()));
     plot.addMeshProperty("Patch Group Count", to_string(independentGroups.size()));
+}
+
+void Mesh::setBoundary(const std::shared_ptr<AbstractBoundary>& boundary)
+{
+    _boundary = boundary;
+
+    assert(_boundary->unitTest());
 }
 
 void Mesh::compileNeighborhoods()

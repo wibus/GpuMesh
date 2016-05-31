@@ -9,7 +9,7 @@ class AbstractBoundary;
 // Basic Types of Constraint
 class VertexConstraint;
 class EdgeConstraint;
-class SurfaceConstraint;
+class FaceConstraint;
 class VolumeConstraint;
 
 

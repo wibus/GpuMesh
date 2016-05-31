@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <vector>
+#include <memory>
 #include <functional>
 
 #include <GLM/glm.hpp>
@@ -15,6 +16,12 @@ namespace cellar
 {
     class GlProgram;
 }
+
+
+class AbstractBoundary;
+class AbstractConstraint;
+class OptimizationPlot;
+
 
 struct MeshVert
 {
@@ -190,20 +197,6 @@ struct MeshHex
     static const MeshTet tets[TET_COUNT];
 };
 
-class MeshBound
-{
-public:
-    MeshBound(int id);
-    virtual ~MeshBound();
-
-    inline int id() const {return _id;}
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const;
-
-private:
-    int _id;
-};
-
 struct MeshNeigVert
 {
     uint v;
@@ -228,14 +221,12 @@ struct MeshTopo
     std::vector<MeshNeigVert> neighborVerts;
     std::vector<MeshNeigElem> neighborElems;
 
-    bool isFixed;
-    bool isBoundary;
-    const MeshBound* snapToBoundary;
-    static const MeshBound NO_BOUNDARY;
+    const AbstractConstraint* snapToBoundary;
+    static const AbstractConstraint* NO_BOUNDARY;
 
     MeshTopo();
-    explicit MeshTopo(bool isFixed);
-    explicit MeshTopo(const MeshBound* snapToBoundary);
+    explicit MeshTopo(const glm::dvec3& fixedPosition);
+    explicit MeshTopo(const AbstractConstraint* constraint);
 };
 
 
@@ -274,10 +265,6 @@ enum class ECutType
     InvertedElements
 };
 
-class OptimizationPlot;
-
-typedef void (*ModelBoundsCudaFct)(void);
-
 
 class Mesh
 {
@@ -299,13 +286,10 @@ public:
     virtual unsigned int bufferBinding(EBufferBinding binding) const;
     virtual void bindShaderStorageBuffers() const;
 
-    virtual std::string modelBoundsShaderName() const;
-    virtual void setModelBoundsShaderName(const std::string& name);
-
-    virtual ModelBoundsCudaFct modelBoundsCudaFct() const;
-    virtual void setModelBoundsCudaFct(ModelBoundsCudaFct fct);
-
     virtual void printPropperties(OptimizationPlot& plot) const;
+
+    std::shared_ptr<AbstractBoundary> boundary() const;
+    void setBoundary(const std::shared_ptr<AbstractBoundary>& boundary);
 
 
     std::string modelName;
@@ -336,8 +320,15 @@ protected:
     /// number of vertices and _d_ is the 'mean' vertex degree.
     virtual void compileIndependentGroups();
 
-    std::string _modelBoundsShaderName;
-    ModelBoundsCudaFct _modelBoundsCudaFct;
+    std::shared_ptr<AbstractBoundary> _boundary;
 };
+
+
+
+// IMPLEMENTATION //
+inline std::shared_ptr<AbstractBoundary> Mesh::boundary() const
+{
+    return _boundary;
+}
 
 #endif // GPUMESH_MESH

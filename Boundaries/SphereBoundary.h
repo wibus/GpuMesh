@@ -11,24 +11,31 @@ public:
     virtual ~SphereBoundary();
 
 
-    const AbstractConstraint* surface() const;
+    virtual bool unitTest() const override;
+
+
+    const AbstractConstraint* face() const;
+
+
+    static const double RADIUS;
+
 
 private:
-    class Surface : public SurfaceConstraint
+    class Face : public FaceConstraint
     {
     public:
-        Surface();
+        Face();
         virtual glm::dvec3 operator()(
             const glm::dvec3 &pos) const override;
-    } _surface;
+    } _face;
 };
 
 
 
 // IMPLEMENTATION //
-inline const AbstractConstraint* SphereBoundary::surface() const
+inline const AbstractConstraint* SphereBoundary::face() const
 {
-    return &_surface;
+    return &_face;
 }
 
 #endif // GPUMESH_SPHERE_BOUNDARY

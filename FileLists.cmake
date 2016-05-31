@@ -5,12 +5,13 @@ SET(GpuMesh_CONSTRAINTS_HEADERS
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/AbstractConstraint.h
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VertexConstraint.h
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/EdgeConstraint.h
-    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/SurfaceConstraint.h
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/FaceConstraint.h
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VolumeConstraint.h)
 
 SET(GpuMesh_BOUNDARIES_HEADERS
     ${GpuMesh_CONSTRAINTS_HEADERS}
     ${GpuMesh_SRC_DIR}/Boundaries/AbstractBoundary.h
+    ${GpuMesh_SRC_DIR}/Boundaries/BoundaryFree.h
     ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.h
     ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.h
     ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.h
@@ -126,12 +127,13 @@ SET(GpuMesh_CONSTRAINTS_HEADERS
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/AbstractConstraint.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VertexConstraint.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/EdgeConstraint.cpp
-    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/SurfaceConstraint.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/Constraints/FaceConstraint.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/Constraints/VolumeConstraint.cpp)
 
 SET(GpuMesh_BOUNDARIES_SOURCES
     ${GpuMesh_CONSTRAINTS_HEADERS}
     ${GpuMesh_SRC_DIR}/Boundaries/AbstractBoundary.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/BoundaryFree.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.cpp
@@ -289,10 +291,11 @@ SET(GpuMesh_FRAGMENT_SHADERS
 
 # Compute shaders
 SET(GpuMesh_BOUNDARY_SHADERS
-    ${GpuMesh_GLSL_DIR}/compute/Boundary/None.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Boundary/Free.glsl
     ${GpuMesh_GLSL_DIR}/compute/Boundary/Box.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Boundary/Shell.glsl
     ${GpuMesh_GLSL_DIR}/compute/Boundary/Sphere.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Boundary/ElbowPipe.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Boundary/Pipe.glsl)
 
 SET(GpuMesh_DISCRETIZING_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Sampling/Base.glsl
@@ -359,10 +362,11 @@ SET(GpuMesh_CUDA_DIR
 SET(GpuMesh_BOUNDARY_CUDA
     ${GpuMesh_CUDA_DIR}/Boundary/Base.cuh
     ${GpuMesh_CUDA_DIR}/Boundary/Base.cu
-    ${GpuMesh_CUDA_DIR}/Boundary/None.cu
+    ${GpuMesh_CUDA_DIR}/Boundary/Free.cu
     ${GpuMesh_CUDA_DIR}/Boundary/Box.cu
+    ${GpuMesh_CUDA_DIR}/Boundary/Shell.cu
     ${GpuMesh_CUDA_DIR}/Boundary/Sphere.cu
-    ${GpuMesh_CUDA_DIR}/Boundary/ElbowPipe.cu)
+    ${GpuMesh_CUDA_DIR}/Boundary/Pipe.cu)
 
 SET(GpuMesh_DISCRETIZING_CUDA
     ${GpuMesh_CUDA_DIR}/Sampling/Base.cuh

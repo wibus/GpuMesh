@@ -11,241 +11,245 @@ public:
     virtual ~BoxBoundary();
 
 
-    const AbstractConstraint* XnYnZnVertex() const;
-
-    const AbstractConstraint* XpYnZnVertex() const;
-
-    const AbstractConstraint* XpYpZnVertex() const;
-
-    const AbstractConstraint* XnYpZnVertex() const;
-
-    const AbstractConstraint* XnYnZpVertex() const;
-
-    const AbstractConstraint* XpYnZpVertex() const;
-
-    const AbstractConstraint* XpYpZpVertex() const;
-
-    const AbstractConstraint* XnYpZpVertex() const;
+    virtual bool unitTest() const override;
 
 
-    const AbstractConstraint* xNyNzEdge() const;
+    const AbstractConstraint* v0() const;
 
-    const AbstractConstraint* xPyNzEdge() const;
+    const AbstractConstraint* v1() const;
 
-    const AbstractConstraint* xNyPzEdge() const;
+    const AbstractConstraint* v2() const;
 
-    const AbstractConstraint* xPyPzEdge() const;
+    const AbstractConstraint* v3() const;
 
+    const AbstractConstraint* v4() const;
 
-    const AbstractConstraint* yNxNzEdge() const;
+    const AbstractConstraint* v5() const;
 
-    const AbstractConstraint* yPxNzEdge() const;
+    const AbstractConstraint* v6() const;
 
-    const AbstractConstraint* yNxPzEdge() const;
-
-    const AbstractConstraint* yPxPzEdge() const;
-
-
-    const AbstractConstraint* zNxNxEdge() const;
-
-    const AbstractConstraint* zPxNxEdge() const;
-
-    const AbstractConstraint* zNxPxEdge() const;
-
-    const AbstractConstraint* zPxPxEdge() const;
+    const AbstractConstraint* v7() const;
 
 
-    const AbstractConstraint* xNegSurface() const;
+    const AbstractConstraint* e01() const;
 
-    const AbstractConstraint* xPosSurface() const;
+    const AbstractConstraint* e23() const;
 
-    const AbstractConstraint* yNegSurface() const;
+    const AbstractConstraint* e45() const;
 
-    const AbstractConstraint* yPosSurface() const;
+    const AbstractConstraint* e67() const;
 
-    const AbstractConstraint* zNegSurface() const;
 
-    const AbstractConstraint* zPosSurface() const;
+    const AbstractConstraint* e03() const;
+
+    const AbstractConstraint* e12() const;
+
+    const AbstractConstraint* e47() const;
+
+    const AbstractConstraint* e56() const;
+
+
+    const AbstractConstraint* e04() const;
+
+    const AbstractConstraint* e15() const;
+
+    const AbstractConstraint* e37() const;
+
+    const AbstractConstraint* e26() const;
+
+
+    const AbstractConstraint* xNegFace() const;
+
+    const AbstractConstraint* xPosFace() const;
+
+    const AbstractConstraint* yNegFace() const;
+
+    const AbstractConstraint* yPosFace() const;
+
+    const AbstractConstraint* zNegFace() const;
+
+    const AbstractConstraint* zPosFace() const;
+
 
 private:
     //////////////
     // VERTICES //
     //////////////
-    VertexConstraint _XnYnZnVertex;
-    VertexConstraint _XpYnZnVertex;
-    VertexConstraint _XpYpZnVertex;
-    VertexConstraint _XnYpZnVertex;
-    VertexConstraint _XnYnZpVertex;
-    VertexConstraint _XpYnZpVertex;
-    VertexConstraint _XpYpZpVertex;
-    VertexConstraint _XnYpZpVertex;
+    VertexConstraint _v0;
+    VertexConstraint _v1;
+    VertexConstraint _v2;
+    VertexConstraint _v3;
+    VertexConstraint _v4;
+    VertexConstraint _v5;
+    VertexConstraint _v6;
+    VertexConstraint _v7;
 
 
     //////////////
     //  EDGES   //
     //////////////
-    SegmentConstraint _xNyNzEdge;
-    SegmentConstraint _xPyNzEdge;
-    SegmentConstraint _xNyPzEdge;
-    SegmentConstraint _xPyPzEdge;
+    SegmentConstraint _e01;
+    SegmentConstraint _e23;
+    SegmentConstraint _e45;
+    SegmentConstraint _e67;
 
-    SegmentConstraint _yNxNzEdge;
-    SegmentConstraint _yPxNzEdge;
-    SegmentConstraint _yNxPzEdge;
-    SegmentConstraint _yPxPzEdge;
+    SegmentConstraint _e03;
+    SegmentConstraint _e12;
+    SegmentConstraint _e47;
+    SegmentConstraint _e56;
 
-    SegmentConstraint _zNxNyEdge;
-    SegmentConstraint _zPxNyEdge;
-    SegmentConstraint _zNxPyEdge;
-    SegmentConstraint _zPxPyEdge;
+    SegmentConstraint _e04;
+    SegmentConstraint _e15;
+    SegmentConstraint _e37;
+    SegmentConstraint _e26;
 
 
     //////////////
-    // SURFACES //
+    //  FACES   //
     //////////////
-    PlaneConstraint _xNegSurface;
-    PlaneConstraint _xPosSurface;
-    PlaneConstraint _yNegSurface;
-    PlaneConstraint _yPosSurface;
-    PlaneConstraint _zNegSurface;
-    PlaneConstraint _zPosSurface;
+    PlaneConstraint _xNegFace;
+    PlaneConstraint _xPosFace;
+    PlaneConstraint _yNegFace;
+    PlaneConstraint _yPosFace;
+    PlaneConstraint _zNegFace;
+    PlaneConstraint _zPosFace;
 };
 
 
 
 // IMPLEMENTATION //
-inline const AbstractConstraint* BoxBoundary::XnYnZnVertex() const
+inline const AbstractConstraint* BoxBoundary::v0() const
 {
-    return &_XnYnZnVertex;
+    return &_v0;
 }
 
-inline const AbstractConstraint* BoxBoundary::XpYnZnVertex() const
+inline const AbstractConstraint* BoxBoundary::v1() const
 {
-    return &_XpYnZnVertex;
+    return &_v1;
 }
 
-inline const AbstractConstraint* BoxBoundary::XpYpZnVertex() const
+inline const AbstractConstraint* BoxBoundary::v2() const
 {
-    return &_XpYpZnVertex;
+    return &_v2;
 }
 
-inline const AbstractConstraint* BoxBoundary::XnYpZnVertex() const
+inline const AbstractConstraint* BoxBoundary::v3() const
 {
-    return &_XnYpZnVertex;
+    return &_v3;
 }
 
-inline const AbstractConstraint* BoxBoundary::XnYnZpVertex() const
+inline const AbstractConstraint* BoxBoundary::v4() const
 {
-    return &_XnYnZpVertex;
+    return &_v4;
 }
 
-inline const AbstractConstraint* BoxBoundary::XpYnZpVertex() const
+inline const AbstractConstraint* BoxBoundary::v5() const
 {
-    return &_XpYnZpVertex;
+    return &_v5;
 }
 
-inline const AbstractConstraint* BoxBoundary::XpYpZpVertex() const
+inline const AbstractConstraint* BoxBoundary::v6() const
 {
-    return &_XpYpZpVertex;
+    return &_v6;
 }
 
-inline const AbstractConstraint* BoxBoundary::XnYpZpVertex() const
+inline const AbstractConstraint* BoxBoundary::v7() const
 {
-    return &_XnYpZpVertex;
-}
-
-
-inline const AbstractConstraint* BoxBoundary::xNyNzEdge() const
-{
-    return &_xNyNzEdge;
-}
-
-inline const AbstractConstraint* BoxBoundary::xPyNzEdge() const
-{
-    return &_xPyNzEdge;
-}
-
-inline const AbstractConstraint* BoxBoundary::xNyPzEdge() const
-{
-    return &_xNyPzEdge;
-}
-
-inline const AbstractConstraint* BoxBoundary::xPyPzEdge() const
-{
-    return &_xPyPzEdge;
+    return &_v7;
 }
 
 
-inline const AbstractConstraint* BoxBoundary::yNxNzEdge() const
+inline const AbstractConstraint* BoxBoundary::e01() const
 {
-    return &_yNxNzEdge;
+    return &_e01;
 }
 
-inline const AbstractConstraint* BoxBoundary::yPxNzEdge() const
+inline const AbstractConstraint* BoxBoundary::e23() const
 {
-    return &_yPxNzEdge;
+    return &_e23;
 }
 
-inline const AbstractConstraint* BoxBoundary::yNxPzEdge() const
+inline const AbstractConstraint* BoxBoundary::e45() const
 {
-    return &_yNxPzEdge;
+    return &_e45;
 }
 
-inline const AbstractConstraint* BoxBoundary::yPxPzEdge() const
+inline const AbstractConstraint* BoxBoundary::e67() const
 {
-    return &_yPxPzEdge;
-}
-
-
-inline const AbstractConstraint* BoxBoundary::zNxNxEdge() const
-{
-    return &_zNxNyEdge;
-}
-
-inline const AbstractConstraint* BoxBoundary::zPxNxEdge() const
-{
-    return &_zPxNyEdge;
-}
-
-inline const AbstractConstraint* BoxBoundary::zNxPxEdge() const
-{
-    return &_zNxPyEdge;
-}
-
-inline const AbstractConstraint* BoxBoundary::zPxPxEdge() const
-{
-    return &_zPxPyEdge;
+    return &_e67;
 }
 
 
-inline const AbstractConstraint* BoxBoundary::xNegSurface() const
+inline const AbstractConstraint* BoxBoundary::e03() const
 {
-    return &_xNegSurface;
+    return &_e03;
 }
 
-inline const AbstractConstraint* BoxBoundary::xPosSurface() const
+inline const AbstractConstraint* BoxBoundary::e12() const
 {
-    return &_xPosSurface;
+    return &_e12;
 }
 
-inline const AbstractConstraint* BoxBoundary::yNegSurface() const
+inline const AbstractConstraint* BoxBoundary::e47() const
 {
-    return &_yNegSurface;
+    return &_e47;
 }
 
-inline const AbstractConstraint* BoxBoundary::yPosSurface() const
+inline const AbstractConstraint* BoxBoundary::e56() const
 {
-    return &_yPosSurface;
+    return &_e56;
 }
 
-inline const AbstractConstraint* BoxBoundary::zNegSurface() const
+
+inline const AbstractConstraint* BoxBoundary::e04() const
 {
-    return &_zNegSurface;
+    return &_e04;
 }
 
-inline const AbstractConstraint* BoxBoundary::zPosSurface() const
+inline const AbstractConstraint* BoxBoundary::e15() const
 {
-    return &_zPosSurface;
+    return &_e15;
+}
+
+inline const AbstractConstraint* BoxBoundary::e37() const
+{
+    return &_e37;
+}
+
+inline const AbstractConstraint* BoxBoundary::e26() const
+{
+    return &_e26;
+}
+
+
+inline const AbstractConstraint* BoxBoundary::xNegFace() const
+{
+    return &_xNegFace;
+}
+
+inline const AbstractConstraint* BoxBoundary::xPosFace() const
+{
+    return &_xPosFace;
+}
+
+inline const AbstractConstraint* BoxBoundary::yNegFace() const
+{
+    return &_yNegFace;
+}
+
+inline const AbstractConstraint* BoxBoundary::yPosFace() const
+{
+    return &_yPosFace;
+}
+
+inline const AbstractConstraint* BoxBoundary::zNegFace() const
+{
+    return &_zNegFace;
+}
+
+inline const AbstractConstraint* BoxBoundary::zPosFace() const
+{
+    return &_zPosFace;
 }
 
 #endif // GPUMESH_BOX_BOUNDARY

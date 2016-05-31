@@ -3,6 +3,8 @@
 #include <CellarWorkbench/Misc/Log.h>
 #include <CellarWorkbench/GL/GlProgram.h>
 
+#include "Boundaries/Constraints/AbstractConstraint.h"
+
 using namespace std;
 using namespace cellar;
 
@@ -159,12 +161,12 @@ void GpuMesh::updateGpuTopology()
         const MeshTopo& meshTopo = topos[i];
         uint neigVertCount = (uint)meshTopo.neighborVerts.size();
         uint neigElemCount = (uint)meshTopo.neighborElems.size();
-        int type = meshTopo.isFixed ? -1 :
+        int type = meshTopo.snapToBoundary->isFixed() ? -1 :
                 meshTopo.snapToBoundary->id();
 
         topoBuff[i] = GpuTopo(type,
-                              neigVertBase, neigVertCount,
-                              neigElemBase, neigElemCount);
+            neigVertBase, neigVertCount,
+            neigElemBase, neigElemCount);
 
 		for (uint n = 0; n < neigVertCount; ++n)
             neigVertBuff.push_back(GpuNeigVert(meshTopo.neighborVerts[n]));

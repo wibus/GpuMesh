@@ -9,6 +9,9 @@
 #include "DataStructures/TetPool.h"
 #include "DataStructures/TriSet.h"
 
+class BoxBoundary;
+class ShellBoundary;
+class SphereBoundary;
 
 struct Vertex;
 struct GridCell;
@@ -60,11 +63,9 @@ protected:
 
 private:
     // Boundaries
-    std::unique_ptr<MeshBound> _boxXFaceBoundary;
-    std::unique_ptr<MeshBound> _boxYFaceBoundary;
-    std::unique_ptr<MeshBound> _boxZFaceBoundary;
-    std::unique_ptr<MeshBound> _sphereInBoundary;
-    std::unique_ptr<MeshBound> _sphereOutBoundary;
+    std::shared_ptr<BoxBoundary> _boxBoundary;
+    std::shared_ptr<ShellBoundary> _shellBoundary;
+    std::shared_ptr<SphereBoundary> _sphereBoundary;
 
     // Main data structures
     std::vector<Vertex> vert;

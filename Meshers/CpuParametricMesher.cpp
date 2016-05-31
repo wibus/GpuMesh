@@ -4,93 +4,14 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "Boundaries/PipeBoundary.h"
+
 using namespace std;
 using namespace cellar;
 
 
-const double PIPE_RADIUS = 0.3;
-const glm::dvec3 EXT_NORMAL(-1, 0, 0);
-const glm::dvec3 EXT_CENTER(-1, 0.5, 0.0);
-
-
-// CUDA Drivers interface
-void installCudaNoneBoundary();
-void installCudaElbowPipeBoundary();
-
-
-class PipeSurfaceBoundary : public MeshBound
-{
-public:
-    PipeSurfaceBoundary() :
-        MeshBound(1)
-    {
-
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        glm::dvec3 center;
-
-        if(pos.x < 0.5) // Straights
-        {
-            center = glm::dvec3(pos.x, (pos.y < 0.0 ? -0.5 : 0.5), 0.0);
-        }
-        else // Arc
-        {
-            center = pos - glm::dvec3(0.5, 0.0, pos.z);
-            center = glm::normalize(center) * 0.5;
-            center = glm::dvec3(0.5, 0, 0) + center;
-        }
-
-        glm::dvec3 dist = pos - center;
-        glm::dvec3 extProj = glm::normalize(dist) * PIPE_RADIUS;
-        return center + extProj;
-    }
-};
-
-class PipeExtFaceBoundary : public MeshBound
-{
-public:
-    PipeExtFaceBoundary() :
-        MeshBound(2)
-    {
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        glm::dvec3 center = EXT_CENTER;
-        if(pos.y < 0.0) center.y = -center.y;
-
-        double offset = glm::dot(pos - center, EXT_NORMAL);
-        return pos - EXT_NORMAL * offset;
-    }
-};
-
-class PipeExtEdgeBoundary : public MeshBound
-{
-public:
-    PipeExtEdgeBoundary() :
-        MeshBound(3)
-    {
-    }
-
-    virtual glm::dvec3 operator()(const glm::dvec3& pos) const override
-    {
-        glm::dvec3 center = EXT_CENTER;
-        if(pos.y < 0.0) center.y = -center.y;
-
-        glm::dvec3 dist = pos - center;
-        double offset = glm::dot(dist, EXT_NORMAL);
-        glm::dvec3 extProj = dist - EXT_NORMAL * offset;
-        return center + glm::normalize(extProj) * PIPE_RADIUS;
-    }
-};
-
-
 CpuParametricMesher::CpuParametricMesher() :
-    _pipeSurface(new PipeSurfaceBoundary()),
-    _pipeExtFace(new PipeExtFaceBoundary()),
-    _pipeExtEdge(new PipeExtEdgeBoundary())
+    _pipeBoundary(new PipeBoundary())
 {
     using namespace std::placeholders;
     _modelFuncs.setDefault("Pipe");
@@ -128,7 +49,7 @@ void CpuParametricMesher::genPipe(Mesh& mesh, size_t vertexCount)
                     glm::dvec3(-1.0, -0.5,  0),
                     glm::dvec3( 0.5, -0.5,  0),
                     glm::dvec3( 0,    0,    1),
-                    PIPE_RADIUS,
+                    PipeBoundary::PIPE_RADIUS,
                     straightPipeStackCount,
                     sliceCount,
                     layerCount,
@@ -142,7 +63,7 @@ void CpuParametricMesher::genPipe(Mesh& mesh, size_t vertexCount)
                glm::dvec3( 0,    0,    1),
                glm::pi<double>(),
                0.5,
-               PIPE_RADIUS,
+               PipeBoundary::PIPE_RADIUS,
                arcPipeStackCount,
                sliceCount,
                layerCount,
@@ -153,7 +74,7 @@ void CpuParametricMesher::genPipe(Mesh& mesh, size_t vertexCount)
                     glm::dvec3( 0.5,  0.5,  0),
                     glm::dvec3(-1.0,  0.5,  0),
                     glm::dvec3( 0,    0,    1),
-                    PIPE_RADIUS,
+                    PipeBoundary::PIPE_RADIUS,
                     straightPipeStackCount,
                     sliceCount,
                     layerCount,
@@ -161,11 +82,7 @@ void CpuParametricMesher::genPipe(Mesh& mesh, size_t vertexCount)
                     true);
 
     meshPipe(mesh, totalStackCount, sliceCount, layerCount);
-
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/ElbowPipe.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaElbowPipeBoundary);
+    mesh.setBoundary(_pipeBoundary);
 }
 
 void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
@@ -508,11 +425,6 @@ void CpuParametricMesher::genBottle(Mesh& mesh, size_t vertexCount)
 
         lastStackBaseIdx = currStackBaseIdx;
     }
-
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/None.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaNoneBoundary);
 }
 
 void CpuParametricMesher::insertStraightRingPipe(
@@ -624,8 +536,14 @@ void CpuParametricMesher::insertRingStackVertices(
         int layerCount,
         bool isBoundary)
 {
-    MeshTopo extTopo(isBoundary ? _pipeExtEdge.get() : _pipeSurface.get());
-    MeshTopo intTopo(isBoundary ? _pipeExtFace.get() : &MeshTopo::NO_BOUNDARY);
+    MeshTopo extTopo(!isBoundary ?
+        static_cast<const AbstractConstraint*>(_pipeBoundary->cylinderFace()) :
+        static_cast<const AbstractConstraint*>(center.y < 0.0 ? _pipeBoundary->yNegCircleEdge() :
+                          _pipeBoundary->yPosCircleEdge()));
+    MeshTopo intTopo(isBoundary ?
+        static_cast<const AbstractConstraint*>(MeshTopo::NO_BOUNDARY) :
+        static_cast<const AbstractConstraint*>(center.y < 0.0 ? _pipeBoundary->yNegDiskFace() :
+                          _pipeBoundary->yPosDiskFace()));
 
     mesh.verts.push_back(center);
     mesh.topos.push_back(intTopo);

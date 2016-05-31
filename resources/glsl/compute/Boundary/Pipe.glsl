@@ -1,6 +1,8 @@
-const int PIPE_SURFACE_ID = 1;
-const int PIPE_EXTREMITY_FACE_ID = 2;
-const int PIPE_EXTREMITY_EDGE_ID = 3;
+const int PIPE_CYLINDER_FACE_ID = 1;
+const int PIPE_YNEG_DISK_FACE_ID = 2;
+const int PIPE_YPOS_DISK_FACE_ID = 3;
+const int PIPE_YNEG_CIRCLE_EDGE_ID = 4;
+const int PIPE_YPOS_CIRCLE_EDGE_ID = 5;
 
 
 const float PIPE_RADIUS = 0.3;
@@ -51,11 +53,13 @@ vec3 snapToBoundary(int boundaryID, vec3 pos)
 {
     switch(boundaryID)
     {
-    case PIPE_SURFACE_ID :
+    case PIPE_CYLINDER_FACE_ID :
         return snapToPipeSurface(pos);
-    case PIPE_EXTREMITY_FACE_ID :
+    case PIPE_YNEG_DISK_FACE_ID :
+    case PIPE_YPOS_DISK_FACE_ID :
         return snapToPipeExtremityFace(pos);
-    case PIPE_EXTREMITY_EDGE_ID :
+    case PIPE_YNEG_CIRCLE_EDGE_ID :
+    case PIPE_YPOS_CIRCLE_EDGE_ID :
         return snapToPipeExtremityEdge(pos);
     }
 

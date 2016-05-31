@@ -2,6 +2,7 @@
 
 #include <limits>
 
+#include "Boundaries/Constraints/AbstractConstraint.h"
 #include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -99,7 +100,7 @@ void GradientDescentSmoother::smoothVertices(
             };
 
             const MeshTopo& topo = topos[vId];
-            if(topo.isBoundary)
+            if(topo.snapToBoundary->isConstrained())
             {
                 for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
                     gradSamples[p] = (*topo.snapToBoundary)(gradSamples[p]);
@@ -151,7 +152,7 @@ void GradientDescentSmoother::smoothVertices(
                 pos + shift * OFFSETS[6],
             };
 
-            if(topo.isBoundary)
+            if(topo.snapToBoundary->isConstrained())
             {
                 for(uint p=0; p < PROPOSITION_COUNT; ++p)
                     propositions[p] = (*topo.snapToBoundary)(propositions[p]);

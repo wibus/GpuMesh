@@ -11,41 +11,47 @@ public:
     virtual ~ShellBoundary();
 
 
-    const AbstractConstraint* inSurface() const;
+    virtual bool unitTest() const override;
 
-    const AbstractConstraint* outSurface() const;
 
-    const AbstractConstraint* volume() const;
+    const AbstractConstraint* inFace() const;
+
+    const AbstractConstraint* outFace() const;
+
+
+    static const double IN_RADIUS;
+    static const double OUT_RADIUS;
+
 
 private:
-    class InSurface : public SurfaceConstraint
+    class InFace : public FaceConstraint
     {
     public:
-        InSurface();
+        InFace();
         virtual glm::dvec3 operator()(
             const glm::dvec3 &pos) const override;
-    } _inSurface;
+    } _inFace;
 
-    class OutSurface : public SurfaceConstraint
+    class OutFace : public FaceConstraint
     {
     public:
-        OutSurface();
+        OutFace();
         virtual glm::dvec3 operator()(
             const glm::dvec3 &pos) const override;
-    } _outSurface;
+    } _outFace;
 };
 
 
 
 // IMPLEMENTATION //
-inline const AbstractConstraint* ShellBoundary::inSurface() const
+inline const AbstractConstraint* ShellBoundary::inFace() const
 {
-    return &_inSurface;
+    return &_inFace;
 }
 
-inline const AbstractConstraint* ShellBoundary::outSurface() const
+inline const AbstractConstraint* ShellBoundary::outFace() const
 {
-    return &_outSurface;
+    return &_outFace;
 }
 
 #endif // GPUMESH_SHELL_BOUNDARY

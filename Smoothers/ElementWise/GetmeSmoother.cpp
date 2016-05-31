@@ -3,6 +3,7 @@
 #include <mutex>
 
 #include "VertexAccum.h"
+#include "Boundaries/Constraints/AbstractConstraint.h"
 #include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -107,10 +108,14 @@ void GetmeSmoother::smoothTets(
         vpp[2] = center + volumeVar * (vpp[2] - center);
         vpp[3] = center + volumeVar * (vpp[3] - center);
 
-        if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
-        if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
-        if(topos[vi[2]].isBoundary) vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
-        if(topos[vi[3]].isBoundary) vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
+        if(topos[vi[0]].snapToBoundary->isConstrained())
+            vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
+        if(topos[vi[1]].snapToBoundary->isConstrained())
+            vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
+        if(topos[vi[2]].snapToBoundary->isConstrained())
+            vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
+        if(topos[vi[3]].snapToBoundary->isConstrained())
+            vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
 
         double quality = crew.evaluator().tetQuality(crew.sampler(), crew.measurer(), vp, tet);
         double qualityPrime = crew.evaluator().tetQuality(crew.sampler(), crew.measurer(), vpp, tet);
@@ -210,12 +215,18 @@ void GetmeSmoother::smoothPris(
         vpp[4] = center + volumeVar * (vpp[4] - center);
         vpp[5] = center + volumeVar * (vpp[5] - center);
 
-        if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
-        if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
-        if(topos[vi[2]].isBoundary) vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
-        if(topos[vi[3]].isBoundary) vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
-        if(topos[vi[4]].isBoundary) vpp[4] = (*topos[vi[4]].snapToBoundary)(vpp[4]);
-        if(topos[vi[5]].isBoundary) vpp[5] = (*topos[vi[5]].snapToBoundary)(vpp[5]);
+        if(topos[vi[0]].snapToBoundary->isConstrained())
+            vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
+        if(topos[vi[1]].snapToBoundary->isConstrained())
+            vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
+        if(topos[vi[2]].snapToBoundary->isConstrained())
+            vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
+        if(topos[vi[3]].snapToBoundary->isConstrained())
+            vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
+        if(topos[vi[4]].snapToBoundary->isConstrained())
+            vpp[4] = (*topos[vi[4]].snapToBoundary)(vpp[4]);
+        if(topos[vi[5]].snapToBoundary->isConstrained())
+            vpp[5] = (*topos[vi[5]].snapToBoundary)(vpp[5]);
 
 
         double quality = crew.evaluator().priQuality(crew.sampler(), crew.measurer(), vp, pri);
@@ -329,14 +340,22 @@ void GetmeSmoother::smoothHexs(
         vpp[6] = center + volumeVar * (vpp[6] - center);
         vpp[7] = center + volumeVar * (vpp[7] - center);
 
-        if(topos[vi[0]].isBoundary) vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
-        if(topos[vi[1]].isBoundary) vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
-        if(topos[vi[2]].isBoundary) vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
-        if(topos[vi[3]].isBoundary) vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
-        if(topos[vi[4]].isBoundary) vpp[4] = (*topos[vi[4]].snapToBoundary)(vpp[4]);
-        if(topos[vi[5]].isBoundary) vpp[5] = (*topos[vi[5]].snapToBoundary)(vpp[5]);
-        if(topos[vi[6]].isBoundary) vpp[6] = (*topos[vi[6]].snapToBoundary)(vpp[6]);
-        if(topos[vi[7]].isBoundary) vpp[7] = (*topos[vi[7]].snapToBoundary)(vpp[7]);
+        if(topos[vi[0]].snapToBoundary->isConstrained())
+            vpp[0] = (*topos[vi[0]].snapToBoundary)(vpp[0]);
+        if(topos[vi[1]].snapToBoundary->isConstrained())
+            vpp[1] = (*topos[vi[1]].snapToBoundary)(vpp[1]);
+        if(topos[vi[2]].snapToBoundary->isConstrained())
+            vpp[2] = (*topos[vi[2]].snapToBoundary)(vpp[2]);
+        if(topos[vi[3]].snapToBoundary->isConstrained())
+            vpp[3] = (*topos[vi[3]].snapToBoundary)(vpp[3]);
+        if(topos[vi[4]].snapToBoundary->isConstrained())
+            vpp[4] = (*topos[vi[4]].snapToBoundary)(vpp[4]);
+        if(topos[vi[5]].snapToBoundary->isConstrained())
+            vpp[5] = (*topos[vi[5]].snapToBoundary)(vpp[5]);
+        if(topos[vi[6]].snapToBoundary->isConstrained())
+            vpp[6] = (*topos[vi[6]].snapToBoundary)(vpp[6]);
+        if(topos[vi[7]].snapToBoundary->isConstrained())
+            vpp[7] = (*topos[vi[7]].snapToBoundary)(vpp[7]);
 
 
         double quality = crew.evaluator().hexQuality(crew.sampler(), crew.measurer(), vp, hex);

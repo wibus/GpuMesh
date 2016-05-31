@@ -1,107 +1,119 @@
 #include "BoxBoundary.h"
 
 
+void installCudaBoxBoundary();
+
+
 BoxBoundary::BoxBoundary() :
-    _XnYnZnVertex(-1, glm::dvec3(-1, -1, -1)),
-    _XpYnZnVertex(-2, glm::dvec3( 1, -1, -1)),
-    _XpYpZnVertex(-3, glm::dvec3( 1,  1, -1)),
-    _XnYpZnVertex(-4, glm::dvec3(-1,  1, -1)),
-    _XnYnZpVertex(-5, glm::dvec3(-1, -1,  1)),
-    _XpYnZpVertex(-6, glm::dvec3( 1, -1,  1)),
-    _XpYpZpVertex(-7, glm::dvec3( 1,  1,  1)),
-    _XnYpZpVertex(-8, glm::dvec3(-1,  1,  1)),
+    AbstractBoundary("Box",
+        ":/glsl/compute/Boundary/Box.glsl",
+        installCudaBoxBoundary),
 
-    _xNyNzEdge(7,  glm::dvec3(-1, -1, -1), glm::dvec3(1, -1, -1)),
-    _xPyNzEdge(8,  glm::dvec3(-1,  1, -1), glm::dvec3(1,  1, -1)),
-    _xNyPzEdge(9,  glm::dvec3(-1, -1,  1), glm::dvec3(1, -1,  1)),
-    _xPyPzEdge(10, glm::dvec3(-1,  1,  1), glm::dvec3(1,  1,  1)),
+    _v0(-1, glm::dvec3(-1, -1, -1)),
+    _v1(-2, glm::dvec3( 1, -1, -1)),
+    _v2(-3, glm::dvec3( 1,  1, -1)),
+    _v3(-4, glm::dvec3(-1,  1, -1)),
+    _v4(-5, glm::dvec3(-1, -1,  1)),
+    _v5(-6, glm::dvec3( 1, -1,  1)),
+    _v6(-7, glm::dvec3( 1,  1,  1)),
+    _v7(-8, glm::dvec3(-1,  1,  1)),
 
-    _yNxNzEdge(11, glm::dvec3(-1, -1, -1), glm::dvec3(-1,  1, -1)),
-    _yPxNzEdge(12, glm::dvec3( 1, -1, -1), glm::dvec3( 1,  1, -1)),
-    _yNxPzEdge(13, glm::dvec3(-1, -1,  1), glm::dvec3(-1,  1,  1)),
-    _yPxPzEdge(14, glm::dvec3( 1, -1,  1), glm::dvec3( 1,  1,  1)),
+    _e01(7,  glm::dvec3(-1, -1, -1), glm::dvec3(1, -1, -1)),
+    _e23(8,  glm::dvec3(-1,  1, -1), glm::dvec3(1,  1, -1)),
+    _e45(9,  glm::dvec3(-1, -1,  1), glm::dvec3(1, -1,  1)),
+    _e67(10, glm::dvec3(-1,  1,  1), glm::dvec3(1,  1,  1)),
 
-    _zNxNyEdge(15, glm::dvec3(-1, -1, -1), glm::dvec3(-1,  -1,  1)),
-    _zPxNyEdge(16, glm::dvec3( 1, -1, -1), glm::dvec3( 1,  -1,  1)),
-    _zNxPyEdge(17, glm::dvec3(-1,  1, -1), glm::dvec3(-1,   1,  1)),
-    _zPxPyEdge(18, glm::dvec3( 1,  1, -1), glm::dvec3( 1,   1,  1)),
+    _e03(11, glm::dvec3(-1, -1, -1), glm::dvec3(-1,  1, -1)),
+    _e12(12, glm::dvec3( 1, -1, -1), glm::dvec3( 1,  1, -1)),
+    _e47(13, glm::dvec3(-1, -1,  1), glm::dvec3(-1,  1,  1)),
+    _e56(14, glm::dvec3( 1, -1,  1), glm::dvec3( 1,  1,  1)),
 
-    _xNegSurface(1, glm::dvec3(-1, 0, 0), glm::dvec3(-1, 0, 0)),
-    _xPosSurface(2, glm::dvec3( 1, 0, 0), glm::dvec3( 1, 0, 0)),
-    _yNegSurface(3, glm::dvec3(0, -1, 0), glm::dvec3(0, -1, 0)),
-    _yPosSurface(4, glm::dvec3(0,  1, 0), glm::dvec3(0,  1, 0)),
-    _zNegSurface(5, glm::dvec3(0, 0, -1), glm::dvec3(0, 0, -1)),
-    _zPosSurface(6, glm::dvec3(0, 0,  1), glm::dvec3(0, 0,  1))
+    _e04(15, glm::dvec3(-1, -1, -1), glm::dvec3(-1,  -1,  1)),
+    _e15(16, glm::dvec3( 1, -1, -1), glm::dvec3( 1,  -1,  1)),
+    _e37(17, glm::dvec3(-1,  1, -1), glm::dvec3(-1,   1,  1)),
+    _e26(18, glm::dvec3( 1,  1, -1), glm::dvec3( 1,   1,  1)),
+
+    _xNegFace(1, glm::dvec3(-1, 0, 0), glm::dvec3(-1, 0, 0)),
+    _xPosFace(2, glm::dvec3( 1, 0, 0), glm::dvec3( 1, 0, 0)),
+    _yNegFace(3, glm::dvec3(0, -1, 0), glm::dvec3(0, -1, 0)),
+    _yPosFace(4, glm::dvec3(0,  1, 0), glm::dvec3(0,  1, 0)),
+    _zNegFace(5, glm::dvec3(0, 0, -1), glm::dvec3(0, 0, -1)),
+    _zPosFace(6, glm::dvec3(0, 0,  1), glm::dvec3(0, 0,  1))
 {
     // Volume
-    volume()->addSurface(&_xNegSurface);
-    volume()->addSurface(&_xPosSurface);
-    volume()->addSurface(&_yNegSurface);
-    volume()->addSurface(&_yPosSurface);
-    volume()->addSurface(&_zNegSurface);
-    volume()->addSurface(&_zPosSurface);
+    volume()->addFace(&_xNegFace);
+    volume()->addFace(&_xPosFace);
+    volume()->addFace(&_yNegFace);
+    volume()->addFace(&_yPosFace);
+    volume()->addFace(&_zNegFace);
+    volume()->addFace(&_zPosFace);
 
-    // Surfaces
-    _xNegSurface.addEdge(&_yNxNzEdge);
-    _xNegSurface.addEdge(&_zNxNyEdge);
-    _xNegSurface.addEdge(&_yNxPzEdge);
-    _xNegSurface.addEdge(&_zNxPyEdge);
+    // Faces
+    _xNegFace.addEdge(&_e03);
+    _xNegFace.addEdge(&_e04);
+    _xNegFace.addEdge(&_e47);
+    _xNegFace.addEdge(&_e37);
 
-    _xPosSurface.addEdge(&_yPxNzEdge);
-    _xPosSurface.addEdge(&_zPxNyEdge);
-    _xPosSurface.addEdge(&_yPxPzEdge);
-    _xPosSurface.addEdge(&_zPxPyEdge);
+    _xPosFace.addEdge(&_e12);
+    _xPosFace.addEdge(&_e15);
+    _xPosFace.addEdge(&_e56);
+    _xPosFace.addEdge(&_e26);
 
-    _yNegSurface.addEdge(&_xNyNzEdge);
-    _yNegSurface.addEdge(&_zNxNyEdge);
-    _yNegSurface.addEdge(&_xNyPzEdge);
-    _yNegSurface.addEdge(&_zPxNyEdge);
+    _yNegFace.addEdge(&_e01);
+    _yNegFace.addEdge(&_e04);
+    _yNegFace.addEdge(&_e45);
+    _yNegFace.addEdge(&_e15);
 
-    _yPosSurface.addEdge(&_zNxPyEdge);
-    _yPosSurface.addEdge(&_xPyNzEdge);
-    _yPosSurface.addEdge(&_xPyPzEdge);
-    _yPosSurface.addEdge(&_zPxPyEdge);
+    _yPosFace.addEdge(&_e37);
+    _yPosFace.addEdge(&_e23);
+    _yPosFace.addEdge(&_e67);
+    _yPosFace.addEdge(&_e26);
 
-    _zNegSurface.addEdge(&_xNyNzEdge);
-    _zNegSurface.addEdge(&_yNxNzEdge);
-    _zNegSurface.addEdge(&_xPyNzEdge);
-    _zNegSurface.addEdge(&_yPxNzEdge);
+    _zNegFace.addEdge(&_e01);
+    _zNegFace.addEdge(&_e03);
+    _zNegFace.addEdge(&_e23);
+    _zNegFace.addEdge(&_e12);
 
-    _zPosSurface.addEdge(&_xNyPzEdge);
-    _zPosSurface.addEdge(&_yNxPzEdge);
-    _zPosSurface.addEdge(&_xPyPzEdge);
-    _zPosSurface.addEdge(&_yPxPzEdge);
+    _zPosFace.addEdge(&_e45);
+    _zPosFace.addEdge(&_e47);
+    _zPosFace.addEdge(&_e67);
+    _zPosFace.addEdge(&_e56);
 
     // Edges
-    _xNyNzEdge.addVertex(&_XnYnZnVertex);
-    _xNyNzEdge.addVertex(&_XpYnZnVertex);
-    _xPyNzEdge.addVertex(&_XnYpZnVertex);
-    _xPyNzEdge.addVertex(&_XpYpZnVertex);
-    _xNyPzEdge.addVertex(&_XnYnZpVertex);
-    _xNyPzEdge.addVertex(&_XpYnZpVertex);
-    _xPyPzEdge.addVertex(&_XnYpZpVertex);
-    _xPyPzEdge.addVertex(&_XpYpZpVertex);
+    _e01.addVertex(&_v0);
+    _e01.addVertex(&_v1);
+    _e23.addVertex(&_v2);
+    _e23.addVertex(&_v3);
+    _e45.addVertex(&_v4);
+    _e45.addVertex(&_v5);
+    _e67.addVertex(&_v6);
+    _e67.addVertex(&_v7);
 
-    _yNxNzEdge.addVertex(&_XnYnZnVertex);
-    _yNxNzEdge.addVertex(&_XnYpZnVertex);
-    _yPxNzEdge.addVertex(&_XpYnZnVertex);
-    _yPxNzEdge.addVertex(&_XpYpZnVertex);
-    _yNxPzEdge.addVertex(&_XnYnZpVertex);
-    _yNxPzEdge.addVertex(&_XnYpZpVertex);
-    _yPxPzEdge.addVertex(&_XpYnZnVertex);
-    _yPxPzEdge.addVertex(&_XpYpZpVertex);
+    _e03.addVertex(&_v0);
+    _e03.addVertex(&_v3);
+    _e12.addVertex(&_v1);
+    _e12.addVertex(&_v2);
+    _e47.addVertex(&_v4);
+    _e47.addVertex(&_v7);
+    _e56.addVertex(&_v5);
+    _e56.addVertex(&_v6);
 
-    _zNxNyEdge.addVertex(&_XnYnZnVertex);
-    _zNxNyEdge.addVertex(&_XnYnZpVertex);
-    _zPxNyEdge.addVertex(&_XpYnZnVertex);
-    _zPxNyEdge.addVertex(&_XpYnZpVertex);
-    _zNxPyEdge.addVertex(&_XnYpZnVertex);
-    _zNxPyEdge.addVertex(&_XnYpZpVertex);
-    _zPxPyEdge.addVertex(&_XpYpZnVertex);
-    _zPxPyEdge.addVertex(&_XpYpZpVertex);
+    _e04.addVertex(&_v0);
+    _e04.addVertex(&_v4);
+    _e15.addVertex(&_v1);
+    _e15.addVertex(&_v5);
+    _e37.addVertex(&_v3);
+    _e37.addVertex(&_v7);
+    _e26.addVertex(&_v2);
+    _e26.addVertex(&_v6);
 }
 
 BoxBoundary::~BoxBoundary()
 {
 
+}
+
+bool BoxBoundary::unitTest() const
+{
+    return true;
 }

@@ -1,13 +1,13 @@
 #include "EdgeConstraint.h"
 
 #include "VertexConstraint.h"
-#include "SurfaceConstraint.h"
+#include "FaceConstraint.h"
 
 
 EdgeConstraint::EdgeConstraint(int id) :
     AbstractConstraint(id, 1),
     _vertices{nullptr, nullptr},
-    _surfaces{nullptr, nullptr}
+    _faces{nullptr, nullptr}
 {
     assert(id > 0);
 }
@@ -23,8 +23,10 @@ void EdgeConstraint::addVertex(VertexConstraint *vertex)
         else
             assert(false);
 
-        _surfaces[0]->addVertex(vertex);
-        _surfaces[1]->addVertex(vertex);
+        if(_faces[0] != nullptr)
+            _faces[0]->addVertex(vertex);
+        if(_faces[1] != nullptr)
+            _faces[1]->addVertex(vertex);
 
         vertex->addEdge(this);
     }
@@ -35,27 +37,29 @@ bool EdgeConstraint::isBoundedBy(const VertexConstraint* vertex) const
     return vertex == _vertices[0] || vertex == _vertices[1];
 }
 
-void EdgeConstraint::addSurface(SurfaceConstraint* surface)
+void EdgeConstraint::addFace(FaceConstraint* face)
 {
-    if(!isBoundedBy(surface))
+    if(!isBoundedBy(face))
     {
-        if(_surfaces[0] == nullptr)
-            _surfaces[0] = surface;
-        else if(_surfaces[1] == nullptr)
-            _surfaces[1] = surface;
+        if(_faces[0] == nullptr)
+            _faces[0] = face;
+        else if(_faces[1] == nullptr)
+            _faces[1] = face;
         else
             assert(false);
 
-        _vertices[0]->addSurface(surface);
-        _vertices[1]->addSurface(surface);
+        if(_vertices[0] != nullptr)
+            _vertices[0]->addFace(face);
+        if(_vertices[1] != nullptr)
+            _vertices[1]->addFace(face);
 
-        surface->addEdge(this);
+        face->addEdge(this);
     }
 }
 
-bool EdgeConstraint::isBoundedBy(const SurfaceConstraint* surface) const
+bool EdgeConstraint::isBoundedBy(const FaceConstraint* face) const
 {
-    return surface == _surfaces[0] || surface == _surfaces[1];
+    return face == _faces[0] || face == _faces[1];
 }
 
 const AbstractConstraint* EdgeConstraint::split(const AbstractConstraint* c) const
@@ -66,8 +70,8 @@ const AbstractConstraint* EdgeConstraint::split(const AbstractConstraint* c) con
     }
     else if(c->dimension() == 2)
     {
-        const SurfaceConstraint* s =
-            static_cast<const SurfaceConstraint*>(c);
+        const FaceConstraint* s =
+            static_cast<const FaceConstraint*>(c);
 
         if(isBoundedBy(s))
             return s;
@@ -79,9 +83,9 @@ const AbstractConstraint* EdgeConstraint::split(const AbstractConstraint* c) con
         const EdgeConstraint* e =
             static_cast<const EdgeConstraint*>(c);
 
-        for(const SurfaceConstraint* surface : _surfaces)
-            if(surface->isBoundedBy(e))
-                return surface;
+        for(const FaceConstraint* face : _faces)
+            if(face->isBoundedBy(e))
+                return face;
 
         return SPLIT_VOLUME;
     }
@@ -93,9 +97,9 @@ const AbstractConstraint* EdgeConstraint::split(const AbstractConstraint* c) con
         if(isBoundedBy(v))
             return v;
 
-        for(const SurfaceConstraint* surface : _surfaces)
-            if(surface->isBoundedBy(v))
-                return surface;
+        for(const FaceConstraint* face : _faces)
+            if(face->isBoundedBy(v))
+                return face;
 
         return SPLIT_VOLUME;
     }
@@ -111,8 +115,8 @@ const AbstractConstraint* EdgeConstraint::merge(const AbstractConstraint* c) con
     }
     else if(c->dimension() == 2)
     {
-        const SurfaceConstraint* s =
-            static_cast<const SurfaceConstraint*>(c);
+        const FaceConstraint* s =
+            static_cast<const FaceConstraint*>(c);
 
         if(isBoundedBy(s))
             return this;

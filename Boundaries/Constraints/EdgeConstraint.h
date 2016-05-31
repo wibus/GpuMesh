@@ -13,8 +13,8 @@ public:
     void addVertex(VertexConstraint* vertex);
     bool isBoundedBy(const VertexConstraint* vertex) const;
 
-    void addSurface(SurfaceConstraint* surface);
-    bool isBoundedBy(const SurfaceConstraint* surface) const;
+    void addFace(FaceConstraint* face);
+    bool isBoundedBy(const FaceConstraint* face) const;
 
 protected:
     virtual const AbstractConstraint* split(const AbstractConstraint* c) const override;
@@ -22,7 +22,7 @@ protected:
 
 private:
     VertexConstraint* _vertices[2];
-    SurfaceConstraint* _surfaces[2];
+    FaceConstraint* _faces[2];
 };
 
 

@@ -8,6 +8,7 @@
 #include <numeric>
 
 #include "VertexAccum.h"
+#include "Boundaries/AbstractBoundary.h"
 #include "DataStructures/MeshCrew.h"
 #include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
@@ -268,7 +269,7 @@ void AbstractElementWiseSmoother::smoothMeshCuda(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    mesh.modelBoundsCudaFct()();
+    mesh.boundary()->installCudaPlugIn();
     _installCudaSmoother();
 
     // There's no need to upload vertices again, but absurdly
@@ -314,7 +315,7 @@ void AbstractElementWiseSmoother::initializeProgram(
         const MeshCrew& crew)
 {
     if(_initialized &&
-       _modelBoundsShader == mesh.modelBoundsShaderName() &&
+       _modelBoundsShader == mesh.boundary()->shaderName() &&
        _samplingShader == crew.sampler().samplingShader() &&
        _evaluationShader == crew.evaluator().evaluationShader() &&
        _measureShader == crew.measurer().measureShader())
@@ -324,7 +325,7 @@ void AbstractElementWiseSmoother::initializeProgram(
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractElementWiseSmoother"));
 
-    _modelBoundsShader = mesh.modelBoundsShaderName();
+    _modelBoundsShader = mesh.boundary()->shaderName();
     _samplingShader = crew.sampler().samplingShader();
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();
@@ -424,7 +425,7 @@ void AbstractElementWiseSmoother::updateVertexPositions(
         if(_vertexAccums[vId]->assignAverage(posPrim))
         {
             const MeshTopo& topo = topos[vId];
-            if(topo.isBoundary)
+            if(topo.snapToBoundary->isConstrained())
                 posPrim = (*topo.snapToBoundary)(posPrim);
 
             double patchQuality =

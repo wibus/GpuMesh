@@ -3,16 +3,15 @@
 #include <GLM/gtc/random.hpp>
 #include <GLM/gtc/matrix_transform.hpp>
 
+#include "Boundaries/BoxBoundary.h"
+
 #include <DataStructures/Tetrahedralizer.h>
 
 using namespace std;
 
 
-// CUDA Drivers interface
-void installCudaNoneBoundary();
-
-
-DebugMesher::DebugMesher()
+DebugMesher::DebugMesher() :
+    _boxBoundary(new BoxBoundary())
 {
     using namespace std::placeholders;
     _modelFuncs.setDefault("Cube");
@@ -107,11 +106,6 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         eBase += MeshHex::VERTEX_COUNT;
         //*/
     }
-
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/None.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaNoneBoundary);
 }
 
 void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
@@ -162,11 +156,6 @@ void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
             }
         }
     }
-
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/None.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaNoneBoundary);
 }
 
 void DebugMesher::genHexGrid(Mesh& mesh, size_t vertexCount)
@@ -209,11 +198,6 @@ void DebugMesher::genHexGrid(Mesh& mesh, size_t vertexCount)
             }
         }
     }
-
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/None.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaNoneBoundary);
 }
 
 void DebugMesher::genTetGrid(Mesh& mesh, size_t vertexCount)
@@ -222,17 +206,12 @@ void DebugMesher::genTetGrid(Mesh& mesh, size_t vertexCount)
 
     tetrahedrize(mesh.tets, mesh);
     mesh.hexs.clear();
-
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/None.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaNoneBoundary);
 }
 
 void DebugMesher::genCube(Mesh& mesh, size_t vertexCount)
 {
-    glm::dvec3 cubeMin(-0.5);
-    glm::dvec3 cubeMax( 0.5);
+    glm::dvec3 cubeMin(-1.0);
+    glm::dvec3 cubeMax( 1.0);
 
     mesh.verts.push_back(glm::dvec3(cubeMin.x, cubeMin.y, cubeMin.z));
     mesh.verts.push_back(glm::dvec3(cubeMax.x, cubeMin.y, cubeMin.z));
@@ -243,13 +222,19 @@ void DebugMesher::genCube(Mesh& mesh, size_t vertexCount)
     mesh.verts.push_back(glm::dvec3(cubeMax.x, cubeMax.y, cubeMax.z));
     mesh.verts.push_back(glm::dvec3(cubeMin.x, cubeMax.y, cubeMax.z));
 
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v0()));
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v1()));
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v2()));
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v3()));
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v4()));
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v5()));
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v6()));
+    mesh.topos.push_back(MeshTopo(_boxBoundary->v7()));
+
     for(uint t=0; t < MeshHex::TET_COUNT; ++t)
         mesh.tets.push_back(MeshHex::tets[t]);
 
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/None.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaNoneBoundary);
+    mesh.setBoundary(_boxBoundary);
 }
 
 void DebugMesher::genTet(Mesh& mesh, size_t vertexCount)
@@ -266,9 +251,4 @@ void DebugMesher::genTet(Mesh& mesh, size_t vertexCount)
     glm::dvec3 center = glm::dvec3(centerw) / centerw.w;
     for(MeshVert& v : mesh.verts)
         v.p -= center;
-
-    mesh.setModelBoundsShaderName(
-        ":/glsl/compute/Boundary/None.glsl");
-    mesh.setModelBoundsCudaFct(
-        installCudaNoneBoundary);
 }

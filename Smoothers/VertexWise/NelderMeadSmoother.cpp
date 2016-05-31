@@ -4,6 +4,7 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "Boundaries/Constraints/AbstractConstraint.h"
 #include "DataStructures/MeshCrew.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -133,7 +134,7 @@ void NelderMeadSmoother::smoothVertices(
                 // Since 'pos' is a reference on vertex's position
                 // modifing its value here should be seen by the evaluator
                 pos = glm::dvec3(simplex[p]);
-                if(topo.isBoundary)
+                if(topo.snapToBoundary->isConstrained())
                     pos = (*topo.snapToBoundary)(pos);
 
 
@@ -170,7 +171,7 @@ void NelderMeadSmoother::smoothVertices(
 
                 // Reflect
                 pos = c + NMAlpha*(c - glm::dvec3(simplex[0]));
-                if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
+                if(topo.snapToBoundary->isConstrained()) pos = (*topo.snapToBoundary)(pos);
                 double fr = f = crew.evaluator().patchQuality(
                     mesh, crew.sampler(), crew.measurer(), vId);
 
@@ -180,7 +181,7 @@ void NelderMeadSmoother::smoothVertices(
                 if(simplex[3].w < fr)
                 {
                     pos = c + NMGamma*(pos - c);
-                    if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
+                    if(topo.snapToBoundary->isConstrained()) pos = (*topo.snapToBoundary)(pos);
                     double fe = f = crew.evaluator().patchQuality(
                         mesh, crew.sampler(), crew.measurer(), vId);
 
@@ -197,7 +198,7 @@ void NelderMeadSmoother::smoothVertices(
                     if(fr > simplex[0].w)
                     {
                         pos = c + NMBeta*(xr - c);
-                        if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
+                        if(topo.snapToBoundary->isConstrained()) pos = (*topo.snapToBoundary)(pos);
                         f = crew.evaluator().patchQuality(
                             mesh, crew.sampler(), crew.measurer(), vId);
                     }
@@ -205,7 +206,7 @@ void NelderMeadSmoother::smoothVertices(
                     else
                     {
                         pos = c + NMBeta*(glm::dvec3(simplex[0]) - c);
-                        if(topo.isBoundary) pos = (*topo.snapToBoundary)(pos);
+                        if(topo.snapToBoundary->isConstrained()) pos = (*topo.snapToBoundary)(pos);
                         f = crew.evaluator().patchQuality(
                             mesh, crew.sampler(), crew.measurer(), vId);
                     }
@@ -246,7 +247,7 @@ void NelderMeadSmoother::smoothVertices(
         }
 
         pos = glm::dvec3(simplex[3]);
-        if(topo.isBoundary)
+        if(topo.snapToBoundary->isConstrained())
             pos = (*topo.snapToBoundary)(pos);
     }
 }

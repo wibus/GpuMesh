@@ -6,6 +6,7 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
+#include "Boundaries/AbstractBoundary.h"
 #include "DataStructures/Mesh.h"
 #include "DataStructures/MeshCrew.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -116,6 +117,7 @@ void BatrTopologist::restructureMesh(
         passOpCount += edgeSwapping(mesh, crew);
         passOpCount += edgeSplitMerge(mesh, crew);
 
+
         if(passOpCount == 0 ||
            passOpCount == lastPassOpCount ||
            passCount >= _globalLoopMaxPassCount)
@@ -173,9 +175,13 @@ size_t BatrTopologist::edgeSplitMerge(
 
             vertsToTry[vId] = false;
 
+            const AbstractConstraint* minConstraint =
+                AbstractBoundary::INVALID_OPERATION;
             double minDist = INFINITY;
             size_t minId = 0;
 
+            const AbstractConstraint* maxConstraint =
+                AbstractBoundary::INVALID_OPERATION;
             double maxDist = -INFINITY;
             size_t maxId = 0;
 
@@ -194,26 +200,26 @@ size_t BatrTopologist::edgeSplitMerge(
                 MeshVert neig = verts[nId];
                 MeshTopo& nTopo = topos[nId];
 
-                if((vTopo.isFixed && (nTopo.isFixed || nTopo.isBoundary)) ||
-                   (nTopo.isFixed && (vTopo.isFixed || vTopo.isBoundary)) ||
-                   (vTopo.isBoundary && nTopo.isBoundary &&
-                    vTopo.snapToBoundary != nTopo.snapToBoundary))
-                {
-                    continue;
-                }
-
+                const AbstractConstraint* split =
+                    mesh.boundary()->split(vTopo.snapToBoundary, nTopo.snapToBoundary);
+                const AbstractConstraint* merge =
+                    mesh.boundary()->merge(vTopo.snapToBoundary, nTopo.snapToBoundary);
 
                 double dist = crew.measurer().riemannianDistance(
                             crew.sampler(), vert.p, neig.p, vert.c);
 
-                if(dist < minEdgeLength() && dist < minDist)
+                if(dist < minEdgeLength() && dist < minDist &&
+                   merge != AbstractBoundary::INVALID_OPERATION)
                 {
+                    minConstraint = merge;
                     minDist = dist;
                     minId = nId;
                 }
 
-                if(dist > maxEdgeLength() && dist > maxDist)
+                if(dist > maxEdgeLength() && dist > maxDist &&
+                   split != AbstractBoundary::INVALID_OPERATION)
                 {
+                    maxConstraint = split;
                     maxDist = dist;
                     maxId = nId;
                 }
@@ -221,15 +227,19 @@ size_t BatrTopologist::edgeSplitMerge(
 
             uint nId;
             double dist;
+            const AbstractConstraint* constraint =
+                AbstractBoundary::INVALID_OPERATION;
 
-            if(minDist != INFINITY)
+            if(minConstraint != AbstractBoundary::INVALID_OPERATION)
             {
+                constraint = minConstraint;
                 dist = minDist;
                 nId = minId;
             }
             else
-            if(maxDist != -INFINITY)
+            if(maxConstraint != AbstractBoundary::INVALID_OPERATION)
             {
+                constraint = maxConstraint;
                 dist = maxDist;
                 nId = maxId;
             }
@@ -267,14 +277,7 @@ size_t BatrTopologist::edgeSplitMerge(
 
 
                 glm::dvec3 middle = (vert.p + neig.p) /2.0;
-                if(vTopo.isBoundary)
-                    middle = (*vTopo.snapToBoundary)(middle);
-                else if(nTopo.isBoundary)
-                    middle = (*nTopo.snapToBoundary)(middle);
-                else if(vTopo.isFixed)
-                    middle = vert.p;
-                else if(nTopo.isFixed)
-                    middle = neig.p;
+                middle = (*constraint)(middle);
 
                 verts[vId].p = verts[nId].p = middle;
 
@@ -335,6 +338,9 @@ size_t BatrTopologist::edgeSplitMerge(
                 }
 
 
+                // Update boundary status
+                vTopo.snapToBoundary = constraint;
+
                 // Rebuild v elem neighborhood
                 std::vector<MeshNeigElem>& vElems = vTopo.neighborElems;
                 vElems.clear();
@@ -348,17 +354,6 @@ size_t BatrTopologist::edgeSplitMerge(
                 for(uint vVert : vTopo.neighborVerts)
                 {
                     buildVertNeighborhood(mesh, vVert);
-                }
-
-                // Update boundary status
-                if(nTopo.isFixed)
-                {
-                    vTopo.isFixed = true;
-                }
-                else if(!vTopo.isBoundary && nTopo.isBoundary)
-                {
-                    vTopo.isBoundary = true;
-                    vTopo.snapToBoundary = nTopo.snapToBoundary;
                 }
 
 
@@ -399,12 +394,8 @@ size_t BatrTopologist::edgeSplitMerge(
                 // Splitting the edge
                 MeshTopo wTopo;
                 glm::dvec3 middle = (vert.p + neig.p) /2.0;
-                if(ringElems.size() < ringVerts.size())
-                {
-                    wTopo.isBoundary = true;
-                    wTopo.snapToBoundary = vTopo.snapToBoundary;
-                    middle = (*vTopo.snapToBoundary)(middle);
-                }
+                wTopo.snapToBoundary = constraint;
+                middle = (*constraint)(middle);
 
 
                 uint wId;
@@ -1447,6 +1438,11 @@ bool BatrTopologist::cureBoundaries(
             continue;
         }
 
+        if(vTopo.snapToBoundary->dimension() != 2)
+        {
+            continue;
+        }
+
         // Check for lone verts (verts that lives on a single tet)
         if(vTopo.neighborElems.size() == 1)
         {
@@ -1481,6 +1477,12 @@ bool BatrTopologist::cureBoundaries(
             uint nId = vVert.v;
             const MeshTopo& nTopo = topos[nId];
 
+            if(mesh.boundary()->supportDimension(
+                vTopo.snapToBoundary, nTopo.snapToBoundary) != 2)
+            {
+                continue;
+            }
+
             std::vector<uint> ringElems;
             for(const MeshNeigElem& vElem : vTopo.neighborElems)
             {
@@ -1498,8 +1500,10 @@ bool BatrTopologist::cureBoundaries(
             {
                 uint tId = ringElems.front();
                 const MeshTet& tet = mesh.tets[tId];
-                if(!topos[tet.v[0]].isBoundary || !topos[tet.v[1]].isBoundary ||
-                   !topos[tet.v[2]].isBoundary || !topos[tet.v[3]].isBoundary)
+                if(!topos[tet.v[0]].snapToBoundary->isConstrained() ||
+                   !topos[tet.v[1]].snapToBoundary->isConstrained() ||
+                   !topos[tet.v[2]].snapToBoundary->isConstrained() ||
+                   !topos[tet.v[3]].snapToBoundary->isConstrained())
                 {
 //                    getLog().postMessage(new Message('D', false,
 //                        "Skipping lone edge " + std::to_string(vId) + "-" + std::to_string(nId)
@@ -1547,7 +1551,7 @@ bool BatrTopologist::cureBoundaries(
 std::ostream& print(const Mesh& mesh, uint vId)
 {
     std::cout << vId;
-    if(mesh.topos[vId].isBoundary)
+    if(mesh.topos[vId].snapToBoundary->isConstrained())
         std::cout << "*";
     return std::cout;
 }
