@@ -97,7 +97,6 @@ private:
 
     std::vector<std::vector<RingConfig>> _ringConfigDictionary;
     size_t _refinementCoarseningMaxPassCount;
-    size_t _globalLoopMaxPassCount;
     double _minAcceptableGenQuality;
 };
 

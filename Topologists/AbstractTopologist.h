@@ -29,11 +29,14 @@ public:
             OptimizationPlot& plot) const = 0;
 
 
+    bool isEnabled() const;
+    void setEnabled(bool isEnabled);
+
     int frequency() const;
     void setFrequency(int frequency);
 
-    bool isEnabled() const;
-    void setEnabled(bool isEnabled);
+    int topoPassCount() const;
+    void setTopoPassCount(int count);
 
     double minEdgeLength() const;
     void setMinEdgeLength(double length);
@@ -43,8 +46,9 @@ public:
 
 
 private:
-    int _frequency;
     bool _isEnabled;
+    int _frequency;
+    int _topoPassCount;
     double _minEdgeLength;
     double _maxEdgeLength;
 };
@@ -52,14 +56,19 @@ private:
 
 
 // IMPLEMENTATION //
+inline bool AbstractTopologist::isEnabled() const
+{
+    return _isEnabled;
+}
+
 inline int AbstractTopologist::frequency() const
 {
     return _frequency;
 }
 
-inline bool AbstractTopologist::isEnabled() const
+inline int AbstractTopologist::topoPassCount() const
 {
-    return _isEnabled;
+    return _topoPassCount;
 }
 
 inline double AbstractTopologist::minEdgeLength() const

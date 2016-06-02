@@ -33,7 +33,6 @@ inline void appendElems(std::vector<MeshNeigElem>& elems, const std::vector<uint
 
 BatrTopologist::BatrTopologist() :
     _refinementCoarseningMaxPassCount(10),
-    _globalLoopMaxPassCount(10),
     _minAcceptableGenQuality(1e-9)
 {
     _ringConfigDictionary = {
@@ -72,7 +71,6 @@ bool BatrTopologist::needTopologicalModifications(
         return false;
 
     return isEnabled() &&
-           (vertRelocationPassCount > 1) &&
            ((vertRelocationPassCount-1) % frequency() == 0);
 }
 
@@ -117,16 +115,16 @@ void BatrTopologist::restructureMesh(
         passOpCount += edgeSwapping(mesh, crew);
         passOpCount += edgeSplitMerge(mesh, crew);
 
+        ++passCount;
 
         if(passOpCount == 0 ||
            passOpCount == lastPassOpCount ||
-           passCount >= _globalLoopMaxPassCount)
+           passCount >= topoPassCount())
         {
             break;
         }
 
         lastPassOpCount = passOpCount;
-        ++passCount;
     }
 
     mesh.compileTopology(false);
@@ -175,21 +173,18 @@ size_t BatrTopologist::edgeSplitMerge(
 
             vertsToTry[vId] = false;
 
-            const AbstractConstraint* minConstraint =
-                AbstractBoundary::INVALID_OPERATION;
-            double minDist = INFINITY;
-            size_t minId = 0;
 
-            const AbstractConstraint* maxConstraint =
+            uint nId = -1;
+            double dist = INFINITY;
+            double priority = 0.0;
+            const AbstractConstraint* constraint =
                 AbstractBoundary::INVALID_OPERATION;
-            double maxDist = -INFINITY;
-            size_t maxId = 0;
 
             for(size_t nAr = 0; nAr < topos[vId].neighborVerts.size(); ++nAr)
             {
-                MeshNeigVert nId = topos[vId].neighborVerts[nAr];
+                MeshNeigVert candidateNId = topos[vId].neighborVerts[nAr];
 
-                if(nId < vId)
+                if(vId > candidateNId && !vertsToTry[candidateNId])
                 {
                     continue;
                 }
@@ -197,53 +192,51 @@ size_t BatrTopologist::edgeSplitMerge(
                 MeshVert vert = verts[vId];
                 MeshTopo& vTopo = topos[vId];
 
-                MeshVert neig = verts[nId];
-                MeshTopo& nTopo = topos[nId];
+                MeshVert neig = verts[candidateNId];
+                MeshTopo& nTopo = topos[candidateNId];
 
-                const AbstractConstraint* split =
-                    mesh.boundary()->split(vTopo.snapToBoundary, nTopo.snapToBoundary);
-                const AbstractConstraint* merge =
-                    mesh.boundary()->merge(vTopo.snapToBoundary, nTopo.snapToBoundary);
+                double candidateDist = crew.measurer().riemannianDistance(
+                        crew.sampler(), vert.p, neig.p, vert.c);
 
-                double dist = crew.measurer().riemannianDistance(
-                            crew.sampler(), vert.p, neig.p, vert.c);
-
-                if(dist < minEdgeLength() && dist < minDist &&
-                   merge != AbstractBoundary::INVALID_OPERATION)
+                if(candidateDist < minEdgeLength())
                 {
-                    minConstraint = merge;
-                    minDist = dist;
-                    minId = nId;
-                }
+                    double candidatePriority = 1.0 / candidateDist;
 
-                if(dist > maxEdgeLength() && dist > maxDist &&
-                   split != AbstractBoundary::INVALID_OPERATION)
+                    if(candidatePriority > priority)
+                    {
+                        const AbstractConstraint* candidaetMerge =
+                            mesh.boundary()->merge(vTopo.snapToBoundary, nTopo.snapToBoundary);
+
+                        if(candidaetMerge != AbstractBoundary::INVALID_OPERATION)
+                        {
+                            constraint = candidaetMerge;
+                            priority = candidatePriority;
+                            dist = candidateDist;
+                            nId = candidateNId;
+                        }
+                    }
+                }
+                else if(candidateDist > maxEdgeLength())
                 {
-                    maxConstraint = split;
-                    maxDist = dist;
-                    maxId = nId;
+                    double candidatePriority = candidateDist;
+
+                    if(candidatePriority > priority)
+                    {
+                        const AbstractConstraint* candidateSplit =
+                            mesh.boundary()->split(vTopo.snapToBoundary, nTopo.snapToBoundary);
+
+                        if(candidateSplit != AbstractBoundary::INVALID_OPERATION)
+                        {
+                            constraint = candidateSplit;
+                            priority = candidatePriority;
+                            dist = candidateDist;
+                            nId = candidateNId;
+                        }
+                    }
                 }
             }
 
-            uint nId;
-            double dist;
-            const AbstractConstraint* constraint =
-                AbstractBoundary::INVALID_OPERATION;
-
-            if(minConstraint != AbstractBoundary::INVALID_OPERATION)
-            {
-                constraint = minConstraint;
-                dist = minDist;
-                nId = minId;
-            }
-            else
-            if(maxConstraint != AbstractBoundary::INVALID_OPERATION)
-            {
-                constraint = maxConstraint;
-                dist = maxDist;
-                nId = maxId;
-            }
-            else
+            if(constraint == AbstractBoundary::INVALID_OPERATION)
             {
                 continue;
             }
@@ -253,7 +246,6 @@ size_t BatrTopologist::edgeSplitMerge(
             MeshTopo& vTopo = topos[vId];
 
             MeshVert neig = verts[nId];
-            MeshTopo& nTopo = topos[nId];
 
 
             // Find verts and elems ring
