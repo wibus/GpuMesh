@@ -15,6 +15,9 @@ using namespace std;
 using namespace cellar;
 
 
+const int AbstractSmoother::INITIAL_PASS_ID = -1;
+const int AbstractSmoother::COMPARE_PASS_ID = -2;
+
 AbstractSmoother::AbstractSmoother(const installCudaFct installCuda) :
     _installCudaSmoother(installCuda),
     _smoothingUtilsShader(":/glsl/compute/Smoothing/Utils.glsl"),
@@ -142,41 +145,74 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         break;
     }
 
-    getLog().postMessage(new Message('I', true,
-        "Smooth pass " + to_string(_smoothPassId) + ": " +
-        "min=" + to_string(histogram.minimumQuality()) +
-        "\t avg=" + to_string(histogram.averageQuality()),
-        "AbstractSmoother"));
-
 
     bool continueSmoothing = true;
-    if(_smoothPassId > _minIteration)
-    {
-        double minGain = histogram.minimumQuality() - _lastMinQuality;
-        double avgGain = histogram.averageQuality() - _lastAvgQuality;
-        double summedGain = minGain + avgGain;
-
-        continueSmoothing = minGain > _gainThreshold ||
-                            avgGain > _gainThreshold ||
-                            summedGain > _gainThreshold;
-    }
-
     auto statsNow = chrono::high_resolution_clock::now();
-    if(_smoothPassId == 0)
+
+    if(_smoothPassId == INITIAL_PASS_ID)
     {
-        _implBeginTimeStamp = statsNow;
+        getLog().postMessage(new Message('I', true,
+            std::string("Initial mesh quality : ") +
+            "min=" + to_string(histogram.minimumQuality()) +
+            "\t avg=" + to_string(histogram.averageQuality()),
+            "AbstractSmoother"));
+
+        _lastPassAvgQuality = histogram.averageQuality();
+        _lastPassMinQuality = histogram.minimumQuality();
+        _lastIterationAvgQuality = histogram.averageQuality();
+        _lastIterationMinQuality = histogram.minimumQuality();
+
         _currentImplementation.passes.clear();
+        _implBeginTimeStamp = statsNow;
+        _smoothPassId = 0;
     }
-    OptimizationPass stats;
-    stats.histogram = histogram;
-    stats.timeStamp = (statsNow - _implBeginTimeStamp).count() / 1.0e9;
+    else if(_smoothPassId == COMPARE_PASS_ID)
+    {
+        getLog().postMessage(new Message('I', true,
+            std::string("Topo/Reloc pass quality : ") +
+            "min=" + to_string(histogram.minimumQuality()) +
+            "\t avg=" + to_string(histogram.averageQuality()),
+            "AbstractSmoother"));
 
-    _currentImplementation.passes.push_back(stats);
+        double minGain = histogram.minimumQuality() - _lastPassMinQuality;
+        double avgGain = histogram.averageQuality() - _lastPassAvgQuality;
+        double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
 
-    _lastAvgQuality = histogram.averageQuality();
-    _lastMinQuality = histogram.minimumQuality();
+        continueSmoothing = summedGain > _gainThreshold;
 
-    ++_smoothPassId;
+        _lastPassAvgQuality = histogram.averageQuality();
+        _lastPassMinQuality = histogram.minimumQuality();
+
+        _smoothPassId = 0;
+    }
+    else
+    {
+        getLog().postMessage(new Message('I', true,
+            "Smooth pass " + to_string(_smoothPassId) + ": " +
+            "min=" + to_string(histogram.minimumQuality()) +
+            "\t avg=" + to_string(histogram.averageQuality()),
+            "AbstractSmoother"));
+
+        if(_smoothPassId > _minIteration)
+        {
+            double minGain = histogram.minimumQuality() - _lastIterationMinQuality;
+            double avgGain = histogram.averageQuality() - _lastIterationAvgQuality;
+            double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
+
+            continueSmoothing = summedGain > _gainThreshold;
+        }
+
+        OptimizationPass stats;
+        stats.histogram = histogram;
+        stats.timeStamp = (statsNow - _implBeginTimeStamp).count() / 1.0e9;
+        _currentImplementation.passes.push_back(stats);
+
+        _lastIterationAvgQuality = histogram.averageQuality();
+        _lastIterationMinQuality = histogram.minimumQuality();
+
+        ++_smoothPassId;
+    }
+
     return continueSmoothing;
 }
 

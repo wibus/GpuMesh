@@ -108,8 +108,13 @@ protected:
     double _gainThreshold;
 
     int _smoothPassId;
-    double _lastAvgQuality;
-    double _lastMinQuality;
+    double _lastPassAvgQuality;
+    double _lastPassMinQuality;
+    double _lastIterationAvgQuality;
+    double _lastIterationMinQuality;
+
+    static const int INITIAL_PASS_ID;
+    static const int COMPARE_PASS_ID;
 
 private:
     std::string _smoothingUtilsShader;

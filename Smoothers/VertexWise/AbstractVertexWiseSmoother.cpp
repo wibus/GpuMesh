@@ -51,10 +51,13 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
     std::vector<uint> vIds(mesh.verts.size());
     std::iota(std::begin(vIds), std::end(vIds), 0);
 
-    _smoothPassId = 0;
+    bool isTopoEnabled = crew.topologist()
+            .needTopologicalModifications(mesh);
+
+    _smoothPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualitySerial(mesh, crew))
     {
-        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
+        if(isTopoEnabled)
         {
             verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
@@ -64,7 +67,13 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
             std::iota(std::begin(vIds), std::end(vIds), 0);
         }
 
-        smoothVertices(mesh, crew, vIds);
+        while(evaluateMeshQualitySerial(mesh, crew))
+            smoothVertices(mesh, crew, vIds);
+
+        if(isTopoEnabled)
+            _smoothPassId = COMPARE_PASS_ID;
+        else
+            break;
     }
 
     mesh.updateVerticesFromCpu();
@@ -81,58 +90,69 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
     std::mutex mutex;
     std::condition_variable cv;
 
-    _smoothPassId = 0;
+    bool isTopoEnabled = crew.topologist()
+            .needTopologicalModifications(mesh);
+
+    _smoothPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityThread(mesh, crew))
     {
-        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
+        if(isTopoEnabled)
         {
             verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
             verboseCuda = true;
         }
 
-        std::atomic<int> done( 0 );
-        std::atomic<int> step( 0 );
-
-        vector<thread> workers;
-        for(uint t=0; t < threadCount; ++t)
+        while(evaluateMeshQualityThread(mesh, crew))
         {
-            workers.push_back(thread([&, t]() {
-                size_t groupCount = mesh.independentGroups.size();
-                for(size_t g=0; g < groupCount; ++g)
-                {
-                    const std::vector<uint>& group =
-                            mesh.independentGroups[g];
+            std::atomic<int> done( 0 );
+            std::atomic<int> step( 0 );
 
-                    size_t groupSize = group.size();
-                    std::vector<uint> vIds(
-                        group.begin() + (groupSize * t) / threadCount,
-                        group.begin() + (groupSize * (t+1)) / threadCount);
-
-                    smoothVertices(mesh, crew, vIds);
-
-                    if(g < groupCount-1)
+            vector<thread> workers;
+            for(uint t=0; t < threadCount; ++t)
+            {
+                workers.push_back(thread([&, t]() {
+                    size_t groupCount = mesh.independentGroups.size();
+                    for(size_t g=0; g < groupCount; ++g)
                     {
-                        std::unique_lock<std::mutex> lk(mutex);
-                        if(done.fetch_add( 1 ) == threadCount-1)
+                        const std::vector<uint>& group =
+                                mesh.independentGroups[g];
+
+                        size_t groupSize = group.size();
+                        std::vector<uint> vIds(
+                            group.begin() + (groupSize * t) / threadCount,
+                            group.begin() + (groupSize * (t+1)) / threadCount);
+
+                        smoothVertices(mesh, crew, vIds);
+
+                        if(g < groupCount-1)
                         {
-                            ++step;
-                            done.store( 0 );
-                            cv.notify_all();
-                        }
-                        else
-                        {
-                            cv.wait(lk, [&](){ return step > g; });
+                            std::unique_lock<std::mutex> lk(mutex);
+                            if(done.fetch_add( 1 ) == threadCount-1)
+                            {
+                                ++step;
+                                done.store( 0 );
+                                cv.notify_all();
+                            }
+                            else
+                            {
+                                cv.wait(lk, [&](){ return step > g; });
+                            }
                         }
                     }
-                }
-            }));
+                }));
+            }
+
+            for(uint t=0; t < threadCount; ++t)
+            {
+                workers[t].join();
+            }
         }
 
-        for(uint t=0; t < threadCount; ++t)
-        {
-            workers[t].join();
-        }
+        if(isTopoEnabled)
+            _smoothPassId = COMPARE_PASS_ID;
+        else
+            break;
     }
 
     mesh.updateVerticesFromCpu();
@@ -153,7 +173,6 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     // Note (2016-04-04) : This trick doesn't seem to be significant anymore...
     //mesh.updateVerticesFromCpu();
 
-
     vector<IndependentDispatch> dispatches;
     organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
     size_t dispatchCount = dispatches.size();
@@ -162,10 +181,13 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     setVertexProgramUniforms(mesh, _vertSmoothProgram);
     _vertSmoothProgram.popProgram();
 
-    _smoothPassId = 0;
+    bool isTopoEnabled = crew.topologist()
+            .needTopologicalModifications(mesh);
+
+    _smoothPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityGlsl(mesh, crew))
     {
-        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
+        if(isTopoEnabled)
         {
             verboseCuda = false;
             mesh.updateVerticesFromGlsl();
@@ -178,21 +200,28 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
             dispatchCount = dispatches.size();
         }
 
-
-        _vertSmoothProgram.pushProgram();
-        mesh.bindShaderStorageBuffers();
-
-        for(size_t d=0; d < dispatchCount; ++d)
+        while(evaluateMeshQualityGlsl(mesh, crew))
         {
-            const IndependentDispatch& dispatch = dispatches[d];
-            _vertSmoothProgram.setInt("GroupBase", dispatch.base);
-            _vertSmoothProgram.setInt("GroupSize", dispatch.size);
+            _vertSmoothProgram.pushProgram();
+            mesh.bindShaderStorageBuffers();
 
-            glDispatchCompute(dispatch.workgroupCount, 1, 1);
-            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            for(size_t d=0; d < dispatchCount; ++d)
+            {
+                const IndependentDispatch& dispatch = dispatches[d];
+                _vertSmoothProgram.setInt("GroupBase", dispatch.base);
+                _vertSmoothProgram.setInt("GroupSize", dispatch.size);
+
+                glDispatchCompute(dispatch.workgroupCount, 1, 1);
+                glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            }
+
+            _vertSmoothProgram.popProgram();
         }
 
-        _vertSmoothProgram.popProgram();
+        if(isTopoEnabled)
+            _smoothPassId = COMPARE_PASS_ID;
+        else
+            break;
     }
 
 
@@ -211,11 +240,13 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
     size_t dispatchCount = dispatches.size();
 
+    bool isTopoEnabled = crew.topologist()
+            .needTopologicalModifications(mesh);
 
-    _smoothPassId = 0;
+    _smoothPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityCuda(mesh, crew))
     {
-        if(crew.topologist().needTopologicalModifications(_smoothPassId, mesh))
+        if(isTopoEnabled)
         {
             verboseCuda = false;
             mesh.updateVerticesFromCuda();
@@ -228,11 +259,19 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
             dispatchCount = dispatches.size();
         }
 
-        for(size_t d=0; d < dispatchCount; ++d)
+        while(evaluateMeshQualityCuda(mesh, crew))
         {
-            const IndependentDispatch& dispatch = dispatches[d];
-            smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
+            for(size_t d=0; d < dispatchCount; ++d)
+            {
+                const IndependentDispatch& dispatch = dispatches[d];
+                smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
+            }
         }
+
+        if(isTopoEnabled)
+            _smoothPassId = COMPARE_PASS_ID;
+        else
+            break;
     }
 
 

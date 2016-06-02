@@ -17,7 +17,6 @@ public:
 
 
     virtual bool needTopologicalModifications(
-            int vertRelocationPassCount,
             const Mesh& mesh) const = 0;
 
     virtual void restructureMesh(

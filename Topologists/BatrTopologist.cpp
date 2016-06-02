@@ -64,14 +64,12 @@ BatrTopologist::~BatrTopologist()
 }
 
 bool BatrTopologist::needTopologicalModifications(
-            int vertRelocationPassCount,
             const Mesh& mesh) const
 {
     if(mesh.tets.empty() || !(mesh.pris.empty() && mesh.hexs.empty()))
         return false;
 
-    return isEnabled() &&
-           ((vertRelocationPassCount-1) % frequency() == 0);
+    return isEnabled();
 }
 
 void BatrTopologist::restructureMesh(
@@ -83,10 +81,6 @@ void BatrTopologist::restructureMesh(
 
     getLog().postMessage(new Message('I', false,
         "Performing BATR topology modifications...",
-        "BatrTopologist"));
-
-    getLog().postMessage(new Message('I', false,
-        "Start by removing lone verts and edges",
         "BatrTopologist"));
 
     std::vector<uint> vertsToVerify(mesh.verts.size());
@@ -101,9 +95,6 @@ void BatrTopologist::restructureMesh(
     trimTets(mesh, aliveTets);
     trimVerts(mesh, aliveVerts);
 
-    getLog().postMessage(new Message('I', false,
-        "And then start main modification loop",
-        "BatrTopologist"));
 
     size_t passCount = 0;
     size_t lastPassOpCount = 0;
