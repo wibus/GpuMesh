@@ -85,11 +85,15 @@ void BatrTopologist::restructureMesh(
 
     std::vector<uint> vertsToVerify(mesh.verts.size());
     std::iota(vertsToVerify.begin(), vertsToVerify.end(), 0);
+    std::vector<uint> tetsToVerify(mesh.tets.size());
+    std::iota(tetsToVerify.begin(), tetsToVerify.end(), 0);
     std::vector<bool> aliveVerts(mesh.verts.size(), true);
     std::vector<bool> aliveTets(mesh.tets.size(), true);
     std::vector<uint> deadVerts, deadTets;
     cureBoundaries(
-            mesh, vertsToVerify,
+            mesh, crew,
+            vertsToVerify,
+            tetsToVerify,
             aliveVerts, deadVerts,
             aliveTets, deadTets);
     trimTets(mesh, aliveTets);
@@ -344,10 +348,16 @@ size_t BatrTopologist::edgeSplitMerge(
                     vTopo.neighborVerts.begin(),
                     vTopo.neighborVerts.end());
                 vertsToVerify.push_back(vId);
+                std::vector<uint> tetsToVerify(
+                    vTopo.neighborElems.begin(),
+                    vTopo.neighborElems.end());
 
-                cureBoundaries(mesh, vertsToVerify,
-                                aliveVerts, deadVerts,
-                                aliveTets, deadTets);
+                cureBoundaries(
+                   mesh, crew,
+                   vertsToVerify,
+                   tetsToVerify,
+                   aliveVerts, deadVerts,
+                   aliveTets, deadTets);
 
 
                 // Notify to check neighbor verts
@@ -530,10 +540,16 @@ size_t BatrTopologist::edgeSplitMerge(
                     wTopo.neighborVerts.begin(),
                     wTopo.neighborVerts.end());
                 vertsToVerify.push_back(wId);
+                std::vector<uint> tetsToVerify(
+                    wTopo.neighborElems.begin(),
+                    wTopo.neighborElems.end());
 
-                cureBoundaries(mesh, vertsToVerify,
-                                aliveVerts, deadVerts,
-                                aliveTets, deadTets);
+                cureBoundaries(
+                    mesh, crew,
+                    vertsToVerify,
+                    tetsToVerify,
+                    aliveVerts, deadVerts,
+                    aliveTets, deadTets);
 
 
                 // Notify to check neighbor verts
@@ -1141,9 +1157,20 @@ size_t BatrTopologist::edgeSwapping(
                 vertsToVerify.push_back(vId);
                 vertsToVerify.push_back(nId);
 
-                cureBoundaries(mesh, vertsToVerify,
-                                aliveVerts, deadVerts,
-                                aliveTets, deadTets);
+                std::vector<uint> tetsToVerify;
+                tetsToVerify.reserve(vTopo.neighborElems.size() +
+                                     nTopo.neighborElems.size());
+                for(const MeshNeigElem& e : vTopo.neighborElems)
+                    tetsToVerify.push_back(e);
+                for(const MeshNeigElem& e : nTopo.neighborElems)
+                    tetsToVerify.push_back(e);
+
+                cureBoundaries(
+                    mesh, crew,
+                    vertsToVerify,
+                    tetsToVerify,
+                    aliveVerts, deadVerts,
+                    aliveTets, deadTets);
 
                 if(ENABLE_VERIFICATION_FRENZY &&
                    !validateMesh(mesh, aliveTets, aliveVerts))
@@ -1402,13 +1429,17 @@ void BatrTopologist::trimTets(Mesh& mesh, const std::vector<bool>& aliveTets) co
 
 bool BatrTopologist::cureBoundaries(
         Mesh& mesh,
+        const MeshCrew& crew,
         std::vector<uint>& vertsToVerifiy,
+        std::vector<uint>& tetsToVerify,
         std::vector<bool>& aliveVerts,
         std::vector<uint>& deadVerts,
         std::vector<bool>& aliveElems,
         std::vector<uint>& deadElems) const
 {
     bool meshTouched = false;
+    std::vector<MeshTet>& tets = mesh.tets;
+    std::vector<MeshVert>& verts = mesh.verts;
     std::vector<MeshTopo>& topos = mesh.topos;
 
     for(uint vArId = 0; vArId < vertsToVerifiy.size(); ++vArId)
@@ -1482,7 +1513,7 @@ bool BatrTopologist::cureBoundaries(
             if(ringElems.size() == 1)
             {
                 uint tId = ringElems.front();
-                const MeshTet& tet = mesh.tets[tId];
+                const MeshTet& tet = tets[tId];
                 if(!topos[tet.v[0]].snapToBoundary->isConstrained() ||
                    !topos[tet.v[1]].snapToBoundary->isConstrained() ||
                    !topos[tet.v[2]].snapToBoundary->isConstrained() ||
@@ -1515,6 +1546,97 @@ bool BatrTopologist::cureBoundaries(
                 // vert was pushed back in vertsToVerify.
                 break;
             }
+        }
+    }
+
+
+    for(size_t tArId=0; tArId < tetsToVerify.size(); ++tArId)
+    {
+        uint tId = tetsToVerify[tArId];
+
+        if(!aliveElems[tId])
+        {
+            continue;
+        }
+
+        const MeshTet& tet = tets[tId];
+        MeshTopo& topo0 = topos[tet.v[0]];
+        MeshTopo& topo1 = topos[tet.v[1]];
+        MeshTopo& topo2 = topos[tet.v[2]];
+        MeshTopo& topo3 = topos[tet.v[3]];
+
+        uint other = -1;
+        int boundCount = 0;
+        const AbstractConstraint*  bounds[4];
+        if(!topo0.snapToBoundary->isConstrained())
+            other = tet.v[0];
+        else bounds[boundCount++] = topo0.snapToBoundary;
+        if(!topo1.snapToBoundary->isConstrained())
+            other = tet.v[1];
+        else bounds[boundCount++] = topo1.snapToBoundary;
+        if(!topo2.snapToBoundary->isConstrained())
+            other = tet.v[2];
+        else bounds[boundCount++] = topo2.snapToBoundary;
+        if(!topo3.snapToBoundary->isConstrained())
+            other = tet.v[3];
+        else bounds[boundCount++] = topo3.snapToBoundary;
+
+        if(boundCount != 3)
+        {
+            continue;
+        }
+
+        const AbstractConstraint* split3 = mesh.boundary()->split(
+            mesh.boundary()->split(bounds[0], bounds[1]), bounds[2]);
+
+        if(!split3->isConstrained())
+        {
+            continue;
+        }
+
+
+        MeshTopo& oTopo = topos[other];
+
+        double minQual = INFINITY;
+        for(const MeshNeigElem oElem : oTopo.neighborElems)
+        {
+            minQual = glm::min(minQual, crew.evaluator().tetQuality(
+                mesh, crew.sampler(), crew.measurer(), tets[oElem.id]));
+        }
+
+        glm::dvec3 oldPos = verts[other].p;
+        verts[other].p = (*split3)(verts[other].p);
+
+        bool revert = false;
+        for(const MeshNeigElem oElem : oTopo.neighborElems)
+        {
+            if(oElem.id != tId)
+            {
+                if(minQual > crew.evaluator().tetQuality(mesh,
+                    crew.sampler(), crew.measurer(), tets[oElem.id]))
+                {
+                    revert = true;
+                    break;
+                }
+            }
+        }
+
+        if(revert)
+        {
+            verts[other].p = oldPos;
+        }
+        else
+        {
+            meshTouched = true;
+            aliveElems[tId] = false;
+            oTopo.snapToBoundary = split3;
+            popOut(topo0.neighborElems, tId);
+            popOut(topo1.neighborElems, tId);
+            popOut(topo2.neighborElems, tId);
+            popOut(topo3.neighborElems, tId);
+
+            for(const MeshNeigElem oElem : oTopo.neighborElems)
+                tetsToVerify.push_back(oElem.id);
         }
     }
 

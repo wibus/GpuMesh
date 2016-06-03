@@ -72,7 +72,9 @@ private:
 
     bool cureBoundaries(
             Mesh& mesh,
+            const MeshCrew& crew,
             std::vector<uint>& vertsToVerifiy,
+            std::vector<uint>& tetsToVerify,
             std::vector<bool>& aliveVerts,
             std::vector<uint>& deadVerts,
             std::vector<bool>& aliveElems,
