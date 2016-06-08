@@ -1,6 +1,7 @@
 #include "MetricFreeMeasurer.h"
 
 #include "DataStructures/Mesh.h"
+#include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
 
 using namespace std;
@@ -29,7 +30,7 @@ double MetricFreeMeasurer::riemannianDistance(
         const glm::dvec3& b,
         uint& cachedRefTet) const
 {
-    return glm::distance(a, b);
+    return glm::distance(a, b) * sampler.scaling();
 }
 
 glm::dvec3 MetricFreeMeasurer::riemannianSegment(
@@ -38,7 +39,7 @@ glm::dvec3 MetricFreeMeasurer::riemannianSegment(
         const glm::dvec3& b,
         uint& cachedRefTet) const
 {
-    return b - a;
+    return (b - a) * sampler.scaling();
 }
 
 double MetricFreeMeasurer::tetVolume(

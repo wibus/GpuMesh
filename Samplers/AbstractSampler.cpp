@@ -7,10 +7,13 @@
 #include "DataStructures/Mesh.h"
 
 
+void setCudaMetricScaling(double scaling);
+
 AbstractSampler::AbstractSampler(
         const std::string& name,
         const std::string& shader,
         const installCudaFct installCuda) :
+    _scaling(1.0),
     _samplingName(name),
     _samplingShader(shader),
     _baseShader(":/glsl/compute/Sampling/Base.glsl"),
@@ -27,6 +30,11 @@ AbstractSampler::~AbstractSampler()
 void AbstractSampler::initialize()
 {
 
+}
+
+void AbstractSampler::setScaling(double scaling)
+{
+    _scaling = scaling;
 }
 
 std::string AbstractSampler::samplingShader() const
@@ -54,11 +62,17 @@ void AbstractSampler::installPlugin(
     _installCuda();
 }
 
-void AbstractSampler::setPluginUniforms(
+void AbstractSampler::setPluginGlslUniforms(
         const Mesh& mesh,
-        cellar::GlProgram& program) const
+        const cellar::GlProgram& program) const
 {
+    program.setFloat("MetricScaling", scaling());
+}
 
+void AbstractSampler::setPluginCudaUniforms(
+        const Mesh& mesh) const
+{
+    setCudaMetricScaling(scaling());
 }
 
 Metric AbstractSampler::interpolateMetrics(
@@ -79,7 +93,7 @@ Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
     glm::dvec3 vp = position * glm::dvec3(7);
 
     double localElemSize = 0.0;
-    localElemSize = 1.0 / glm::pow(100, 1.0/3.0);
+    localElemSize = 1.0 / (scaling() * glm::pow(100, 1.0/3.0));
 
     double elemSize = localElemSize;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);

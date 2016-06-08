@@ -80,6 +80,8 @@ public:
             const std::string& evaluatorName,
             const std::map<std::string, int>& cycleCounts);
 
+    virtual void setMetricScaling(double scaling);
+
     // Smooth
     virtual void smoothMesh(
             const std::string& smootherName,
@@ -149,6 +151,8 @@ protected:
     double _qualityCullingMax;
 
     bool _displaySamplingMesh;
+
+    double _metricScaling;
 
 private:
     std::unique_ptr<Mesh> _mesh;

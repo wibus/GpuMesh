@@ -50,9 +50,15 @@ void AbstractMeasurer::installPlugin(
     _installCuda();
 }
 
-void AbstractMeasurer::setPluginUniforms(
+void AbstractMeasurer::setPluginGlslUniforms(
         const Mesh& mesh,
-        cellar::GlProgram& program) const
+        const cellar::GlProgram& program) const
+{
+
+}
+
+void AbstractMeasurer::setPluginCudaUniforms(
+        const Mesh& mesh) const
 {
 
 }

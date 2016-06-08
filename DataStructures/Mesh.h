@@ -281,7 +281,6 @@ public:
     virtual void updateVerticesFromCuda();
 
     virtual std::string meshGeometryShaderName() const;
-    virtual void uploadGeometry(cellar::GlProgram& program) const;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
     virtual unsigned int bufferBinding(EBufferBinding binding) const;
     virtual void bindShaderStorageBuffers() const;

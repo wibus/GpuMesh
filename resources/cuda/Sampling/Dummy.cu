@@ -3,7 +3,7 @@
 
 __device__ mat3 dummyMetricAt(const vec3& position, uint& cachedRefTet)
 {
-    return mat3(1.0);
+    return mat3(MetricScaling * MetricScaling);
 }
 
 __device__ metricAtFct dummyMetricAtPtr = dummyMetricAt;

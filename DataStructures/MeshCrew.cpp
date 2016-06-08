@@ -113,20 +113,24 @@ void MeshCrew::installPlugins(const Mesh& mesh, cellar::GlProgram& program) cons
 
     // Crew members' plugin
     _sampler->installPlugin(mesh, program);
-    _evaluator->installPlugin(mesh, program);
     _measurer->installPlugin(mesh, program);
+    _evaluator->installPlugin(mesh, program);
 }
 
-void MeshCrew::setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) const
+void MeshCrew::setPluginGlslUniforms(const Mesh& mesh, cellar::GlProgram& program) const
 {
-    // Mesh's uniforms
-    mesh.uploadGeometry(program);
-
-    // Crew members' uniforms
-    _sampler->setPluginUniforms(mesh, program);
-    _evaluator->setPluginUniforms(mesh, program);
-    _measurer->setPluginUniforms(mesh, program);
+    _sampler->setPluginGlslUniforms(mesh, program);
+    _measurer->setPluginGlslUniforms(mesh, program);
+    _evaluator->setPluginGlslUniforms(mesh, program);
 }
+
+void MeshCrew::setPluginCudaUniforms(const Mesh& mesh) const
+{
+    _sampler->setPluginCudaUniforms(mesh);
+    _measurer->setPluginCudaUniforms(mesh);
+    _evaluator->setPluginCudaUniforms(mesh);
+}
+
 
 void MeshCrew::reinitCrew(const Mesh& mesh)
 {

@@ -6,6 +6,8 @@
 ///////////////////////////////
 __device__ metricAtFct metricAt = nullptr;
 
+__constant__ float MetricScaling = 1.0;
+
 
 
 //////////////////////////////
@@ -24,7 +26,7 @@ __device__ mat3 vertMetric(const vec3& position)
     vec3 vp = position * vec3(7);
 
     float localElemSize = 0.0;
-    localElemSize = 1.0 / pow(100, 1.0/3.0);
+    localElemSize = 1.0 / (MetricScaling * pow(100, 1.0/3.0));
 
     float elemSize = localElemSize;
     float elemSizeInv2 = 1.0 / (elemSize * elemSize);
@@ -82,4 +84,12 @@ __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4])
     bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
                  coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
     return isIn;
+}
+
+
+// CUDA Drivers
+void setCudaMetricScaling(double scaling)
+{
+    float h_scaling = scaling;
+    cudaMemcpyToSymbol(MetricScaling, &h_scaling, sizeof(h_scaling));
 }

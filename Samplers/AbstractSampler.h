@@ -36,6 +36,9 @@ public:
 
     virtual void initialize();
 
+    double scaling() const;
+    virtual void setScaling(double scaling);
+
 
     // GLSL Plug-in interface
     virtual std::string samplingShader() const;
@@ -44,9 +47,12 @@ public:
             const Mesh& mesh,
             cellar::GlProgram& program) const;
 
-    virtual void setPluginUniforms(
+    virtual void setPluginGlslUniforms(
             const Mesh& mesh,
-            cellar::GlProgram& program) const;
+            const cellar::GlProgram& program) const;
+
+    virtual void setPluginCudaUniforms(
+            const Mesh& mesh) const;
 
 
     virtual void setReferenceMesh(
@@ -76,10 +82,19 @@ protected:
                      glm::dvec3& maxBounds) const;
 
 private:
+    double _scaling;
     std::string _samplingName;
     std::string _samplingShader;
     std::string _baseShader;
     installCudaFct _installCuda;
 };
+
+
+
+// IMPLEMENTATION //
+inline double AbstractSampler::scaling() const
+{
+    return _scaling;
+}
 
 #endif // GPUMESH_ABSTRACTSAMPLER

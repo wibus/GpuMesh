@@ -4,7 +4,7 @@
 AbstractTopologist::AbstractTopologist() :
     _isEnabled(false),
     _frequency(1),
-    _topoPassCount(3),
+    _topoPassCount(5),
     _minEdgeLength(0.5),
     _maxEdgeLength(1.5)
 {

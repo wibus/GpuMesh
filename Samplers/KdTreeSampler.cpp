@@ -107,13 +107,6 @@ void KdTreeSampler::installPlugin(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
 }
 
-void KdTreeSampler::setPluginUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    //program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
-}
-
 void KdTreeSampler::setReferenceMesh(const Mesh& mesh)
 {
     size_t vertCount = mesh.verts.size();

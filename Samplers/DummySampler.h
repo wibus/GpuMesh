@@ -26,9 +26,6 @@ public:
     virtual const Mesh& debugMesh() override;
 
 
-protected:
-
-
 private:
     std::shared_ptr<Mesh> _debugMesh;
 };

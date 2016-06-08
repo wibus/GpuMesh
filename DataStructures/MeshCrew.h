@@ -45,7 +45,8 @@ public:
     void setEvaluator(const Mesh& mesh, const std::shared_ptr<AbstractEvaluator>& evaluator);
 
     void installPlugins(const Mesh& mesh, cellar::GlProgram& program) const;
-    void setPluginUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
+    void setPluginGlslUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
+    void setPluginCudaUniforms(const Mesh& mesh) const;
 
 
 private:

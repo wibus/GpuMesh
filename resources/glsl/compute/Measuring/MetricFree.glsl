@@ -1,12 +1,14 @@
+uniform float MetricScaling;
+
 // Element Volume
 float riemannianDistance(in vec3 a, in vec3 b, inout uint cachedRefTet)
 {
-    return distance(a, b);
+    return distance(a, b) * MetricScaling;
 }
 
 vec3 riemannianSegment(in vec3 a, in vec3 b, inout uint cachedRefTet)
 {
-    return b - a;
+    return (b - a) * MetricScaling;
 }
 
 float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)

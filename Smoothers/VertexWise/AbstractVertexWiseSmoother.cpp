@@ -178,6 +178,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     size_t dispatchCount = dispatches.size();
 
     _vertSmoothProgram.pushProgram();
+    crew.setPluginGlslUniforms(mesh, _vertSmoothProgram);
     setVertexProgramUniforms(mesh, _vertSmoothProgram);
     _vertSmoothProgram.popProgram();
 
@@ -316,7 +317,7 @@ void AbstractVertexWiseSmoother::initializeProgram(
 
     _vertSmoothProgram.link();
     _vertSmoothProgram.pushProgram();
-    crew.setPluginUniforms(mesh, _vertSmoothProgram);
+    crew.setPluginGlslUniforms(mesh, _vertSmoothProgram);
     _vertSmoothProgram.popProgram();
 
     /*

@@ -284,6 +284,8 @@ void AbstractElementWiseSmoother::smoothMeshCuda(
     size_t maxElem = glm::max(glm::max(tetCount, priCount), hexCount);
     size_t smoothWgCount = glm::ceil(maxElem / double(WORKGROUP_SIZE));
 
+    crew.setPluginCudaUniforms(mesh);
+
     vertexAccumCudaInstall(mesh.verts.size());
 
     vector<IndependentDispatch> dispatches;
@@ -352,7 +354,7 @@ void AbstractElementWiseSmoother::initializeProgram(
 
     _elemSmoothProgram.link();
     _elemSmoothProgram.pushProgram();
-    crew.setPluginUniforms(mesh, _elemSmoothProgram);
+    crew.setPluginGlslUniforms(mesh, _elemSmoothProgram);
     _elemSmoothProgram.popProgram();
 
 
@@ -371,7 +373,7 @@ void AbstractElementWiseSmoother::initializeProgram(
 
     _vertUpdateProgram.link();
     _vertUpdateProgram.pushProgram();
-    crew.setPluginUniforms(mesh, _vertUpdateProgram);
+    crew.setPluginGlslUniforms(mesh, _vertUpdateProgram);
     _vertUpdateProgram.popProgram();
 
 

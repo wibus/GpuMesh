@@ -116,7 +116,7 @@ void AbstractEvaluator::initialize(
         ":/glsl/compute/Evaluating/Evaluate.glsl"});
 
     _evaluationProgram.link();
-    crew.setPluginUniforms(mesh, _evaluationProgram);
+    crew.setPluginGlslUniforms(mesh, _evaluationProgram);
 
     /*
     const GlProgramBinary& binary = _evaluationProgram.getBinary();
@@ -161,9 +161,9 @@ void AbstractEvaluator::installPlugin(
     _installCuda();
 }
 
-void AbstractEvaluator::setPluginUniforms(
+void AbstractEvaluator::setPluginGlslUniforms(
         const Mesh& mesh,
-        cellar::GlProgram& program) const
+        const GlProgram& program) const
 {
     // Seems to be a driver bug with inactive subroutines (NVIDIA GTX 780Ti )
     // The query API return correct info (omitting inactive subroutines uniforms),
@@ -171,6 +171,12 @@ void AbstractEvaluator::setPluginUniforms(
     // number of subroutine nuiform locations (GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS).
 
     //program.setSubroutine(GL_COMPUTE_SHADER, "patchQualityUni", "patchQualityImpl");
+}
+
+void AbstractEvaluator::setPluginCudaUniforms(
+        const Mesh& mesh) const
+{
+
 }
 
 double AbstractEvaluator::tetQuality(
@@ -482,6 +488,9 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
         EBufferBinding::EVALUATE_HIST_BUFFER_BINDING);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, histBinding, _histSsbo);
 
+    setPluginGlslUniforms(mesh, _evaluationProgram);
+    sampler.setPluginGlslUniforms(mesh, _evaluationProgram);
+    measurer.setPluginGlslUniforms(mesh, _evaluationProgram);
 
     // When Nvidia compiler bug about linker crash on hists.length() is fixed
     // Remove this uniform and get hists length directly from the SSBO.
@@ -557,6 +566,10 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
     {
         return;
     }
+
+    setPluginCudaUniforms(mesh);
+    sampler.setPluginCudaUniforms(mesh);
+    measurer.setPluginCudaUniforms(mesh);
 
     evaluateCudaMeshQuality(MAX_QUALITY_VALUE * elemCount,
                             WORKGROUP_SIZE, workgroupCount,

@@ -212,12 +212,32 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="AnisotropyGroup">
+         <widget class="QGroupBox" name="metricGroup">
           <property name="title">
-           <string>Anisotropy</string>
+           <string>Metric</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_9">
-           <item>
+          <layout class="QFormLayout" name="formLayout_7">
+           <item row="0" column="0">
+            <widget class="QLabel" name="scalingLabel">
+             <property name="text">
+              <string>Scaling: </string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="scalingSpin">
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>9999.989999999999782</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
             <widget class="QCheckBox" name="enableAnisotropyCheck">
              <property name="text">
               <string>Enable Anisotropy</string>
@@ -227,8 +247,8 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QGroupBox" name="discretizationGroup">
+           <item row="2" column="0" colspan="2">
+            <widget class="QGroupBox" name="samplingGroup">
              <property name="title">
               <string>Sampling</string>
              </property>
@@ -361,7 +381,7 @@
               <double>0.000001000000000</double>
              </property>
              <property name="value">
-              <double>0.000100000000000</double>
+              <double>0.005000000000000</double>
              </property>
             </widget>
            </item>

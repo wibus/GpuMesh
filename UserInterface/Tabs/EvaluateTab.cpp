@@ -29,6 +29,9 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &EvaluateTab::benchmarkImplementations);
 
+    connect(_ui->scalingSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+            this, &EvaluateTab::scalingChanged);
+    scalingChanged(_ui->scalingSpin->value());
 
     connect(_ui->enableAnisotropyCheck, &QCheckBox::toggled,
             this, &EvaluateTab::enableAnisotropy);
@@ -78,7 +81,7 @@ void EvaluateTab::benchmarkImplementations()
 
 void EvaluateTab::enableAnisotropy(bool enabled)
 {
-    _ui->discretizationGroup->setEnabled(enabled);
+    _ui->samplingGroup->setEnabled(enabled);
     if(enabled)
     {
         _character->useSampler(
@@ -90,6 +93,11 @@ void EvaluateTab::enableAnisotropy(bool enabled)
     {
         _character->disableAnisotropy();
     }
+}
+
+void EvaluateTab::scalingChanged(double scaling)
+{
+    _character->setMetricScaling(scaling);
 }
 
 void EvaluateTab::samplingTypeChanged(const QString& type)

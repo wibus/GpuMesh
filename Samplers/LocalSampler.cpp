@@ -75,13 +75,6 @@ void LocalSampler::installPlugin(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
 }
 
-void LocalSampler::setPluginUniforms(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    //program.setSubroutine(GL_COMPUTE_SHADER, "metricAtUni", "metricAtImpl");
-}
-
 void LocalSampler::setReferenceMesh(
         const Mesh& mesh)
 {
@@ -207,7 +200,7 @@ void LocalSampler::setReferenceMesh(
     _maxSearchDepth = 0;
 }
 
-const size_t MAX_TABOO = 32;
+const size_t MAX_TABOO = 128;
 bool isTaboo(uint tId, uint taboo[], size_t count)
 {
     if(tId != -1)

@@ -186,19 +186,12 @@ public:
     virtual void updateVerticesFromCuda() override;
 
     virtual std::string meshGeometryShaderName() const override;
-    virtual void uploadGeometry(cellar::GlProgram& program) const override;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const override;
     virtual unsigned int bufferBinding(EBufferBinding binding) const override;
     virtual void bindShaderStorageBuffers() const override;
 
 
 protected:
-    virtual void uploadElement(
-            cellar::GlProgram& program,
-            const std::string& prefix,
-            int edgeCount, const MeshEdge edges[],
-            int triCount,  const MeshTri tris[],
-            int tetCount,  const MeshTet tets[]) const;
 
     GLuint _vertSsbo;
     GLuint _tetSsbo;

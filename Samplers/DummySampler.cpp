@@ -35,14 +35,7 @@ Metric DummySampler::metricAt(
         uint& cachedRefTet) const
 {
     // Constant isotropic metric
-    double rx = 1.0;
-    double ry = 1.0;
-    double rz = 1.0;
-
-    return Metric(
-        glm::dvec3(rx, 0,  0),
-        glm::dvec3(0,  ry, 0),
-        glm::dvec3(0,  0,  rz));
+    return Metric(scaling() * scaling());
 }
 
 void DummySampler::releaseDebugMesh()

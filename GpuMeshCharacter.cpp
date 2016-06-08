@@ -74,6 +74,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _qualityCullingMin(-INFINITY),
     _qualityCullingMax(INFINITY),
     _displaySamplingMesh(false),
+    _metricScaling(1.0),
     _mesh(new GpuMesh()),
     _meshCrew(new MeshCrew()),
     _availableMeshers("Available Meshers"),
@@ -544,6 +545,13 @@ void GpuMeshCharacter::benchmarkEvaluator(
     }
 }
 
+void GpuMeshCharacter::setMetricScaling(double scaling)
+{
+    _metricScaling = scaling;
+    updateSampling();
+    updateMeshMeasures();
+}
+
 void GpuMeshCharacter::smoothMesh(
         const std::string& smootherName,
         const std::string& implementationName,
@@ -781,6 +789,8 @@ void GpuMeshCharacter::updateSampling()
 {
     if(_meshCrew->initialized())
     {
+        _meshCrew->sampler().setScaling(_metricScaling);
+
         _meshCrew->sampler().setReferenceMesh(*_mesh);
 
         // In the event that sampler updated element caches

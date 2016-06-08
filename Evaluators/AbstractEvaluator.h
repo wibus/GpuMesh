@@ -38,9 +38,12 @@ public:
             const Mesh& mesh,
             cellar::GlProgram& program) const;
 
-    virtual void setPluginUniforms(
+    virtual void setPluginGlslUniforms(
             const Mesh& mesh,
-            cellar::GlProgram& program) const;
+            const cellar::GlProgram& program) const;
+
+    virtual void setPluginCudaUniforms(
+            const Mesh& mesh) const;
 
 
 

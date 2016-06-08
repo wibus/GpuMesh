@@ -306,53 +306,6 @@ std::string GpuMesh::meshGeometryShaderName() const
     return ":/glsl/compute/Mesh.glsl";
 }
 
-void GpuMesh::uploadGeometry(cellar::GlProgram& program) const
-{
-    uploadElement(program, "TET",
-        MeshTet::EDGE_COUNT, MeshTet::edges,
-        MeshTet::TRI_COUNT,  MeshTet::tris,
-        MeshTet::TET_COUNT,  MeshTet::tets);
-
-    uploadElement(program, "PRI",
-        MeshPri::EDGE_COUNT, MeshPri::edges,
-        MeshPri::TRI_COUNT,  MeshPri::tris,
-        MeshPri::TET_COUNT,  MeshPri::tets);
-
-    uploadElement(program, "HEX",
-        MeshHex::EDGE_COUNT, MeshHex::edges,
-        MeshHex::TRI_COUNT,  MeshHex::tris,
-        MeshHex::TET_COUNT,  MeshHex::tets);
-}
-
-void GpuMesh::uploadElement(
-        cellar::GlProgram& program,
-        const std::string& prefix,
-        int edgeCount, const MeshEdge edges[],
-        int triCount,  const MeshTri tris[],
-        int tetCount,  const MeshTet tets[]) const
-{
-    for(int i=0; i < edgeCount; ++i)
-    {
-        program.setUnsigned(prefix + "_EDGES[" + to_string(i) + "].v[0]", edges[i][0]);
-        program.setUnsigned(prefix + "_EDGES[" + to_string(i) + "].v[1]", edges[i][1]);
-    }
-
-    for(int i=0; i < triCount; ++i)
-    {
-        program.setUnsigned(prefix + "_TRIS[" + to_string(i) + "].v[0]", tris[i][0]);
-        program.setUnsigned(prefix + "_TRIS[" + to_string(i) + "].v[1]", tris[i][1]);
-        program.setUnsigned(prefix + "_TRIS[" + to_string(i) + "].v[2]", tris[i][2]);
-    }
-
-    for(int i=0; i < tetCount; ++i)
-    {
-        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[0]", tets[i][0]);
-        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[1]", tets[i][1]);
-        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[2]", tets[i][2]);
-        program.setUnsigned(prefix + "_TETS[" + to_string(i) + "].v[3]", tets[i][3]);
-    }
-}
-
 unsigned int GpuMesh::bufferBinding(EBufferBinding binding) const
 {
     switch(binding)

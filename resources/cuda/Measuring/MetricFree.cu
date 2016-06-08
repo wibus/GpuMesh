@@ -4,12 +4,12 @@
 // Distance
 __device__ float metricFreeRiemannianDistance(const vec3& a, const vec3& b, uint& cachedRefTet)
 {
-    return distance(a, b);
+    return distance(a, b) * MetricScaling;
 }
 
 __device__ vec3 metricFreeRiemannianSegment(const vec3& a, const vec3& b, uint& cachedRefTet)
 {
-    return b - a;
+    return (b - a) * MetricScaling;
 }
 
 

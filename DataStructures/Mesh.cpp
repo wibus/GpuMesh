@@ -249,11 +249,6 @@ std::string Mesh::meshGeometryShaderName() const
     return std::string();
 }
 
-void Mesh::uploadGeometry(cellar::GlProgram& program) const
-{
-
-}
-
 unsigned int Mesh::glBuffer(const EMeshBuffer&) const
 {
     return 0;

@@ -29,10 +29,6 @@ public:
             const Mesh& mesh,
             cellar::GlProgram& program) const override;
 
-    virtual void setPluginUniforms(
-            const Mesh& mesh,
-            cellar::GlProgram& program) const override;
-
 
     virtual void setReferenceMesh(
             const Mesh& mesh) override;

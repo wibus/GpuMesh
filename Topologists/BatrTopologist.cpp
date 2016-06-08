@@ -32,8 +32,8 @@ inline void appendElems(std::vector<MeshNeigElem>& elems, const std::vector<uint
 
 
 BatrTopologist::BatrTopologist() :
-    _refinementCoarseningMaxPassCount(10),
-    _minAcceptableGenQuality(1e-9)
+    _refinementCoarseningMaxPassCount(5),
+    _minAcceptableGenQuality(1e-6)
 {
     _ringConfigDictionary = {
       {}, {}, {},
@@ -606,6 +606,7 @@ size_t BatrTopologist::faceSwapping(
         const MeshCrew& crew) const
 {
     std::vector<MeshTet>& tets = mesh.tets;
+    std::vector<MeshVert>& verts = mesh.verts;
     std::vector<MeshTopo>& topos = mesh.topos;
 
     size_t passCount = 0;
@@ -691,6 +692,21 @@ size_t BatrTopologist::faceSwapping(
                         else if(ntet.v[3] != tri.v[0] && ntet.v[3] != tri.v[1] && ntet.v[3] != tri.v[2])
                             nOp = ntet.v[3];
 
+                        const glm::dvec3& vPos = verts[tOp].p;
+                        const glm::dvec3& nPos = verts[nOp].p;
+                        glm::dvec3 v0Pos = verts[tri.v[0]].p - vPos;
+                        glm::dvec3 v1Pos = verts[tri.v[1]].p - vPos;
+                        glm::dvec3 v2Pos = verts[tri.v[2]].p - vPos;
+                        glm::dvec3 vnVec = nPos - vPos;
+
+                        // Verify that V-N edge crosses selected triangle
+                        if(glm::dot(glm::cross(v0Pos, v1Pos), vnVec) < 0.0 ||
+                           glm::dot(glm::cross(v1Pos, v2Pos), vnVec) < 0.0 ||
+                           glm::dot(glm::cross(v2Pos, v0Pos), vnVec) < 0.0)
+                        {
+                            continue;
+                        }
+
 
                         double minQual = crew.evaluator().tetQuality(
                             mesh, crew.sampler(), crew.measurer(), tet);
@@ -701,61 +717,64 @@ size_t BatrTopologist::faceSwapping(
                         MeshTet newTet1(tOp, tri[1], tri[2], nOp, tet.c[0]);
                         MeshTet newTet2(tOp, tri[2], tri[0], nOp, tet.c[0]);
 
-
-                        if(minQual < crew.evaluator().tetQuality(mesh,
-                                crew.sampler(), crew.measurer(), newTet0) &&
-                           minQual < crew.evaluator().tetQuality(mesh,
-                                crew.sampler(), crew.measurer(), newTet1) &&
-                           minQual < crew.evaluator().tetQuality(mesh,
+                        // Check if it would produce a ring of better quality
+                        if(minQual > crew.evaluator().tetQuality(mesh,
+                                crew.sampler(), crew.measurer(), newTet0) ||
+                           minQual > crew.evaluator().tetQuality(mesh,
+                                crew.sampler(), crew.measurer(), newTet1) ||
+                           minQual > crew.evaluator().tetQuality(mesh,
                                 crew.sampler(), crew.measurer(), newTet2))
                         {
-                            tets[t] = newTet0;
-                            tets[nt] = newTet1;
-                            uint lt = tets.size();
-                            tets.push_back(newTet2);
-
-                            topos[tOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, nt));
-                            topos[tOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, lt));
-                            topos[tOp].neighborVerts.push_back(MeshNeigVert(nOp));
-
-                            topos[nOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, t));
-                            topos[nOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, lt));
-                            topos[nOp].neighborVerts.push_back(MeshNeigVert(tOp));
-
-                            for(MeshNeigElem& v : neigTets0)
-                                if(v.id == nt) {v.id = lt; break;}
-
-                            for(MeshNeigElem& v : neigTets2)
-                                if(v.id == t) {v.id = lt; break;}
-
-                            // TODO wbussiere 2016-04-20 :
-                            // Expand 'to try' marker to neighboor tets
-                            stillTetsToTry = true;
-                            tetsToTry.push_back(true);
-                            aliveTets.push_back(true);
-                            tetsToTry[nt] = true;
-                            tetsToTry[t] = true;
-                            ++faceSwapCount;
+                            continue;
+                        }
 
 
-                            if(ENABLE_VERIFICATION_FRENZY &&
-                               !validateMesh(mesh, aliveTets, aliveVerts))
-                            {
-                                for(MeshTet& tet : tets)
-                                    tet.value = 0.0;
+                        tets[t] = newTet0;
+                        tets[nt] = newTet1;
+                        uint lt = tets.size();
+                        tets.push_back(newTet2);
 
-                                for(const MeshNeigElem& vElem : topos[tOp].neighborElems)
-                                    tets[vElem.id].value = 0.5;
+                        topos[tOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, nt));
+                        topos[tOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, lt));
+                        topos[tOp].neighborVerts.push_back(MeshNeigVert(nOp));
 
-                                for(const MeshNeigElem& nElem : topos[nOp].neighborElems)
-                                    tets[nElem.id].value = 1.0;
+                        topos[nOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, t));
+                        topos[nOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, lt));
+                        topos[nOp].neighborVerts.push_back(MeshNeigVert(tOp));
 
-                                emergencyExit = true;
-                                break;
-                            }
+                        for(MeshNeigElem& v : neigTets0)
+                            if(v.id == nt) {v.id = lt; break;}
 
+                        for(MeshNeigElem& v : neigTets2)
+                            if(v.id == t) {v.id = lt; break;}
+
+                        // TODO wbussiere 2016-04-20 :
+                        // Expand 'to try' marker to neighboor tets
+                        stillTetsToTry = true;
+                        tetsToTry.push_back(true);
+                        aliveTets.push_back(true);
+                        tetsToTry[nt] = true;
+                        tetsToTry[t] = true;
+                        ++faceSwapCount;
+
+
+                        if(ENABLE_VERIFICATION_FRENZY &&
+                           !validateMesh(mesh, aliveTets, aliveVerts))
+                        {
+                            for(MeshTet& tet : tets)
+                                tet.value = 0.0;
+
+                            for(const MeshNeigElem& vElem : topos[tOp].neighborElems)
+                                tets[vElem.id].value = 0.5;
+
+                            for(const MeshNeigElem& nElem : topos[nOp].neighborElems)
+                                tets[nElem.id].value = 1.0;
+
+                            emergencyExit = true;
                             break;
                         }
+
+                        break;
                     }
                 }
             }
