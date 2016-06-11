@@ -13,7 +13,7 @@ mat3 vertMetric(in vec3 position)
     vec3 vp = position * vec3(7);
 
     float localElemSize = 0.0;
-    localElemSize = 1.0 / (MetricScaling * pow(100, 1.0/3.0));
+    localElemSize = 1.0 / MetricScaling;
 
     float elemSize = localElemSize;
     float elemSizeInv2 = 1.0 / (elemSize * elemSize);

@@ -10,7 +10,6 @@ const double ShellBoundary::OUT_RADIUS = 1.0;
 
 ShellBoundary::ShellBoundary() :
     AbstractBoundary("Shell",
-        ":/glsl/compute/Boundary/Shell.glsl",
         installCudaShellBoundary)
 {
     volume()->addFace(&_inFace);

@@ -6,7 +6,6 @@ void installCudaBoxBoundary();
 
 BoxBoundary::BoxBoundary() :
     AbstractBoundary("Box",
-        ":/glsl/compute/Boundary/Box.glsl",
         installCudaBoxBoundary),
 
     _v0(-1, glm::dvec3(-1, -1, -1)),

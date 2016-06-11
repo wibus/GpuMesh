@@ -18,7 +18,6 @@ class AbstractBoundary
 protected:
     AbstractBoundary(
             const std::string& name,
-            const std::string& shaderName,
             ModelBoundsCudaFct cudaBoundary);
 
 public:
@@ -32,8 +31,6 @@ public:
     void installCudaPlugIn() const;
 
     const std::string& name() const;
-
-    const std::string& shaderName() const;
 
     const VolumeConstraint* volume() const;
 
@@ -56,7 +53,6 @@ protected:
 
 private:
     std::string _name;
-    std::string _shaderName;
     ModelBoundsCudaFct _cudaBoundary;
 
     VolumeConstraint _volume;
@@ -73,11 +69,6 @@ inline void AbstractBoundary::installCudaPlugIn() const
 inline const std::string& AbstractBoundary::name() const
 {
     return _name;
-}
-
-inline const std::string& AbstractBoundary::shaderName() const
-{
-    return _shaderName;
 }
 
 inline const VolumeConstraint* AbstractBoundary::volume() const

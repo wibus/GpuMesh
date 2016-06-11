@@ -24,7 +24,7 @@ AbstractSmoother::AbstractSmoother(const installCudaFct installCuda) :
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("Thread");
+    _implementationFuncs.setDefault("GLSL");
     _implementationFuncs.setContent({
         {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
         {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},
@@ -65,25 +65,6 @@ void AbstractSmoother::smoothMesh(
         auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart);
         getLog().postMessage(new Message('I', true,
             "Smoothing time: " + to_string(dt.count() / 1000.0) + "s", "AbstractSmoother"));
-    }
-}
-
-void AbstractSmoother::organizeDispatches(
-        const Mesh& mesh,
-        size_t workgroupSize,
-        std::vector<IndependentDispatch>& dispatches) const
-{
-    dispatches.clear();
-    size_t groupCount = mesh.independentGroups.size();
-
-    size_t base = 0;
-    for(size_t i=0; i < groupCount; ++i)
-    {
-        size_t count = mesh.independentGroups[i].size();
-        size_t wg = glm::ceil(count / double(workgroupSize));
-        dispatches.emplace_back(base, count, wg);
-
-        base += count;
     }
 }
 

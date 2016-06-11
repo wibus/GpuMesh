@@ -3,9 +3,6 @@ uniform float MoveCoeff;
 const uint PROPOSITION_COUNT = 4;
 
 
-// Boundaries
-vec3 snapToBoundary(int boundaryID, vec3 pos);
-
 // Smoothing helper
 vec3 computeVertexEquilibrium(in uint vId);
 float patchQuality(in uint vId);
@@ -27,15 +24,6 @@ void smoothVert(uint vId)
         patchCenter,
         patchCenter + centerDist * MoveCoeff
     );
-
-    Topo topo = topos[vId];
-    if(topo.type > 0)
-    {
-        for(uint p=1; p < PROPOSITION_COUNT; ++p)
-            propositions[p] = snapToBoundary(
-                topo.type, propositions[p]);
-    }
-
 
 
     // Choose best position based on quality geometric mean

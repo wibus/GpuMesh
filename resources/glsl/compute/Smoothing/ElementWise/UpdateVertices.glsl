@@ -1,9 +1,6 @@
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 
-// Boundaries
-vec3 snapToBoundary(int boundaryID, vec3 pos);
-
 // Vertex Accum
 bool assignAverage(in uint vId, inout vec3 pos);
 void reinitAccum(in uint vId);
@@ -25,10 +22,6 @@ void main()
 
         if(assignAverage(vId, posPrim))
         {
-            Topo topo = topos[vId];
-            if(topo.type > 0)
-                posPrim = snapToBoundary(topo.type, posPrim);
-
             float prePatchQuality =
                 patchQuality(vId);
 

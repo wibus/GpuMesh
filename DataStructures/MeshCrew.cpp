@@ -106,12 +106,6 @@ void MeshCrew::setEvaluator(const Mesh& mesh, const std::shared_ptr<AbstractEval
 
 void MeshCrew::installPlugins(const Mesh& mesh, cellar::GlProgram& program) const
 {
-    // Mesh's plugin
-    program.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        mesh.boundary()->shaderName().c_str()});
-
-    // Crew members' plugin
     _sampler->installPlugin(mesh, program);
     _measurer->installPlugin(mesh, program);
     _evaluator->installPlugin(mesh, program);

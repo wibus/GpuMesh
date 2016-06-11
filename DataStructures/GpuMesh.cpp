@@ -3,6 +3,8 @@
 #include <CellarWorkbench/Misc/Log.h>
 #include <CellarWorkbench/GL/GlProgram.h>
 
+#include "NodeGroups.h"
+
 #include "Boundaries/Constraints/AbstractConstraint.h"
 
 using namespace std;
@@ -200,28 +202,22 @@ void GpuMesh::updateGpuTopology()
 
 
     // Independent group members
-    size_t groupCount = independentGroups.size();
-    std::vector<GLuint> groupMemberBuff;
-    groupMemberBuff.reserve(vertCount);
-    for(size_t g=0; g < groupCount; ++g)
-    {
-        size_t memberCount = independentGroups[g].size();
-        for(size_t m=0; m < memberCount; ++m)
-            groupMemberBuff.push_back(independentGroups[g][m]);
-    }
+    std::vector<GLuint> groupMemberBuff(
+        nodeGroups().gpuGroupsBuffer().begin(),
+        nodeGroups().gpuGroupsBuffer().end());
+
     updateCudaGroupMembers(groupMemberBuff);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
     size_t membersSize = sizeof(decltype(groupMemberBuff.front())) * groupMemberBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMemberBuff.data(), GL_STATIC_COPY);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMemberBuff.data(), GL_STATIC_COPY);    
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     groupMemberBuff.clear();
     groupMemberBuff.shrink_to_fit();
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void GpuMesh::updateVerticesFromCpu()
 {
-#ifdef NDEBUG
     size_t vertCount = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
@@ -245,7 +241,6 @@ void GpuMesh::updateVerticesFromCpu()
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-#endif
 }
 
 void GpuMesh::updateVerticesFromGlsl()

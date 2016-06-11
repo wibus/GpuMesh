@@ -21,6 +21,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.h
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.h
     ${GpuMesh_SRC_DIR}/DataStructures/MeshCrew.h
+    ${GpuMesh_SRC_DIR}/DataStructures/NodeGroups.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptionMap.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.h
     ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedralizer.h
@@ -143,6 +144,7 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/GpuMesh.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/MeshCrew.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/NodeGroups.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
@@ -290,13 +292,6 @@ SET(GpuMesh_FRAGMENT_SHADERS
     ${GpuMesh_GLSL_DIR}/fragment/Grain.frag)
 
 # Compute shaders
-SET(GpuMesh_BOUNDARY_SHADERS
-    ${GpuMesh_GLSL_DIR}/compute/Boundary/Free.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Boundary/Box.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Boundary/Shell.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Boundary/Sphere.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Boundary/Pipe.glsl)
-
 SET(GpuMesh_DISCRETIZING_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Sampling/Base.glsl
     ${GpuMesh_GLSL_DIR}/compute/Sampling/Dummy.glsl
@@ -338,7 +333,6 @@ SET(GpuMesh_SMOOTHING_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/Utils.glsl)
 
 SET(GpuMesh_COMPUTE_SHADERS
-    ${GpuMesh_BOUNDARY_SHADERS}
     ${GpuMesh_DISCRETIZING_SHADERS}
     ${GpuMesh_MEASURING_SHADERS}
     ${GpuMesh_EVALUATING_SHADERS}

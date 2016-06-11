@@ -9,7 +9,9 @@
 #include <chrono>
 
 #include "Boundaries/AbstractBoundary.h"
+#include "DataStructures/GpuMesh.h"
 #include "DataStructures/MeshCrew.h"
+#include "DataStructures/NodeGroups.h"
 #include "Samplers/AbstractSampler.h"
 #include "Measurers/AbstractMeasurer.h"
 #include "Evaluators/AbstractEvaluator.h"
@@ -48,9 +50,6 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    std::vector<uint> vIds(mesh.verts.size());
-    std::iota(std::begin(vIds), std::end(vIds), 0);
-
     bool isTopoEnabled = crew.topologist()
             .needTopologicalModifications(mesh);
 
@@ -62,13 +61,13 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
             verboseCuda = false;
             crew.topologist().restructureMesh(mesh, crew);
             verboseCuda = true;
-
-            vIds.resize(mesh.verts.size());
-            std::iota(std::begin(vIds), std::end(vIds), 0);
         }
 
         while(evaluateMeshQualitySerial(mesh, crew))
-            smoothVertices(mesh, crew, vIds);
+        {
+            smoothVertices(mesh, crew,
+                mesh.nodeGroups().serialGroup());
+        }
 
         if(isTopoEnabled)
             _smoothPassId = COMPARE_PASS_ID;
@@ -84,14 +83,12 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    // TODO : Use a thread pool
-    uint threadCount = thread::hardware_concurrency();
-
-    std::mutex mutex;
-    std::condition_variable cv;
-
     bool isTopoEnabled = crew.topologist()
             .needTopologicalModifications(mesh);
+
+    // TODO : Use a thread pool
+    uint threadCount = thread::hardware_concurrency();    
+    mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
 
     _smoothPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityThread(mesh, crew))
@@ -105,6 +102,8 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
 
         while(evaluateMeshQualityThread(mesh, crew))
         {
+            std::mutex mutex;
+            std::condition_variable cv;
             std::atomic<int> done( 0 );
             std::atomic<int> step( 0 );
 
@@ -112,18 +111,11 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
             for(uint t=0; t < threadCount; ++t)
             {
                 workers.push_back(thread([&, t]() {
-                    size_t groupCount = mesh.independentGroups.size();
+                    size_t groupCount = mesh.nodeGroups().count();
                     for(size_t g=0; g < groupCount; ++g)
                     {
-                        const std::vector<uint>& group =
-                                mesh.independentGroups[g];
-
-                        size_t groupSize = group.size();
-                        std::vector<uint> vIds(
-                            group.begin() + (groupSize * t) / threadCount,
-                            group.begin() + (groupSize * (t+1)) / threadCount);
-
-                        smoothVertices(mesh, crew, vIds);
+                        smoothVertices(mesh, crew,
+                            mesh.nodeGroups().parallelGroups()[g].allDispatchedNodes[t]);
 
                         if(g < groupCount-1)
                         {
@@ -173,9 +165,10 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     // Note (2016-04-04) : This trick doesn't seem to be significant anymore...
     //mesh.updateVerticesFromCpu();
 
-    vector<IndependentDispatch> dispatches;
-    organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
-    size_t dispatchCount = dispatches.size();
+    size_t groupCount = mesh.nodeGroups().count();
+    uint threadCount = thread::hardware_concurrency();
+    mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
+    mesh.nodeGroups().setGpuWorkgroupSize(WORKGROUP_SIZE);
 
     _vertSmoothProgram.pushProgram();
     crew.setPluginGlslUniforms(mesh, _vertSmoothProgram);
@@ -197,26 +190,153 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
             mesh.updateGpuTopology();
             verboseCuda = true;
 
-            organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
-            dispatchCount = dispatches.size();
+            groupCount = mesh.nodeGroups().count();
         }
 
         while(evaluateMeshQualityGlsl(mesh, crew))
         {
+            std::mutex mutex;
+            std::condition_variable groupCv;
+            std::condition_variable memcpyCv;
+            std::atomic<int> moveDone( 0 );
+            std::atomic<int> stepDone( 0 );
+            std::atomic<bool> memcpyDone( false );
+
+            vector<thread> workers;
+            for(uint t=0; t < threadCount; ++t)
+            {
+                workers.push_back(thread([&, t]() {
+                    size_t groupCount = mesh.nodeGroups().count();
+                    for(size_t g=0; g < groupCount; ++g)
+                    {
+                        const NodeGroups::ParallelGroup& group =
+                            mesh.nodeGroups().parallelGroups()[g];
+
+                        smoothVertices(mesh, crew,
+                            group.cpuOnlyDispatchedNodes[t]);
+
+                        if(g < groupCount)
+                        {
+                            std::unique_lock<std::mutex> lk(mutex);
+                            if(moveDone.fetch_add( 1 ) == threadCount)
+                            {
+                                ++stepDone;
+                                moveDone.store( 0 );
+                                memcpyDone = false;
+                                groupCv.notify_all();
+                            }
+                            else
+                            {
+                                groupCv.wait(lk, [&](){ return stepDone > g; });
+                            }
+
+                            memcpyCv.wait(lk, [&](){ return memcpyDone.load(); });
+                        }
+                    }
+                }));
+            }
+
             _vertSmoothProgram.pushProgram();
             mesh.bindShaderStorageBuffers();
-
-            for(size_t d=0; d < dispatchCount; ++d)
+            for(size_t g=0; g < groupCount; ++g)
             {
-                const IndependentDispatch& dispatch = dispatches[d];
-                _vertSmoothProgram.setInt("GroupBase", dispatch.base);
-                _vertSmoothProgram.setInt("GroupSize", dispatch.size);
+                const NodeGroups::ParallelGroup& group =
+                        mesh.nodeGroups().parallelGroups()[g];
+
+                const NodeGroups::GpuDispatch& dispatch = group.gpuDispatch;
+                _vertSmoothProgram.setInt("GroupBase", dispatch.gpuBufferBase);
+                _vertSmoothProgram.setInt("GroupSize", dispatch.gpuBufferSize);
 
                 glDispatchCompute(dispatch.workgroupCount, 1, 1);
                 glMemoryBarrier(GL_ALL_BARRIER_BITS);
-            }
 
+
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER,
+                             mesh.glBuffer(EMeshBuffer::VERT));
+
+                // Fetch subsurface vertex positions from GPU
+                size_t subsurfaceSize =
+                        group.subsurfaceRange.end -
+                        group.subsurfaceRange.begin;
+
+                if(subsurfaceSize > 0)
+                {
+                    subsurfaceSize *= sizeof(GpuVert);
+                    size_t subsurfaceBase = group.subsurfaceRange.begin * sizeof(GpuVert);
+                    GpuVert* boundVerts = static_cast<GpuVert*>(
+                        glMapBufferRange(GL_SHADER_STORAGE_BUFFER,
+                            subsurfaceBase, subsurfaceSize,
+                            GL_MAP_READ_BIT));
+
+                    for(size_t vId = group.subsurfaceRange.begin, bId=0;
+                        vId < group.subsurfaceRange.end; ++vId, ++bId)
+                    {
+                        MeshVert vert(boundVerts[bId]);
+                        mesh.verts[vId] = vert;
+                    }
+
+                    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+                }
+
+
+                // Synchronize with CPU workers
+                if(g < groupCount)
+                {
+                    std::unique_lock<std::mutex> lk(mutex);
+                    if(moveDone.fetch_add( 1 ) == threadCount)
+                    {
+                        ++stepDone;
+                        moveDone.store( 0 );
+                        memcpyDone = false;
+                        groupCv.notify_all();
+                    }
+                    else
+                    {
+                        groupCv.wait(lk, [&](){ return stepDone > g; });
+                    }
+                }
+
+
+                // Push boundary vertex positions to GPU
+                size_t boundarySize =
+                        group.boundaryRange.end -
+                        group.boundaryRange.begin;
+
+                if(boundarySize > 0)
+                {
+                    boundarySize *= sizeof(GpuVert);
+                    size_t boundaryBase = group.boundaryRange.begin * sizeof(GpuVert);
+                    GpuVert* boundVerts = static_cast<GpuVert*>(
+                        glMapBufferRange(GL_SHADER_STORAGE_BUFFER,
+                            boundaryBase, boundarySize,
+                            GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT));
+
+                    for(size_t vId = group.boundaryRange.begin, bId=0;
+                        vId < group.boundaryRange.end; ++vId, ++bId)
+                    {
+                        GpuVert vert(mesh.verts[vId]);
+                        boundVerts[bId] = vert;
+                    }
+
+                    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+                }
+
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+                glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+
+                // Wake-up threads
+                mutex.lock();
+                memcpyDone = true;
+                mutex.unlock();
+                memcpyCv.notify_all();
+            }
             _vertSmoothProgram.popProgram();
+
+            for(uint t=0; t < threadCount; ++t)
+            {
+                workers[t].join();
+            }
         }
 
         if(isTopoEnabled)
@@ -234,12 +354,13 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    mesh.boundary()->installCudaPlugIn();
+    mesh.boundary().installCudaPlugIn();
     _installCudaSmoother();
 
-    vector<IndependentDispatch> dispatches;
-    organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
-    size_t dispatchCount = dispatches.size();
+    size_t groupCount = mesh.nodeGroups().count();
+    uint threadCount = thread::hardware_concurrency();
+    mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
+    mesh.nodeGroups().setGpuWorkgroupSize(WORKGROUP_SIZE);
 
     bool isTopoEnabled = crew.topologist()
             .needTopologicalModifications(mesh);
@@ -256,16 +377,17 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
             mesh.updateGpuTopology();
             verboseCuda = true;
 
-            organizeDispatches(mesh, WORKGROUP_SIZE, dispatches);
-            dispatchCount = dispatches.size();
+            groupCount = mesh.nodeGroups().count();
         }
 
         while(evaluateMeshQualityCuda(mesh, crew))
         {
-            for(size_t d=0; d < dispatchCount; ++d)
-            {
-                const IndependentDispatch& dispatch = dispatches[d];
-                smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
+            for(size_t g=0; g < groupCount; ++g)
+            {                
+                const NodeGroups::GpuDispatch& dispatch =
+                    mesh.nodeGroups().parallelGroups()[g].gpuDispatch;
+                //const IndependentDispatch& dispatch = dispatches[d];
+                //smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
             }
         }
 
@@ -285,7 +407,6 @@ void AbstractVertexWiseSmoother::initializeProgram(
         const MeshCrew& crew)
 {
     if(_initialized &&
-       _modelBoundsShader == mesh.boundary()->shaderName() &&
        _samplingShader == crew.sampler().samplingShader() &&
        _evaluationShader == crew.evaluator().evaluationShader() &&
        _measureShader == crew.measurer().measureShader())
@@ -295,7 +416,6 @@ void AbstractVertexWiseSmoother::initializeProgram(
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractVertexWiseSmoother"));
 
-    _modelBoundsShader = mesh.boundary()->shaderName();
     _samplingShader = crew.sampler().samplingShader();
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();

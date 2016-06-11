@@ -12,7 +12,6 @@ const glm::dvec3 PipeBoundary::EXT_YPOS_CENTER(-1,  0.5, 0.0);
 
 PipeBoundary::PipeBoundary() :
     AbstractBoundary("Pipe",
-        ":/glsl/compute/Boundary/Pipe.glsl",
         installCudaPipeBoundary)
 {
     volume()->addFace(&_cylinderFace);

@@ -13,7 +13,6 @@ const double SphereBoundary::RADIUS = 1.0;
 
 SphereBoundary::SphereBoundary() :
     AbstractBoundary("Sphere",
-        ":/glsl/compute/Boundary/Sphere.glsl",
         installCudaSphereBoundary)
 {
     volume()->addFace(&_face);

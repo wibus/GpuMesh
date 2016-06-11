@@ -21,6 +21,7 @@ namespace cellar
 class AbstractBoundary;
 class AbstractConstraint;
 class OptimizationPlot;
+class NodeGroups;
 
 
 struct MeshVert
@@ -287,7 +288,10 @@ public:
 
     virtual void printPropperties(OptimizationPlot& plot) const;
 
-    std::shared_ptr<AbstractBoundary> boundary() const;
+
+    NodeGroups& nodeGroups() const;
+
+    AbstractBoundary& boundary() const;
     void setBoundary(const std::shared_ptr<AbstractBoundary>& boundary);
 
 
@@ -298,36 +302,27 @@ public:
     std::vector<MeshHex>  hexs;
     std::vector<MeshTopo> topos;
 
-    std::vector<std::vector<uint>> independentGroups;
-
 
 protected:
     virtual void compileNeighborhoods();
     virtual void addEdge(int firstVert,
                          int secondVert);
 
-
-    /// @brief Independent vertex groups compilation
-    /// Compiles independent vertex groups that is used by parallel smoothing
-    /// algorithms to ensure that no two _adjacent_ vertices are moved at the
-    /// same time. Independent vertices are vertices that do not share a common
-    /// element. This is more strict than prohibiting edge existance.
-    ///
-    /// A simple graph coloring scheme is used to generate the groups. The
-    /// algorithm works well with connected and highly disconnected graphs and
-    /// show a linear complexity in either case : O(n*d), where _n_ is the
-    /// number of vertices and _d_ is the 'mean' vertex degree.
-    virtual void compileIndependentGroups();
-
+    std::shared_ptr<NodeGroups> _nodeGroups;
     std::shared_ptr<AbstractBoundary> _boundary;
 };
 
 
 
 // IMPLEMENTATION //
-inline std::shared_ptr<AbstractBoundary> Mesh::boundary() const
+inline NodeGroups& Mesh::nodeGroups() const
 {
-    return _boundary;
+    return *_nodeGroups;
+}
+
+inline AbstractBoundary& Mesh::boundary() const
+{
+    return *_boundary;
 }
 
 #endif // GPUMESH_MESH

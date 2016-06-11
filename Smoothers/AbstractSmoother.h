@@ -81,11 +81,6 @@ protected:
             const Mesh& mesh,
             OptimizationPlot& plot) const = 0;
 
-    virtual void organizeDispatches(
-            const Mesh& mesh,
-            size_t workgroupSize,
-            std::vector<IndependentDispatch>& dispatches) const;
-
     virtual bool isSmoothable(
             const Mesh& mesh,
             size_t vId) const;

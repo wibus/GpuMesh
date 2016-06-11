@@ -6,9 +6,6 @@ uniform float Beta;
 uniform float Gamma;
 uniform float Delta;
 
-// Boundaries
-vec3 snapToBoundary(int boundaryID, vec3 pos);
-
 // Smoothing Helper
 float computeLocalElementSize(in uint vId);
 float patchQuality(in uint vId);
@@ -28,8 +25,6 @@ void smoothVert(uint vId)
     // Initialize node shift distance
     float nodeShift = localSize * LocalSizeToNodeShift;
 
-
-    Topo topo = topos[vId];
     vec3 pos = verts[vId].p;
     vec4 vo = vec4(pos, patchQuality(vId));
 
@@ -49,13 +44,10 @@ void smoothVert(uint vId)
         {
             // Since 'pos' is a reference on vertex's position
             // modifing its value here should be seen by the evaluator
-            if(topo.type > 0)
-                verts[vId].p = snapToBoundary(topo.type, vec3(simplex[p]));
-            else
-                verts[vId].p = vec3(simplex[p]);
+            verts[vId].p = vec3(simplex[p]);
 
             // Compute patch quality
-            simplex[p] = vec4(verts[vId].p, patchQuality(vId));
+            simplex[p].w = patchQuality(vId);
         }
 
         // Mini bubble sort
@@ -85,7 +77,6 @@ void smoothVert(uint vId)
 
             // Reflect
             verts[vId].p = c + Alpha*(c - vec3(simplex[0]));
-            if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
             float fr = f = patchQuality(vId);
 
             vec3 xr = verts[vId].p;
@@ -94,7 +85,6 @@ void smoothVert(uint vId)
             if(simplex[3].w < fr)
             {
                 verts[vId].p = c + Gamma*(verts[vId].p - c);
-                if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                 float fe = f = patchQuality(vId);
 
                 if(fe <= fr)
@@ -110,14 +100,12 @@ void smoothVert(uint vId)
                 if(fr > simplex[0].w)
                 {
                     verts[vId].p = c + Beta*(vec3(xr) - c);
-                    if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                     f = patchQuality(vId);
                 }
                 // Inside
                 else
                 {
                     verts[vId].p = c + Beta*(vec3(simplex[0]) - c);
-                    if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                     f = patchQuality(vId);
                 }
             }
@@ -156,8 +144,5 @@ void smoothVert(uint vId)
         }
     }
 
-    if(topo.type > 0)
-        verts[vId].p = snapToBoundary(topo.type, vec3(simplex[3]));
-    else
-        verts[vId].p = vec3(simplex[3]);
+    verts[vId].p = vec3(simplex[3]);
 }
