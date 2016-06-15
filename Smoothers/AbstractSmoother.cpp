@@ -305,7 +305,7 @@ void AbstractSmoother::benchmark(
                 mesh = meshBackup;
                 mesh.updateVerticesFromCpu();
                 if(topologist.isEnabled())
-                    mesh.updateGpuTopology();
+                    mesh.compileTopology();
 
                 if(toggleTopologyModifications)
                 {

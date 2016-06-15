@@ -1,12 +1,8 @@
 #include "BoxBoundary.h"
 
 
-void installCudaBoxBoundary();
-
-
 BoxBoundary::BoxBoundary() :
-    AbstractBoundary("Box",
-        installCudaBoxBoundary),
+    AbstractBoundary("Box"),
 
     _v0(-1, glm::dvec3(-1, -1, -1)),
     _v1(-2, glm::dvec3( 1, -1, -1)),

@@ -1,9 +1,6 @@
 #include "PipeBoundary.h"
 
 
-void installCudaPipeBoundary();
-
-
 const double PipeBoundary::PIPE_RADIUS = 0.3;
 const glm::dvec3 PipeBoundary::EXT_FACE_NORMAL(-1, 0, 0);
 const glm::dvec3 PipeBoundary::EXT_YNEG_CENTER(-1, -0.5, 0.0);
@@ -11,8 +8,7 @@ const glm::dvec3 PipeBoundary::EXT_YPOS_CENTER(-1,  0.5, 0.0);
 
 
 PipeBoundary::PipeBoundary() :
-    AbstractBoundary("Pipe",
-        installCudaPipeBoundary)
+    AbstractBoundary("Pipe")
 {
     volume()->addFace(&_cylinderFace);
     volume()->addFace(&_yNegDiskFace);

@@ -26,7 +26,7 @@ void smoothCudaElements(
         size_t workGroupCount,
         size_t workgroupSize);
 void updateCudaSmoothedElementsVertices(
-        const IndependentDispatch& dispatch,
+        const NodeGroups::GpuDispatch& dispatch,
         size_t workgroupSize);
 
 

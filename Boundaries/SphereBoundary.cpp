@@ -2,18 +2,12 @@
 
 #include <CellarWorkbench/Misc/Log.h>
 
-using namespace cellar;
-
-
-void installCudaSphereBoundary();
-
 
 const double SphereBoundary::RADIUS = 1.0;
 
 
 SphereBoundary::SphereBoundary() :
-    AbstractBoundary("Sphere",
-        installCudaSphereBoundary)
+    AbstractBoundary("Sphere")
 {
     volume()->addFace(&_face);
 }

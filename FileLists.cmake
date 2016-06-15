@@ -353,15 +353,6 @@ SET(GpuMesh_CUDA_DIR
     ${GpuMesh_SRC_DIR}/resources/cuda)
 
 # Compute shaders
-SET(GpuMesh_BOUNDARY_CUDA
-    ${GpuMesh_CUDA_DIR}/Boundary/Base.cuh
-    ${GpuMesh_CUDA_DIR}/Boundary/Base.cu
-    ${GpuMesh_CUDA_DIR}/Boundary/Free.cu
-    ${GpuMesh_CUDA_DIR}/Boundary/Box.cu
-    ${GpuMesh_CUDA_DIR}/Boundary/Shell.cu
-    ${GpuMesh_CUDA_DIR}/Boundary/Sphere.cu
-    ${GpuMesh_CUDA_DIR}/Boundary/Pipe.cu)
-
 SET(GpuMesh_DISCRETIZING_CUDA
     ${GpuMesh_CUDA_DIR}/Sampling/Base.cuh
     ${GpuMesh_CUDA_DIR}/Sampling/Base.cu
@@ -406,7 +397,6 @@ SET(GpuMesh_SMOOTHING_CUDA
 
 # CUDA sources
 SET(GpuMesh_CUDA_SOURCES
-    ${GpuMesh_BOUNDARY_CUDA}
     ${GpuMesh_DISCRETIZING_CUDA}
     ${GpuMesh_EVALUATING_CUDA}
     ${GpuMesh_MEASURING_CUDA}

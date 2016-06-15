@@ -24,9 +24,15 @@ using namespace cellar;
 // CUDA Drivers
 extern bool verboseCuda;
 void smoothCudaVertices(
-        const IndependentDispatch& dispatch,
+        const NodeGroups::GpuDispatch& dispatch,
         size_t workgroupSize,
         float moveCoeff);
+void fetchCudaSubsurfaceVertices(
+        std::vector<MeshVert>& verts,
+        const NodeGroups::ParallelGroup& group);
+void sendCudaBoundaryVertices(
+        const std::vector<MeshVert>& verts,
+        const NodeGroups::ParallelGroup& group);
 
 
 const size_t AbstractVertexWiseSmoother::WORKGROUP_SIZE = 256;
@@ -157,6 +163,11 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
 {
     initializeProgram(mesh, crew);
 
+    _vertSmoothProgram.pushProgram();
+    crew.setPluginGlslUniforms(mesh, _vertSmoothProgram);
+    setVertexProgramUniforms(mesh, _vertSmoothProgram);
+    _vertSmoothProgram.popProgram();
+
     // There's no need to upload vertices again, but absurdly
     // this makes subsequent passes much more faster...
     // I guess it's because the driver put buffer back on GPU.
@@ -169,11 +180,6 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     uint threadCount = thread::hardware_concurrency();
     mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
     mesh.nodeGroups().setGpuWorkgroupSize(WORKGROUP_SIZE);
-
-    _vertSmoothProgram.pushProgram();
-    crew.setPluginGlslUniforms(mesh, _vertSmoothProgram);
-    setVertexProgramUniforms(mesh, _vertSmoothProgram);
-    _vertSmoothProgram.popProgram();
 
     bool isTopoEnabled = crew.topologist()
             .needTopologicalModifications(mesh);
@@ -206,7 +212,6 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
             for(uint t=0; t < threadCount; ++t)
             {
                 workers.push_back(thread([&, t]() {
-                    size_t groupCount = mesh.nodeGroups().count();
                     for(size_t g=0; g < groupCount; ++g)
                     {
                         const NodeGroups::ParallelGroup& group =
@@ -297,7 +302,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
                 }
 
 
-                // Push boundary vertex positions to GPU
+                // Send boundary vertex positions to GPU
                 size_t boundarySize =
                         group.boundaryRange.end -
                         group.boundaryRange.begin;
@@ -354,8 +359,8 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    mesh.boundary().installCudaPlugIn();
     _installCudaSmoother();
+    crew.setPluginCudaUniforms(mesh);
 
     size_t groupCount = mesh.nodeGroups().count();
     uint threadCount = thread::hardware_concurrency();
@@ -378,16 +383,95 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
             verboseCuda = true;
 
             groupCount = mesh.nodeGroups().count();
-        }
+        }        
 
         while(evaluateMeshQualityCuda(mesh, crew))
         {
+            std::mutex mutex;
+            std::condition_variable groupCv;
+            std::condition_variable memcpyCv;
+            std::atomic<int> moveDone( 0 );
+            std::atomic<int> stepDone( 0 );
+            std::atomic<bool> memcpyDone( false );
+
+            vector<thread> workers;
+            for(uint t=0; t < threadCount; ++t)
+            {
+                workers.push_back(thread([&, t]() {
+                    for(size_t g=0; g < groupCount; ++g)
+                    {
+                        const NodeGroups::ParallelGroup& group =
+                            mesh.nodeGroups().parallelGroups()[g];
+
+                        smoothVertices(mesh, crew,
+                            group.cpuOnlyDispatchedNodes[t]);
+
+                        if(g < groupCount)
+                        {
+                            std::unique_lock<std::mutex> lk(mutex);
+                            if(moveDone.fetch_add( 1 ) == threadCount)
+                            {
+                                ++stepDone;
+                                moveDone.store( 0 );
+                                memcpyDone = false;
+                                groupCv.notify_all();
+                            }
+                            else
+                            {
+                                groupCv.wait(lk, [&](){ return stepDone > g; });
+                            }
+
+                            memcpyCv.wait(lk, [&](){ return memcpyDone.load(); });
+                        }
+                    }
+                }));
+            }
+
+
             for(size_t g=0; g < groupCount; ++g)
-            {                
-                const NodeGroups::GpuDispatch& dispatch =
-                    mesh.nodeGroups().parallelGroups()[g].gpuDispatch;
-                //const IndependentDispatch& dispatch = dispatches[d];
-                //smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
+            {
+                const NodeGroups::ParallelGroup& group =
+                        mesh.nodeGroups().parallelGroups()[g];
+
+                const NodeGroups::GpuDispatch& dispatch = group.gpuDispatch;
+                smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
+
+
+                // Fetch subsurface vertex positions from GPU
+                fetchCudaSubsurfaceVertices(mesh.verts, group);
+
+                // Synchronize with CPU workers
+                if(g < groupCount)
+                {
+                    std::unique_lock<std::mutex> lk(mutex);
+                    if(moveDone.fetch_add( 1 ) == threadCount)
+                    {
+                        ++stepDone;
+                        moveDone.store( 0 );
+                        memcpyDone = false;
+                        groupCv.notify_all();
+                    }
+                    else
+                    {
+                        groupCv.wait(lk, [&](){ return stepDone > g; });
+                    }
+                }
+
+                // Send boundary vertex positions to GPU
+                sendCudaBoundaryVertices(mesh.verts, group);
+
+
+                // Wake-up threads
+                mutex.lock();
+                memcpyDone = true;
+                mutex.unlock();
+                memcpyCv.notify_all();
+            }
+
+
+            for(uint t=0; t < threadCount; ++t)
+            {
+                workers[t].join();
             }
         }
 
@@ -436,9 +520,6 @@ void AbstractVertexWiseSmoother::initializeProgram(
     }
 
     _vertSmoothProgram.link();
-    _vertSmoothProgram.pushProgram();
-    crew.setPluginGlslUniforms(mesh, _vertSmoothProgram);
-    _vertSmoothProgram.popProgram();
 
     /*
     const GlProgramBinary& binary = _vertSmoothProgram.getBinary();

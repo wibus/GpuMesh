@@ -1,12 +1,8 @@
 #include "BoundaryFree.h"
 
 
-void installCudaBoundaryFree();
-
-
 BoundaryFree::BoundaryFree() :
-    AbstractBoundary("Free",
-        installCudaBoundaryFree)
+    AbstractBoundary("Free")
 {
 }
 

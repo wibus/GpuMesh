@@ -28,8 +28,6 @@ __device__ void nelderMeadSmoothVert(uint vId)
     // Initialize node shift distance
     float nodeShift = localSize * NMLocalSizeToNodeShift;
 
-
-    Topo topo = topos[vId];
     vec3 pos = verts[vId].p;
     vec4 vo(pos, patchQuality(vId));
 
@@ -49,10 +47,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
         {
             // Since 'pos' is a reference on vertex's position
             // modifing its value here should be seen by the evaluator
-            if(topo.type > 0)
-                verts[vId].p = snapToBoundary(topo.type, vec3(simplex[p]));
-            else
-                verts[vId].p = vec3(simplex[p]);
+            verts[vId].p = vec3(simplex[p]);
 
             // Compute patch quality
             simplex[p] = vec4(verts[vId].p, patchQuality(vId));
@@ -85,7 +80,6 @@ __device__ void nelderMeadSmoothVert(uint vId)
 
             // Reflect
             verts[vId].p = c + NMAlpha*(c - vec3(simplex[0]));
-            if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
             float fr = f = patchQuality(vId);
 
             vec3 xr = verts[vId].p;
@@ -94,7 +88,6 @@ __device__ void nelderMeadSmoothVert(uint vId)
             if(simplex[3].w < fr)
             {
                 verts[vId].p = c + NMGamma*(verts[vId].p - c);
-                if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                 float fe = f = patchQuality(vId);
 
                 if(fe <= fr)
@@ -110,14 +103,12 @@ __device__ void nelderMeadSmoothVert(uint vId)
                 if(fr > simplex[0].w)
                 {
                     verts[vId].p = c + NMBeta*(vec3(xr) - c);
-                    if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                     f = patchQuality(vId);
                 }
                 // Inside
                 else
                 {
                     verts[vId].p = c + NMBeta*(vec3(simplex[0]) - c), 0;
-                    if(topo.type > 0) verts[vId].p = snapToBoundary(topo.type, verts[vId].p);
                     f = patchQuality(vId);
                 }
             }
@@ -156,10 +147,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
         }
     }
 
-    if(topo.type > 0)
-        verts[vId].p = snapToBoundary(topo.type, vec3(simplex[3]));
-    else
-        verts[vId].p = vec3(simplex[3]);
+    verts[vId].p = vec3(simplex[3]);
 }
 
 __device__ smoothVertFct nelderMeadSmoothVertPtr = nelderMeadSmoothVert;

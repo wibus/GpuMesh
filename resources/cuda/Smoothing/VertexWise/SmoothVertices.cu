@@ -1,4 +1,5 @@
 #include "Base.cuh"
+#include <DataStructures/NodeGroups.h>
 #include <Smoothers/AbstractSmoother.h>
 
 
@@ -24,10 +25,10 @@ __global__ void smoothVerticesCudaMain()
 
 
 // CUDA Drivers
-void setupCudaIndependentDispatch(const IndependentDispatch& dispatch);
+void setupCudaIndependentDispatch(const NodeGroups::GpuDispatch& dispatch);
 
 void smoothCudaVertices(
-        const IndependentDispatch& dispatch,
+        const NodeGroups::GpuDispatch& dispatch,
         size_t workgroupSize,
         float moveCoeff)
 {

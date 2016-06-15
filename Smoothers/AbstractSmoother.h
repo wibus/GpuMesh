@@ -12,20 +12,6 @@
 class MeshCrew;
 
 
-struct IndependentDispatch
-{
-    IndependentDispatch(uint base, uint size, uint wgc) :
-        base(base), size(size), workgroupCount(wgc) {}
-
-    // Independent set range
-    uint base;
-    uint size;
-
-    // Compute Dispatch Size
-    uint workgroupCount;
-};
-
-
 class AbstractSmoother
 {
 protected:
