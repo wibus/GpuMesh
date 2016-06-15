@@ -13,6 +13,7 @@ __device__ float hexQuality(const Hex& hex);
 
 
 __device__ int qualMin;
+__device__ float invLogSum;
 __device__ int* means;
 
 __constant__ uint hists_length;
@@ -26,6 +27,7 @@ __device__ void commit(uint gid, float q)
 {
     atomicMin(&qualMin, int(q * MIN_MAX));
     atomicAdd(&means[gid], int(q * MEAN_MAX + 0.5));
+    atomicAdd(&invLogSum, log(1.0 / q));
 
     int bucket = int(max(q * hists_length, 0.0));
     atomicAdd(&hists[bucket], 1);
@@ -64,6 +66,9 @@ void evaluateCudaMeshQuality(
     int h_qualMin = MIN_MAX;
     cudaMemcpyToSymbol(qualMin, &h_qualMin, sizeof(qualMin));
 
+    float h_invLogSum = 0.0f;
+    cudaMemcpyToSymbol(invLogSum, &h_invLogSum, sizeof(invLogSum));
+
 
     int* d_means = nullptr;
     int* h_means = new int[workgroupCount];
@@ -92,11 +97,15 @@ void evaluateCudaMeshQuality(
     cudaCheckErrors("CUDA error in evaluation");
 
     cudaMemcpyFromSymbol(&h_qualMin, qualMin, sizeof(h_qualMin));
+    cudaMemcpyFromSymbol(&h_invLogSum, invLogSum, sizeof(h_invLogSum));
     cudaMemcpy(h_means, d_means, meansSize, cudaMemcpyDeviceToHost);
     cudaMemcpy(h_hists, d_hists, histsSize, cudaMemcpyDeviceToHost);
 
     // Get minimum quality
     histogram.setMinimumQuality(h_qualMin / double(MIN_MAX));
+
+    // Get inverse log quality sum
+    histogram.setInvQualityLogSum(h_invLogSum);
 
     // Combine workgroups' mean
     double qualSum = 0.0;

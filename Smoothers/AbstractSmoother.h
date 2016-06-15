@@ -89,10 +89,12 @@ protected:
     double _gainThreshold;
 
     int _smoothPassId;
-    double _lastPassAvgQuality;
     double _lastPassMinQuality;
-    double _lastIterationAvgQuality;
+    double _lastPassAvgQuality;
+    double _lastPassGeomQuality;
     double _lastIterationMinQuality;
+    double _lastIterationAvgQuality;
+    double _lastIterationGeomQuality;
 
     static const int INITIAL_PASS_ID;
     static const int COMPARE_PASS_ID;

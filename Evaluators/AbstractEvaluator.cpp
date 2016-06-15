@@ -463,8 +463,10 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     //    Not to metion that using a single float accumulator gives inacurate
     // results while the workgroup specific integer accumulators gives the
     // exact same result a the double floating point CPU computations.
-    std::vector<GLint> qualBuff(1 + workgroupCount, 0);
+    GLfloat zerof = 0.0f;
+    std::vector<GLint> qualBuff(1 + 1 + workgroupCount, 0);
     qualBuff[0] = GLint(MAX_INTEGER_VALUE);
+    qualBuff[1] = reinterpret_cast<GLint&>(zerof);
     size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_DYNAMIC_READ);
@@ -518,10 +520,13 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // Get minimum quality
     histogram.setMinimumQuality(quals[0] / MAX_INTEGER_VALUE);
 
+    // Get inverse quality log sum
+    histogram.setInvQualityLogSum(reinterpret_cast<GLfloat&>(quals[1]));
+
     // Combine workgroups' mean
-    size_t i = 0;
+    size_t i = 1;
     double qualSum = 0.0;
-    while(i <= workgroupCount)
+    while(i <= workgroupCount+1)
         qualSum += quals[++i];
     histogram.setAverageQuality(
         qualSum / (MAX_QUALITY_VALUE * elemCount));
