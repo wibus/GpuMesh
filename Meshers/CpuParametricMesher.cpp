@@ -540,7 +540,7 @@ void CpuParametricMesher::insertRingStackVertices(
         static_cast<const AbstractConstraint*>(_pipeBoundary->cylinderFace()) :
         static_cast<const AbstractConstraint*>(center.y < 0.0 ? _pipeBoundary->yNegCircleEdge() :
                           _pipeBoundary->yPosCircleEdge()));
-    MeshTopo intTopo(isBoundary ?
+    MeshTopo intTopo(!isBoundary ?
         static_cast<const AbstractConstraint*>(MeshTopo::NO_BOUNDARY) :
         static_cast<const AbstractConstraint*>(center.y < 0.0 ? _pipeBoundary->yNegDiskFace() :
                           _pipeBoundary->yPosDiskFace()));
