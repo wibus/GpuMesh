@@ -709,8 +709,8 @@ void AbstractEvaluator::benchmark(
             }
             else if(impl == CUDA_IMPL_NAME)
             {
-                verboseCuda = true;
                 mesh.clearCudaMemory();
+                verboseCuda = true;
             }
 
             EvalBenchmarkStats stats;

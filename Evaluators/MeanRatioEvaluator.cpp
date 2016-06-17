@@ -81,7 +81,26 @@ double MeanRatioEvaluator::priQuality(
     double qual4 = cornerQuality(Fk4);
     double qual5 = cornerQuality(Fk5);
 
-    return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
+
+    if(qual0 <= 0.0 || qual1 <= 0.0 || qual2 <= 0.0 ||
+       qual3 <= 0.0 || qual4 <= 0.0 || qual5 <= 0.0)
+    {
+        double qualMin = qual0;
+        if(qual1 < qualMin) qualMin = qual1;
+        if(qual2 < qualMin) qualMin = qual2;
+        if(qual3 < qualMin) qualMin = qual3;
+        if(qual4 < qualMin) qualMin = qual4;
+        if(qual5 < qualMin) qualMin = qual5;
+        return qualMin;
+    }
+    else
+    {
+        double geomMean = exp( (-1.0 / 6.0) *
+            (log(1.0/qual0) + log(1.0/qual1) + log(1.0/qual2) +
+             log(1.0/qual3) + log(1.0/qual4) + log(1.0/qual5)));
+
+        return geomMean;
+    }
 }
 
 double MeanRatioEvaluator::hexQuality(
@@ -123,5 +142,26 @@ double MeanRatioEvaluator::hexQuality(
     double qual6 = cornerQuality(Fk6);
     double qual7 = cornerQuality(Fk7);
 
-    return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5 + qual6 + qual7) / 8.0;
+
+    if(qual0 <= 0.0 || qual1 <= 0.0 || qual2 <= 0.0 || qual3 <= 0.0 ||
+       qual4 <= 0.0 || qual5 <= 0.0 || qual6 <= 0.0 || qual7 <= 0.0)
+    {
+        double minQual = qual0;
+        if(qual1 < minQual) minQual = qual1;
+        if(qual2 < minQual) minQual = qual2;
+        if(qual3 < minQual) minQual = qual3;
+        if(qual4 < minQual) minQual = qual4;
+        if(qual5 < minQual) minQual = qual5;
+        if(qual6 < minQual) minQual = qual6;
+        if(qual7 < minQual) minQual = qual7;
+        return minQual;
+    }
+    else
+    {
+        double geomMean = exp( (-1.0 / 8.0) *
+            (log(1.0/qual0) + log(1.0/qual1) + log(1.0/qual2) + log(1.0/qual3) +
+             log(1.0/qual4) + log(1.0/qual5) + log(1.0/qual6) + log(1.0/qual7)));
+
+        return geomMean;
+    }
 }

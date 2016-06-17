@@ -97,7 +97,26 @@ __device__ float metricConformityPriQuality(const vec3 vp[PRI_VERTEX_COUNT], con
     float qual4 = metricConformity(Fk4, Ms4);
     float qual5 = metricConformity(Fk5, Ms5);
 
-    return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5) / 6.0;
+
+    if(qual0 <= 0.0 || qual1 <= 0.0 || qual2 <= 0.0 ||
+       qual3 <= 0.0 || qual4 <= 0.0 || qual5 <= 0.0)
+    {
+        float qualMin = qual0;
+        if(qual1 < qualMin) qualMin = qual1;
+        if(qual2 < qualMin) qualMin = qual2;
+        if(qual3 < qualMin) qualMin = qual3;
+        if(qual4 < qualMin) qualMin = qual4;
+        if(qual5 < qualMin) qualMin = qual5;
+        return qualMin;
+    }
+    else
+    {
+        float geomMean = exp( (-1.0 / 6.0) *
+            (log(1.0/qual0) + log(1.0/qual1) + log(1.0/qual2) +
+             log(1.0/qual3) + log(1.0/qual4) + log(1.0/qual5)));
+
+        return geomMean;
+    }
 }
 
 __device__ float metricConformityHexQuality(const vec3 vp[HEX_VERTEX_COUNT], const Hex& hex)
@@ -144,7 +163,28 @@ __device__ float metricConformityHexQuality(const vec3 vp[HEX_VERTEX_COUNT], con
     float qual6 = metricConformity(Fk6, Ms6);
     float qual7 = metricConformity(Fk7, Ms7);
 
-    return (qual0 + qual1 + qual2 + qual3 + qual4 + qual5 + qual6 + qual7) / 8.0;
+
+    if(qual0 <= 0.0 || qual1 <= 0.0 || qual2 <= 0.0 || qual3 <= 0.0 ||
+       qual4 <= 0.0 || qual5 <= 0.0 || qual6 <= 0.0 || qual7 <= 0.0)
+    {
+        float minQual = qual0;
+        if(qual1 < minQual) minQual = qual1;
+        if(qual2 < minQual) minQual = qual2;
+        if(qual3 < minQual) minQual = qual3;
+        if(qual4 < minQual) minQual = qual4;
+        if(qual5 < minQual) minQual = qual5;
+        if(qual6 < minQual) minQual = qual6;
+        if(qual7 < minQual) minQual = qual7;
+        return minQual;
+    }
+    else
+    {
+        float geomMean = exp( (-1.0 / 8.0) *
+            (log(1.0/qual0) + log(1.0/qual1) + log(1.0/qual2) + log(1.0/qual3) +
+             log(1.0/qual4) + log(1.0/qual5) + log(1.0/qual6) + log(1.0/qual7)));
+
+        return geomMean;
+    }
 }
 
 __device__ tetQualityFct metricConformityTetQualityPtr = metricConformityTetQuality;
