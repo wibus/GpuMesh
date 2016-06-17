@@ -164,7 +164,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         double geomGain = histogram.geometricMean() - _lastPassGeomQuality;
         //double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
 
-        continueSmoothing = geomGain > _gainThreshold;
+        continueSmoothing = (geomGain > 0) || (minGain > _gainThreshold);
 
         _lastPassAvgQuality = histogram.averageQuality();
         _lastPassMinQuality = histogram.minimumQuality();
@@ -188,7 +188,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
             double geomGain = histogram.geometricMean() - _lastIterationGeomQuality;
             //double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
 
-            continueSmoothing = geomGain > _gainThreshold;
+            continueSmoothing = (geomGain > 0) || (minGain > _gainThreshold);
         }
 
         OptimizationPass stats;
@@ -312,9 +312,6 @@ void AbstractSmoother::benchmark(
 
                 // Restore mesh vertices' initial position
                 mesh = meshBackup;
-                mesh.updateVerticesFromCpu();
-                if(topologist.isEnabled())
-                    mesh.compileTopology();
 
                 if(toggleTopologyModifications)
                 {
@@ -340,8 +337,6 @@ void AbstractSmoother::benchmark(
     if(!smoothedMesh.verts.empty())
     {
         mesh = smoothedMesh;
-        mesh.updateVerticesFromCpu();
-        mesh.updateGpuTopology();
     }
 
     // Get minimums for ratio computations

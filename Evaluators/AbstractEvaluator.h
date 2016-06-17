@@ -139,6 +139,10 @@ protected:
             double patchQuality,
             double patchWeight) const;
 
+    static const std::string SERIAL_IMPL_NAME;
+    static const std::string THREAD_IMPL_NAME;
+    static const std::string GLSL_IMPL_NAME;
+    static const std::string CUDA_IMPL_NAME;
 
     static const size_t WORKGROUP_SIZE;
     static const size_t POLYHEDRON_TYPE_COUNT;

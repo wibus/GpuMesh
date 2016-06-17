@@ -273,18 +273,26 @@ public:
     Mesh();
     virtual ~Mesh();
 
+    virtual Mesh& operator=(const Mesh& mesh);
+
     virtual void clear();
 
-    virtual void compileTopology(bool updateGpu = true);
-    virtual void updateGpuTopology();
-    virtual void updateVerticesFromCpu();
-    virtual void updateVerticesFromGlsl();
-    virtual void updateVerticesFromCuda();
+    virtual void compileTopology(bool verbose = true);
+
+    virtual void updateGlslTopology() const;
+    virtual void updateGlslVertices() const;
+    virtual void fetchGlslVertices();
+    virtual void clearGlslMemory() const;
+
+    virtual void updateCudaTopology() const;
+    virtual void updateCudaVertices() const;
+    virtual void fetchCudaVertices();
+    virtual void clearCudaMemory() const;
 
     virtual std::string meshGeometryShaderName() const;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const;
-    virtual unsigned int bufferBinding(EBufferBinding binding) const;
-    virtual void bindShaderStorageBuffers() const;
+    virtual unsigned int glBufferBinding(EBufferBinding binding) const;
+    virtual void bindGlShaderStorageBuffers() const;
 
     virtual void printPropperties(OptimizationPlot& plot) const;
 
@@ -297,10 +305,10 @@ public:
 
     std::string modelName;
     std::vector<MeshVert> verts;
+    std::vector<MeshTopo> topos;
     std::vector<MeshTet>  tets;
     std::vector<MeshPri>  pris;
     std::vector<MeshHex>  hexs;
-    std::vector<MeshTopo> topos;
 
 
 protected:

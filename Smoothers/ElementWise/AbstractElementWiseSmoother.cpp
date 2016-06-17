@@ -76,8 +76,6 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
             mesh.nodeGroups().serialGroup());
     }
 
-    mesh.updateVerticesFromCpu();
-
 
     // Deallocate vertex accumulators
     for(size_t i=0; i < vertCount; ++i)
@@ -177,8 +175,6 @@ void AbstractElementWiseSmoother::smoothMeshThread(
             workers[t].join();
         }
     }
-
-    mesh.updateVerticesFromCpu();
 */
 
     // Deallocate vertex accumulators

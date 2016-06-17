@@ -620,9 +620,6 @@ void GpuMeshCharacter::restructureMesh()
     _meshCrew->topologist().restructureMesh(
         *_mesh, *_meshCrew);
 
-    _mesh->compileTopology();
-    _mesh->updateVerticesFromCpu();
-
     updateSampling();
     updateMeshMeasures();
 }
@@ -792,9 +789,6 @@ void GpuMeshCharacter::updateSampling()
         _meshCrew->sampler().setScaling(_metricScaling);
 
         _meshCrew->sampler().setReferenceMesh(*_mesh);
-
-        // In the event that sampler updated element caches
-        _mesh->updateGpuTopology();
 
         if(_displaySamplingMesh)
             if(_renderer.get() != nullptr)

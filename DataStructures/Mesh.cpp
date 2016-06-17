@@ -137,6 +137,20 @@ Mesh::~Mesh()
 
 }
 
+Mesh& Mesh::operator=(const Mesh& mesh)
+{
+    modelName = mesh.modelName;
+
+    verts = mesh.verts;
+    topos = mesh.topos;
+    tets = mesh.tets;
+    pris = mesh.pris;
+    hexs = mesh.hexs;
+
+    _nodeGroups.reset(new NodeGroups(mesh.nodeGroups()));
+    _boundary = mesh._boundary;
+}
+
 void Mesh::clear()
 {
     verts.clear();
@@ -152,9 +166,9 @@ void Mesh::clear()
     nodeGroups().clear();
 }
 
-void Mesh::compileTopology(bool updateGpu)
+void Mesh::compileTopology(bool verbose)
 {
-    if(updateGpu)
+    if(verbose)
     {
         getLog().postMessage(new Message('I', false,
             modelName + ": Compiling mesh topology...", "Mesh"));
@@ -180,7 +194,7 @@ void Mesh::compileTopology(bool updateGpu)
     auto compileEnd = chrono::high_resolution_clock::now();
 
 
-    if(updateGpu)
+    if(verbose)
     {
         getLog().postMessage(new Message('I', false,
             "Vertice count: " + to_string(vertCount), "Mesh"));
@@ -225,22 +239,42 @@ void Mesh::compileTopology(bool updateGpu)
     }
 }
 
-void Mesh::updateGpuTopology()
+void Mesh::updateGlslTopology() const
 {
 
 }
 
-void Mesh::updateVerticesFromCpu()
+void Mesh::updateGlslVertices() const
 {
 
 }
 
-void Mesh::updateVerticesFromGlsl()
+void Mesh::fetchGlslVertices()
 {
 
 }
 
-void Mesh::updateVerticesFromCuda()
+void Mesh::clearGlslMemory() const
+{
+
+}
+
+void Mesh::updateCudaTopology() const
+{
+
+}
+
+void Mesh::updateCudaVertices() const
+{
+
+}
+
+void Mesh::fetchCudaVertices()
+{
+
+}
+
+void Mesh::clearCudaMemory() const
 {
 
 }
@@ -255,12 +289,12 @@ unsigned int Mesh::glBuffer(const EMeshBuffer&) const
     return 0;
 }
 
-unsigned int Mesh::bufferBinding(EBufferBinding binding) const
+unsigned int Mesh::glBufferBinding(EBufferBinding binding) const
 {
     return 0;
 }
 
-void Mesh::bindShaderStorageBuffers() const
+void Mesh::bindGlShaderStorageBuffers() const
 {
 
 }
