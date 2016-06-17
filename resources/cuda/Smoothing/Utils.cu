@@ -47,13 +47,6 @@ __device__ bool isSmoothableVertex(uint vId)
     if(vId >= verts_length)
         return false;
 
-    Topo topo = topos[vId];
-    if(topo.type == TOPO_FIXED)
-        return false;
-
-    if(topo.neigElemCount == 0)
-        return false;
-
     return true;
 }
 

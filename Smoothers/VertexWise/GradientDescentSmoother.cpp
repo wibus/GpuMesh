@@ -72,8 +72,6 @@ void GradientDescentSmoother::smoothVertices(
     {
         uint vId = vIds[v];
 
-        if(!isSmoothable(mesh, vId))
-            continue;
 
         // Compute local element size
         double localSize =

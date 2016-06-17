@@ -51,9 +51,6 @@ void QualityLaplaceSmoother::smoothVertices(
     {
         uint vId = vIds[v];
 
-        if(!isSmoothable(mesh, vId))
-            continue;
-
 
         // Compute patch center
         glm::dvec3 patchCenter =

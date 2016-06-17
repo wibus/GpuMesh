@@ -68,21 +68,6 @@ void AbstractSmoother::smoothMesh(
     }
 }
 
-bool AbstractSmoother::isSmoothable(
-        const Mesh& mesh,
-        size_t vId) const
-{
-    const MeshTopo& topo = mesh.topos[vId];
-    if(topo.snapToBoundary->isFixed())
-        return false;
-
-    size_t neigElemCount = topo.neighborElems.size();
-    if(neigElemCount == 0)
-        return false;
-
-    return true;
-}
-
 bool AbstractSmoother::evaluateMeshQualitySerial(Mesh& mesh,  const MeshCrew& crew)
 {
     return evaluateMeshQuality(mesh, crew, 0);

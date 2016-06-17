@@ -47,8 +47,6 @@ void SpringLaplaceSmoother::smoothVertices(
     {
         uint vId = vIds[v];
 
-        if(!isSmoothable(mesh, vId))
-            continue;
 
         glm::dvec3 patchCenter =
             crew.measurer().computeVertexEquilibrium(

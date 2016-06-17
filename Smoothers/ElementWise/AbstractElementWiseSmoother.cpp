@@ -417,9 +417,6 @@ void AbstractElementWiseSmoother::updateVertexPositions(
     {
         uint vId = vIds[v];
 
-        if(!isSmoothable(mesh, vId))
-            continue;
-
 
         glm::dvec3 pos = verts[vId].p;
         glm::dvec3 posPrim = pos;

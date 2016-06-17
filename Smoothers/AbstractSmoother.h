@@ -67,10 +67,6 @@ protected:
             const Mesh& mesh,
             OptimizationPlot& plot) const = 0;
 
-    virtual bool isSmoothable(
-            const Mesh& mesh,
-            size_t vId) const;
-
     bool evaluateMeshQualitySerial(Mesh& mesh, const MeshCrew& crew);
     bool evaluateMeshQualityThread(Mesh& mesh, const MeshCrew& crew);
     bool evaluateMeshQualityGlsl(Mesh& mesh, const MeshCrew& crew);
