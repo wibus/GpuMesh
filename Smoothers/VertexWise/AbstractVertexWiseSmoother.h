@@ -55,7 +55,6 @@ private:
     static const size_t WORKGROUP_SIZE;
 
     bool _initialized;
-    std::string _modelBoundsShader;
     std::string _samplingShader;
     std::string _measureShader;
     std::string _evaluationShader;

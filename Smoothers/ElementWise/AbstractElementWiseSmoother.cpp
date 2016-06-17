@@ -10,6 +10,7 @@
 #include "VertexAccum.h"
 #include "Boundaries/AbstractBoundary.h"
 #include "DataStructures/MeshCrew.h"
+#include "DataStructures/NodeGroups.h"
 #include "Samplers/AbstractSampler.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Measurers/AbstractMeasurer.h"
@@ -25,7 +26,7 @@ void smoothCudaElements(
         size_t workGroupCount,
         size_t workgroupSize);
 void updateCudaSmoothedElementsVertices(
-        const IndependentDispatch& dispatch,
+        const NodeGroups::GpuDispatch& dispatch,
         size_t workgroupSize);
 
 
@@ -60,12 +61,9 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
     for(size_t i=0; i < vertCount; ++i)
         _vertexAccums[i] = new NotThreadSafeVertexAccum();
 
-
     size_t tetCount = mesh.tets.size();
     size_t priCount = mesh.pris.size();
     size_t hexCount = mesh.hexs.size();
-    std::vector<uint> vIds(vertCount);
-    std::iota(std::begin(vIds), std::end(vIds), 0);
 
     _smoothPassId = 0;
     while(evaluateMeshQualitySerial(mesh, crew))
@@ -74,10 +72,9 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
         smoothPris(mesh, crew, 0, priCount);
         smoothHexs(mesh, crew, 0, hexCount);
 
-        updateVertexPositions(mesh, crew, vIds);
+        updateVertexPositions(mesh, crew,
+            mesh.nodeGroups().serialGroup());
     }
-
-    mesh.updateVerticesFromCpu();
 
 
     // Deallocate vertex accumulators
@@ -96,10 +93,12 @@ void AbstractElementWiseSmoother::smoothMeshThread(
     for(size_t i=0; i < vertCount; ++i)
         _vertexAccums[i] = new ThreadSafeVertexAccum();
 
-
+/*
     // TODO : Use a thread pool
-    size_t groupCount = mesh.independentGroups.size();
-    uint threadCount = thread::hardware_concurrency();
+    size_t groupCount = mesh.nodeGroups.size();
+    uint threadCount = thread::hardware_concurrency();    
+
+    mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
 
 
     _smoothPassId = 0;
@@ -159,7 +158,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
 
                     // Vertex position update step
                     const std::vector<uint>& group =
-                            mesh.independentGroups[g];
+                            mesh.nodeGroups[g];
 
                     size_t groupSize = group.size();
                     std::vector<uint> vIds(
@@ -176,9 +175,7 @@ void AbstractElementWiseSmoother::smoothMeshThread(
             workers[t].join();
         }
     }
-
-    mesh.updateVerticesFromCpu();
-
+*/
 
     // Deallocate vertex accumulators
     for(size_t i=0; i < vertCount; ++i)
@@ -190,6 +187,7 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
         Mesh& mesh,
         const MeshCrew& crew)
 {
+    /*
     initializeProgram(mesh, crew);
 
     // There's no need to upload vertices again, but absurdly
@@ -263,13 +261,15 @@ void AbstractElementWiseSmoother::smoothMeshGlsl(
 
     // Fetch new vertices' position
     mesh.updateVerticesFromGlsl();
+    */
 }
 
 void AbstractElementWiseSmoother::smoothMeshCuda(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    mesh.boundary()->installCudaPlugIn();
+    /*
+    mesh.boundary().installCudaPlugIn();
     _installCudaSmoother();
 
     // There's no need to upload vertices again, but absurdly
@@ -310,6 +310,7 @@ void AbstractElementWiseSmoother::smoothMeshCuda(
 
     // Fetch new vertices' position
     mesh.updateVerticesFromCuda();
+    */
 }
 
 void AbstractElementWiseSmoother::initializeProgram(
@@ -317,7 +318,6 @@ void AbstractElementWiseSmoother::initializeProgram(
         const MeshCrew& crew)
 {
     if(_initialized &&
-       _modelBoundsShader == mesh.boundary()->shaderName() &&
        _samplingShader == crew.sampler().samplingShader() &&
        _evaluationShader == crew.evaluator().evaluationShader() &&
        _measureShader == crew.measurer().measureShader())
@@ -327,7 +327,6 @@ void AbstractElementWiseSmoother::initializeProgram(
     getLog().postMessage(new Message('I', false,
         "Initializing smoothing compute shader", "AbstractElementWiseSmoother"));
 
-    _modelBoundsShader = mesh.boundary()->shaderName();
     _samplingShader = crew.sampler().samplingShader();
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();

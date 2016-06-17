@@ -3,6 +3,8 @@
 #include <CellarWorkbench/Misc/Log.h>
 #include <CellarWorkbench/GL/GlProgram.h>
 
+#include "NodeGroups.h"
+
 #include "Boundaries/Constraints/AbstractConstraint.h"
 
 using namespace std;
@@ -10,8 +12,8 @@ using namespace cellar;
 
 
 // CUDA Drivers Interface
-void fetchCudaVerts(GpuVert* vertsBuff, size_t vertsLength);
-void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength);
+void fetchCudaVerts(std::vector<GpuVert>& vertsBuff);
+void updateCudaVerts(const std::vector<GpuVert>& vertsBuff);
 void updateCudaTets(const std::vector<GpuTet>& tetsBuff);
 void updateCudaPris(const std::vector<GpuPri>& prisBuff);
 void updateCudaHexs(const std::vector<GpuHex>& hexsBuff);
@@ -71,157 +73,95 @@ void GpuMesh::clear()
     _groupMembersSsbo = 0;
 }
 
-void GpuMesh::compileTopology(bool updateGpu)
+void GpuMesh::updateGlslTopology() const
 {
-    Mesh::compileTopology(updateGpu);
-
-    if(updateGpu)
+    if(_tetSsbo == 0)
     {
-        if(_vertSsbo == 0)
-        {
-            getLog().postMessage(new Message('I', false,
-                "Generating mesh shader storage buffers", "GpuMesh"));
-
-            glGenBuffers(1, &_vertSsbo);
-            glGenBuffers(1, &_tetSsbo);
-            glGenBuffers(1, &_priSsbo);
-            glGenBuffers(1, &_hexSsbo);
-            glGenBuffers(1, &_topoSsbo);
-            glGenBuffers(1, &_neigVertSsbo);
-            glGenBuffers(1, &_neigElemSsbo);
-            glGenBuffers(1, &_groupMembersSsbo);
-
-
-            // Allocation GPU side vertex positions storage space
-            size_t vertBuffSize = sizeof(GpuVert) * verts.size();
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-            glBufferData(GL_SHADER_STORAGE_BUFFER, vertBuffSize, nullptr, GL_DYNAMIC_COPY);
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-            updateVerticesFromCpu();
-        }
-
-        updateGpuTopology();
+        glGenBuffers(1, &_tetSsbo);
+        glGenBuffers(1, &_priSsbo);
+        glGenBuffers(1, &_hexSsbo);
+        glGenBuffers(1, &_topoSsbo);
+        glGenBuffers(1, &_neigVertSsbo);
+        glGenBuffers(1, &_neigElemSsbo);
+        glGenBuffers(1, &_groupMembersSsbo);
     }
-}
 
-
-void GpuMesh::updateGpuTopology()
-{
     // Send individual elements
-    size_t tetCount = tets.size();
-    std::vector<GpuTet> tetBuff(tetCount);
-    for(int i=0; i < tetCount; ++i)
-        tetBuff[i] = tets[i];
+    {
+        std::vector<GpuTet> tetBuff;
+        buildGpuTetBuffer(tetBuff);
 
-    updateCudaTets(tetBuff);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
-    size_t tetSize = sizeof(decltype(tetBuff.front())) * tetBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, tetSize, tetBuff.data(), GL_STATIC_COPY);
-    tetBuff.clear();
-    tetBuff.shrink_to_fit();
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
+        size_t tetSize = sizeof(decltype(tetBuff.front())) * tetBuff.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, tetSize, tetBuff.data(), GL_STATIC_COPY);
+    }
 
+    {
+        std::vector<GpuPri> priBuff;
+        buildGpuPriBuffer(priBuff);
 
-    size_t priCount = pris.size();
-    std::vector<GpuPri> priBuff(priCount);
-    for(int i=0; i < priCount; ++i)
-        priBuff[i] = pris[i];
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _priSsbo);
+        size_t priSize = sizeof(decltype(priBuff.front())) * priBuff.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, priSize, priBuff.data(), GL_STATIC_COPY);
+    }
 
-    updateCudaPris(priBuff);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _priSsbo);
-    size_t priSize = sizeof(decltype(priBuff.front())) * priBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, priSize, priBuff.data(), GL_STATIC_COPY);
-    priBuff.clear();
-    priBuff.shrink_to_fit();
+    {
+        std::vector<GpuHex> hexBuff;
+        buildGpuHexBuffer(hexBuff);
 
-
-    size_t hexCount = hexs.size();
-    std::vector<GpuHex> hexBuff(hexCount);
-    for(int i=0; i < hexCount; ++i)
-        hexBuff[i] = hexs[i];
-
-    updateCudaHexs(hexBuff);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _hexSsbo);
-    size_t hexSize = sizeof(decltype(hexBuff.front())) * hexBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, hexSize, hexBuff.data(), GL_STATIC_COPY);
-    hexBuff.clear();
-    hexBuff.shrink_to_fit();
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _hexSsbo);
+        size_t hexSize = sizeof(decltype(hexBuff.front())) * hexBuff.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, hexSize, hexBuff.data(), GL_STATIC_COPY);
+    }
 
 
     // Topo descriptors
-    size_t vertCount = verts.size();
-    std::vector<GpuTopo> topoBuff(vertCount);
-    std::vector<GpuNeigVert> neigVertBuff;
-    std::vector<GpuNeigElem> neigElemBuff;
-
-    int neigVertBase = 0;
-    int neigElemBase = 0;
-    for(int i=0; i < vertCount; ++i)
     {
-        const MeshTopo& meshTopo = topos[i];
-        uint neigVertCount = (uint)meshTopo.neighborVerts.size();
-        uint neigElemCount = (uint)meshTopo.neighborElems.size();
-        int type = meshTopo.snapToBoundary->isFixed() ? -1 :
-                meshTopo.snapToBoundary->id();
+        std::vector<GpuTopo> topoBuff;
+        std::vector<GpuNeigVert> neigVertBuff;
+        std::vector<GpuNeigElem> neigElemBuff;
+        buildGpuTopoBuffers(topoBuff, neigVertBuff, neigElemBuff);
 
-        topoBuff[i] = GpuTopo(type,
-            neigVertBase, neigVertCount,
-            neigElemBase, neigElemCount);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
+        size_t topoSize = sizeof(decltype(topoBuff.front())) * topoBuff.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, topoSize, topoBuff.data(), GL_STATIC_COPY);
+        topoBuff.clear();
+        topoBuff.shrink_to_fit();
 
-		for (uint n = 0; n < neigVertCount; ++n)
-            neigVertBuff.push_back(GpuNeigVert(meshTopo.neighborVerts[n]));
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigVertSsbo);
+        size_t neigVertSize = sizeof(decltype(neigVertBuff.front())) * neigVertBuff.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, neigVertSize, neigVertBuff.data(), GL_STATIC_COPY);
+        neigVertBuff.clear();
+        neigVertBuff.shrink_to_fit();
 
-		for (uint n = 0; n < neigElemCount; ++n)
-            neigElemBuff.push_back(GpuNeigElem(meshTopo.neighborElems[n]));
-
-        neigVertBase += neigVertCount;
-        neigElemBase += neigElemCount;
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigElemSsbo);
+        size_t neigElemSize = sizeof(decltype(neigElemBuff.front())) * neigElemBuff.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, neigElemSize, neigElemBuff.data(), GL_STATIC_COPY);
+        neigElemBuff.clear();
+        neigElemBuff.shrink_to_fit();
     }
-
-    updateCudaTopo(topoBuff, neigVertBuff, neigElemBuff);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
-    size_t topoSize = sizeof(decltype(topoBuff.front())) * topoBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, topoSize, topoBuff.data(), GL_STATIC_COPY);
-    topoBuff.clear();
-    topoBuff.shrink_to_fit();
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigVertSsbo);
-    size_t neigVertSize = sizeof(decltype(neigVertBuff.front())) * neigVertBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, neigVertSize, neigVertBuff.data(), GL_STATIC_COPY);
-    neigVertBuff.clear();
-    neigVertBuff.shrink_to_fit();
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigElemSsbo);
-    size_t neigElemSize = sizeof(decltype(neigElemBuff.front())) * neigElemBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, neigElemSize, neigElemBuff.data(), GL_STATIC_COPY);
-    neigElemBuff.clear();
-    neigElemBuff.shrink_to_fit();
 
 
     // Independent group members
-    size_t groupCount = independentGroups.size();
-    std::vector<GLuint> groupMemberBuff;
-    groupMemberBuff.reserve(vertCount);
-    for(size_t g=0; g < groupCount; ++g)
     {
-        size_t memberCount = independentGroups[g].size();
-        for(size_t m=0; m < memberCount; ++m)
-            groupMemberBuff.push_back(independentGroups[g][m]);
-    }
-    updateCudaGroupMembers(groupMemberBuff);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
-    size_t membersSize = sizeof(decltype(groupMemberBuff.front())) * groupMemberBuff.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMemberBuff.data(), GL_STATIC_COPY);
-    groupMemberBuff.clear();
-    groupMemberBuff.shrink_to_fit();
+        std::vector<GLuint> groupMemberBuff(
+            nodeGroups().gpuGroupsBuffer().begin(),
+            nodeGroups().gpuGroupsBuffer().end());
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
+        size_t membersSize = sizeof(decltype(groupMemberBuff.front())) * groupMemberBuff.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, membersSize, groupMemberBuff.data(), GL_STATIC_COPY);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
 }
 
-void GpuMesh::updateVerticesFromCpu()
+void GpuMesh::updateGlslVertices() const
 {
-#ifdef NDEBUG
+    if(_vertSsbo == 0)
+    {
+        glGenBuffers(1, &_vertSsbo);
+    }
+
     size_t vertCount = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
@@ -234,55 +174,128 @@ void GpuMesh::updateVerticesFromCpu()
     if(buffSize != cpuBuffSize)
         glBufferData(GL_SHADER_STORAGE_BUFFER, cpuBuffSize, nullptr, GL_DYNAMIC_COPY);
 
-
-    GpuVert* glslVerts = (GpuVert*) glMapBufferRange(
+    GpuVert* vertBuff = (GpuVert*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
     for(int i=0; i < vertCount; ++i)
-        glslVerts[i] = GpuVert(verts[i]);
-    updateCudaVerts(glslVerts, verts.size());
+        vertBuff[i] = GpuVert(verts[i]);
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-#endif
 }
 
-void GpuMesh::updateVerticesFromGlsl()
+void GpuMesh::fetchGlslVertices()
 {
     size_t vertCount = verts.size();
     size_t vertBuffSize = sizeof(GpuVert) * vertCount;
 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    GpuVert* glslVerts = (GpuVert*) glMapBufferRange(
+    GpuVert* vertBuff = (GpuVert*) glMapBufferRange(
         GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
         GL_MAP_READ_BIT);
 
-    updateCudaVerts(glslVerts, verts.size());
     for(int i=0; i < vertCount; ++i)
-        verts[i].p = glm::dvec3(glslVerts[i].p);
+        verts[i] = MeshVert(vertBuff[i]);
 
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void GpuMesh::updateVerticesFromCuda()
+void GpuMesh::clearGlslMemory() const
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _tetSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _priSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _hexSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _topoSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigVertSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _neigElemSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _groupMembersSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STATIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void GpuMesh::updateCudaTopology() const
+{
+    // Send individual elements
+    {
+        std::vector<GpuTet> tetBuff;
+        buildGpuTetBuffer(tetBuff);
+        updateCudaTets(tetBuff);
+    }
+
+    {
+        std::vector<GpuPri> priBuff;
+        buildGpuPriBuffer(priBuff);
+        updateCudaPris(priBuff);
+    }
+
+    {
+        std::vector<GpuHex> hexBuff;
+        buildGpuHexBuffer(hexBuff);
+        updateCudaHexs(hexBuff);
+    }
+
+    // Topo descriptors
+    {
+        std::vector<GpuTopo> topoBuff;
+        std::vector<GpuNeigVert> neigVertBuff;
+        std::vector<GpuNeigElem> neigElemBuff;
+        buildGpuTopoBuffers(topoBuff, neigVertBuff, neigElemBuff);
+        updateCudaTopo(topoBuff, neigVertBuff, neigElemBuff);
+    }
+
+
+    // Independent group members
+    {
+        std::vector<GLuint> groupMemberBuff(
+            nodeGroups().gpuGroupsBuffer().begin(),
+            nodeGroups().gpuGroupsBuffer().end());
+        updateCudaGroupMembers(groupMemberBuff);
+    }
+}
+
+void GpuMesh::updateCudaVertices() const
 {
     size_t vertCount = verts.size();
-    size_t vertBuffSize = sizeof(GpuVert) * vertCount;
+    std::vector<GpuVert> vertBuff(vertCount);
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _vertSsbo);
-    GpuVert* glslVerts = (GpuVert*) glMapBufferRange(
-        GL_SHADER_STORAGE_BUFFER, 0, vertBuffSize,
-        GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-    fetchCudaVerts(glslVerts, verts.size());
     for(int i=0; i < vertCount; ++i)
-        verts[i].p = glm::dvec3(glslVerts[i].p);
+        vertBuff[i] = GpuVert(verts[i]);
 
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    updateCudaVerts(vertBuff);
+}
+
+void GpuMesh::fetchCudaVertices()
+{
+    size_t vertCount = verts.size();
+    std::vector<GpuVert> vertsBuff(vertCount);
+
+    fetchCudaVerts(vertsBuff);
+
+    for(int i=0; i < vertCount; ++i)
+        verts[i] = MeshVert(vertsBuff[i]);
+}
+
+void GpuMesh::clearCudaMemory() const
+{
+    updateCudaTets(std::vector<GpuTet>());
+    updateCudaPris(std::vector<GpuPri>());
+    updateCudaHexs(std::vector<GpuHex>());
+    updateCudaTopo(std::vector<GpuTopo>(),
+                   std::vector<GpuNeigVert>(),
+                   std::vector<GpuNeigElem>());
+    updateCudaGroupMembers(std::vector<GLuint>());
+    updateCudaVerts(std::vector<GpuVert>());
 }
 
 unsigned int GpuMesh::glBuffer(const EMeshBuffer& buffer) const
@@ -306,7 +319,7 @@ std::string GpuMesh::meshGeometryShaderName() const
     return ":/glsl/compute/Mesh.glsl";
 }
 
-unsigned int GpuMesh::bufferBinding(EBufferBinding binding) const
+unsigned int GpuMesh::glBufferBinding(EBufferBinding binding) const
 {
     switch(binding)
     {
@@ -323,7 +336,7 @@ unsigned int GpuMesh::bufferBinding(EBufferBinding binding) const
     return 0;
 }
 
-void GpuMesh::bindShaderStorageBuffers() const
+void GpuMesh::bindGlShaderStorageBuffers() const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _vertSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _tetSsbo);
@@ -333,4 +346,69 @@ void GpuMesh::bindShaderStorageBuffers() const
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, _neigVertSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, _neigElemSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, _groupMembersSsbo);
+}
+
+void GpuMesh::buildGpuTetBuffer(
+    std::vector<GpuTet>& tetBuff) const
+{
+    size_t tetCount = tets.size();
+    tetBuff.resize(tetCount);
+
+    for(int i=0; i < tetCount; ++i)
+        tetBuff[i] = tets[i];
+}
+
+void GpuMesh::buildGpuPriBuffer(
+    std::vector<GpuPri>& priBuff) const
+{
+    size_t priCount = pris.size();
+    priBuff.resize(priCount);
+
+    for(int i=0; i < priCount; ++i)
+        priBuff[i] = pris[i];
+}
+
+void GpuMesh::buildGpuHexBuffer(
+    std::vector<GpuHex>& hexBuff) const
+{
+    size_t hexCount = hexs.size();
+    hexBuff.resize(hexCount);
+
+    for(int i=0; i < hexCount; ++i)
+        hexBuff[i] = hexs[i];
+}
+
+void GpuMesh::buildGpuTopoBuffers(
+    std::vector<GpuTopo>& topoBuff,
+    std::vector<GpuNeigVert>& neigVertBuff,
+    std::vector<GpuNeigElem>& neigElemBuff) const
+{
+    size_t vertCount = verts.size();
+    topoBuff.resize(vertCount);
+    neigVertBuff.clear();
+    neigElemBuff.clear();
+
+    int neigVertBase = 0;
+    int neigElemBase = 0;
+    for(int i=0; i < vertCount; ++i)
+    {
+        const MeshTopo& meshTopo = topos[i];
+        uint neigVertCount = (uint)meshTopo.neighborVerts.size();
+        uint neigElemCount = (uint)meshTopo.neighborElems.size();
+        int type = meshTopo.snapToBoundary->isFixed() ? -1 :
+                meshTopo.snapToBoundary->id();
+
+        topoBuff[i] = GpuTopo(type,
+            neigVertBase, neigVertCount,
+            neigElemBase, neigElemCount);
+
+        for (uint n = 0; n < neigVertCount; ++n)
+            neigVertBuff.push_back(GpuNeigVert(meshTopo.neighborVerts[n]));
+
+        for (uint n = 0; n < neigElemCount; ++n)
+            neigElemBuff.push_back(GpuNeigElem(meshTopo.neighborElems[n]));
+
+        neigVertBase += neigVertCount;
+        neigElemBase += neigElemCount;
+    }
 }

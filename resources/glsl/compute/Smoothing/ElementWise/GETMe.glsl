@@ -9,9 +9,6 @@ float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
 float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
 float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
 
-// Boundaries
-vec3 snapToBoundary(int boundaryID, vec3 pos);
-
 // Vertex Accum
 void addPosition(in uint vId, in vec3 pos, in float weight);
 
@@ -62,11 +59,6 @@ void smoothTet(uint eId)
     vpp[1] = center + volumeVar * (vpp[1] - center);
     vpp[2] = center + volumeVar * (vpp[2] - center);
     vpp[3] = center + volumeVar * (vpp[3] - center);
-
-    if(topos[vi[0]].type > 0) vpp[0] = snapToBoundary(topos[vi[0]].type, vpp[0]);
-    if(topos[vi[1]].type > 0) vpp[1] = snapToBoundary(topos[vi[1]].type, vpp[1]);
-    if(topos[vi[2]].type > 0) vpp[2] = snapToBoundary(topos[vi[2]].type, vpp[2]);
-    if(topos[vi[3]].type > 0) vpp[3] = snapToBoundary(topos[vi[3]].type, vpp[3]);
 
     float quality = tetQuality(vp, tet);
     float qualityPrime = tetQuality(vpp, tet);
@@ -154,13 +146,6 @@ void smoothPri(uint eId)
     vpp[3] = center + volumeVar * (vpp[3] - center);
     vpp[4] = center + volumeVar * (vpp[4] - center);
     vpp[5] = center + volumeVar * (vpp[5] - center);
-
-    if(topos[vi[0]].type > 0) vpp[0] = snapToBoundary(topos[vi[0]].type, vpp[0]);
-    if(topos[vi[1]].type > 0) vpp[1] = snapToBoundary(topos[vi[1]].type, vpp[1]);
-    if(topos[vi[2]].type > 0) vpp[2] = snapToBoundary(topos[vi[2]].type, vpp[2]);
-    if(topos[vi[3]].type > 0) vpp[3] = snapToBoundary(topos[vi[3]].type, vpp[3]);
-    if(topos[vi[4]].type > 0) vpp[4] = snapToBoundary(topos[vi[4]].type, vpp[4]);
-    if(topos[vi[5]].type > 0) vpp[5] = snapToBoundary(topos[vi[5]].type, vpp[5]);
 
 
     float quality = priQuality(vp, pri);
@@ -262,15 +247,6 @@ void smoothHex(uint eId)
     vpp[5] = center + volumeVar * (vpp[5] - center);
     vpp[6] = center + volumeVar * (vpp[6] - center);
     vpp[7] = center + volumeVar * (vpp[7] - center);
-
-    if(topos[vi[0]].type > 0) vpp[0] = snapToBoundary(topos[vi[0]].type, vpp[0]);
-    if(topos[vi[1]].type > 0) vpp[1] = snapToBoundary(topos[vi[1]].type, vpp[1]);
-    if(topos[vi[2]].type > 0) vpp[2] = snapToBoundary(topos[vi[2]].type, vpp[2]);
-    if(topos[vi[3]].type > 0) vpp[3] = snapToBoundary(topos[vi[3]].type, vpp[3]);
-    if(topos[vi[4]].type > 0) vpp[4] = snapToBoundary(topos[vi[4]].type, vpp[4]);
-    if(topos[vi[5]].type > 0) vpp[5] = snapToBoundary(topos[vi[5]].type, vpp[5]);
-    if(topos[vi[6]].type > 0) vpp[6] = snapToBoundary(topos[vi[6]].type, vpp[6]);
-    if(topos[vi[7]].type > 0) vpp[7] = snapToBoundary(topos[vi[7]].type, vpp[7]);
 
 
     float quality = hexQuality(vp, hex);

@@ -200,7 +200,7 @@ size_t BatrTopologist::edgeSplitMerge(
                     if(candidatePriority > priority)
                     {
                         const AbstractConstraint* candidaetMerge =
-                            mesh.boundary()->merge(vTopo.snapToBoundary, nTopo.snapToBoundary);
+                            mesh.boundary().merge(vTopo.snapToBoundary, nTopo.snapToBoundary);
 
                         if(candidaetMerge != AbstractBoundary::INVALID_OPERATION)
                         {
@@ -218,7 +218,7 @@ size_t BatrTopologist::edgeSplitMerge(
                     if(candidatePriority > priority)
                     {
                         const AbstractConstraint* candidateSplit =
-                            mesh.boundary()->split(vTopo.snapToBoundary, nTopo.snapToBoundary);
+                            mesh.boundary().split(vTopo.snapToBoundary, nTopo.snapToBoundary);
 
                         if(candidateSplit != AbstractBoundary::INVALID_OPERATION)
                         {
@@ -1510,7 +1510,7 @@ bool BatrTopologist::cureBoundaries(
             uint nId = vVert.v;
             const MeshTopo& nTopo = topos[nId];
 
-            if(mesh.boundary()->supportDimension(
+            if(mesh.boundary().supportDimension(
                 vTopo.snapToBoundary, nTopo.snapToBoundary) != 2)
             {
                 continue;
@@ -1605,8 +1605,8 @@ bool BatrTopologist::cureBoundaries(
             continue;
         }
 
-        const AbstractConstraint* split3 = mesh.boundary()->split(
-            mesh.boundary()->split(bounds[0], bounds[1]), bounds[2]);
+        const AbstractConstraint* split3 = mesh.boundary().split(
+            mesh.boundary().split(bounds[0], bounds[1]), bounds[2]);
 
         if(!split3->isConstrained())
         {

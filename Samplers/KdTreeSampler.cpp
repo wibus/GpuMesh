@@ -96,10 +96,10 @@ void KdTreeSampler::installPlugin(
 {
     AbstractSampler::installPlugin(mesh, program);
 
-    GLuint kdTets     = mesh.bufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
-    GLuint kdNodes    = mesh.bufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
-    GLuint refVerts   = mesh.bufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
-    GLuint refMetrics = mesh.bufferBinding(EBufferBinding::REF_METRICS_BUFFER_BINDING);
+    GLuint kdTets     = mesh.glBufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
+    GLuint kdNodes    = mesh.glBufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
+    GLuint refVerts   = mesh.glBufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
+    GLuint refMetrics = mesh.glBufferBinding(EBufferBinding::REF_METRICS_BUFFER_BINDING);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdTets,     _kdTetsSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdNodes,    _kdNodesSsbo);

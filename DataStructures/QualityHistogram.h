@@ -30,6 +30,9 @@ public:
     double averageQuality() const;
     void setAverageQuality(double average);
 
+    double geometricMean() const;
+    void setInvQualityLogSum(double sum);
+
 
     virtual void add(double value);
 
@@ -41,6 +44,7 @@ private:
     std::size_t _sampleCount;
     double _minimumQuality;
     double _averageQuality;
+    double _invQualityLogSum;
     std::vector<int> _buckets;
 };
 

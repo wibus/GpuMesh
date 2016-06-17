@@ -1,4 +1,5 @@
 #include "Base.cuh"
+#include <DataStructures/NodeGroups.h>
 #include <Smoothers/AbstractSmoother.h>
 
 
@@ -23,10 +24,6 @@ __global__ void updateVerticesCudaMain()
 
         if(assignAverage(vId, posPrim))
         {
-            Topo topo = topos[vId];
-            if(topo.type > 0)
-                posPrim = snapToBoundary(topo.type, posPrim);
-
             float prePatchQuality =
                 patchQuality(vId);
 
@@ -45,9 +42,10 @@ __global__ void updateVerticesCudaMain()
 
 
 // CUDA Drivers
-void setupCudaIndependentDispatch(const IndependentDispatch& dispatch);
+void setupCudaIndependentDispatch(const NodeGroups::GpuDispatch& dispatch);
+
 void updateCudaSmoothedElementsVertices(
-        const IndependentDispatch& dispatch,
+        const NodeGroups::GpuDispatch& dispatch,
         size_t workgroupSize)
 {
     setupCudaIndependentDispatch(dispatch);

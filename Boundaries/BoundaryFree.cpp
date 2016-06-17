@@ -1,13 +1,8 @@
 #include "BoundaryFree.h"
 
 
-void installCudaBoundaryFree();
-
-
 BoundaryFree::BoundaryFree() :
-    AbstractBoundary("Free",
-        ":/glsl/compute/Boundary/Free.glsl",
-        installCudaBoundaryFree)
+    AbstractBoundary("Free")
 {
 }
 

@@ -12,6 +12,8 @@
 
 #include "OptimizationPlot.h"
 
+#include "NodeGroups.h"
+
 using namespace std;
 using namespace cellar;
 
@@ -123,8 +125,8 @@ MeshTopo::MeshTopo(const AbstractConstraint* constraint) :
 {
 }
 
-
 Mesh::Mesh() :
+    _nodeGroups(new NodeGroups()),
     _boundary(new BoundaryFree())
 {
 
@@ -133,6 +135,20 @@ Mesh::Mesh() :
 Mesh::~Mesh()
 {
 
+}
+
+Mesh& Mesh::operator=(const Mesh& mesh)
+{
+    modelName = mesh.modelName;
+
+    verts = mesh.verts;
+    topos = mesh.topos;
+    tets = mesh.tets;
+    pris = mesh.pris;
+    hexs = mesh.hexs;
+
+    _nodeGroups.reset(new NodeGroups(mesh.nodeGroups()));
+    _boundary = mesh._boundary;
 }
 
 void Mesh::clear()
@@ -147,13 +163,12 @@ void Mesh::clear()
     hexs.shrink_to_fit();
     topos.clear();
     topos.shrink_to_fit();
-    independentGroups.clear();
-    independentGroups.shrink_to_fit();
+    nodeGroups().clear();
 }
 
-void Mesh::compileTopology(bool updateGpu)
+void Mesh::compileTopology(bool verbose)
 {
-    if(updateGpu)
+    if(verbose)
     {
         getLog().postMessage(new Message('I', false,
             modelName + ": Compiling mesh topology...", "Mesh"));
@@ -173,13 +188,13 @@ void Mesh::compileTopology(bool updateGpu)
     compileNeighborhoods();
 
     auto indeBegin = chrono::high_resolution_clock::now();
-    independentGroups.clear();
-    compileIndependentGroups();
+
+    nodeGroups().build(*this);
 
     auto compileEnd = chrono::high_resolution_clock::now();
 
 
-    if(updateGpu)
+    if(verbose)
     {
         getLog().postMessage(new Message('I', false,
             "Vertice count: " + to_string(vertCount), "Mesh"));
@@ -193,7 +208,7 @@ void Mesh::compileTopology(bool updateGpu)
             "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
 
         getLog().postMessage(new Message('I', false,
-            "Independent set count: " + to_string(independentGroups.size()), "Mesh"));
+            "Independent set count: " + to_string(nodeGroups().count()), "Mesh"));
 
         size_t neigVertCount = 0;
         size_t neigElemCount = 0;
@@ -224,22 +239,42 @@ void Mesh::compileTopology(bool updateGpu)
     }
 }
 
-void Mesh::updateGpuTopology()
+void Mesh::updateGlslTopology() const
 {
 
 }
 
-void Mesh::updateVerticesFromCpu()
+void Mesh::updateGlslVertices() const
 {
 
 }
 
-void Mesh::updateVerticesFromGlsl()
+void Mesh::fetchGlslVertices()
 {
 
 }
 
-void Mesh::updateVerticesFromCuda()
+void Mesh::clearGlslMemory() const
+{
+
+}
+
+void Mesh::updateCudaTopology() const
+{
+
+}
+
+void Mesh::updateCudaVertices() const
+{
+
+}
+
+void Mesh::fetchCudaVertices()
+{
+
+}
+
+void Mesh::clearCudaMemory() const
 {
 
 }
@@ -254,12 +289,12 @@ unsigned int Mesh::glBuffer(const EMeshBuffer&) const
     return 0;
 }
 
-unsigned int Mesh::bufferBinding(EBufferBinding binding) const
+unsigned int Mesh::glBufferBinding(EBufferBinding binding) const
 {
     return 0;
 }
 
-void Mesh::bindShaderStorageBuffers() const
+void Mesh::bindGlShaderStorageBuffers() const
 {
 
 }
@@ -271,7 +306,7 @@ void Mesh::printPropperties(OptimizationPlot& plot) const
     plot.addMeshProperty("Tet Count",         to_string(tets.size()));
     plot.addMeshProperty("Prism Count",       to_string(pris.size()));
     plot.addMeshProperty("Hex Count",         to_string(hexs.size()));
-    plot.addMeshProperty("Patch Group Count", to_string(independentGroups.size()));
+    plot.addMeshProperty("Patch Group Count", to_string(nodeGroups().count()));
 }
 
 void Mesh::setBoundary(const std::shared_ptr<AbstractBoundary>& boundary)
@@ -360,115 +395,4 @@ void Mesh::addEdge(int firstVert, int secondVert)
     // This really is a new edge
     topos[firstVert].neighborVerts.push_back(secondVert);
     topos[secondVert].neighborVerts.push_back(firstVert);
-}
-
-void Mesh::compileIndependentGroups()
-{
-    const int NO_GROUP = 0;
-    const int UNSET_GROUP = -1;
-
-    size_t vertCount = verts.size();
-
-    size_t seekStart = 0;
-    std::set<uint> existingGroups;
-    std::vector<size_t> nextNodes;
-    std::vector<int> vertGroup(vertCount, NO_GROUP);
-    while(nextNodes.size() < vertCount)
-    {
-        size_t firstNode = nextNodes.size();
-        for(size_t vId=seekStart; vId < vertCount; ++vId)
-        {
-            ++seekStart;
-            if(vertGroup[vId] == NO_GROUP)
-            {
-                vertGroup[vId] = UNSET_GROUP;
-                nextNodes.push_back(vId);
-                break;
-            }
-        }
-
-        for(int v=firstNode; v < nextNodes.size(); ++v)
-        {
-            uint vId = nextNodes[v];
-            MeshTopo& topo = topos[vId];
-            std::set<uint> availableGroups = existingGroups;
-
-            for(size_t e=0; e < topo.neighborElems.size(); ++e)
-            {
-                MeshNeigElem& neigElem = topo.neighborElems[e];
-                if(neigElem.type == MeshTet::ELEMENT_TYPE)
-                {
-                    MeshTet& elem = tets[neigElem.id];
-                    for(size_t n=0; n < MeshTet::VERTEX_COUNT; ++n)
-                    {
-                        int& group = vertGroup[elem.v[n]];
-                        if(group == NO_GROUP)
-                        {
-                            group = UNSET_GROUP;
-                            nextNodes.push_back(elem.v[n]);
-                        }
-                        else if(group != UNSET_GROUP)
-                        {
-                            availableGroups.erase(group);
-                        }
-                    }
-                }
-                else if(neigElem.type == MeshPri::ELEMENT_TYPE)
-                {
-                    MeshPri& elem = pris[neigElem.id];
-                    for(size_t n=0; n < MeshPri::VERTEX_COUNT; ++n)
-                    {
-                        int& group = vertGroup[elem.v[n]];
-                        if(group == NO_GROUP)
-                        {
-                            group = UNSET_GROUP;
-                            nextNodes.push_back(elem.v[n]);
-                        }
-                        else if(group != UNSET_GROUP)
-                        {
-                            availableGroups.erase(group);
-                        }
-                    }
-                }
-                else if(neigElem.type == MeshHex::ELEMENT_TYPE)
-                {
-                    MeshHex& elem = hexs[neigElem.id];
-                    for(size_t n=0; n < MeshHex::VERTEX_COUNT; ++n)
-                    {
-                        int& group = vertGroup[elem.v[n]];
-                        if(group == NO_GROUP)
-                        {
-                            group = UNSET_GROUP;
-                            nextNodes.push_back(elem.v[n]);
-                        }
-                        else if(group != UNSET_GROUP)
-                        {
-                            availableGroups.erase(group);
-                        }
-                    }
-                }
-            }
-
-            int group;
-            if(availableGroups.empty())
-            {
-                group = existingGroups.size() + 1;
-                existingGroups.insert(group);
-                independentGroups.push_back(std::vector<uint>());
-            }
-            else
-            {
-                group = *availableGroups.begin();
-            }
-
-            vertGroup[vId] = group;
-            independentGroups[group-1].push_back(vId);
-        }
-    }
-
-
-    // Make independent groups as compact as possible
-    independentGroups.shrink_to_fit();
-    for(auto& group : independentGroups)
-        group.shrink_to_fit();
 }

@@ -24,15 +24,6 @@ __device__ void qualityLaplaceSmoothVert(uint vId)
         patchCenter + centerDist * MoveCoeff
     };
 
-    Topo topo = topos[vId];
-    if(topo.type > 0)
-    {
-        for(uint p=1; p < PROPOSITION_COUNT; ++p)
-            propositions[p] = snapToBoundary(
-                topo.type, propositions[p]);
-    }
-
-
 
     // Choose best position based on quality geometric mean
     uint bestProposition = 0;

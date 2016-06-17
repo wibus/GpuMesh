@@ -10,16 +10,10 @@
 #include "Constraints/VolumeConstraint.h"
 
 
-typedef void (*ModelBoundsCudaFct)(void);
-
-
 class AbstractBoundary
 {
 protected:
-    AbstractBoundary(
-            const std::string& name,
-            const std::string& shaderName,
-            ModelBoundsCudaFct cudaBoundary);
+    AbstractBoundary(const std::string& name);
 
 public:
     virtual ~AbstractBoundary();
@@ -29,11 +23,7 @@ public:
     virtual bool unitTest() const = 0;
 
 
-    void installCudaPlugIn() const;
-
     const std::string& name() const;
-
-    const std::string& shaderName() const;
 
     const VolumeConstraint* volume() const;
 
@@ -56,8 +46,6 @@ protected:
 
 private:
     std::string _name;
-    std::string _shaderName;
-    ModelBoundsCudaFct _cudaBoundary;
 
     VolumeConstraint _volume;
 };
@@ -65,19 +53,9 @@ private:
 
 
 // IMPLEMENTATION //
-inline void AbstractBoundary::installCudaPlugIn() const
-{
-    (*_cudaBoundary)();
-}
-
 inline const std::string& AbstractBoundary::name() const
 {
     return _name;
-}
-
-inline const std::string& AbstractBoundary::shaderName() const
-{
-    return _shaderName;
 }
 
 inline const VolumeConstraint* AbstractBoundary::volume() const

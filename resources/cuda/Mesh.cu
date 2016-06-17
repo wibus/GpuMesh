@@ -46,14 +46,25 @@ bool verboseCuda = true;
 size_t d_vertsLength = 0;
 GpuVert* d_verts = nullptr;
 
-void fetchCudaVerts(GpuVert* vertsBuff, size_t vertsLength)
+void fetchCudaVerts(std::vector<GpuVert>& vertsBuff)
 {
-    size_t vertsBuffSize = sizeof(GpuVert) *vertsLength;
-    cudaMemcpy(vertsBuff, d_verts, vertsBuffSize, cudaMemcpyDeviceToHost);
+    if(vertsBuff.size() != d_vertsLength)
+    {
+        printf("I -> CUDA \tverts CPU and GPU buffer sizes mismatch\n");
+        assert(vertsBuff.size() == d_vertsLength);
+    }
+
+    uint vertsLength = vertsBuff.size();
+    size_t vertsBuffSize = sizeof(GpuVert) * vertsLength;
+    cudaMemcpy(vertsBuff.data(), d_verts, vertsBuffSize, cudaMemcpyDeviceToHost);
+
+    if(verboseCuda)
+        printf("I -> CUDA \tverts fetched\n");
 }
 
-void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength)
+void updateCudaVerts(const std::vector<GpuVert>& vertsBuff)
 {
+    uint vertsLength = vertsBuff.size();
     size_t vertsBuffSize = sizeof(GpuVert) * vertsLength;
     if(d_verts == nullptr || d_vertsLength != vertsLength)
     {
@@ -66,7 +77,7 @@ void updateCudaVerts(const GpuVert* vertsBuff, size_t vertsLength)
         cudaMemcpyToSymbol(verts_length, &vertsLength, sizeof(uint));
     }
 
-    cudaMemcpy(d_verts, vertsBuff, vertsBuffSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_verts, vertsBuff.data(), vertsBuffSize, cudaMemcpyHostToDevice);
 
     if(verboseCuda)
         printf("I -> CUDA \tverts updated\n");

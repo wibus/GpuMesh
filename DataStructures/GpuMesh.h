@@ -179,33 +179,53 @@ public:
 
     virtual void clear() override;
 
-    virtual void compileTopology(bool updateGpu = true) override;
-    virtual void updateGpuTopology() override;
-    virtual void updateVerticesFromCpu() override;
-    virtual void updateVerticesFromGlsl() override;
-    virtual void updateVerticesFromCuda() override;
+    virtual void updateGlslTopology() const override;
+    virtual void updateGlslVertices() const override;
+    virtual void fetchGlslVertices() override;
+    virtual void clearGlslMemory() const override;
+
+    virtual void updateCudaTopology() const override;
+    virtual void updateCudaVertices() const override;
+    virtual void fetchCudaVertices() override;
+    virtual void clearCudaMemory() const override;
+
 
     virtual std::string meshGeometryShaderName() const override;
     virtual unsigned int glBuffer(const EMeshBuffer& buffer) const override;
-    virtual unsigned int bufferBinding(EBufferBinding binding) const override;
-    virtual void bindShaderStorageBuffers() const override;
+    virtual unsigned int glBufferBinding(EBufferBinding binding) const override;
+    virtual void bindGlShaderStorageBuffers() const override;
 
 
 protected:
+    void buildGpuTetBuffer(
+        std::vector<GpuTet>& tetBuff) const;
 
-    GLuint _vertSsbo;
-    GLuint _tetSsbo;
-    GLuint _priSsbo;
-    GLuint _hexSsbo;
-    GLuint _topoSsbo;
-    GLuint _neigVertSsbo;
-    GLuint _neigElemSsbo;
-    GLuint _groupMembersSsbo;
+    void buildGpuPriBuffer(
+        std::vector<GpuPri>& priBuff) const;
+
+    void buildGpuHexBuffer(
+        std::vector<GpuHex>& hexBuff) const;
+
+    void buildGpuTopoBuffers(
+        std::vector<GpuTopo>& topoBuff,
+        std::vector<GpuNeigVert>& neigVertBuff,
+        std::vector<GpuNeigElem>& neigElemBuff) const;
+
+
+    // SSBO indices are mutable because they are allocated
+    // by update<Impl>{Topology, Vertices}() methods.
+
+    // These methods were made const because they are needed to push
+    // the mesh on the GPU before performing a simple mesh evaluation.
+
+    mutable GLuint _vertSsbo;
+    mutable GLuint _tetSsbo;
+    mutable GLuint _priSsbo;
+    mutable GLuint _hexSsbo;
+    mutable GLuint _topoSsbo;
+    mutable GLuint _neigVertSsbo;
+    mutable GLuint _neigElemSsbo;
+    mutable GLuint _groupMembersSsbo;
 };
-
-
-
-
-// IMPLEMENTATION //
 
 #endif // GPUMESH_GPUMESH

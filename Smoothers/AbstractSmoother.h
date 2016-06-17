@@ -12,20 +12,6 @@
 class MeshCrew;
 
 
-struct IndependentDispatch
-{
-    IndependentDispatch(uint base, uint size, uint wgc) :
-        base(base), size(size), workgroupCount(wgc) {}
-
-    // Independent set range
-    uint base;
-    uint size;
-
-    // Compute Dispatch Size
-    uint workgroupCount;
-};
-
-
 class AbstractSmoother
 {
 protected:
@@ -81,11 +67,6 @@ protected:
             const Mesh& mesh,
             OptimizationPlot& plot) const = 0;
 
-    virtual void organizeDispatches(
-            const Mesh& mesh,
-            size_t workgroupSize,
-            std::vector<IndependentDispatch>& dispatches) const;
-
     virtual bool isSmoothable(
             const Mesh& mesh,
             size_t vId) const;
@@ -108,10 +89,12 @@ protected:
     double _gainThreshold;
 
     int _smoothPassId;
-    double _lastPassAvgQuality;
     double _lastPassMinQuality;
-    double _lastIterationAvgQuality;
+    double _lastPassAvgQuality;
+    double _lastPassGeomQuality;
     double _lastIterationMinQuality;
+    double _lastIterationAvgQuality;
+    double _lastIterationGeomQuality;
 
     static const int INITIAL_PASS_ID;
     static const int COMPARE_PASS_ID;

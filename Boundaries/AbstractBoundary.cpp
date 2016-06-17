@@ -8,12 +8,8 @@
 
 const AbstractConstraint* AbstractBoundary::INVALID_OPERATION = nullptr;
 
-AbstractBoundary::AbstractBoundary(const std::string& name,
-                                   const std::string& shaderName,
-                                   ModelBoundsCudaFct cudaBoundary) :
-    _name(name),
-    _shaderName(shaderName),
-    _cudaBoundary(cudaBoundary)
+AbstractBoundary::AbstractBoundary(const std::string& name) :
+    _name(name)
 {
 
 }

@@ -24,7 +24,7 @@ AbstractSmoother::AbstractSmoother(const installCudaFct installCuda) :
     _implementationFuncs("Smoothing Implementations")
 {
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("Thread");
+    _implementationFuncs.setDefault("GLSL");
     _implementationFuncs.setContent({
         {string("Serial"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshSerial, this, _1, _2))},
         {string("Thread"),  ImplementationFunc(bind(&AbstractSmoother::smoothMeshThread, this, _1, _2))},
@@ -65,25 +65,6 @@ void AbstractSmoother::smoothMesh(
         auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart);
         getLog().postMessage(new Message('I', true,
             "Smoothing time: " + to_string(dt.count() / 1000.0) + "s", "AbstractSmoother"));
-    }
-}
-
-void AbstractSmoother::organizeDispatches(
-        const Mesh& mesh,
-        size_t workgroupSize,
-        std::vector<IndependentDispatch>& dispatches) const
-{
-    dispatches.clear();
-    size_t groupCount = mesh.independentGroups.size();
-
-    size_t base = 0;
-    for(size_t i=0; i < groupCount; ++i)
-    {
-        size_t count = mesh.independentGroups[i].size();
-        size_t wg = glm::ceil(count / double(workgroupSize));
-        dispatches.emplace_back(base, count, wg);
-
-        base += count;
     }
 }
 
@@ -154,13 +135,16 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         getLog().postMessage(new Message('I', true,
             std::string("Initial mesh quality : ") +
             "min=" + to_string(histogram.minimumQuality()) +
-            "\t avg=" + to_string(histogram.averageQuality()),
+            "\t avg=" + to_string(histogram.averageQuality()) +
+            "\t mean=" + to_string(histogram.geometricMean()),
             "AbstractSmoother"));
 
-        _lastPassAvgQuality = histogram.averageQuality();
         _lastPassMinQuality = histogram.minimumQuality();
-        _lastIterationAvgQuality = histogram.averageQuality();
+        _lastPassAvgQuality = histogram.averageQuality();
+        _lastPassGeomQuality = histogram.geometricMean();
         _lastIterationMinQuality = histogram.minimumQuality();
+        _lastIterationAvgQuality = histogram.averageQuality();
+        _lastIterationGeomQuality = histogram.geometricMean();
 
         _currentImplementation.passes.clear();
         _implBeginTimeStamp = statsNow;
@@ -171,17 +155,20 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         getLog().postMessage(new Message('I', true,
             std::string("Topo/Reloc pass quality : ") +
             "min=" + to_string(histogram.minimumQuality()) +
-            "\t avg=" + to_string(histogram.averageQuality()),
+            "\t avg=" + to_string(histogram.averageQuality()) +
+            "\t mean=" + to_string(histogram.geometricMean()),
             "AbstractSmoother"));
 
         double minGain = histogram.minimumQuality() - _lastPassMinQuality;
         double avgGain = histogram.averageQuality() - _lastPassAvgQuality;
-        double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
+        double geomGain = histogram.geometricMean() - _lastPassGeomQuality;
+        //double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
 
-        continueSmoothing = summedGain > _gainThreshold;
+        continueSmoothing = (geomGain > 0) || (minGain > _gainThreshold);
 
         _lastPassAvgQuality = histogram.averageQuality();
         _lastPassMinQuality = histogram.minimumQuality();
+        _lastPassGeomQuality = histogram.geometricMean();
 
         _smoothPassId = 0;
     }
@@ -190,16 +177,18 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         getLog().postMessage(new Message('I', true,
             "Smooth pass " + to_string(_smoothPassId) + ": " +
             "min=" + to_string(histogram.minimumQuality()) +
-            "\t avg=" + to_string(histogram.averageQuality()),
+            "\t avg=" + to_string(histogram.averageQuality()) +
+            "\t mean=" + to_string(histogram.geometricMean()),
             "AbstractSmoother"));
 
         if(_smoothPassId > _minIteration)
         {
             double minGain = histogram.minimumQuality() - _lastIterationMinQuality;
             double avgGain = histogram.averageQuality() - _lastIterationAvgQuality;
-            double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
+            double geomGain = histogram.geometricMean() - _lastIterationGeomQuality;
+            //double summedGain = glm::max(0.0, minGain) + glm::max(0.0, avgGain);
 
-            continueSmoothing = summedGain > _gainThreshold;
+            continueSmoothing = (geomGain > 0) || (minGain > _gainThreshold);
         }
 
         OptimizationPass stats;
@@ -209,6 +198,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
 
         _lastIterationAvgQuality = histogram.averageQuality();
         _lastIterationMinQuality = histogram.minimumQuality();
+        _lastIterationGeomQuality = histogram.geometricMean();
 
         ++_smoothPassId;
     }
@@ -322,9 +312,6 @@ void AbstractSmoother::benchmark(
 
                 // Restore mesh vertices' initial position
                 mesh = meshBackup;
-                mesh.updateVerticesFromCpu();
-                if(topologist.isEnabled())
-                    mesh.updateGpuTopology();
 
                 if(toggleTopologyModifications)
                 {
@@ -350,8 +337,6 @@ void AbstractSmoother::benchmark(
     if(!smoothedMesh.verts.empty())
     {
         mesh = smoothedMesh;
-        mesh.updateVerticesFromCpu();
-        mesh.updateGpuTopology();
     }
 
     // Get minimums for ratio computations

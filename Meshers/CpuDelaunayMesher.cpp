@@ -60,7 +60,7 @@ CpuDelaunayMesher::CpuDelaunayMesher() :
     _sphereBoundary(new SphereBoundary())
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Shell");
+    _modelFuncs.setDefault("Sphere");
     _modelFuncs.setContent({
         {string("Box"),    ModelFunc(bind(&CpuDelaunayMesher::genBox,    this, _1, _2))},
         {string("Shell"),  ModelFunc(bind(&CpuDelaunayMesher::genShell,  this, _1, _2))},

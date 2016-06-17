@@ -35,14 +35,6 @@ __device__ void gradientDescentSmoothVert(uint vId)
             pos + vec3( 0.0,   0.0,   nodeShift)
         };
 
-        Topo topo = topos[vId];
-        if(topo.type > 0)
-        {
-            for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
-                gradSamples[p] = snapToBoundary(
-                    topo.type, gradSamples[p]);
-        }
-
         for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
         {
             // Quality evaluation functions will use this updated position
@@ -85,13 +77,6 @@ __device__ void gradientDescentSmoothVert(uint vId)
             pos + shift * OFFSETS[5],
             pos + shift * OFFSETS[6]
         };
-
-        if(topo.type > 0)
-        {
-            for(uint p=0; p < PROPOSITION_COUNT; ++p)
-                propositions[p] = snapToBoundary(
-                    topo.type, propositions[p]);
-        }
 
         uint bestProposition = 0;
         float bestQualityMean = -1.0/0.0; // -Inf

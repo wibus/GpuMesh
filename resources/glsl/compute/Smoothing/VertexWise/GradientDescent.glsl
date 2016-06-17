@@ -2,9 +2,6 @@ uniform float MoveCoeff;
 uniform int SecurityCycleCount;
 uniform float LocalSizeToNodeShift;
 
-// Boundaries
-vec3 snapToBoundary(int boundaryID, vec3 pos);
-
 // Smoothing Helper
 float computeLocalElementSize(in uint vId);
 float patchQuality(in uint vId);
@@ -35,14 +32,6 @@ void smoothVert(uint vId)
             pos + vec3( 0.0,   0.0,  -nodeShift),
             pos + vec3( 0.0,   0.0,   nodeShift)
         );
-
-        Topo topo = topos[vId];
-        if(topo.type > 0)
-        {
-            for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
-                gradSamples[p] = snapToBoundary(
-                    topo.type, gradSamples[p]);
-        }
 
         for(uint p=0; p < GRADIENT_SAMPLE_COUNT; ++p)
         {
@@ -86,13 +75,6 @@ void smoothVert(uint vId)
             pos + shift * OFFSETS[5],
             pos + shift * OFFSETS[6]
         );
-
-        if(topo.type > 0)
-        {
-            for(uint p=0; p < PROPOSITION_COUNT; ++p)
-                propositions[p] = snapToBoundary(
-                    topo.type, propositions[p]);
-        }
 
         uint bestProposition = 0;
         float bestQualityMean = -1.0/0.0; // -Inf

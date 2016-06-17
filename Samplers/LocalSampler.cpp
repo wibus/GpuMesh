@@ -66,9 +66,9 @@ void LocalSampler::installPlugin(
 {
     AbstractSampler::installPlugin(mesh, program);
 
-    GLuint localTets  = mesh.bufferBinding(EBufferBinding::LOCAL_TETS_BUFFER_BINDING);
-    GLuint refVerts   = mesh.bufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
-    GLuint refMetrics = mesh.bufferBinding(EBufferBinding::REF_METRICS_BUFFER_BINDING);
+    GLuint localTets  = mesh.glBufferBinding(EBufferBinding::LOCAL_TETS_BUFFER_BINDING);
+    GLuint refVerts   = mesh.glBufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
+    GLuint refMetrics = mesh.glBufferBinding(EBufferBinding::REF_METRICS_BUFFER_BINDING);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, localTets,  _localTetsSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refVerts,   _refVertsSsbo);

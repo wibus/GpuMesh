@@ -17,6 +17,10 @@
 using namespace cellar;
 using namespace std;
 
+const std::string AbstractEvaluator::SERIAL_IMPL_NAME = "Serial";
+const std::string AbstractEvaluator::THREAD_IMPL_NAME = "Thread";
+const std::string AbstractEvaluator::GLSL_IMPL_NAME = "GLSL";
+const std::string AbstractEvaluator::CUDA_IMPL_NAME = "CUDA";
 
 const size_t AbstractEvaluator::WORKGROUP_SIZE = 256;
 const size_t AbstractEvaluator::POLYHEDRON_TYPE_COUNT = 3;
@@ -44,6 +48,7 @@ const glm::dmat3 AbstractEvaluator::Fr_HEX_INV = glm::dmat3(1.0);
 
 
 // CUDA Drivers Interface
+extern bool verboseCuda;
 void evaluateCudaMeshQuality(
         double meanScaleFactor,
         size_t workgroupSize,
@@ -66,12 +71,12 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
                    given this workgroup size.");
 */
     using namespace std::placeholders;
-    _implementationFuncs.setDefault("CUDA");
+    _implementationFuncs.setDefault(GLSL_IMPL_NAME);
     _implementationFuncs.setContent({
-      {string("Serial"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4))},
-      {string("Thread"),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3, _4))},
-      {string("GLSL"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl,   this, _1, _2, _3, _4))},
-      {string("CUDA"),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityCuda,   this, _1, _2, _3, _4))},
+      {string(SERIAL_IMPL_NAME),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4))},
+      {string(THREAD_IMPL_NAME),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3, _4))},
+      {string(GLSL_IMPL_NAME),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityGlsl,   this, _1, _2, _3, _4))},
+      {string(CUDA_IMPL_NAME),    ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityCuda,   this, _1, _2, _3, _4))},
     });
 }
 
@@ -348,7 +353,27 @@ void AbstractEvaluator::evaluateMesh(
     ImplementationFunc implementationFunc;
     if(_implementationFuncs.select(implementationName, implementationFunc))
     {
+        if(implementationName == GLSL_IMPL_NAME)
+        {
+            mesh.updateGlslTopology();
+            mesh.updateGlslVertices();
+        }
+        else if(implementationName == CUDA_IMPL_NAME)
+        {
+            mesh.updateCudaTopology();
+            mesh.updateCudaVertices();
+        }
+
         implementationFunc(mesh, sampler, measurer, histogram);
+
+        if(implementationName == GLSL_IMPL_NAME)
+        {
+            mesh.clearGlslMemory();
+        }
+        else if(implementationName == CUDA_IMPL_NAME)
+        {
+            mesh.clearCudaMemory();
+        }
     }
     else
     {
@@ -463,8 +488,10 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     //    Not to metion that using a single float accumulator gives inacurate
     // results while the workgroup specific integer accumulators gives the
     // exact same result a the double floating point CPU computations.
-    std::vector<GLint> qualBuff(1 + workgroupCount, 0);
+    GLfloat zerof = 0.0f;
+    std::vector<GLint> qualBuff(1 + 1 + workgroupCount, 0);
     qualBuff[0] = GLint(MAX_INTEGER_VALUE);
+    qualBuff[1] = reinterpret_cast<GLint&>(zerof);
     size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_DYNAMIC_READ);
@@ -480,11 +507,11 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
 
     _evaluationProgram.pushProgram();
 
-    mesh.bindShaderStorageBuffers();
-    GLuint qualsBinding = mesh.bufferBinding(
+    mesh.bindGlShaderStorageBuffers();
+    GLuint qualsBinding = mesh.glBufferBinding(
         EBufferBinding::EVALUATE_QUAL_BUFFER_BINDING);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, qualsBinding, _qualSsbo);
-    GLuint histBinding = mesh.bufferBinding(
+    GLuint histBinding = mesh.glBufferBinding(
         EBufferBinding::EVALUATE_HIST_BUFFER_BINDING);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, histBinding, _histSsbo);
 
@@ -518,10 +545,13 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // Get minimum quality
     histogram.setMinimumQuality(quals[0] / MAX_INTEGER_VALUE);
 
+    // Get inverse quality log sum
+    histogram.setInvQualityLogSum(reinterpret_cast<GLfloat&>(quals[1]));
+
     // Combine workgroups' mean
-    size_t i = 0;
+    size_t i = 1;
     double qualSum = 0.0;
-    while(i <= workgroupCount)
+    while(i <= workgroupCount+1)
         qualSum += quals[++i];
     histogram.setAverageQuality(
         qualSum / (MAX_QUALITY_VALUE * elemCount));
@@ -632,6 +662,18 @@ void AbstractEvaluator::benchmark(
         ImplementationFunc implementationFunc;
         if(_implementationFuncs.select(impl, implementationFunc))
         {
+            if(impl == GLSL_IMPL_NAME)
+            {
+                mesh.updateGlslTopology();
+                mesh.updateGlslVertices();
+            }
+            else if(impl == CUDA_IMPL_NAME)
+            {
+                verboseCuda = false;
+                mesh.updateCudaTopology();
+                mesh.updateCudaVertices();
+            }
+
             high_resolution_clock::duration totalTime(0);
             size_t markSize = cycleCount / glm::min(markCount, cycleCount);
             for(size_t i=0, m=0; i < cycleCount; ++i)
@@ -659,6 +701,16 @@ void AbstractEvaluator::benchmark(
                        "AbstractEvaluator"));
                     m += markSize;
                 }
+            }
+
+            if(impl == GLSL_IMPL_NAME)
+            {
+                mesh.clearGlslMemory();
+            }
+            else if(impl == CUDA_IMPL_NAME)
+            {
+                verboseCuda = true;
+                mesh.clearCudaMemory();
             }
 
             EvalBenchmarkStats stats;
