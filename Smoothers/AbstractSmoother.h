@@ -86,10 +86,8 @@ protected:
 
     int _smoothPassId;
     double _lastPassMinQuality;
-    double _lastPassAvgQuality;
     double _lastPassGeomQuality;
     double _lastIterationMinQuality;
-    double _lastIterationAvgQuality;
     double _lastIterationGeomQuality;
 
     static const int INITIAL_PASS_ID;

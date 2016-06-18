@@ -50,7 +50,6 @@ const glm::dmat3 AbstractEvaluator::Fr_HEX_INV = glm::dmat3(1.0);
 // CUDA Drivers Interface
 extern bool verboseCuda;
 void evaluateCudaMeshQuality(
-        double meanScaleFactor,
         size_t workgroupSize,
         size_t workgroupCount,
         QualityHistogram& histogram);
@@ -378,7 +377,7 @@ void AbstractEvaluator::evaluateMesh(
     else
     {
         histogram.setMinimumQuality(nan(""));
-        histogram.setAverageQuality(nan(""));
+        histogram.setInvQualityLogSum(nan(""));
     }
 }
 
@@ -479,6 +478,17 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
         return;
     }
 
+    struct QualBuff
+    {
+        QualBuff() :
+            qualMin(MAX_INTEGER_VALUE),
+            invLogSum(0.0)
+        {}
+
+        GLint qualMin;
+        GLfloat invLogSum;
+    };
+
     // Workgroup integer accum VS. Mesh float accum for mean quality computation
     //
     //    Using atomic integer operations on an array (one int per workgroup)
@@ -487,14 +497,10 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     //
     //    Not to metion that using a single float accumulator gives inacurate
     // results while the workgroup specific integer accumulators gives the
-    // exact same result a the double floating point CPU computations.
-    GLfloat zerof = 0.0f;
-    std::vector<GLint> qualBuff(1 + 1 + workgroupCount, 0);
-    qualBuff[0] = GLint(MAX_INTEGER_VALUE);
-    qualBuff[1] = reinterpret_cast<GLint&>(zerof);
-    size_t qualSize = sizeof(decltype(qualBuff.front())) * qualBuff.size();
+    // exact same result as the double floating point CPU computations.
+    QualBuff qualBuff;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, qualSize, qualBuff.data(), GL_DYNAMIC_READ);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(qualBuff), &qualBuff, GL_DYNAMIC_READ);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
@@ -539,22 +545,14 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // before and after the call to glGetBufferSubData).
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _qualSsbo);
-    GLint* quals = (GLint*) glMapBufferRange(
-        GL_SHADER_STORAGE_BUFFER, 0, qualSize, GL_MAP_READ_BIT);
+    QualBuff* quals = (QualBuff*) glMapBufferRange(
+        GL_SHADER_STORAGE_BUFFER, 0, sizeof(qualBuff), GL_MAP_READ_BIT);
 
     // Get minimum quality
-    histogram.setMinimumQuality(quals[0] / MAX_INTEGER_VALUE);
+    histogram.setMinimumQuality(quals->qualMin / MAX_INTEGER_VALUE);
 
     // Get inverse quality log sum
-    histogram.setInvQualityLogSum(reinterpret_cast<GLfloat&>(quals[1]));
-
-    // Combine workgroups' mean
-    size_t i = 1;
-    double qualSum = 0.0;
-    while(i <= workgroupCount+1)
-        qualSum += quals[++i];
-    histogram.setAverageQuality(
-        qualSum / (MAX_QUALITY_VALUE * elemCount));
+    histogram.setInvQualityLogSum(quals->invLogSum);
 
     histogram.setSampleCount(elemCount);
 
@@ -601,9 +599,10 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
     sampler.setPluginCudaUniforms(mesh);
     measurer.setPluginCudaUniforms(mesh);
 
-    evaluateCudaMeshQuality(MAX_QUALITY_VALUE * elemCount,
-                            WORKGROUP_SIZE, workgroupCount,
-                            histogram);
+    evaluateCudaMeshQuality(
+        WORKGROUP_SIZE,
+        workgroupCount,
+        histogram);
 
     histogram.setSampleCount(elemCount);
 }
@@ -697,7 +696,7 @@ void AbstractEvaluator::benchmark(
                     getLog().postMessage(new Message('I', false,
                        "Benchmark progress : " + to_string(progress) + "%\t" +
                        "(min=" + to_string(histogram.minimumQuality()) +
-                       ", mean=" + to_string(histogram.averageQuality()) + ")",
+                       ", mean=" + to_string(histogram.geometricMean()) + ")",
                        "AbstractEvaluator"));
                     m += markSize;
                 }

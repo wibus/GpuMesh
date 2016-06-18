@@ -1,6 +1,7 @@
 #ifndef GPUMESH_QUALITYHISTOGRAM
 #define GPUMESH_QUALITYHISTOGRAM
 
+#include <cmath>
 #include <vector>
 
 
@@ -27,9 +28,6 @@ public:
     double minimumQuality() const;
     void setMinimumQuality(double minimum);
 
-    double averageQuality() const;
-    void setAverageQuality(double average);
-
     double geometricMean() const;
     void setInvQualityLogSum(double sum);
 
@@ -43,7 +41,6 @@ public:
 private:
     std::size_t _sampleCount;
     double _minimumQuality;
-    double _averageQuality;
     double _invQualityLogSum;
     std::vector<int> _buckets;
 };
@@ -71,9 +68,9 @@ inline double QualityHistogram::minimumQuality() const
     return _minimumQuality;
 }
 
-inline double QualityHistogram::averageQuality() const
+inline double QualityHistogram::geometricMean() const
 {
-    return _averageQuality;
+    return exp( - _invQualityLogSum / sampleCount());
 }
 
 #endif // GPUMESH_QUALITYHISTOGRAM

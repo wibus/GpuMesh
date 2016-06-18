@@ -523,7 +523,8 @@ void GpuMeshCharacter::evaluateMesh(
         getLog().postMessage(new Message('I', false,
             "Results "\
             ": min=" + to_string(histogram.minimumQuality()) +
-            ", avg=" + to_string(histogram.averageQuality()), "GpuMeshCharacter"));
+            ", mean=" + to_string(histogram.geometricMean()),
+             "GpuMeshCharacter"));
     }
 }
 

@@ -14,19 +14,16 @@ __device__ float hexQuality(const Hex& hex);
 
 __device__ int qualMin;
 __device__ float invLogSum;
-__device__ int* means;
 
 __constant__ uint hists_length;
 __device__ int* hists;
 
 
 #define MIN_MAX 2147483647
-#define MEAN_MAX (MIN_MAX / (blockDim.x * 3))
 
 __device__ void commit(uint gid, float q)
 {
     atomicMin(&qualMin, int(q * MIN_MAX));
-    atomicAdd(&means[gid], int(q * MEAN_MAX + 0.5));
     atomicAdd(&invLogSum, log(1.0 / q));
 
     int bucket = int(max(q * hists_length, 0.0));
@@ -58,7 +55,6 @@ __global__ void evaluateCudaMeshQualityMain()
 
 // CUDA Drivers
 void evaluateCudaMeshQuality(
-        double meanScaleFactor,
         size_t workgroupSize,
         size_t workgroupCount,
         QualityHistogram& histogram)
@@ -68,17 +64,6 @@ void evaluateCudaMeshQuality(
 
     float h_invLogSum = 0.0f;
     cudaMemcpyToSymbol(invLogSum, &h_invLogSum, sizeof(invLogSum));
-
-
-    int* d_means = nullptr;
-    int* h_means = new int[workgroupCount];
-    size_t meansSize = sizeof(int) * workgroupCount;
-    for(int i=0; i < workgroupCount; ++i)
-        h_means[i] = 0;
-
-    cudaMalloc(&d_means, meansSize);
-    cudaMemcpy(d_means, h_means, meansSize, cudaMemcpyHostToDevice);
-    cudaMemcpyToSymbol(means, &d_means, sizeof(d_means));
 
 
     int* d_hists = nullptr;
@@ -98,7 +83,6 @@ void evaluateCudaMeshQuality(
 
     cudaMemcpyFromSymbol(&h_qualMin, qualMin, sizeof(h_qualMin));
     cudaMemcpyFromSymbol(&h_invLogSum, invLogSum, sizeof(h_invLogSum));
-    cudaMemcpy(h_means, d_means, meansSize, cudaMemcpyDeviceToHost);
     cudaMemcpy(h_hists, d_hists, histsSize, cudaMemcpyDeviceToHost);
 
     // Get minimum quality
@@ -107,15 +91,6 @@ void evaluateCudaMeshQuality(
     // Get inverse log quality sum
     histogram.setInvQualityLogSum(h_invLogSum);
 
-    // Combine workgroups' mean
-    double qualSum = 0.0;
-    for(int i=0; i < workgroupCount; ++i)
-        qualSum += h_means[i];
-    histogram.setAverageQuality(
-        qualSum / meanScaleFactor);
-    delete[] h_means;
-
     // Free CUDA memory
-    cudaFree(d_means);
     cudaFree(d_hists);
 }

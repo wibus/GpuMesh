@@ -4,7 +4,6 @@ layout(shared, binding = EVALUATE_QUAL_BUFFER_BINDING) buffer Quals
 {
     int qualMin;
     float invLogSum;
-    int means[];
 };
 
 layout(shared, binding = EVALUATE_HIST_BUFFER_BINDING) buffer Hists
@@ -15,7 +14,6 @@ layout(shared, binding = EVALUATE_HIST_BUFFER_BINDING) buffer Hists
 uniform float hists_length;
 
 const int MIN_MAX = 2147483647;
-const float MEAN_MAX = MIN_MAX / (gl_WorkGroupSize.x * 3);
 
 float tetQuality(inout Tet tet);
 float priQuality(inout Pri pri);
@@ -26,7 +24,6 @@ float hexQuality(inout Hex hex);
 void commit(uint gid, float q)
 {
     atomicMin(qualMin, int(q * MIN_MAX));
-    atomicAdd(means[gid], int(q * MEAN_MAX + 0.5));
     atomicAdd(invLogSum, log(1.0 / q));
 
     // ! Driver linker bug :
