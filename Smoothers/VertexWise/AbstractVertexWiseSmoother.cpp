@@ -246,23 +246,24 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
                         mesh.nodeGroups().parallelGroups()[g];
 
                 const NodeGroups::GpuDispatch& dispatch = group.gpuDispatch;
-                _vertSmoothProgram.setInt("GroupBase", dispatch.gpuBufferBase);
-                _vertSmoothProgram.setInt("GroupSize", dispatch.gpuBufferSize);
-
-                glDispatchCompute(dispatch.workgroupCount, 1, 1);
-                glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER,
                              mesh.glBuffer(EMeshBuffer::VERT));
 
-                // Fetch subsurface vertex positions from GPU
-                size_t subsurfaceSize =
-                        group.subsurfaceRange.end -
-                        group.subsurfaceRange.begin;
-
-                if(subsurfaceSize > 0)
+                if(dispatch.workgroupCount > 0)
                 {
+                    _vertSmoothProgram.setInt("GroupBase", dispatch.gpuBufferBase);
+                    _vertSmoothProgram.setInt("GroupSize", dispatch.gpuBufferSize);
+                    glDispatchCompute(dispatch.workgroupCount, 1, 1);
+                    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+
+                    // Fetch subsurface vertex positions from GPU
+                    size_t subsurfaceSize =
+                            group.subsurfaceRange.end -
+                            group.subsurfaceRange.begin;
+
                     subsurfaceSize *= sizeof(GpuVert);
                     size_t subsurfaceBase = group.subsurfaceRange.begin * sizeof(GpuVert);
                     GpuVert* boundVerts = static_cast<GpuVert*>(
@@ -436,11 +437,14 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
                         mesh.nodeGroups().parallelGroups()[g];
 
                 const NodeGroups::GpuDispatch& dispatch = group.gpuDispatch;
-                smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
 
+                if(dispatch.workgroupCount > 0)
+                {
+                    smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
 
-                // Fetch subsurface vertex positions from GPU
-                fetchCudaSubsurfaceVertices(mesh.verts, group);
+                    // Fetch subsurface vertex positions from GPU
+                    fetchCudaSubsurfaceVertices(mesh.verts, group);
+                }
 
                 // Synchronize with CPU workers
                 if(g < groupCount)

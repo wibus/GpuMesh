@@ -37,7 +37,7 @@ void smoothCudaVertices(
 
     cudaCheckErrors("CUDA error before vertices smoothing");
     smoothVerticesCudaMain<<<dispatch.workgroupCount, workgroupSize>>>();
-    cudaCheckErrors("CUDA error in vertices smoothing");
+    cudaCheckErrors("CUDA error during vertices smoothing");
 
     cudaDeviceSynchronize();
 }

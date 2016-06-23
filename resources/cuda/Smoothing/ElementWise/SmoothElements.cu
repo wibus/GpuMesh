@@ -42,7 +42,7 @@ void smoothCudaElements(size_t workGroupCount, size_t workgroupSize)
 {
     cudaCheckErrors("CUDA error before elements smoothing");
     smoothElementsCudaMain<<<workGroupCount, workgroupSize>>>();
-    cudaCheckErrors("CUDA error in elements smoothing");
+    cudaCheckErrors("CUDA error during elements smoothing");
 
     cudaDeviceSynchronize();
 }

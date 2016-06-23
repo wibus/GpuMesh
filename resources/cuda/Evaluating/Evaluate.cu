@@ -79,7 +79,7 @@ void evaluateCudaMeshQuality(
 
     cudaCheckErrors("CUDA error before evaluation");
     evaluateCudaMeshQualityMain<<<workgroupCount, workgroupSize>>>();
-    cudaCheckErrors("CUDA error in evaluation");
+    cudaCheckErrors("CUDA error during evaluation");
 
     cudaMemcpyFromSymbol(&h_qualMin, qualMin, sizeof(h_qualMin));
     cudaMemcpyFromSymbol(&h_invLogSum, invLogSum, sizeof(h_invLogSum));

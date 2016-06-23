@@ -52,7 +52,7 @@ void updateCudaSmoothedElementsVertices(
 
     cudaCheckErrors("CUDA error before vertices update");
     updateVerticesCudaMain<<<dispatch.workgroupCount, workgroupSize>>>();
-    cudaCheckErrors("CUDA error in vertices update");
+    cudaCheckErrors("CUDA error during vertices update");
 
     cudaDeviceSynchronize();
 }
