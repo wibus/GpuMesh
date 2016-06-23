@@ -1,6 +1,6 @@
 *.user
 resources/textures/Backdrop*.png
 Reports/
-Meshes/
+resources/meshes
 doc/html
 doc/latex
