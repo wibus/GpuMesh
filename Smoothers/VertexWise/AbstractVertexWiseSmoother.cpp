@@ -25,8 +25,7 @@ using namespace cellar;
 extern bool verboseCuda;
 void smoothCudaVertices(
         const NodeGroups::GpuDispatch& dispatch,
-        size_t workgroupSize,
-        float moveCoeff);
+        size_t workgroupSize);
 void fetchCudaSubsurfaceVertices(
         std::vector<MeshVert>& verts,
         const NodeGroups::ParallelGroup& group);
@@ -440,7 +439,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
 
                 if(dispatch.workgroupCount > 0)
                 {
-                    smoothCudaVertices(dispatch, WORKGROUP_SIZE, _moveCoeff);
+                    smoothCudaVertices(dispatch, WORKGROUP_SIZE);
 
                     // Fetch subsurface vertex positions from GPU
                     fetchCudaSubsurfaceVertices(mesh.verts, group);
@@ -548,7 +547,6 @@ void AbstractVertexWiseSmoother::setVertexProgramUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program)
 {
-    program.setFloat("MoveCoeff", _moveCoeff);
 }
 
 void AbstractVertexWiseSmoother::printOptimisationParameters(

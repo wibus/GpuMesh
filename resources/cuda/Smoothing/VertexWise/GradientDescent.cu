@@ -119,9 +119,6 @@ void installCudaGradientDescentSmoother(
     cudaMemcpyFromSymbol(&d_smoothVert, gradientDescentSmoothVertPtr, sizeof(smoothVertFct));
     cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
-    // TODO wbussiere 2016-04-04 : Pass security cycle count and
-    //  local size to node shift from Smoother
-
     cudaMemcpyToSymbol(GDSecurityCycleCount, &h_securityCycleCount, sizeof(int));
     cudaMemcpyToSymbol(GDLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
 

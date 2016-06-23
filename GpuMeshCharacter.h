@@ -87,7 +87,6 @@ public:
             const std::string& smootherName,
             const std::string& implementationName,
             size_t minIterationCount,
-            double moveFactor,
             double gainThreshold);
 
     virtual OptimizationPlot benchmarkSmoother(
@@ -95,7 +94,6 @@ public:
             const std::map<std::string, bool>& activeImpls,
             bool toggleTopologyModifications,
             size_t minIterationCount,
-            double moveFactor,
             double gainThreshold);
 
     // Topology

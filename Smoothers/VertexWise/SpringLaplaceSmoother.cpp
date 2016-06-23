@@ -7,9 +7,14 @@
 
 using namespace std;
 
+const double SLMoveCoeff = 0.35;
 
 // CUDA Drivers
-void installCudaSpringLaplaceSmoother();
+void installCudaSpringLaplaceSmoother(float moveCoeff);
+void installCudaSpringLaplaceSmoother()
+{
+    installCudaSpringLaplaceSmoother(SLMoveCoeff);
+}
 
 
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
@@ -25,13 +30,20 @@ SpringLaplaceSmoother::~SpringLaplaceSmoother()
 
 }
 
+void SpringLaplaceSmoother::setVertexProgramUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program)
+{
+    program.setFloat("MoveCoeff", SLMoveCoeff);
+}
+
 void SpringLaplaceSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
     AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Spring Laplace");
-    plot.addSmoothingProperty("Move Factor", to_string(_moveCoeff));
+    plot.addSmoothingProperty("Move Factor", to_string(SLMoveCoeff));
 }
 
 void SpringLaplaceSmoother::smoothVertices(
@@ -53,7 +65,7 @@ void SpringLaplaceSmoother::smoothVertices(
                 mesh, crew.sampler(), vId);
 
         glm::dvec3& pos = verts[vId].p;
-        pos = glm::mix(pos, patchCenter, _moveCoeff);
+        pos = glm::mix(pos, patchCenter, SLMoveCoeff);
 
         const MeshTopo& topo = topos[vId];
         if(topo.snapToBoundary->isConstrained())

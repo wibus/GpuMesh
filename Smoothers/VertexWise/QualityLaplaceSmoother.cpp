@@ -9,10 +9,15 @@ using namespace std;
 
 
 const uint PROPOSITION_COUNT = 4;
+const double QLMoveCoeff = 0.35;
 
 
 // CUDA Drivers
-void installCudaQualityLaplaceSmoother();
+void installCudaQualityLaplaceSmoother(float moveCoeff);
+void installCudaQualityLaplaceSmoother()
+{
+    installCudaQualityLaplaceSmoother(QLMoveCoeff);
+}
 
 
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
@@ -28,6 +33,13 @@ QualityLaplaceSmoother::~QualityLaplaceSmoother()
 
 }
 
+void QualityLaplaceSmoother::setVertexProgramUniforms(
+        const Mesh& mesh,
+        cellar::GlProgram& program)
+{
+    program.setFloat("MoveCoeff", QLMoveCoeff);
+}
+
 void QualityLaplaceSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
@@ -35,7 +47,7 @@ void QualityLaplaceSmoother::printOptimisationParameters(
     AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
     plot.addSmoothingProperty("Method Name", "Quality Laplace");
     plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
-    plot.addSmoothingProperty("Line Gaps", to_string(_moveCoeff));
+    plot.addSmoothingProperty("Line Gaps", to_string(QLMoveCoeff));
 }
 
 void QualityLaplaceSmoother::smoothVertices(
@@ -64,9 +76,9 @@ void QualityLaplaceSmoother::smoothVertices(
         // Define propositions for new vertex's position
         glm::dvec3 propositions[PROPOSITION_COUNT] = {
             pos,
-            patchCenter - centerDist * _moveCoeff,
+            patchCenter - centerDist * QLMoveCoeff,
             patchCenter,
-            patchCenter + centerDist * _moveCoeff,
+            patchCenter + centerDist * QLMoveCoeff,
         };
 
         const MeshTopo& topo = topos[vId];

@@ -5,8 +5,6 @@
 
 __device__ smoothVertFct smoothVert = nullptr;
 
-__device__  float MoveCoeff = 0.35;
-
 
 // Smoothing Helper
 __device__ uint getInvocationVertexId();
@@ -29,11 +27,9 @@ void setupCudaIndependentDispatch(const NodeGroups::GpuDispatch& dispatch);
 
 void smoothCudaVertices(
         const NodeGroups::GpuDispatch& dispatch,
-        size_t workgroupSize,
-        float moveCoeff)
+        size_t workgroupSize)
 {
     setupCudaIndependentDispatch(dispatch);
-    cudaMemcpyToSymbol(MoveCoeff, &moveCoeff, sizeof(float));
 
     cudaCheckErrors("CUDA error before vertices smoothing");
     smoothVerticesCudaMain<<<dispatch.workgroupCount, workgroupSize>>>();

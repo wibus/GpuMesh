@@ -93,7 +93,6 @@ void SmoothTab::smoothMesh()
         _ui->smoothingTechniqueMenu->currentText().toStdString(),
         _ui->smoothingImplementationMenu->currentText().toStdString(),
         _ui->smoothMinIterationSpin->value(),
-        _ui->smoothMoveFactorSpin->value(),
         _ui->smoothGainThresholdSpin->value());
 }
 
@@ -153,7 +152,6 @@ void SmoothTab::benchmarkImplementations()
             _activeImpls,
             _ui->compareTopologyRadio->isChecked(),
             _ui->smoothMinIterationSpin->value(),
-            _ui->smoothMoveFactorSpin->value(),
             _ui->smoothGainThresholdSpin->value());
 
     QApplication::processEvents();

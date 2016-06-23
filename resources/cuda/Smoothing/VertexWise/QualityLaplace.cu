@@ -2,6 +2,8 @@
 
 #define PROPOSITION_COUNT uint(4)
 
+__device__  float QLMoveCoeff = 0.35;
+
 
 // Smoothing helper
 __device__ float patchQuality(uint vId);
@@ -19,9 +21,9 @@ __device__ void qualityLaplaceSmoothVert(uint vId)
     // Define propositions for new vertex's position
     vec3 propositions[PROPOSITION_COUNT] = {
         pos,
-        patchCenter - centerDist * MoveCoeff,
+        patchCenter - centerDist * QLMoveCoeff,
         patchCenter,
-        patchCenter + centerDist * MoveCoeff
+        patchCenter + centerDist * QLMoveCoeff
     };
 
 
@@ -52,8 +54,10 @@ __device__ smoothVertFct qualityLaplaceSmoothVertPtr = qualityLaplaceSmoothVert;
 
 
 // CUDA Drivers
-void installCudaQualityLaplaceSmoother()
+void installCudaQualityLaplaceSmoother(float moveCoeff)
 {
+    cudaMemcpyToSymbol(QLMoveCoeff, &moveCoeff, sizeof(float));
+
     smoothVertFct d_smoothVert = nullptr;
     cudaMemcpyFromSymbol(&d_smoothVert, qualityLaplaceSmoothVertPtr, sizeof(smoothVertFct));
     cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));

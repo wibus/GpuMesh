@@ -557,7 +557,6 @@ void GpuMeshCharacter::smoothMesh(
         const std::string& smootherName,
         const std::string& implementationName,
         size_t minIterationCount,
-        double moveFactor,
         double gainThreshold)
 {
     printStep("Mesh Smoothing "\
@@ -572,7 +571,6 @@ void GpuMeshCharacter::smoothMesh(
             *_meshCrew,
             implementationName,
             minIterationCount,
-            moveFactor,
             gainThreshold);
 
         updateSampling();
@@ -585,7 +583,6 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
         const map<string, bool>& activeImpls,
         bool toggleTopologyModifications,
         size_t minIterationCount,
-        double moveFactor,
         double gainThreshold)
 {
     printStep("Smoothing benchmark "\
@@ -605,7 +602,6 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
             activeImpls,
             toggleTopologyModifications,
             minIterationCount,
-            moveFactor,
             gainThreshold,
             plot);
 

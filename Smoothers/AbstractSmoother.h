@@ -28,7 +28,6 @@ public:
             const MeshCrew& crew,
             const std::string& implementationName,
             int minIteration,
-            double moveFactor,
             double gainThreshold);
 
     virtual void smoothMeshSerial(
@@ -53,7 +52,6 @@ public:
             const std::map<std::string, bool>& activeImpls,
             bool toggleTopologyModifications,
             int minIteration,
-            double moveFactor,
             double gainThreshold,
             OptimizationPlot& outPlot);
 
@@ -81,7 +79,6 @@ protected:
     installCudaFct _installCudaSmoother;
 
     int _minIteration;
-    double _moveCoeff;
     double _gainThreshold;
 
     int _smoothPassId;

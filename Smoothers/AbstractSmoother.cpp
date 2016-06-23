@@ -48,14 +48,12 @@ void AbstractSmoother::smoothMesh(
         const MeshCrew& crew,
         const std::string& implementationName,
         int minIteration,
-        double moveFactor,
         double gainThreshold)
 {
     ImplementationFunc implementationFunc;
     if(_implementationFuncs.select(implementationName, implementationFunc))
     {
         _minIteration = minIteration;
-        _moveCoeff = moveFactor;
         _gainThreshold = gainThreshold;
 
         auto tStart = chrono::high_resolution_clock::now();
@@ -194,12 +192,10 @@ void AbstractSmoother::benchmark(
         const map<string, bool>& activeImpls,
         bool toggleTopologyModifications,
         int minIteration,
-        double moveFactor,
         double gainThreshold,
         OptimizationPlot& outPlot)
 {
     _minIteration = minIteration;
-    _moveCoeff = moveFactor;
     _gainThreshold = gainThreshold;
     initializeProgram(mesh, crew);
 

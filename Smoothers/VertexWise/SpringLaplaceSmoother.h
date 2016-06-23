@@ -12,6 +12,10 @@ public:
     virtual ~SpringLaplaceSmoother();
 
 protected:
+    virtual void setVertexProgramUniforms(
+            const Mesh& mesh,
+            cellar::GlProgram& program) override;
+
     virtual void printOptimisationParameters(
             const Mesh& mesh,
             OptimizationPlot& plot) const override;
