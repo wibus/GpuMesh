@@ -19,6 +19,8 @@ public:
 
     virtual glm::dvec3 operator()(const glm::dvec3& pos) const override;
 
+    const glm::dvec3& position() const;
+
 protected:
     virtual const AbstractConstraint* split(const AbstractConstraint* c) const override;
     virtual const AbstractConstraint* merge(const AbstractConstraint* c) const override;
@@ -28,6 +30,14 @@ private:
     std::vector<EdgeConstraint*> _edges;
     std::vector<FaceConstraint*> _faces;
 };
+
+
+
+// IMPLEMENTATION //
+inline const glm::dvec3& VertexConstraint::position() const
+{
+    return _pos;
+}
 
 
 #endif // GPUMESH_VERTEX_CONSTRAINT

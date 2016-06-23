@@ -7,6 +7,7 @@
 
 
 class BoxBoundary;
+class TetBoundary;
 
 
 class DebugMesher : public AbstractMesher
@@ -26,6 +27,7 @@ protected:
 
 private:
     std::shared_ptr<BoxBoundary> _boxBoundary;
+    std::shared_ptr<TetBoundary> _tetBoundary;
 };
 
 #endif // GPUMESH_DEBUGMESHER

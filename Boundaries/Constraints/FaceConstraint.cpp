@@ -156,7 +156,7 @@ const AbstractConstraint* FaceConstraint::merge(const AbstractConstraint* c) con
 
 PlaneConstraint::PlaneConstraint(int id, const glm::dvec3 &p, const glm::dvec3 &n) :
     FaceConstraint(id),
-    _p(p), _n(n)
+    _p(p), _n(glm::normalize(n))
 {
 
 }

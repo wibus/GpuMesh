@@ -4,6 +4,7 @@
 #include <GLM/gtc/matrix_transform.hpp>
 
 #include "Boundaries/BoxBoundary.h"
+#include "Boundaries/TetBoundary.h"
 
 #include <DataStructures/Tetrahedralizer.h>
 
@@ -11,10 +12,11 @@ using namespace std;
 
 
 DebugMesher::DebugMesher() :
-    _boxBoundary(new BoxBoundary())
+    _boxBoundary(new BoxBoundary()),
+    _tetBoundary(new TetBoundary())
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Cube");
+    _modelFuncs.setDefault("Tet");
     _modelFuncs.setContent({
         {string("Singles"), ModelFunc(bind(&DebugMesher::genSingles, this, _1, _2))},
         {string("Squish"),  ModelFunc(bind(&DebugMesher::genSquish,  this, _1, _2))},
@@ -245,10 +247,17 @@ void DebugMesher::genTet(Mesh& mesh, size_t vertexCount)
     mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
     mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
 
+    mesh.topos.push_back(MeshTopo(_tetBoundary->v0()));
+    mesh.topos.push_back(MeshTopo(_tetBoundary->v1()));
+    mesh.topos.push_back(MeshTopo(_tetBoundary->v2()));
+    mesh.topos.push_back(MeshTopo(_tetBoundary->v3()));
+
     glm::dvec4 centerw;
     for(const MeshVert& v : mesh.verts)
         centerw += glm::dvec4(v.p, 1.0);
     glm::dvec3 center = glm::dvec3(centerw) / centerw.w;
     for(MeshVert& v : mesh.verts)
         v.p -= center;
+
+    mesh.setBoundary(_tetBoundary);
 }

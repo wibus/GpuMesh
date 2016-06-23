@@ -15,7 +15,8 @@ SET(GpuMesh_BOUNDARIES_HEADERS
     ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.h
     ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.h
     ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.h
-    ${GpuMesh_SRC_DIR}/Boundaries/SphereBoundary.h)
+    ${GpuMesh_SRC_DIR}/Boundaries/SphereBoundary.h
+    ${GpuMesh_SRC_DIR}/Boundaries/TetBoundary.h)
 
 SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.h
@@ -138,7 +139,8 @@ SET(GpuMesh_BOUNDARIES_SOURCES
     ${GpuMesh_SRC_DIR}/Boundaries/BoxBoundary.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/PipeBoundary.cpp
     ${GpuMesh_SRC_DIR}/Boundaries/ShellBoundary.cpp
-    ${GpuMesh_SRC_DIR}/Boundaries/SphereBoundary.cpp)
+    ${GpuMesh_SRC_DIR}/Boundaries/SphereBoundary.cpp
+    ${GpuMesh_SRC_DIR}/Boundaries/TetBoundary.cpp)
 
 SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/Mesh.cpp
