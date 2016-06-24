@@ -6,7 +6,7 @@
 
 #include "Tabs/MeshTab.h"
 #include "Tabs/EvaluateTab.h"
-#include "Tabs/SmoothTab.h"
+#include "Tabs/OptimizeTab.h"
 #include "Tabs/RenderTab.h"
 
 using namespace scaena;
@@ -25,7 +25,7 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
 
     _meshTab.reset(new MeshTab(_ui, character));
     _evaluateTab.reset(new EvaluateTab(_ui, character));
-    _smoothTab.reset(new SmoothTab(_ui, character));
+    _optimizeTab.reset(new OptimizeTab(_ui, character));
     _renderTab.reset(new RenderTab(_ui, character));
 
     resize(1920, 1080);

@@ -2,9 +2,6 @@
 
 
 AbstractTopologist::AbstractTopologist() :
-    _isEnabled(false),
-    _frequency(1),
-    _topoPassCount(5),
     _minEdgeLength(0.5),
     _maxEdgeLength(1.5)
 {
@@ -16,17 +13,12 @@ AbstractTopologist::~AbstractTopologist()
 
 }
 
-void AbstractTopologist::setEnabled(bool enabled)
+void AbstractTopologist::setMinEdgeLength(double length)
 {
-    _isEnabled = enabled;
+    _minEdgeLength = length;
 }
 
-void AbstractTopologist::setFrequency(int frequency)
+void AbstractTopologist::setMaxEdgeLength(double length)
 {
-    _frequency = frequency;
-}
-
-void AbstractTopologist::setTopoPassCount(int count)
-{
-    _topoPassCount = count;
+    _maxEdgeLength = length;
 }

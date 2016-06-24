@@ -6,10 +6,12 @@
 #include <CellarWorkbench/GL/GlProgram.h>
 
 #include "DataStructures/Mesh.h"
+#include "DataStructures/Schedule.h"
 #include "DataStructures/OptionMap.h"
 #include "DataStructures/OptimizationPlot.h"
 
 class MeshCrew;
+class Schedule;
 
 
 class AbstractSmoother
@@ -27,8 +29,7 @@ public:
             Mesh& mesh,
             const MeshCrew& crew,
             const std::string& implementationName,
-            int minIteration,
-            double gainThreshold);
+            const Schedule& schedule);
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
@@ -50,9 +51,7 @@ public:
             Mesh& mesh,
             const MeshCrew& crew,
             const std::map<std::string, bool>& activeImpls,
-            bool toggleTopologyModifications,
-            int minIteration,
-            double gainThreshold,
+            const Schedule& schedule,
             OptimizationPlot& outPlot);
 
 
@@ -71,17 +70,15 @@ protected:
     bool evaluateMeshQualityCuda(Mesh& mesh, const MeshCrew& crew);
     bool evaluateMeshQuality(Mesh& mesh, const MeshCrew& crew, int impl);
 
-
-
     std::string smoothingUtilsShader() const;
 
 
     installCudaFct _installCudaSmoother;
 
-    int _minIteration;
-    double _gainThreshold;
+    Schedule _schedule;
 
-    int _smoothPassId;
+    int _relocPassId;
+    int _globalPassId;
     double _lastPassMinQuality;
     double _lastPassGeomQuality;
     double _lastIterationMinQuality;

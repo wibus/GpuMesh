@@ -68,13 +68,14 @@ bool BatrTopologist::needTopologicalModifications(
 {
     if(mesh.tets.empty() || !(mesh.pris.empty() && mesh.hexs.empty()))
         return false;
-
-    return isEnabled();
+    else
+        return true;
 }
 
 void BatrTopologist::restructureMesh(
         Mesh& mesh,
-        const MeshCrew& crew) const
+        const MeshCrew& crew,
+        unsigned int passCount) const
 {
     if(mesh.tets.empty() || !(mesh.pris.empty() && mesh.hexs.empty()))
         return;
@@ -100,7 +101,7 @@ void BatrTopologist::restructureMesh(
     trimVerts(mesh, aliveVerts);
 
 
-    size_t passCount = 0;
+    size_t passDone = 0;
     size_t lastPassOpCount = 0;
     while(true)
     {
@@ -110,11 +111,11 @@ void BatrTopologist::restructureMesh(
         passOpCount += edgeSwapping(mesh, crew);
         passOpCount += edgeSplitMerge(mesh, crew);
 
-        ++passCount;
+        ++passDone;
 
         if(passOpCount == 0 ||
            passOpCount == lastPassOpCount ||
-           passCount >= topoPassCount())
+           passDone >= passCount)
         {
             break;
         }

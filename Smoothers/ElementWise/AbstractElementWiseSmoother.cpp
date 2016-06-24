@@ -65,7 +65,7 @@ void AbstractElementWiseSmoother::smoothMeshSerial(
     size_t priCount = mesh.pris.size();
     size_t hexCount = mesh.hexs.size();
 
-    _smoothPassId = 0;
+    _relocPassId = 0;
     while(evaluateMeshQualitySerial(mesh, crew))
     {
         smoothTets(mesh, crew, 0, tetCount);

@@ -25,6 +25,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
     ${GpuMesh_SRC_DIR}/DataStructures/NodeGroups.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptionMap.h
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.h
+    ${GpuMesh_SRC_DIR}/DataStructures/Schedule.h
     ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedralizer.h
     ${GpuMesh_SRC_DIR}/DataStructures/Tetrahedron.h
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.h
@@ -99,7 +100,7 @@ SET(GpuMesh_DIALOGS_HEADERS
 SET(GpuMesh_UITABS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.h
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/EvaluateTab.h
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/SmoothTab.h
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/OptimizeTab.h
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderTab.h)
 
 SET(GpuMesh_USERINTERFACE_HEADERS
@@ -148,6 +149,7 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
     ${GpuMesh_SRC_DIR}/DataStructures/MeshCrew.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/NodeGroups.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/OptimizationPlot.cpp
+    ${GpuMesh_SRC_DIR}/DataStructures/Schedule.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetList.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TetPool.cpp
     ${GpuMesh_SRC_DIR}/DataStructures/TriSet.cpp
@@ -217,7 +219,7 @@ SET(GpuMesh_TOPOLOGISTS_SOURCES
 SET(GpuMesh_UITABS_SOURCES
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/MeshTab.cpp
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/EvaluateTab.cpp
-    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/SmoothTab.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/Tabs/OptimizeTab.cpp
     ${GpuMesh_SRC_DIR}/UserInterface/Tabs/RenderTab.cpp)
 
 SET(GpuMesh_DIALOGS_HEADERS

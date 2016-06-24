@@ -15,6 +15,7 @@
 #include "DataStructures/OptimizationPlot.h"
 
 class Mesh;
+class Schedule;
 class AbstractMesher;
 class AbstractSampler;
 class AbstractEvaluator;
@@ -86,26 +87,21 @@ public:
     virtual void smoothMesh(
             const std::string& smootherName,
             const std::string& implementationName,
-            size_t minIterationCount,
-            double gainThreshold);
+            const Schedule& schedule);
 
     virtual OptimizationPlot benchmarkSmoother(
             const std::string& smootherName,
             const std::map<std::string, bool>& activeImpls,
-            bool toggleTopologyModifications,
-            size_t minIterationCount,
-            double gainThreshold);
+            const Schedule& schedule);
 
     // Topology
-    virtual void restructureMesh();
+    virtual void restructureMesh(int passCount);
 
     // Render
     virtual void disableAnisotropy();
     virtual void displaySamplingMesh(bool display);
     virtual void useSampler(const std::string& samplerName);
     virtual void useEvaluator(const std::string& evaluatorName);
-    virtual void enableTopologyModifications(bool enable);
-    virtual void setTopologyModificationsFrequency(int frequency);
     virtual void useRenderer(const std::string& rendererName);
     virtual void useShading(const std::string& shadingName);
     virtual void useCameraMan(const std::string& cameraManName);

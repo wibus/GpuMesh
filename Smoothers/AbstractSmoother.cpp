@@ -47,14 +47,12 @@ void AbstractSmoother::smoothMesh(
         Mesh& mesh,
         const MeshCrew& crew,
         const std::string& implementationName,
-        int minIteration,
-        double gainThreshold)
+        const Schedule& schedule)
 {
     ImplementationFunc implementationFunc;
     if(_implementationFuncs.select(implementationName, implementationFunc))
     {
-        _minIteration = minIteration;
-        _gainThreshold = gainThreshold;
+        _schedule = schedule;
 
         auto tStart = chrono::high_resolution_clock::now();
         implementationFunc(mesh, crew);
@@ -113,7 +111,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
     bool continueSmoothing = true;
     auto statsNow = chrono::high_resolution_clock::now();
 
-    if(_smoothPassId == INITIAL_PASS_ID)
+    if(_relocPassId == INITIAL_PASS_ID)
     {
         getLog().postMessage(new Message('I', true,
             std::string("Initial mesh quality : ") +
@@ -128,12 +126,15 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
 
         _currentImplementation.passes.clear();
         _implBeginTimeStamp = statsNow;
-        _smoothPassId = 0;
+
+        _relocPassId = 0;
+        _globalPassId = 1;
     }
-    else if(_smoothPassId == COMPARE_PASS_ID)
+    else if(_relocPassId == COMPARE_PASS_ID)
     {
         getLog().postMessage(new Message('I', true,
-            std::string("Topo/Reloc pass quality : ") +
+            std::string("Topo/Reloc pass quality " +
+                  to_string(_globalPassId) + " : ") +
             "min=" + to_string(histogram.minimumQuality()) +
             "\t mean=" + to_string(histogram.geometricMean()),
             "AbstractSmoother"));
@@ -141,27 +142,42 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         double minGain = histogram.minimumQuality() - _lastPassMinQuality;
         double geomGain = histogram.geometricMean() - _lastPassGeomQuality;
 
-        continueSmoothing = (geomGain > 0) || (minGain > _gainThreshold);
+        if(_schedule.autoPilotEnabled)
+        {
+            continueSmoothing = (geomGain > _schedule.minQualThreshold) ||
+                                (minGain  > _schedule.qualMeanThreshold);
+        }
+        else
+        {
+            continueSmoothing = _globalPassId < _schedule.globalPassCount;
+        }
 
         _lastPassMinQuality = histogram.minimumQuality();
         _lastPassGeomQuality = histogram.geometricMean();
 
-        _smoothPassId = 0;
+        ++_globalPassId;
+        _relocPassId = 0;
     }
     else
     {
         getLog().postMessage(new Message('I', true,
-            "Smooth pass " + to_string(_smoothPassId) + ": " +
+            "Smooth pass " + to_string(_globalPassId) + "|" +
+                             to_string(_relocPassId) + " : " +
             "min=" + to_string(histogram.minimumQuality()) +
             "\t mean=" + to_string(histogram.geometricMean()),
             "AbstractSmoother"));
 
-        if(_smoothPassId > _minIteration)
-        {
-            double minGain = histogram.minimumQuality() - _lastIterationMinQuality;
-            double geomGain = histogram.geometricMean() - _lastIterationGeomQuality;
+        double minGain = histogram.minimumQuality() - _lastIterationMinQuality;
+        double geomGain = histogram.geometricMean() - _lastIterationGeomQuality;
 
-            continueSmoothing = (geomGain > 0) || (minGain > _gainThreshold);
+        if(_schedule.autoPilotEnabled)
+        {
+            continueSmoothing = (geomGain > _schedule.minQualThreshold) ||
+                                (minGain  > _schedule.qualMeanThreshold);
+        }
+        else
+        {
+            continueSmoothing = _relocPassId < _schedule.nodeRelocationsPassCount;
         }
 
         OptimizationPass stats;
@@ -172,7 +188,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         _lastIterationMinQuality = histogram.minimumQuality();
         _lastIterationGeomQuality = histogram.geometricMean();
 
-        ++_smoothPassId;
+        ++_relocPassId;
     }
 
     return continueSmoothing;
@@ -190,13 +206,10 @@ void AbstractSmoother::benchmark(
         Mesh& mesh,
         const MeshCrew& crew,
         const map<string, bool>& activeImpls,
-        bool toggleTopologyModifications,
-        int minIteration,
-        double gainThreshold,
+        const Schedule& schedule,
         OptimizationPlot& outPlot)
 {
-    _minIteration = minIteration;
-    _gainThreshold = gainThreshold;
+    _schedule = schedule;
     initializeProgram(mesh, crew);
 
     printOptimisationParameters(mesh, outPlot);
@@ -241,60 +254,40 @@ void AbstractSmoother::benchmark(
         ImplementationFunc implementationFunc;
         if(_implementationFuncs.select(impl, implementationFunc))
         {
-            AbstractTopologist& topologist = const_cast<AbstractTopologist&>(crew.topologist());
-            if(toggleTopologyModifications)
-                topologist.setEnabled(false);
+            std::string topo = " (topo=";
+            if(_schedule.topoOperationEnabled)
+                topo += "on)";
+            else
+                topo += "off)";
 
-            bool implCompleted = false;
-            while(!implCompleted)
-            {
-                std::string topo = " (topo=";
-                if(topologist.isEnabled())
-                    topo += "on)";
-                else
-                    topo += "off)";
-
-                getLog().postMessage(new Message('I', false,
-                   "Benchmarking "+ impl + topo +" implementation",
-                   "AbstractSmoother"));
+            getLog().postMessage(new Message('I', false,
+               "Benchmarking "+ impl + topo +" implementation",
+               "AbstractSmoother"));
 
 
-                _currentImplementation = OptimizationImpl();
-                _currentImplementation.name = impl + topo;
+            _currentImplementation = OptimizationImpl();
+            _currentImplementation.name = impl + topo;
 
-                implementationFunc(mesh, crew);
+            implementationFunc(mesh, crew);
 
-                SmoothBenchmarkStats stats;
-                crew.evaluator().evaluateMeshQualityThread(
-                    mesh, crew.sampler(), crew.measurer(),
-                    stats.histogram);
+            SmoothBenchmarkStats stats;
+            crew.evaluator().evaluateMeshQualityThread(
+                mesh, crew.sampler(), crew.measurer(),
+                stats.histogram);
 
-                outPlot.addImplementation(_currentImplementation);
+            outPlot.addImplementation(_currentImplementation);
 
-                stats.impl = impl;
-                stats.totalSeconds = _currentImplementation.passes.back().timeStamp -
-                                     _currentImplementation.passes.front().timeStamp;
-                stats.qualityGain = stats.histogram.computeGain(initialHistogram);
-                statsVec.push_back(stats);
+            stats.impl = impl;
+            stats.totalSeconds = _currentImplementation.passes.back().timeStamp -
+                                 _currentImplementation.passes.front().timeStamp;
+            stats.qualityGain = stats.histogram.computeGain(initialHistogram);
+            statsVec.push_back(stats);
 
-                if(smoothedMesh.verts.empty())
-                    smoothedMesh = mesh;
+            if(smoothedMesh.verts.empty())
+                smoothedMesh = mesh;
 
-                // Restore mesh vertices' initial position
-                mesh = meshBackup;
-
-                if(toggleTopologyModifications)
-                {
-                    if(!topologist.isEnabled())
-                        topologist.setEnabled(true);
-                    else
-                        implCompleted = true;
-                }
-                else
-                {
-                    implCompleted = true;
-                }
-            }
+            // Restore mesh vertices' initial position
+            mesh = meshBackup;
         }
         else
         {

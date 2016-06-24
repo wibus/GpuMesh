@@ -19,7 +19,8 @@ public:
 
     virtual void restructureMesh(
             Mesh& mesh,
-            const MeshCrew& crew) const override;
+            const MeshCrew& crew,
+            unsigned int passCount) const override;
 
     virtual void printOptimisationParameters(
             const Mesh& mesh,

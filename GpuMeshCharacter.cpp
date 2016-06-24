@@ -556,8 +556,7 @@ void GpuMeshCharacter::setMetricScaling(double scaling)
 void GpuMeshCharacter::smoothMesh(
         const std::string& smootherName,
         const std::string& implementationName,
-        size_t minIterationCount,
-        double gainThreshold)
+        const Schedule& schedule)
 {
     printStep("Mesh Smoothing "\
               ": smoother=" + smootherName +
@@ -570,8 +569,7 @@ void GpuMeshCharacter::smoothMesh(
             *_mesh,
             *_meshCrew,
             implementationName,
-            minIterationCount,
-            gainThreshold);
+            schedule);
 
         updateSampling();
         updateMeshMeasures();
@@ -581,9 +579,7 @@ void GpuMeshCharacter::smoothMesh(
 OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
         const std::string& smootherName,
         const map<string, bool>& activeImpls,
-        bool toggleTopologyModifications,
-        size_t minIterationCount,
-        double gainThreshold)
+        const Schedule& schedule)
 {
     printStep("Smoothing benchmark "\
               ": smoother=" + smootherName);
@@ -600,9 +596,7 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
             *_mesh,
             *_meshCrew,
             activeImpls,
-            toggleTopologyModifications,
-            minIterationCount,
-            gainThreshold,
+            schedule,
             plot);
 
         updateSampling();
@@ -612,10 +606,10 @@ OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
     return plot;
 }
 
-void GpuMeshCharacter::restructureMesh()
+void GpuMeshCharacter::restructureMesh(int passCount)
 {
     _meshCrew->topologist().restructureMesh(
-        *_mesh, *_meshCrew);
+        *_mesh, *_meshCrew, passCount);
 
     updateSampling();
     updateMeshMeasures();
@@ -656,16 +650,6 @@ void GpuMeshCharacter::useEvaluator(const std::string& evaluatorName)
         _meshCrew->setEvaluator(*_mesh, evaluator);
         updateMeshMeasures();
     }
-}
-
-void GpuMeshCharacter::enableTopologyModifications(bool enable)
-{
-    _meshCrew->topologist().setEnabled(enable);
-}
-
-void GpuMeshCharacter::setTopologyModificationsFrequency(int frequency)
-{
-    _meshCrew->topologist().setFrequency(frequency);
 }
 
 void GpuMeshCharacter::useRenderer(const std::string& rendererName)

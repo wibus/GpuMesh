@@ -55,16 +55,18 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    bool isTopoEnabled = crew.topologist()
-            .needTopologicalModifications(mesh);
+    bool isTopoEnabled =
+        _schedule.topoOperationEnabled &&
+        crew.topologist().needTopologicalModifications(mesh);
 
-    _smoothPassId = INITIAL_PASS_ID;
+    _relocPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualitySerial(mesh, crew))
     {
         if(isTopoEnabled)
         {
             verboseCuda = false;
-            crew.topologist().restructureMesh(mesh, crew);
+            crew.topologist().restructureMesh(mesh, crew,
+                _schedule.topoOperationPassCount);
             verboseCuda = true;
         }
 
@@ -75,7 +77,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
         }
 
         if(isTopoEnabled)
-            _smoothPassId = COMPARE_PASS_ID;
+            _relocPassId = COMPARE_PASS_ID;
         else
             break;
     }
@@ -85,20 +87,22 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         Mesh& mesh,
         const MeshCrew& crew)
 {
-    bool isTopoEnabled = crew.topologist()
-            .needTopologicalModifications(mesh);
+    bool isTopoEnabled =
+        _schedule.topoOperationEnabled &&
+        crew.topologist().needTopologicalModifications(mesh);
 
     // TODO : Use a thread pool
     uint threadCount = thread::hardware_concurrency();    
     mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
 
-    _smoothPassId = INITIAL_PASS_ID;
+    _relocPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityThread(mesh, crew))
     {
         if(isTopoEnabled)
         {
             verboseCuda = false;
-            crew.topologist().restructureMesh(mesh, crew);
+            crew.topologist().restructureMesh(mesh, crew,
+                _schedule.topoOperationPassCount);
             verboseCuda = true;
         }
 
@@ -144,7 +148,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         }
 
         if(isTopoEnabled)
-            _smoothPassId = COMPARE_PASS_ID;
+            _relocPassId = COMPARE_PASS_ID;
         else
             break;
     }
@@ -177,17 +181,19 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
     mesh.nodeGroups().setGpuWorkgroupSize(WORKGROUP_SIZE);
 
-    bool isTopoEnabled = crew.topologist()
-            .needTopologicalModifications(mesh);
+    bool isTopoEnabled =
+        _schedule.topoOperationEnabled &&
+        crew.topologist().needTopologicalModifications(mesh);
 
-    _smoothPassId = INITIAL_PASS_ID;
+    _relocPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityGlsl(mesh, crew))
     {
         if(isTopoEnabled)
         {
             verboseCuda = false;
             mesh.fetchGlslVertices();
-            crew.topologist().restructureMesh(mesh, crew);
+            crew.topologist().restructureMesh(mesh, crew,
+                _schedule.topoOperationPassCount);
             mesh.updateGlslTopology();
             mesh.updateGlslVertices();
             verboseCuda = true;
@@ -342,7 +348,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
         }
 
         if(isTopoEnabled)
-            _smoothPassId = COMPARE_PASS_ID;
+            _relocPassId = COMPARE_PASS_ID;
         else
             break;
     }
@@ -369,17 +375,19 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
     mesh.nodeGroups().setGpuWorkgroupSize(WORKGROUP_SIZE);
 
-    bool isTopoEnabled = crew.topologist()
-            .needTopologicalModifications(mesh);
+    bool isTopoEnabled =
+        _schedule.topoOperationEnabled &&
+        crew.topologist().needTopologicalModifications(mesh);
 
-    _smoothPassId = INITIAL_PASS_ID;
+    _relocPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityCuda(mesh, crew))
     {
         if(isTopoEnabled)
         {
             verboseCuda = false;
             mesh.fetchCudaVertices();
-            crew.topologist().restructureMesh(mesh, crew);
+            crew.topologist().restructureMesh(mesh, crew,
+                _schedule.topoOperationPassCount);
             mesh.updateCudaTopology();
             mesh.updateCudaVertices();
             verboseCuda = true;
@@ -481,7 +489,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
         }
 
         if(isTopoEnabled)
-            _smoothPassId = COMPARE_PASS_ID;
+            _relocPassId = COMPARE_PASS_ID;
         else
             break;
     }

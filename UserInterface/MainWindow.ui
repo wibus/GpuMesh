@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>715</height>
+    <height>857</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
      <widget class="QTabWidget" name="tabWidget">
       <property name="maximumSize">
        <size>
-        <width>261</width>
+        <width>300</width>
         <height>16777215</height>
        </size>
       </property>
@@ -291,11 +291,208 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="smoothTab">
+      <widget class="QWidget" name="optimizeTab">
        <attribute name="title">
-        <string>Smooth</string>
+        <string>Optimize</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QGroupBox" name="schedulingGroup">
+          <property name="title">
+           <string>Scheduling</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_10">
+           <item>
+            <widget class="QRadioButton" name="scheduleAutoPilotRadio">
+             <property name="text">
+              <string>Auto pilot</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="scheduleAutoPiltoWidget" native="true">
+             <layout class="QFormLayout" name="formLayout_6">
+              <property name="horizontalSpacing">
+               <number>0</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="scheduleMinThresholdLabel">
+                <property name="text">
+                 <string>Min threshold: </string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="scheduleMinThresholdSpin">
+                <property name="decimals">
+                 <number>5</number>
+                </property>
+                <property name="minimum">
+                 <double>-1.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>1.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.001000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="scheduleMeanThresholdLabel">
+                <property name="text">
+                 <string>Mean threshold: </string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="scheduleMeanThresholdSpin">
+                <property name="decimals">
+                 <number>5</number>
+                </property>
+                <property name="minimum">
+                 <double>-1.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>1.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="scheduleFixedIterationsRadio">
+             <property name="text">
+              <string>Fixed pass counts</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="scheduleFixedIterationsWidget" native="true">
+             <layout class="QFormLayout" name="formLayout_9">
+              <property name="horizontalSpacing">
+               <number>0</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="scheduleGlobalPassCountLabel">
+                <property name="text">
+                 <string>Global pass count:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="scheduleRelocPassCountLabel">
+                <property name="text">
+                 <string>Reloc pass count:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QSpinBox" name="scheduleGlobalPassCountSpin">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="value">
+                 <number>5</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QSpinBox" name="scheduleRelocPassCountSpin">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>500</number>
+                </property>
+                <property name="value">
+                 <number>10</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="topologyGroup">
+          <property name="title">
+           <string>Topology Modifications</string>
+          </property>
+          <layout class="QFormLayout" name="formLayout_8">
+           <item row="1" column="0">
+            <widget class="QLabel" name="topoPassCountLabel">
+             <property name="text">
+              <string>Pass count:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="topoPassCountSpin">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="value">
+              <number>5</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QPushButton" name="restructureMeshButton">
+             <property name="text">
+              <string>Restructure Mesh</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="QCheckBox" name="topoEnabledCheck">
+             <property name="text">
+              <string>Enabled</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
         <item>
          <widget class="QGroupBox" name="smoothingGroup">
           <property name="sizePolicy">
@@ -305,7 +502,7 @@
            </sizepolicy>
           </property>
           <property name="title">
-           <string>Smoothing</string>
+           <string>Node Relocation</string>
           </property>
           <layout class="QFormLayout" name="formLayout_2">
            <item row="0" column="0">
@@ -328,110 +525,10 @@
            <item row="1" column="1">
             <widget class="QComboBox" name="smoothingImplementationMenu"/>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="smoothMinIterationLabel">
-             <property name="text">
-              <string>Min iteration</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QSpinBox" name="smoothMinIterationSpin">
-             <property name="maximum">
-              <number>100</number>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="smoothGainThresholdLabel">
-             <property name="text">
-              <string>Gain threshold</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="smoothGainThresholdSpin">
-             <property name="decimals">
-              <number>6</number>
-             </property>
-             <property name="maximum">
-              <double>1.000000000000000</double>
-             </property>
-             <property name="singleStep">
-              <double>0.000001000000000</double>
-             </property>
-             <property name="value">
-              <double>0.005000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0" colspan="2">
+           <item row="2" column="0" colspan="2">
             <widget class="QPushButton" name="smoothMeshButton">
              <property name="text">
               <string>Smooth Mesh</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="topologyGroup">
-          <property name="title">
-           <string>Topology</string>
-          </property>
-          <layout class="QFormLayout" name="formLayout_6">
-           <item row="4" column="0">
-            <widget class="QLabel" name="topoFrequencyLabel">
-             <property name="text">
-              <string>Frequency</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QSpinBox" name="topoFrequencySpin">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>100</number>
-             </property>
-             <property name="value">
-              <number>3</number>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0" colspan="2">
-            <widget class="QRadioButton" name="disableTopologyRadio">
-             <property name="text">
-              <string>Disable</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QRadioButton" name="enableTopologyRadio">
-             <property name="text">
-              <string>Enable</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="QRadioButton" name="compareTopologyRadio">
-             <property name="text">
-              <string>Compare</string>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0" colspan="2">
-            <widget class="QPushButton" name="restructureMeshButton">
-             <property name="text">
-              <string>Restructure Mesh</string>
              </property>
             </widget>
            </item>
@@ -444,6 +541,16 @@
            <string>Benchmarking</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QLabel" name="smoothActiveTechLabel">
+             <property name="text">
+              <string>Active techniques:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="smoothActiveTechLayout" native="true"/>
+           </item>
            <item>
             <widget class="QLabel" name="smoothActiveImplLabel">
              <property name="text">

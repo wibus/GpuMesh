@@ -14,7 +14,7 @@ namespace Ui
 
 class MeshTab;
 class EvaluateTab;
-class SmoothTab;
+class OptimizeTab;
 class RenderTab;
 class GpuMeshCharacter;
 
@@ -37,7 +37,7 @@ private:
     std::shared_ptr<scaena::QGlWidgetView> _view;
     std::shared_ptr<MeshTab> _meshTab;
     std::shared_ptr<EvaluateTab> _evaluateTab;
-    std::shared_ptr<SmoothTab> _smoothTab;
+    std::shared_ptr<OptimizeTab> _optimizeTab;
     std::shared_ptr<RenderTab> _renderTab;
 };
 
