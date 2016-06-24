@@ -20,7 +20,7 @@ __device__ LocalTet* localTets;
 __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4]);
 
 
-#define MAX_TABOO 32
+#define MAX_TABOO 128
 __device__ bool isTaboo(uint tId, uint taboo[MAX_TABOO], uint count)
 {
     if(tId != -1)

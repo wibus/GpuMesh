@@ -23,7 +23,7 @@ mat3 metricAt(in vec3 position, inout uint cachedRefTet)
 }
 
 
-const uint MAX_TABOO = 32;
+const uint MAX_TABOO = 128;
 bool isTaboo(uint tId, uint taboo[MAX_TABOO], uint count)
 {
     if(tId != -1)
