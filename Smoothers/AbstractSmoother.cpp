@@ -170,7 +170,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         double minGain = histogram.minimumQuality() - _lastIterationMinQuality;
         double geomGain = histogram.geometricMean() - _lastIterationGeomQuality;
 
-        if(_schedule.autoPilotEnabled)
+        if(_schedule.autoPilotEnabled && _relocPassId > 0)
         {
             continueSmoothing = (geomGain > _schedule.minQualThreshold) ||
                                 (minGain  > _schedule.qualMeanThreshold);
