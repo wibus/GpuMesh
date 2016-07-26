@@ -48,6 +48,12 @@ public:
     void setPluginGlslUniforms(const Mesh& mesh, cellar::GlProgram& program) const;
     void setPluginCudaUniforms(const Mesh& mesh) const;
 
+    void updateGlslData(const Mesh& mesh) const;
+    void updateCudaData(const Mesh& mesh) const;
+
+    void clearGlslMemory(const Mesh& mesh) const;
+    void clearCudaMemory(const Mesh& mesh) const;
+
 
 private:
     void reinitCrew(const Mesh& mesh);

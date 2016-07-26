@@ -80,7 +80,28 @@ bool UniformSampler::isMetricWise() const
     return true;
 }
 
-void UniformSampler::setReferenceMesh(const Mesh& mesh)
+void UniformSampler::updateGlslData(const Mesh& mesh) const
+{
+
+}
+
+void UniformSampler::updateCudaData(const Mesh& mesh) const
+{
+
+}
+
+void UniformSampler::clearGlslMemory(const Mesh& mesh) const
+{
+
+}
+
+void UniformSampler::clearCudaMemory(const Mesh& mesh) const
+{
+
+}
+
+void UniformSampler::setReferenceMesh(
+        const Mesh& mesh)
 {
     _debugMesh.reset();
     if(mesh.verts.empty())

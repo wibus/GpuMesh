@@ -36,11 +36,12 @@ public:
 
     virtual void initialize();
 
+
     double scaling() const;
     virtual void setScaling(double scaling);
 
 
-    // GLSL Plug-in interface
+    // GPU Plug-in interface
     virtual std::string samplingShader() const;
 
     virtual void installPlugin(
@@ -53,6 +54,14 @@ public:
 
     virtual void setPluginCudaUniforms(
             const Mesh& mesh) const;
+
+    virtual void updateGlslData(const Mesh& mesh) const;
+
+    virtual void updateCudaData(const Mesh& mesh) const;
+
+    virtual void clearGlslMemory(const Mesh& mesh) const;
+
+    virtual void clearCudaMemory(const Mesh& mesh) const;
 
 
     virtual void setReferenceMesh(

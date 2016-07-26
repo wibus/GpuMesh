@@ -48,7 +48,7 @@ bool LocalSampler::isMetricWise() const
     return true;
 }
 
-void LocalSampler::initialize()
+void LocalSampler::updateGlslData(const Mesh& mesh) const
 {
     if(_localTetsSsbo == 0)
         glGenBuffers(1, &_localTetsSsbo);
@@ -58,13 +58,6 @@ void LocalSampler::initialize()
 
     if(_refMetricsSsbo == 0)
         glGenBuffers(1, &_refMetricsSsbo);
-}
-
-void LocalSampler::installPlugin(
-        const Mesh& mesh,
-        cellar::GlProgram& program) const
-{
-    AbstractSampler::installPlugin(mesh, program);
 
     GLuint localTets  = mesh.glBufferBinding(EBufferBinding::LOCAL_TETS_BUFFER_BINDING);
     GLuint refVerts   = mesh.glBufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
@@ -73,6 +66,114 @@ void LocalSampler::installPlugin(
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, localTets,  _localTetsSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refVerts,   _refVertsSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
+
+
+    // Reference Mesh Tetrahedra
+    {
+        std::vector<GpuLocalTet> gpuLocalTets;
+        gpuLocalTets.reserve(_localTets.size());
+        for(const auto& t : _localTets)
+            gpuLocalTets.push_back(GpuLocalTet(t.v, t.n));
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _localTetsSsbo);
+        size_t localTetsSize = sizeof(decltype(gpuLocalTets.front())) * gpuLocalTets.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, localTetsSize, gpuLocalTets.data(), GL_STREAM_COPY);
+    }
+
+
+    // Reference Mesh Vertices
+    {
+        std::vector<GpuVert> gpuRefVerts;
+        gpuRefVerts.reserve(_refVerts.size());
+        for(const auto& v : _refVerts)
+            gpuRefVerts.push_back(GpuVert(v));
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
+        size_t refVertsSize = sizeof(decltype(gpuRefVerts.front())) * gpuRefVerts.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STREAM_COPY);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+
+
+    // Reference Mesh Metrics
+    {
+        std::vector<glm::mat4> gpuRefMetrics;
+        gpuRefMetrics.reserve(_refMetrics.size());
+        for(const auto& metric : _refMetrics)
+            gpuRefMetrics.push_back(glm::mat4(metric));
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
+        size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_STREAM_COPY);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+}
+
+void LocalSampler::updateCudaData(const Mesh& mesh) const
+{
+    // Reference Mesh Tetrahedra
+    {
+        std::vector<GpuLocalTet> gpuLocalTets;
+        gpuLocalTets.reserve(_localTets.size());
+        for(const auto& t : _localTets)
+            gpuLocalTets.push_back(GpuLocalTet(t.v, t.n));
+
+        updateCudaLocalTets(gpuLocalTets);
+    }
+
+
+    // Reference Mesh Vertices
+    {
+        std::vector<GpuVert> gpuRefVerts;
+        gpuRefVerts.reserve(_refVerts.size());
+        for(const auto& v : _refVerts)
+            gpuRefVerts.push_back(GpuVert(v));
+
+        updateCudaRefVerts(gpuRefVerts);
+    }
+
+
+    // Reference Mesh Metrics
+    {
+        std::vector<glm::mat4> gpuRefMetrics;
+        gpuRefMetrics.reserve(_refMetrics.size());
+        for(const auto& metric : _refMetrics)
+            gpuRefMetrics.push_back(glm::mat4(metric));
+
+        updateCudaRefMetrics(gpuRefMetrics);
+    }
+}
+
+void LocalSampler::clearGlslMemory(const Mesh& mesh) const
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _localTetsSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void LocalSampler::clearCudaMemory(const Mesh& mesh) const
+{
+    // Reference Mesh Tetrahedra
+    {
+        std::vector<GpuLocalTet> gpuLocalTets;
+        updateCudaLocalTets(gpuLocalTets);
+    }
+
+    // Reference Mesh Vertices
+    {
+        std::vector<GpuVert> gpuRefVerts;
+        updateCudaRefVerts(gpuRefVerts);
+    }
+
+    // Reference Mesh Metrics
+    {
+        std::vector<glm::mat4> gpuRefMetrics;
+        updateCudaRefMetrics(gpuRefMetrics);
+    }
 }
 
 void LocalSampler::setReferenceMesh(
@@ -151,51 +252,6 @@ void LocalSampler::setReferenceMesh(
         releaseDebugMesh();
         debugMesh();
     }
-
-
-
-    // Reference Mesh Tetrahedra
-    std::vector<GpuLocalTet> gpuLocalTets;
-    gpuLocalTets.reserve(_localTets.size());
-    for(const auto& t : _localTets)
-        gpuLocalTets.push_back(GpuLocalTet(t.v, t.n));
-
-    updateCudaLocalTets(gpuLocalTets);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _localTetsSsbo);
-    size_t localTetsSize = sizeof(decltype(gpuLocalTets.front())) * gpuLocalTets.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, localTetsSize, gpuLocalTets.data(), GL_STREAM_COPY);
-    gpuLocalTets.clear();
-    gpuLocalTets.shrink_to_fit();
-
-
-    // Reference Mesh Vertices
-    std::vector<GpuVert> gpuRefVerts;
-    gpuRefVerts.reserve(_refVerts.size());
-    for(const auto& v : _refVerts)
-        gpuRefVerts.push_back(GpuVert(v));
-
-    updateCudaRefVerts(gpuRefVerts);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
-    size_t refVertsSize = sizeof(decltype(gpuRefVerts.front())) * gpuRefVerts.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STREAM_COPY);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-
-    // Reference Mesh Metrics
-    std::vector<glm::mat4> gpuRefMetrics;
-    gpuRefMetrics.reserve(_refMetrics.size());
-    for(const auto& metric : _refMetrics)
-        gpuRefMetrics.push_back(glm::mat4(metric));
-
-    updateCudaRefMetrics(gpuRefMetrics);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
-    size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
-    glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_STREAM_COPY);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
 
     _maxSearchDepth = 0;
 }

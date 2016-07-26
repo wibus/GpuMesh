@@ -356,21 +356,25 @@ void AbstractEvaluator::evaluateMesh(
         {
             mesh.updateGlslTopology();
             mesh.updateGlslVertices();
+            sampler.updateGlslData(mesh);
         }
         else if(implementationName == CUDA_IMPL_NAME)
         {
             mesh.updateCudaTopology();
             mesh.updateCudaVertices();
+            sampler.updateCudaData(mesh);
         }
 
         implementationFunc(mesh, sampler, measurer, histogram);
 
         if(implementationName == GLSL_IMPL_NAME)
         {
+            sampler.clearGlslMemory(mesh);
             mesh.clearGlslMemory();
         }
         else if(implementationName == CUDA_IMPL_NAME)
         {
+            sampler.clearCudaMemory(mesh);
             mesh.clearCudaMemory();
         }
     }
@@ -665,12 +669,14 @@ void AbstractEvaluator::benchmark(
             {
                 mesh.updateGlslTopology();
                 mesh.updateGlslVertices();
+                sampler.updateGlslData(mesh);
             }
             else if(impl == CUDA_IMPL_NAME)
             {
                 verboseCuda = false;
                 mesh.updateCudaTopology();
                 mesh.updateCudaVertices();
+                sampler.updateCudaData(mesh);
             }
 
             high_resolution_clock::duration totalTime(0);
@@ -704,10 +710,12 @@ void AbstractEvaluator::benchmark(
 
             if(impl == GLSL_IMPL_NAME)
             {
+                sampler.clearGlslMemory(mesh);
                 mesh.clearGlslMemory();
             }
             else if(impl == CUDA_IMPL_NAME)
             {
+                sampler.clearCudaMemory(mesh);
                 mesh.clearCudaMemory();
                 verboseCuda = true;
             }

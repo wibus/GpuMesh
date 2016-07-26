@@ -162,6 +162,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
 
     mesh.updateGlslTopology();
     mesh.updateGlslVertices();
+    crew.updateGlslData(mesh);
 
     _vertSmoothProgram.pushProgram();
     crew.setPluginGlslUniforms(mesh, _vertSmoothProgram);
@@ -196,6 +197,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
                 _schedule.topoOperationPassCount);
             mesh.updateGlslTopology();
             mesh.updateGlslVertices();
+            crew.updateGlslData(mesh);
             verboseCuda = true;
 
             groupCount = mesh.nodeGroups().count();
@@ -357,6 +359,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     // Fetch new vertices' position
     mesh.fetchGlslVertices();
     mesh.clearGlslMemory();
+    crew.clearGlslMemory(mesh);
 }
 
 void AbstractVertexWiseSmoother::smoothMeshCuda(
@@ -367,6 +370,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
 
     mesh.updateCudaTopology();
     mesh.updateCudaVertices();
+    crew.updateCudaData(mesh);
 
     crew.setPluginCudaUniforms(mesh);
 
@@ -390,6 +394,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
                 _schedule.topoOperationPassCount);
             mesh.updateCudaTopology();
             mesh.updateCudaVertices();
+            crew.updateCudaData(mesh);
             verboseCuda = true;
 
             groupCount = mesh.nodeGroups().count();
@@ -498,6 +503,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     // Fetch new vertices' position
     mesh.fetchCudaVertices();
     mesh.clearCudaMemory();
+    crew.clearCudaMemory(mesh);
 }
 
 void AbstractVertexWiseSmoother::initializeProgram(

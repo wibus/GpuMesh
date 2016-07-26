@@ -210,4 +210,6 @@ void installCudaMetricConformityEvaluator()
 
     if(verboseCuda)
         printf("I -> CUDA \tMetric Conformity Evaluator installed\n");
+
+    cudaCheckErrors("CUDA error during Metric Conformity installation");
 }

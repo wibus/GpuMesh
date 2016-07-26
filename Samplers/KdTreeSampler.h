@@ -22,12 +22,15 @@ public:
 
     virtual bool isMetricWise() const override;
 
-    virtual void initialize() override;
 
+    virtual void updateGlslData(const Mesh& mesh) const override;
 
-    virtual void installPlugin(
-            const Mesh& mesh,
-            cellar::GlProgram& program) const override;
+    virtual void updateCudaData(const Mesh& mesh) const override;
+
+    virtual void clearGlslMemory(const Mesh& mesh) const override;
+
+    virtual void clearCudaMemory(const Mesh& mesh) const override;
+
 
 
     virtual void setReferenceMesh(
@@ -57,7 +60,7 @@ private:
     void buildGpuBuffers(
             KdNode* node,
             std::vector<GpuKdNode>& kdNodes,
-            std::vector<GpuTet>& kdTets);
+            std::vector<GpuTet>& kdTets) const;
 
     void meshTree(KdNode* node, Mesh& mesh);
 
@@ -66,10 +69,10 @@ private:
     std::vector<MeshVert> _refVerts;
     std::vector<Metric> _refMetrics;
 
-    GLuint _kdTetsSsbo;
-    GLuint _kdNodesSsbo;
-    GLuint _refVertsSsbo;
-    GLuint _refMetricsSsbo;
+    mutable GLuint _kdTetsSsbo;
+    mutable GLuint _kdNodesSsbo;
+    mutable GLuint _refVertsSsbo;
+    mutable GLuint _refMetricsSsbo;
 };
 
 #endif // GPUMESH_KDTREESAMPLER

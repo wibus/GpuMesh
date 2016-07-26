@@ -16,6 +16,15 @@ public:
     virtual bool isMetricWise() const override;
 
 
+    virtual void updateGlslData(const Mesh& mesh) const override;
+
+    virtual void updateCudaData(const Mesh& mesh) const override;
+
+    virtual void clearGlslMemory(const Mesh& mesh) const override;
+
+    virtual void clearCudaMemory(const Mesh& mesh) const override;
+
+
     virtual void setReferenceMesh(
             const Mesh& mesh) override;
 

@@ -145,6 +145,8 @@ void installCudaLocalSampler()
 
     if(verboseCuda)
         printf("I -> CUDA \tLocal Discritizer installed\n");
+
+    cudaCheckErrors("CUDA error during Local Tets installation");
 }
 
 
@@ -171,4 +173,6 @@ void updateCudaLocalTets(
 
     if(verboseCuda)
         printf("I -> CUDA \tLocal Tets updated\n");
+
+    cudaCheckErrors("CUDA error during Local Tets update");
 }

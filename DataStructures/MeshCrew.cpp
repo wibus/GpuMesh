@@ -125,6 +125,26 @@ void MeshCrew::setPluginCudaUniforms(const Mesh& mesh) const
     _evaluator->setPluginCudaUniforms(mesh);
 }
 
+void MeshCrew::updateGlslData(const Mesh& mesh) const
+{
+    _sampler->updateGlslData(mesh);
+}
+
+void MeshCrew::updateCudaData(const Mesh& mesh) const
+{
+    _sampler->updateCudaData(mesh);
+}
+
+void MeshCrew::clearGlslMemory(const Mesh& mesh) const
+{
+    _sampler->clearGlslMemory(mesh);
+}
+
+void MeshCrew::clearCudaMemory(const Mesh& mesh) const
+{
+    _sampler->clearCudaMemory(mesh);
+}
+
 
 void MeshCrew::reinitCrew(const Mesh& mesh)
 {

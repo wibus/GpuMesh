@@ -18,12 +18,14 @@ public:
 
     virtual bool isMetricWise() const override;
 
-    virtual void initialize() override;
 
+    virtual void updateGlslData(const Mesh& mesh) const override;
 
-    virtual void installPlugin(
-            const Mesh& mesh,
-            cellar::GlProgram& program) const override;
+    virtual void updateCudaData(const Mesh& mesh) const override;
+
+    virtual void clearGlslMemory(const Mesh& mesh) const override;
+
+    virtual void clearCudaMemory(const Mesh& mesh) const override;
 
 
     virtual void setReferenceMesh(
@@ -45,9 +47,9 @@ private:
     std::vector<Metric>   _refMetrics;
     std::vector<MeshLocalTet> _localTets;
 
-    GLuint _localTetsSsbo;
-    GLuint _refVertsSsbo;
-    GLuint _refMetricsSsbo;
+    mutable GLuint _localTetsSsbo;
+    mutable GLuint _refVertsSsbo;
+    mutable GLuint _refMetricsSsbo;
 
     // Debug structures
     mutable int _maxSearchDepth;

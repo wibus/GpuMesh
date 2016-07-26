@@ -75,6 +75,26 @@ void AbstractSampler::setPluginCudaUniforms(
     setCudaMetricScaling(scaling());
 }
 
+void AbstractSampler::updateGlslData(const Mesh& mesh) const
+{
+
+}
+
+void AbstractSampler::updateCudaData(const Mesh& mesh) const
+{
+
+}
+
+void AbstractSampler::clearGlslMemory(const Mesh& mesh) const
+{
+
+}
+
+void AbstractSampler::clearCudaMemory(const Mesh& mesh) const
+{
+
+}
+
 Metric AbstractSampler::interpolateMetrics(
         const Metric& m1,
         const Metric& m2,
