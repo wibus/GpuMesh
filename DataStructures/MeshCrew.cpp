@@ -154,8 +154,6 @@ void MeshCrew::reinitCrew(const Mesh& mesh)
            _measurer.get()  != nullptr &&
            _evaluator.get() != nullptr)
         {
-            _sampler->initialize();
-            _measurer->initialize();
             _evaluator->initialize(mesh, *this);
         }
     }

@@ -39,6 +39,8 @@ public:
     virtual void releaseDebugMesh() override;
     virtual const Mesh& debugMesh() override;
 
+    const std::vector<MeshLocalTet>& localTets() const;
+
 
 private:
     std::shared_ptr<Mesh> _debugMesh;
@@ -56,5 +58,13 @@ private:
     std::vector<Triangle> _surfTris;
     mutable std::vector<glm::dvec4> _failedSamples;
 };
+
+
+
+// IMPLEMENTATION //
+inline const std::vector<MeshLocalTet>& LocalSampler::localTets() const
+{
+    return _localTets;
+}
 
 #endif // GPUMESH_LOCALSAMPLER

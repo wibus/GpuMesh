@@ -39,9 +39,7 @@ public:
 
 protected:
     glm::ivec3 cellId(
-            const glm::ivec3& gridSize,
-            const glm::dvec3& minBounds,
-            const glm::dvec3& extents,
+            const UniformGrid& grid,
             const glm::dvec3& vertPos) const;
 
     void meshGrid(UniformGrid& grid, Mesh& mesh);

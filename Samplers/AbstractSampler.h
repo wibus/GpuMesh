@@ -34,8 +34,6 @@ public:
 
     virtual bool isMetricWise() const = 0;
 
-    virtual void initialize();
-
 
     double scaling() const;
     virtual void setScaling(double scaling);

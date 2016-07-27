@@ -27,11 +27,6 @@ AbstractSampler::~AbstractSampler()
 
 }
 
-void AbstractSampler::initialize()
-{
-
-}
-
 void AbstractSampler::setScaling(double scaling)
 {
     _scaling = scaling;

@@ -5,6 +5,8 @@
 
 #include "DataStructures/Mesh.h"
 
+#include "LocalSampler.h"
+
 using namespace cellar;
 
 
@@ -14,24 +16,16 @@ struct ElemValue
     ElemValue() :
         minBox(INT32_MAX),
         maxBox(INT32_MIN),
-        metric(0.0)
+        cacheTetId(-1)
     {
     }
 
     glm::ivec3 minBox;
     glm::ivec3 maxBox;
-    Metric metric;
+    uint cacheTetId;
 };
 
 const Metric ISOTROPIC_METRIC(1.0);
-
-struct MetricCell
-{
-    MetricCell() : metric(0), weight(0) {}
-
-    Metric metric;
-    double weight;
-};
 
 
 class UniformGrid
@@ -43,11 +37,13 @@ public:
         size(size),
         extents(extents),
         minBounds(minBounds),
+        minCellId(0, 0, 0),
+        maxCellId(size - glm::ivec3(1)),
         _impl(size.x, size.y, size.z)
     {
     }
 
-    inline MetricCell& at(const glm::ivec3& pos)
+    inline Metric& at(const glm::ivec3& pos)
     {
         return _impl[pos];
     }
@@ -56,8 +52,11 @@ public:
     const glm::dvec3 extents;
     const glm::dvec3 minBounds;
 
+    const glm::ivec3 minCellId;
+    const glm::ivec3 maxCellId;
+
 private:
-    Grid3D<MetricCell> _impl;
+    Grid3D<Metric> _impl;
 };
 
 
@@ -104,10 +103,6 @@ void UniformSampler::setReferenceMesh(
         const Mesh& mesh)
 {
     _debugMesh.reset();
-    if(mesh.verts.empty())
-    {
-        _grid.reset();
-    }
 
 
     // Find grid bounds
@@ -118,25 +113,33 @@ void UniformSampler::setReferenceMesh(
     // Compute grid size
     size_t vertCount = mesh.verts.size();
     double alpha = glm::pow(vertCount / (2 * extents.x*extents.y*extents.z), 1/3.0);
-    glm::ivec3 gridSize(alpha * extents);
+    glm::ivec3 size(alpha * extents);
+
+
+    _grid.reset(new UniformGrid(
+        size, extents, minBounds));
+
 
     getLog().postMessage(new Message('I', false,
         "Sampling mesh metric in a Uniform grid",
         "UniformSampler"));
     getLog().postMessage(new Message('I', false,
-        "Grid size: (" + std::to_string(gridSize.x) + ", " +
-                         std::to_string(gridSize.y) + ", " +
-                         std::to_string(gridSize.z) + ")",
+        "Grid size: (" + std::to_string(size.x) + ", " +
+                         std::to_string(size.y) + ", " +
+                         std::to_string(size.z) + ")",
         "UniformSampler"));
 
+    LocalSampler localSampler;
+    localSampler.setScaling(scaling());
+    localSampler.setReferenceMesh(mesh);
+    const auto& localTets = localSampler.localTets();
 
     std::vector<ElemValue> elemValues;
-
-    size_t tetCount = mesh.tets.size();
+    size_t tetCount = localTets.size();
     for(size_t e=0; e < tetCount; ++e)
     {
         ElemValue ev;
-        const MeshTet& elem = mesh.tets[e];
+        const MeshLocalTet& elem = localTets[e];
         glm::dvec3 minBoxPos = glm::dvec3(INFINITY);
         glm::dvec3 maxBoxPos = glm::dvec3(-INFINITY);
         for(uint v=0; v < MeshTet::VERTEX_COUNT; ++v)
@@ -145,97 +148,40 @@ void UniformSampler::setReferenceMesh(
             const glm::dvec3& vertPos = mesh.verts[vId].p;
             minBoxPos = glm::min(minBoxPos, vertPos);
             maxBoxPos = glm::max(maxBoxPos, vertPos);
-            ev.metric += vertMetric(mesh, vId);
         }
 
-        ev.minBox = cellId(gridSize, minBounds, extents, minBoxPos);
-        ev.maxBox = cellId(gridSize, minBounds, extents, maxBoxPos);
-        ev.metric /= MeshTet::VERTEX_COUNT;
-        elemValues.push_back(ev);
-    }
-
-    size_t priCount = mesh.pris.size();
-    for(size_t e=0; e < priCount; ++e)
-    {
-        ElemValue ev;
-        const MeshPri& elem = mesh.pris[e];
-        glm::dvec3 minBoxPos = glm::dvec3(INFINITY);
-        glm::dvec3 maxBoxPos = glm::dvec3(-INFINITY);
-        for(uint v=0; v < MeshPri::VERTEX_COUNT; ++v)
-        {
-            uint vId = elem.v[v];
-            const glm::dvec3& vertPos = mesh.verts[vId].p;
-            minBoxPos = glm::min(minBoxPos, vertPos);
-            maxBoxPos = glm::max(maxBoxPos, vertPos);
-            ev.metric += vertMetric(mesh, vId);
-        }
-
-        ev.minBox = cellId(gridSize, minBounds, extents, minBoxPos);
-        ev.maxBox = cellId(gridSize, minBounds, extents, maxBoxPos);
-        ev.metric /= MeshPri::VERTEX_COUNT;
-        elemValues.push_back(ev);
-    }
-
-    size_t hexCount = mesh.hexs.size();
-    for(size_t e=0; e < hexCount; ++e)
-    {
-        ElemValue ev;
-        const MeshHex& elem = mesh.hexs[e];
-        glm::dvec3 minBoxPos = glm::dvec3(INFINITY);
-        glm::dvec3 maxBoxPos = glm::dvec3(-INFINITY);
-        for(uint v=0; v < MeshHex::VERTEX_COUNT; ++v)
-        {
-            uint vId = elem.v[v];
-            const glm::dvec3& vertPos = mesh.verts[vId].p;
-            minBoxPos = glm::min(minBoxPos, vertPos);
-            maxBoxPos = glm::max(maxBoxPos, vertPos);
-            ev.metric += vertMetric(mesh, vId);
-        }
-
-        ev.minBox = cellId(gridSize, minBounds, extents, minBoxPos);
-        ev.maxBox = cellId(gridSize, minBounds, extents, maxBoxPos);
-        ev.metric /= MeshHex::VERTEX_COUNT;
+        ev.cacheTetId = e;
+        ev.minBox = cellId(*_grid, minBoxPos) - glm::ivec3(1);
+        ev.maxBox = cellId(*_grid, maxBoxPos) + glm::ivec3(1);
+        ev.minBox = glm::max(ev.minBox, _grid->minCellId);
+        ev.maxBox = glm::min(ev.maxBox, _grid->maxCellId);
         elemValues.push_back(ev);
     }
 
 
-    _grid.reset(new UniformGrid(gridSize, extents, minBounds));
+    glm::dvec3 cellExtents = extents / glm::dvec3(size);
+    Grid3D<bool> cellIsSet(size.x, size.y, size.z, false);
 
     size_t elemCount = elemValues.size();
     for(size_t e=0; e < elemCount; ++e)
     {
         ElemValue& ev = elemValues[e];
+
         for(int k=ev.minBox.z; k <= ev.maxBox.z; ++k)
         {
             for(int j=ev.minBox.y; j <= ev.maxBox.y; ++j)
             {
                 for(int i=ev.minBox.x; i <= ev.maxBox.x; ++i)
                 {
-                    glm::ivec3 id(i, j, k);
-                    MetricCell& cell = _grid->at(id);
-                    cell.metric += ev.metric;
-                    cell.weight += 1.0;
-                }
-            }
-        }
-    }
+                    if(cellIsSet.get(i, j, k))
+                        continue;
 
-    // Divide each cell's value by its weight
-    for(int k=0; k < gridSize.z; ++k)
-    {
-        for(int j=0; j < gridSize.y; ++j)
-        {
-            for(int i=0; i < gridSize.x; ++i)
-            {
-                glm::ivec3 id(i, j, k);
-                MetricCell& cell = _grid->at(id);
-                if(cell.weight > 0.0)
-                {
-                    cell.metric /= cell.weight;
-                }
-                else
-                {
-                    cell.metric = ISOTROPIC_METRIC;
+                    glm::ivec3 id(i, j, k);
+                    glm::dvec3 pos = _grid->minBounds + cellExtents *
+                        (glm::dvec3(id) + glm::dvec3(0.5));
+
+                    _grid->at(id) = localSampler.metricAt(pos, ev.cacheTetId);
+                    cellIsSet.set(i, j, k, true);
                 }
             }
         }
@@ -251,7 +197,7 @@ Metric UniformSampler::metricAt(
     glm::dvec3 maxB = _grid->minBounds + _grid->extents - (cs *1.5);
     glm::dvec3 cp000 = glm::clamp(position + glm::dvec3(-cs.x, -cs.y, -cs.z)/2.0, minB, maxB);
 
-    glm::ivec3 id000 = cellId(_grid->size, _grid->minBounds, _grid->extents, cp000);
+    glm::ivec3 id000 = cellId(*_grid, cp000);
 
     glm::ivec3 id100 = id000 + glm::ivec3(1, 0, 0);
     glm::ivec3 id010 = id000 + glm::ivec3(0, 1, 0);
@@ -261,14 +207,14 @@ Metric UniformSampler::metricAt(
     glm::ivec3 id011 = id000 + glm::ivec3(0, 1, 1);
     glm::ivec3 id111 = id000 + glm::ivec3(1, 1, 1);
 
-    Metric m000 = _grid->at(id000).metric;
-    Metric m100 = _grid->at(id100).metric;
-    Metric m010 = _grid->at(id010).metric;
-    Metric m110 = _grid->at(id110).metric;
-    Metric m001 = _grid->at(id001).metric;
-    Metric m101 = _grid->at(id101).metric;
-    Metric m011 = _grid->at(id011).metric;
-    Metric m111 = _grid->at(id111).metric;
+    Metric m000 = _grid->at(id000);
+    Metric m100 = _grid->at(id100);
+    Metric m010 = _grid->at(id010);
+    Metric m110 = _grid->at(id110);
+    Metric m001 = _grid->at(id001);
+    Metric m101 = _grid->at(id101);
+    Metric m011 = _grid->at(id011);
+    Metric m111 = _grid->at(id111);
 
     glm::dvec3 c000Center = cs * (glm::dvec3(id000) + glm::dvec3(0.5));
     glm::dvec3 a = (position - (_grid->minBounds + c000Center)) / cs;
@@ -311,15 +257,15 @@ const Mesh& UniformSampler::debugMesh()
 }
 
 inline glm::ivec3 UniformSampler::cellId(
-        const glm::ivec3& gridSize,
-        const glm::dvec3& minBounds,
-        const glm::dvec3& extents,
+        const UniformGrid& grid,
         const glm::dvec3& vertPos) const
 {
-    glm::dvec3 origDist = vertPos - minBounds;
-    glm::dvec3 distRatio = origDist / extents;
-    glm::ivec3 cellId = glm::ivec3(distRatio * glm::dvec3(gridSize));
-    cellId = glm::clamp(cellId, glm::ivec3(), gridSize - glm::ivec3(1));
+    glm::dvec3 origDist = vertPos - grid.minBounds;
+    glm::dvec3 distRatio = origDist / grid.extents;
+
+    glm::ivec3 cellId = glm::ivec3(distRatio * glm::dvec3(grid.size));
+    cellId = glm::clamp(cellId, _grid->minCellId, _grid->maxCellId);
+
     return cellId;
 }
 
@@ -344,7 +290,7 @@ void UniformSampler::meshGrid(UniformGrid& grid, Mesh& mesh)
                     glm::dvec3(grid.minBounds + cellPos * grid.extents)));
 
                 if(glm::all(glm::lessThan(cellId, gridSize)) &&
-                   grid.at(cellId).metric != ISOTROPIC_METRIC)
+                   grid.at(cellId) != ISOTROPIC_METRIC)
                 {
                     int xb = i;
                     int xt = i+1;
@@ -362,7 +308,8 @@ void UniformSampler::meshGrid(UniformGrid& grid, Mesh& mesh)
                         xt + yt + zt,
                         xb + yt + zt);
 
-                    hex.value = grid.at(cellId).metric[0][0];
+                    hex.value = _grid->at(cellId)[0][0] /
+                            (scaling() * scaling() * 10.0);
                     mesh.hexs.push_back(hex);
                 }
             }
