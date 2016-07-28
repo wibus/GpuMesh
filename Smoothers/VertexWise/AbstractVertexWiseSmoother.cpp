@@ -197,7 +197,6 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
                 _schedule.topoOperationPassCount);
             mesh.updateGlslTopology();
             mesh.updateGlslVertices();
-            crew.updateGlslData(mesh);
             verboseCuda = true;
 
             groupCount = mesh.nodeGroups().count();
@@ -394,7 +393,6 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
                 _schedule.topoOperationPassCount);
             mesh.updateCudaTopology();
             mesh.updateCudaVertices();
-            crew.updateCudaData(mesh);
             verboseCuda = true;
 
             groupCount = mesh.nodeGroups().count();

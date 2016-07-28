@@ -1,6 +1,9 @@
 #include "UniformSampler.h"
 
+#include <GLM/gtc/matrix_transform.hpp>
+
 #include <CellarWorkbench/DataStructure/Grid3D.h>
+#include <CellarWorkbench/GL/GlProgram.h>
 #include <CellarWorkbench/Misc/Log.h>
 
 #include "DataStructures/Mesh.h"
@@ -65,13 +68,18 @@ void installCudaUniformSampler();
 
 
 UniformSampler::UniformSampler() :
-    AbstractSampler("Uniform", ":/glsl/compute/Sampling/Uniform.glsl", installCudaUniformSampler)
+    AbstractSampler("Uniform", ":/glsl/compute/Sampling/Uniform.glsl", installCudaUniformSampler),
+    _topLineTex(0),
+    _sideTriTex(0)
 {
 }
 
 UniformSampler::~UniformSampler()
 {
-
+    glDeleteTextures(1, &_topLineTex);
+    _topLineTex = 0;
+    glDeleteTextures(1, &_sideTriTex);
+    _sideTriTex = 0;
 }
 
 bool UniformSampler::isMetricWise() const
@@ -79,9 +87,89 @@ bool UniformSampler::isMetricWise() const
     return true;
 }
 
+void UniformSampler::setPluginGlslUniforms(
+        const Mesh& mesh,
+        const cellar::GlProgram& program) const
+{
+    AbstractSampler::setPluginGlslUniforms(mesh, program);
+
+    program.pushProgram();
+    program.setInt("TopLineTex", 0);
+    program.setInt("SideTriTex", 1);
+    program.setMat4f("TexTransform", _transform);
+    program.popProgram();
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_3D, _sideTriTex);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_3D, _topLineTex);
+}
+
+void UniformSampler::setPluginCudaUniforms(
+        const Mesh& mesh) const
+{
+    AbstractSampler::setPluginCudaUniforms(mesh);
+}
+
 void UniformSampler::updateGlslData(const Mesh& mesh) const
 {
+    if(_topLineTex == 0)
+        glGenTextures(1, &_topLineTex);
 
+    if(_sideTriTex == 0)
+        glGenTextures(1, &_sideTriTex);
+
+
+    glm::ivec3 size = _grid->size;
+    size_t cellCount = size.x * size.y * size.z;
+
+    std::vector<glm::vec3> topLineBuff;
+    std::vector<glm::vec3> sideTriBuff;
+
+    topLineBuff.reserve(cellCount);
+    sideTriBuff.reserve(cellCount);
+
+    for(int k = 0; k < size.z; ++k)
+    {
+        for(int j = 0; j < size.y; ++j)
+        {
+            for(int i = 0; i < size.x; ++i)
+            {
+                glm::ivec3 cellId(i, j, k);
+                const Metric& metric = _grid->at(cellId);
+
+                glm::vec3 topline = metric[0];
+                topLineBuff.push_back(topline);
+
+                glm::vec3 sideTri(metric[1][1],
+                                  metric[1][2],
+                                  metric[2][2]);
+                sideTriBuff.push_back(sideTri);
+            }
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_3D, _topLineTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F,
+                 size.x, size.y, size.z, 0,
+                 GL_RGB, GL_FLOAT, topLineBuff.data());
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_3D, _sideTriTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F,
+                 size.x, size.y, size.z, 0,
+                 GL_RGB, GL_FLOAT, sideTriBuff.data());
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_3D, 0);
 }
 
 void UniformSampler::updateCudaData(const Mesh& mesh) const
@@ -115,6 +203,10 @@ void UniformSampler::setReferenceMesh(
     double alpha = glm::pow(vertCount / (2 * extents.x*extents.y*extents.z), 1/3.0);
     glm::ivec3 size(alpha * extents);
 
+    _transform = glm::scale(glm::mat4(),
+        glm::vec3(1 / extents.x, 1 / extents.y, 1 / extents.z));
+    _transform *= glm::translate(glm::mat4(),
+        glm::vec3(-minBounds));
 
     _grid.reset(new UniformGrid(
         size, extents, minBounds));

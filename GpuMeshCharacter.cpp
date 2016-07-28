@@ -439,6 +439,7 @@ void GpuMeshCharacter::generateMesh(
 
         _mesh->modelName = modelName;
         _mesh->compileTopology();
+
         updateSampling();
         updateMeshMeasures();
     }
@@ -448,6 +449,7 @@ void GpuMeshCharacter::clearMesh()
 {
     _mesh->clear();
     _mesh->modelName = "";
+
     updateSampling();
     updateMeshMeasures();
 }
@@ -490,6 +492,7 @@ void GpuMeshCharacter::loadMesh(
         if(deserializer->deserialize(fileName, *_mesh))
         {
             _mesh->compileTopology();
+
             updateSampling();
             updateMeshMeasures();
         }
@@ -549,6 +552,7 @@ void GpuMeshCharacter::benchmarkEvaluator(
 void GpuMeshCharacter::setMetricScaling(double scaling)
 {
     _metricScaling = scaling;
+
     updateSampling();
     updateMeshMeasures();
 }
@@ -637,6 +641,7 @@ void GpuMeshCharacter::useSampler(const std::string& samplerName)
     if(_availableSamplers.select(samplerName, sampler))
     {
         _meshCrew->setSampler(*_mesh, sampler);
+
         updateSampling();
         updateMeshMeasures();
     }

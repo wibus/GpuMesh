@@ -1,0 +1,1 @@
+LD_PRELOAD=../ots/apitrace/build/wrappers/glxtrace.so ../build/RelWithDebInfo/GpuMesh/GpuMesh
