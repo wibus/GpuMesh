@@ -60,6 +60,8 @@ void fetchCudaVerts(std::vector<GpuVert>& vertsBuff)
 
     if(verboseCuda)
         printf("I -> CUDA \tverts fetched\n");
+
+    cudaCheckErrors("Verts fetch");
 }
 
 void updateCudaVerts(const std::vector<GpuVert>& vertsBuff)
@@ -81,6 +83,8 @@ void updateCudaVerts(const std::vector<GpuVert>& vertsBuff)
 
     if(verboseCuda)
         printf("I -> CUDA \tverts updated\n");
+
+    cudaCheckErrors("Verts update");
 }
 
 
@@ -105,6 +109,8 @@ void updateCudaTets(const std::vector<GpuTet>& tetsBuff)
 
     if(verboseCuda)
         printf("I -> CUDA \ttets updated\n");
+
+    cudaCheckErrors("Tets update");
 }
 
 
@@ -129,6 +135,8 @@ void updateCudaPris(const std::vector<GpuPri>& prisBuff)
 
     if(verboseCuda)
         printf("I -> CUDA \tpris updated\n");
+
+    cudaCheckErrors("Pris update");
 }
 
 
@@ -153,6 +161,8 @@ void updateCudaHexs(const std::vector<GpuHex>& hexsBuff)
 
     if(verboseCuda)
         printf("I -> CUDA \thexs updated\n");
+
+    cudaCheckErrors("Hexs update");
 }
 
 
@@ -189,6 +199,8 @@ void updateCudaTopo(
     if(verboseCuda)
         printf("I -> CUDA \ttopos updated\n");
 
+    cudaCheckErrors("Topos update");
+
 
     // Neighbor vertices
     uint neigVertsLength = neigVertsBuff.size();
@@ -209,6 +221,8 @@ void updateCudaTopo(
     if(verboseCuda)
         printf("I -> CUDA \tneigVerts updated\n");
 
+    cudaCheckErrors("Neig verts update");
+
 
     // Neighbor elements
     uint neigElemsLength = neigElemsBuff.size();
@@ -228,6 +242,8 @@ void updateCudaTopo(
 
     if(verboseCuda)
         printf("I -> CUDA \tneigElems updated\n");
+
+    cudaCheckErrors("Neig elems update");
 }
 
 
@@ -253,6 +269,8 @@ void updateCudaGroupMembers(const std::vector<GLuint>& groupMembersBuff)
 
     if(verboseCuda)
         printf("I -> CUDA \tgroupMembers updated\n");
+
+    cudaCheckErrors("Group members update");
 }
 
 
@@ -279,6 +297,8 @@ void updateCudaRefVerts(
 
     if(verboseCuda)
         printf("I -> CUDA \tRef Vertices updated\n");
+
+    cudaCheckErrors("Ref verts update");
 }
 
 
@@ -305,4 +325,6 @@ void updateCudaRefMetrics(
 
     if(verboseCuda)
         printf("I -> CUDA \tRef Metrics updated\n");
+
+    cudaCheckErrors("Ref metrics update");
 }

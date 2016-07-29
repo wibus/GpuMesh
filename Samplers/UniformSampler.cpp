@@ -13,7 +13,6 @@
 using namespace cellar;
 
 
-
 struct ElemValue
 {
     ElemValue() :
@@ -65,6 +64,11 @@ private:
 
 // CUDA Drivers Interface
 void installCudaUniformSampler();
+void updateCudaUniformTextures(
+        const std::vector<glm::vec4>& topLineBuff,
+        const std::vector<glm::vec4>& sideTriBuff,
+        const glm::mat4& texTransform,
+        const glm::ivec3 texDims);
 
 
 UniformSampler::UniformSampler() :
@@ -174,17 +178,59 @@ void UniformSampler::updateGlslData(const Mesh& mesh) const
 
 void UniformSampler::updateCudaData(const Mesh& mesh) const
 {
+    glm::ivec3 size = _grid->size;
+    size_t cellCount = size.x * size.y * size.z;
 
+    std::vector<glm::vec4> topLineBuff;
+    std::vector<glm::vec4> sideTriBuff;
+
+    topLineBuff.reserve(cellCount);
+    sideTriBuff.reserve(cellCount);
+
+    for(int k = 0; k < size.z; ++k)
+    {
+        for(int j = 0; j < size.y; ++j)
+        {
+            for(int i = 0; i < size.x; ++i)
+            {
+                glm::ivec3 cellId(i, j, k);
+                const Metric& metric = _grid->at(cellId);
+
+                glm::vec3 topline = metric[0];
+                topLineBuff.push_back(glm::vec4(topline, 0));
+
+                glm::vec3 sideTri(metric[1][1],
+                                  metric[1][2],
+                                  metric[2][2]);
+                sideTriBuff.push_back(glm::vec4(sideTri, 0));
+            }
+        }
+    }
+
+    updateCudaUniformTextures(topLineBuff, sideTriBuff, _transform, size);
 }
 
 void UniformSampler::clearGlslMemory(const Mesh& mesh) const
 {
+    glBindTexture(GL_TEXTURE_3D, _topLineTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F,
+                 0, 0, 0, 0, GL_RGB, GL_FLOAT, nullptr);
 
+    glBindTexture(GL_TEXTURE_3D, _sideTriTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F,
+                 0, 0, 0, 0,GL_RGB, GL_FLOAT, nullptr);
+
+    glBindTexture(GL_TEXTURE_3D, 0);
 }
 
 void UniformSampler::clearCudaMemory(const Mesh& mesh) const
 {
+    glm::ivec3 size = glm::ivec3(0, 0, 0);
+    std::vector<glm::vec4> topLineBuff;
+    std::vector<glm::vec4> sideTriBuff;
 
+    updateCudaUniformTextures(
+        topLineBuff, sideTriBuff, _transform, size);
 }
 
 void UniformSampler::setReferenceMesh(

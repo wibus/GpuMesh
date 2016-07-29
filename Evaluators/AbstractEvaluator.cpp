@@ -70,7 +70,7 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
                    given this workgroup size.");
 */
     using namespace std::placeholders;
-    _implementationFuncs.setDefault(GLSL_IMPL_NAME);
+    _implementationFuncs.setDefault(CUDA_IMPL_NAME);
     _implementationFuncs.setContent({
       {string(SERIAL_IMPL_NAME),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4))},
       {string(THREAD_IMPL_NAME),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualityThread, this, _1, _2, _3, _4))},
