@@ -1,4 +1,6 @@
-#include "QualityLaplaceSmoother.h"
+#include "SpawnSearchSmoother.h"
+
+#include <CellarWorkbench/Misc/Distribution.h>
 
 #include "Boundaries/Constraints/AbstractConstraint.h"
 #include "DataStructures/MeshCrew.h"
@@ -7,50 +9,55 @@
 
 using namespace std;
 
-
-const uint PROPOSITION_COUNT = 4;
-const double QLMoveCoeff = 0.35;
+const double SSMoveCoeff = 0.10;
 
 
 // CUDA Drivers
-void installCudaQualityLaplaceSmoother(float moveCoeff);
-void installCudaQualityLaplaceSmoother()
+void installCudaSpawnSearchSmoother(float moveCoeff);
+void installCudaSpawnSearchSmoother()
 {
-    installCudaQualityLaplaceSmoother(QLMoveCoeff);
+    installCudaSpawnSearchSmoother(SSMoveCoeff);
 }
 
 
-QualityLaplaceSmoother::QualityLaplaceSmoother() :
+const int SpawnSearchSmoother::PROPOSITION_COUNT = 64;
+
+
+SpawnSearchSmoother::SpawnSearchSmoother() :
     AbstractVertexWiseSmoother(
-        {":/glsl/compute/Smoothing/VertexWise/QualityLaplace.glsl"},
-        installCudaQualityLaplaceSmoother)
+        {":/glsl/compute/Smoothing/VertexWise/SpawnSearch.glsl"},
+        installCudaSpawnSearchSmoother)
+{
+    _offsets.clear();
+
+    for(int k=0; k<=4; ++k)
+        for(int j=0; j<=4; ++j)
+            for(int i=0; i<=4; ++i)
+                _offsets.push_back(glm::dvec3(i, j, k) - glm::dvec3(1.5));
+
+    _offsets[0] = glm::dvec3(0, 0, 0);
+}
+
+SpawnSearchSmoother::~SpawnSearchSmoother()
 {
 
 }
 
-QualityLaplaceSmoother::~QualityLaplaceSmoother()
-{
-
-}
-
-void QualityLaplaceSmoother::setVertexProgramUniforms(
+void SpawnSearchSmoother::setVertexProgramUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program)
 {
-    program.setFloat("MoveCoeff", QLMoveCoeff);
 }
 
-void QualityLaplaceSmoother::printOptimisationParameters(
+void SpawnSearchSmoother::printOptimisationParameters(
         const Mesh& mesh,
         OptimizationPlot& plot) const
 {
     AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "Quality Laplace");
-    plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
-    plot.addSmoothingProperty("Line Gaps", to_string(QLMoveCoeff));
+    plot.addSmoothingProperty("Method Name", "Spread Search");
 }
 
-void QualityLaplaceSmoother::smoothVertices(
+void SpawnSearchSmoother::smoothVertices(
         Mesh& mesh,
         const MeshCrew& crew,
         const std::vector<uint>& vIds)
@@ -63,28 +70,24 @@ void QualityLaplaceSmoother::smoothVertices(
     {
         uint vId = vIds[v];
 
-
-        // Compute patch center
-        glm::dvec3 patchCenter =
-            crew.measurer().computeVertexEquilibrium(
-                mesh, crew.sampler(), vId);
-
         glm::dvec3& pos = verts[vId].p;
-        glm::dvec3 centerDist = patchCenter - pos;
+
+        // Compute local element size
+        double localSize = SSMoveCoeff *
+            crew.measurer().computeLocalElementSize(mesh, vId);
 
 
         // Define propositions for new vertex's position
-        glm::dvec3 propositions[PROPOSITION_COUNT] = {
-            pos,
-            patchCenter - centerDist * QLMoveCoeff,
-            patchCenter,
-            patchCenter + centerDist * QLMoveCoeff,
-        };
+        glm::dvec3 propositions[PROPOSITION_COUNT];
+        for(int p=0; p < PROPOSITION_COUNT; ++p)
+        {
+            propositions[p] = pos + glm::dvec3(_offsets[p]) * localSize;
+        }
 
         const MeshTopo& topo = topos[vId];
         if(topo.snapToBoundary->isConstrained())
         {
-            for(uint p=1; p < PROPOSITION_COUNT; ++p)
+            for(uint p=0; p < PROPOSITION_COUNT; ++p)
                 propositions[p] = (*topo.snapToBoundary)(propositions[p]);
         }
 

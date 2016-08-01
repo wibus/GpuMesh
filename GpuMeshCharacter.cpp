@@ -43,6 +43,7 @@
 #include "Smoothers/VertexWise/QualityLaplaceSmoother.h"
 #include "Smoothers/VertexWise/GradientDescentSmoother.h"
 #include "Smoothers/VertexWise/NelderMeadSmoother.h"
+#include "Smoothers/VertexWise/SpawnSearchSmoother.h"
 #include "Smoothers/ElementWise/GetmeSmoother.h"
 #include "Topologists/AbstractTopologist.h"
 
@@ -94,7 +95,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Debug"),      shared_ptr<AbstractMesher>(new DebugMesher())},
     });
 
-    _availableSamplers.setDefault("Uniform");
+    _availableSamplers.setDefault("Analytic");
     _availableSamplers.setContent({
         {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new DummySampler())},
         {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
@@ -109,12 +110,13 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Metric Conformity"), shared_ptr<AbstractEvaluator>(new MetricConformityEvaluator())},
     });
 
-    _availableSmoothers.setDefault("Nelder-Mead");
+    _availableSmoothers.setDefault("Spawn Search");
     _availableSmoothers.setContent({
         {string("Spring Laplace"),   shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),  shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
         {string("Gradient Descent"), shared_ptr<AbstractSmoother>(new GradientDescentSmoother())},
         {string("Nelder-Mead"),      shared_ptr<AbstractSmoother>(new NelderMeadSmoother())},
+        {string("Spawn Search"),     shared_ptr<AbstractSmoother>(new SpawnSearchSmoother())},
         {string("GETMe"),            shared_ptr<AbstractSmoother>(new GetmeSmoother())},
     });
 
