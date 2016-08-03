@@ -5,8 +5,8 @@
 
 
 // Independent group range
-__device__ int GroupBase;
-__device__ int GroupSize;
+__constant__ int GroupBase;
+__constant__ int GroupSize;
 
 
 // Invocation indices

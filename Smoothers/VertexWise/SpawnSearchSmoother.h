@@ -13,6 +13,9 @@ public:
     virtual ~SpawnSearchSmoother();
 
 protected:
+    virtual void lauchCudaKernel(
+            const NodeGroups::GpuDispatch& dispatch);
+
     virtual void setVertexProgramUniforms(
             const Mesh& mesh,
             cellar::GlProgram& program) override;
@@ -33,7 +36,6 @@ protected:
 
 private:
     static const int PROPOSITION_COUNT;
-    std::vector<glm::dvec4> _offsets;
 
     GLuint _offsetsSsbo;
 };

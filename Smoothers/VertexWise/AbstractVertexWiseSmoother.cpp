@@ -451,7 +451,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
 
                 if(dispatch.workgroupCount > 0)
                 {
-                    smoothCudaVertices(dispatch, WORKGROUP_SIZE);
+                    lauchCudaKernel(dispatch);
 
                     // Fetch subsurface vertex positions from GPU
                     fetchCudaSubsurfaceVertices(mesh.verts, group);
@@ -503,6 +503,12 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     mesh.fetchCudaVertices();
     mesh.clearCudaMemory();
     crew.clearCudaMemory(mesh);
+}
+
+void AbstractVertexWiseSmoother::lauchCudaKernel(
+            const NodeGroups::GpuDispatch& dispatch)
+{
+    smoothCudaVertices(dispatch, WORKGROUP_SIZE);
 }
 
 void AbstractVertexWiseSmoother::initializeProgram(

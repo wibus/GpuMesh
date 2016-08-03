@@ -34,7 +34,10 @@ public:
             const MeshCrew& crew) override;
 
 
-protected:
+protected:    
+    virtual void lauchCudaKernel(
+            const NodeGroups::GpuDispatch& dispatch);
+
     virtual void initializeProgram(
             Mesh& mesh,
             const MeshCrew& crew) override;

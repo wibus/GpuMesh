@@ -107,6 +107,10 @@ extern __device__ Vert* refVerts;
 extern __constant__ uint refMetrics_length;
 extern __device__ mat4* refMetrics;
 
+// GPU independent groups
+extern __constant__ int GroupBase;
+extern __constant__ int GroupSize;
+
 
 
 //////////////////////////////////

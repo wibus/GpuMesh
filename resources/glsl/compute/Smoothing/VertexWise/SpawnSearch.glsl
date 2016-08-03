@@ -16,7 +16,6 @@ struct TetVert
 shared Tet tetElems[SPAWN_COUNT];
 shared TetVert tetVerts[SPAWN_COUNT];
 shared float qualities[SPAWN_COUNT];
-shared vec3 locations[SPAWN_COUNT];
 uniform float MoveCoeff;
 
 // Independent group range
@@ -65,9 +64,8 @@ void smoothVert(uint vId)
     float localSize = computeLocalElementSize(vId);
     float scale = localSize * MoveCoeff;
 
-    vec4 offset = offsets[gl_LocalInvocationIndex];
+    vec4 offset = offsets[lId];
     vec3 spawnPos = verts[vId].p + vec3(offset) * scale;
-    locations[lId] = spawnPos;
 
 
     double patchWeight = 0.0;
@@ -110,7 +108,7 @@ void smoothVert(uint vId)
         }
 
         // Update vertex's position
-        verts[vId].p = locations[bestLoc];
+        verts[vId].p += vec3(offsets[bestLoc]) * scale;
     }
 }
 
