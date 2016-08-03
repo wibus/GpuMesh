@@ -26,9 +26,16 @@ protected:
             const MeshCrew& crew,
             const std::vector<uint>& vIds) override;
 
+    virtual std::string glslLauncher() const override;
+
+    virtual glm::ivec3 layoutWorkgroups(
+            const NodeGroups::GpuDispatch& dispatch) const override;
+
 private:
     static const int PROPOSITION_COUNT;
-    std::vector<glm::dvec3> _offsets;
+    std::vector<glm::dvec4> _offsets;
+
+    GLuint _offsetsSsbo;
 };
 
 #endif // GPUMESH_SPAWNSEARCHSMOOTHER

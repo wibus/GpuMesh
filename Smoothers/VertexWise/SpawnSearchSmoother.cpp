@@ -26,16 +26,24 @@ const int SpawnSearchSmoother::PROPOSITION_COUNT = 64;
 SpawnSearchSmoother::SpawnSearchSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/SpawnSearch.glsl"},
-        installCudaSpawnSearchSmoother)
+        installCudaSpawnSearchSmoother),
+    _offsetsSsbo(0)
 {
     _offsets.clear();
 
     for(int k=0; k<=4; ++k)
+    {
         for(int j=0; j<=4; ++j)
+        {
             for(int i=0; i<=4; ++i)
-                _offsets.push_back(glm::dvec3(i, j, k) - glm::dvec3(1.5));
+            {
+                glm::dvec3 offset = glm::dvec3(i, j, k) - glm::dvec3(1.5);
+                _offsets.push_back(glm::dvec4(offset, glm::length(offset)));
+            }
+        }
+    }
 
-    _offsets[0] = glm::dvec3(0, 0, 0);
+    _offsets[0] = glm::dvec4(0, 0, 0, 0);
 }
 
 SpawnSearchSmoother::~SpawnSearchSmoother()
@@ -47,6 +55,24 @@ void SpawnSearchSmoother::setVertexProgramUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program)
 {
+    AbstractVertexWiseSmoother::setVertexProgramUniforms(mesh, program);
+    program.setFloat("MoveCoeff", SSMoveCoeff);
+
+
+    if(_offsetsSsbo == 0)
+    {
+        glGenBuffers(1, &_offsetsSsbo);
+    }
+
+    GLuint offsets = mesh.glBufferBinding(EBufferBinding::SPAWN_OFFSETS_BUFFER_BINDING);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, offsets,  _offsetsSsbo);
+
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _offsetsSsbo);
+        vector<glm::vec4> gpuOffsets(_offsets.begin(), _offsets.end());
+        size_t offsetsSize = sizeof(decltype(gpuOffsets.front())) * gpuOffsets.size();
+        glBufferData(GL_SHADER_STORAGE_BUFFER, offsetsSize, gpuOffsets.data(), GL_STREAM_COPY);
+    }
 }
 
 void SpawnSearchSmoother::printOptimisationParameters(
@@ -54,7 +80,7 @@ void SpawnSearchSmoother::printOptimisationParameters(
         OptimizationPlot& plot) const
 {
     AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "Spread Search");
+    plot.addSmoothingProperty("Method Name", "Spawn Search");
 }
 
 void SpawnSearchSmoother::smoothVertices(
@@ -73,15 +99,15 @@ void SpawnSearchSmoother::smoothVertices(
         glm::dvec3& pos = verts[vId].p;
 
         // Compute local element size
-        double localSize = SSMoveCoeff *
-            crew.measurer().computeLocalElementSize(mesh, vId);
+        double localSize = crew.measurer().computeLocalElementSize(mesh, vId);
+        double scale = SSMoveCoeff * localSize;
 
 
         // Define propositions for new vertex's position
         glm::dvec3 propositions[PROPOSITION_COUNT];
         for(int p=0; p < PROPOSITION_COUNT; ++p)
         {
-            propositions[p] = pos + glm::dvec3(_offsets[p]) * localSize;
+            propositions[p] = pos + glm::dvec3(_offsets[p]) * scale;
         }
 
         const MeshTopo& topo = topos[vId];
@@ -117,4 +143,15 @@ void SpawnSearchSmoother::smoothVertices(
         // Update vertex's position
         pos = propositions[bestProposition];
     }
+}
+
+std::string SpawnSearchSmoother::glslLauncher() const
+{
+    return "";
+}
+
+glm::ivec3 SpawnSearchSmoother::layoutWorkgroups(
+        const NodeGroups::GpuDispatch& dispatch) const
+{
+    return glm::ivec3(dispatch.gpuBufferSize, 1, 1);
 }

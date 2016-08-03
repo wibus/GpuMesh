@@ -49,5 +49,6 @@
         <file>glsl/fragment/BoldEdge.frag</file>
         <file>glsl/compute/Smoothing/VertexWise/GradientDescent.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/NelderMead.glsl</file>
+        <file>glsl/compute/Smoothing/VertexWise/SpawnSearch.glsl</file>
     </qresource>
 </RCC>

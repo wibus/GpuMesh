@@ -28,9 +28,6 @@ public:
                const std::shared_ptr<GpuMeshCharacter>& character);
     ~MainWindow();
 
-public slots:
-    void aboutToQuitSlot();
-
 private:
     Ui::MainWindow *_ui;
     std::shared_ptr<scaena::Play> _play;

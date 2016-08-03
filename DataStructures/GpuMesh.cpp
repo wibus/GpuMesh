@@ -331,6 +331,7 @@ unsigned int GpuMesh::glBufferBinding(EBufferBinding binding) const
     case EBufferBinding::KD_TETS_BUFFER_BINDING :           return 13;
     case EBufferBinding::KD_NODES_BUFFER_BINDING :          return 14;
     case EBufferBinding::LOCAL_TETS_BUFFER_BINDING :        return 15;
+    case EBufferBinding::SPAWN_OFFSETS_BUFFER_BINDING:      return 16;
     }
 
     return 0;

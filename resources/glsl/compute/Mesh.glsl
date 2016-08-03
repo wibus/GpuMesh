@@ -85,6 +85,7 @@ const uint REF_METRICS_BUFFER_BINDING       = 12;
 const uint KD_TETS_BUFFER_BINDING           = 13;
 const uint KD_NODES_BUFFER_BINDING          = 14;
 const uint LOCAL_TETS_BUFFER_BINDING        = 15;
+const uint SPAWN_OFFSETS_BUFFER_BINDING     = 16;
 
 const uint METRIC_AT_SUBROUTINE_LOC         = 0;
 const uint METRIC_AT_SUBROUTINE_IDX         = 0;

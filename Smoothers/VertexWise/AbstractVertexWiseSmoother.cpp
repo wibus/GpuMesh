@@ -261,7 +261,8 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
                 {
                     _vertSmoothProgram.setInt("GroupBase", dispatch.gpuBufferBase);
                     _vertSmoothProgram.setInt("GroupSize", dispatch.gpuBufferSize);
-                    glDispatchCompute(dispatch.workgroupCount, 1, 1);
+                    glm::ivec3 layout = layoutWorkgroups(dispatch);
+                    glDispatchCompute(layout.x, layout.y, layout.z);
                     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 
@@ -522,14 +523,20 @@ void AbstractVertexWiseSmoother::initializeProgram(
     _evaluationShader = crew.evaluator().evaluationShader();
     _measureShader = crew.measurer().measureShader();
 
+    std::string launcher = glslLauncher();
+
     _vertSmoothProgram.reset();
     crew.installPlugins(mesh, _vertSmoothProgram);
     _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
         mesh.meshGeometryShaderName(),
-        smoothingUtilsShader().c_str()});
-    _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
-        mesh.meshGeometryShaderName(),
-        ":/glsl/compute/Smoothing/VertexWise/SmoothVertices.glsl"});
+        smoothingUtilsShader().c_str()}
+    );
+    if(!launcher.empty())
+    {
+        _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
+            mesh.meshGeometryShaderName(),
+            launcher});
+    }
     for(const string& shader : _smoothShaders)
     {
         _vertSmoothProgram.addShader(GL_COMPUTE_SHADER, {
@@ -566,4 +573,15 @@ void AbstractVertexWiseSmoother::printOptimisationParameters(
         OptimizationPlot& plot) const
 {
     plot.addSmoothingProperty("Category", "Vertex-Wise");
+}
+
+std::string AbstractVertexWiseSmoother::glslLauncher() const
+{
+    return ":/glsl/compute/Smoothing/VertexWise/SmoothVertices.glsl";
+}
+
+glm::ivec3 AbstractVertexWiseSmoother::layoutWorkgroups(
+        const NodeGroups::GpuDispatch& dispatch) const
+{
+    return glm::ivec3(dispatch.workgroupCount, 1, 1);
 }

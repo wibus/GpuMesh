@@ -3,6 +3,8 @@
 
 #include "../AbstractSmoother.h"
 
+#include "DataStructures/NodeGroups.h"
+
 
 class AbstractVertexWiseSmoother : public AbstractSmoother
 {
@@ -49,6 +51,11 @@ protected:
             Mesh& mesh,
             const MeshCrew& crew,
             const std::vector<uint>& vIds) = 0;
+
+    virtual std::string glslLauncher() const;
+
+    virtual glm::ivec3 layoutWorkgroups(
+            const NodeGroups::GpuDispatch& dispatch) const;
 
 
 private:

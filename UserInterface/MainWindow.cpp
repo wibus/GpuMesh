@@ -14,9 +14,10 @@ using namespace scaena;
 
 MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
                        const std::shared_ptr<GpuMeshCharacter>& character) :
+    QMainWindow(),
     _ui(new Ui::MainWindow),
     _play(play),
-    _view(new QGlWidgetView("MainView", this))
+    _view(new QGlWidgetView("MainView", this), [](QGlWidgetView*){})
 {
     _ui->setupUi(this);
     _ui->horizontalLayout->addWidget(_view.get());
@@ -30,13 +31,6 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
 
     resize(1920, 1080);
     move(0, 0);
-}
-
-void MainWindow::aboutToQuitSlot()
-{
-    // Prevent double deletion of QGlWidgetView
-    // Qt delete child objects when windows are closed
-    _view->setParent(nullptr);
 }
 
 MainWindow::~MainWindow()

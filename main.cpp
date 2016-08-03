@@ -30,8 +30,6 @@ int main(int argc, char** argv) try
     play->appendAct(act);
 
     MainWindow window(play, character);
-    QObject::connect(&getApplication(), &Application::aboutToQuitSignal,
-                     &window, &MainWindow::aboutToQuitSlot);
     window.show();
 
     getApplication().setPlay(play);
