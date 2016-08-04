@@ -9,6 +9,14 @@
 
 typedef std::vector<std::pair<std::string, std::string>> Properties;
 
+
+struct Configuration
+{
+    std::string samplerName;
+    std::string smootherName;
+    std::string implementationName;
+};
+
 struct OptimizationPass
 {
     double timeStamp;
@@ -18,7 +26,12 @@ struct OptimizationPass
 struct OptimizationImpl
 {
     std::string name;
+    Configuration configuration;
+    bool isTopologicalOperationOn;
+    Properties smoothingProperties;
     std::vector<OptimizationPass> passes;
+
+    void addSmoothingProperty(const std::string& name, const std::string& value);
 };
 
 
@@ -30,29 +43,21 @@ public:
 
     void setMeshModelName(const std::string& name);
 
-    void setSmoothingMethodName(const std::string& name);
-
     void addMeshProperty(const std::string& name, const std::string& value);
-
-    void addSmoothingProperty(const std::string& name, const std::string& value);
 
     void setInitialHistogram(const QualityHistogram& histogram);
 
     void addImplementation(const OptimizationImpl& impl);
 
-    const std::string& meshModelName() const;
-    const std::string& smoothingMethodName() const;
     const Properties& meshProperties() const;
-    const Properties& smoothingProperties() const;
+    const std::string& meshModelName() const;
     const QualityHistogram& initialHistogram() const;
     const std::vector<OptimizationImpl>& implementations() const;
 
 
 private:
-    std::string _meshModelName;
-    std::string _smoothingMethodName;
     Properties _meshProperties;
-    Properties _smoothingProperties;
+    std::string _meshModelName;
     QualityHistogram _initialHistogram;
     std::vector<OptimizationImpl> _implementations;
 };

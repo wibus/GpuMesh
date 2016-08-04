@@ -56,8 +56,6 @@ private:
 
     Schedule _schedule;
     std::shared_ptr<GpuMeshCharacter> _character;
-    std::map<std::string, bool> _activeTechs;
-    std::map<std::string, bool> _activeImpls;
     std::string _lastImpl;
 
     QTextEdit* _reportWidget;

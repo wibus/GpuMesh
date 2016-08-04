@@ -399,9 +399,9 @@ void AbstractElementWiseSmoother::setVertexProgramUniforms(
 
 void AbstractElementWiseSmoother::printOptimisationParameters(
         const Mesh& mesh,
-         OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    plot.addSmoothingProperty("Category", "Element-Wise");
+    plotImpl.addSmoothingProperty("Category", "Element-Wise");
 }
 
 void AbstractElementWiseSmoother::updateVertexPositions(

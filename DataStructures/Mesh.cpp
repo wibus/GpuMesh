@@ -132,6 +132,19 @@ Mesh::Mesh() :
 
 }
 
+Mesh::Mesh(const Mesh& m) :
+    modelName(m.modelName),
+    verts(m.verts),
+    topos(m.topos),
+    tets(m.tets),
+    pris(m.pris),
+    hexs(m.hexs),
+    _nodeGroups(new NodeGroups(m.nodeGroups())),
+    _boundary(m._boundary)
+{
+
+}
+
 Mesh::~Mesh()
 {
 

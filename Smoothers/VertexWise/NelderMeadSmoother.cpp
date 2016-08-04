@@ -73,17 +73,17 @@ void NelderMeadSmoother::setVertexProgramUniforms(
 
 void NelderMeadSmoother::printOptimisationParameters(
         const Mesh& mesh,
-        OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "Local Optimization");
-    plot.addSmoothingProperty("Value Convergence", to_string(NMValueConvergence));
-    plot.addSmoothingProperty("Security Cycle Count", to_string(NMSecurityCycleCount));
-    plot.addSmoothingProperty("Local Size to Node Shift", to_string(NMLocalSizeToNodeShift));
-    plot.addSmoothingProperty("Reflexion", to_string(NMAlpha));
-    plot.addSmoothingProperty("Contraction", to_string(NMBeta));
-    plot.addSmoothingProperty("Expansion", to_string(NMGamma));
-    plot.addSmoothingProperty("Shrinkage", to_string(NMDelta));
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plotImpl);
+    plotImpl.addSmoothingProperty("Method Name", "Local Optimization");
+    plotImpl.addSmoothingProperty("Value Convergence", to_string(NMValueConvergence));
+    plotImpl.addSmoothingProperty("Security Cycle Count", to_string(NMSecurityCycleCount));
+    plotImpl.addSmoothingProperty("Local Size to Node Shift", to_string(NMLocalSizeToNodeShift));
+    plotImpl.addSmoothingProperty("Reflexion", to_string(NMAlpha));
+    plotImpl.addSmoothingProperty("Contraction", to_string(NMBeta));
+    plotImpl.addSmoothingProperty("Expansion", to_string(NMGamma));
+    plotImpl.addSmoothingProperty("Shrinkage", to_string(NMDelta));
 }
 
 void NelderMeadSmoother::smoothVertices(

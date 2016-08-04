@@ -88,10 +88,10 @@ void SpawnSearchSmoother::setVertexProgramUniforms(
 
 void SpawnSearchSmoother::printOptimisationParameters(
         const Mesh& mesh,
-        OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "Spawn Search");
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plotImpl);
+    plotImpl.addSmoothingProperty("Method Name", "Spawn Search");
 }
 
 void SpawnSearchSmoother::smoothVertices(

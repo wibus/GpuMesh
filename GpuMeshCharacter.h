@@ -89,10 +89,10 @@ public:
             const std::string& implementationName,
             const Schedule& schedule);
 
-    virtual OptimizationPlot benchmarkSmoother(
-            const std::string& smootherName,
-            const std::map<std::string, bool>& activeImpls,
-            const Schedule& schedule);
+    virtual void benchmarkSmoothers(
+            OptimizationPlot& plot,
+            const Schedule& schedule,
+            const std::vector<Configuration>& configurations);
 
     // Topology
     virtual void restructureMesh(int passCount);

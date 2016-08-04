@@ -29,7 +29,8 @@ public:
             Mesh& mesh,
             const MeshCrew& crew,
             const std::string& implementationName,
-            const Schedule& schedule);
+            const Schedule& schedule,
+            OptimizationImpl& optImpl);
 
     virtual void smoothMeshSerial(
             Mesh& mesh,
@@ -47,13 +48,6 @@ public:
             Mesh& mesh,
             const MeshCrew& crew) = 0;
 
-    virtual void benchmark(
-            Mesh& mesh,
-            const MeshCrew& crew,
-            const std::map<std::string, bool>& activeImpls,
-            const Schedule& schedule,
-            OptimizationPlot& outPlot);
-
 
 protected:
     virtual void initializeProgram(
@@ -62,7 +56,7 @@ protected:
 
     virtual void printOptimisationParameters(
             const Mesh& mesh,
-            OptimizationPlot& plot) const = 0;
+            OptimizationImpl& plotImpl) const = 0;
 
     bool evaluateMeshQualitySerial(Mesh& mesh, const MeshCrew& crew);
     bool evaluateMeshQualityThread(Mesh& mesh, const MeshCrew& crew);
@@ -90,8 +84,8 @@ protected:
 private:
     std::string _smoothingUtilsShader;
 
+    std::vector<OptimizationPass> _optimizationPasses;
     std::chrono::high_resolution_clock::time_point _implBeginTimeStamp;
-    OptimizationImpl _currentImplementation;
 
     typedef std::function<void(Mesh&, const MeshCrew&)> ImplementationFunc;
     OptionMap<ImplementationFunc> _implementationFuncs;

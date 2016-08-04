@@ -272,6 +272,7 @@ class Mesh
 {
 public:
     Mesh();
+    Mesh(const Mesh& m);
     virtual ~Mesh();
 
     virtual Mesh& operator=(const Mesh& mesh);

@@ -39,11 +39,11 @@ void SpringLaplaceSmoother::setVertexProgramUniforms(
 
 void SpringLaplaceSmoother::printOptimisationParameters(
         const Mesh& mesh,
-        OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "Spring Laplace");
-    plot.addSmoothingProperty("Move Factor", to_string(SLMoveCoeff));
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plotImpl);
+    plotImpl.addSmoothingProperty("Method Name", "Spring Laplace");
+    plotImpl.addSmoothingProperty("Move Factor", to_string(SLMoveCoeff));
 }
 
 void SpringLaplaceSmoother::smoothVertices(

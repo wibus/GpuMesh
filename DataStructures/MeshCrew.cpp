@@ -84,6 +84,11 @@ const AbstractTopologist& MeshCrew::topologist() const
     return *_topologist;
 }
 
+std::shared_ptr<AbstractSampler> MeshCrew::samplerPtr() const
+{
+    return _sampler;
+}
+
 
 void MeshCrew::setSampler(const Mesh& mesh, const std::shared_ptr<AbstractSampler>& sampler)
 {

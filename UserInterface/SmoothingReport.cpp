@@ -46,8 +46,7 @@ bool SmoothingReport::save(const std::string& fileName) const
     writer.setPageMargins(QMargins(10, 10, 10, 10),
                           QPageLayout::Millimeter);
     writer.setPageSize(QPagedPaintDevice::Letter);
-    writer.setTitle((_plot.smoothingMethodName() +
-                     ": " + _plot.meshModelName()).c_str());
+    writer.setTitle((_plot.meshModelName()).c_str());
 
     qreal textWidth = writer.pageLayout().paintRectPoints().width();
 
@@ -96,8 +95,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     blockFormat.setAlignment(Qt::AlignHCenter);
     cursor.insertBlock(blockFormat);
     blockFormat.setAlignment(Qt::AlignJustify);
-    cursor.insertHtml(("<h1>" + _plot.smoothingMethodName() +
-                       ": " + _plot.meshModelName() + "</h1>").c_str());
+    cursor.insertHtml(("<h1>" + _plot.meshModelName() + "</h1>").c_str());
 
     blockFormat.setTopMargin(20);
 
@@ -170,33 +168,37 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.movePosition(QTextCursor::End);
 
 
-    cursor.insertBlock(blockFormat);
-    cursor.insertHtml("<h3>Smoothing Method</h3>");
-
-    size_t smoothPropCount = _plot.smoothingProperties().size();
-    QTextTable* smoothTable = cursor.insertTable(smoothPropCount+1, 2, propertyTableFormat);
-    tableCell = smoothTable->cellAt(0, 0);
-    tableCursor = tableCell.firstCursorPosition();
-    tableCursor.insertText("Property", tableHeaderCharFormat);
-    tableCell = smoothTable->cellAt(0, 1);
-    tableCursor = tableCell.firstCursorPosition();
-    tableCursor.insertText("Value", tableHeaderCharFormat);
-
-    for(size_t p=0; p < smoothPropCount; ++p)
+    for(const OptimizationImpl& impl : _plot.implementations())
     {
-        const auto& property = _plot.smoothingProperties()[p];
+        cursor.insertBlock(blockFormat);
+        cursor.insertHtml(("<h3>" + impl.name + "</h3>").c_str());
 
-        const std::string& name = property.first;
-        tableCell = smoothTable->cellAt(1+p, 0);
+        size_t smoothPropCount = impl.smoothingProperties.size();
+        QTextTable* smoothTable = cursor.insertTable(smoothPropCount+1, 2, propertyTableFormat);
+        tableCell = smoothTable->cellAt(0, 0);
         tableCursor = tableCell.firstCursorPosition();
-        tableCursor.insertText(name.c_str());
+        tableCursor.insertText("Property", tableHeaderCharFormat);
+        tableCell = smoothTable->cellAt(0, 1);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText("Value", tableHeaderCharFormat);
 
-        const std::string& value = property.second;
-        QTextTableCell valueCell = smoothTable->cellAt(1+p, 1);
-        QTextCursor valueCursor = valueCell.firstCursorPosition();
-        valueCursor.insertText(value.c_str());
+        for(size_t p=0; p < smoothPropCount; ++p)
+        {
+            const auto& property = impl.smoothingProperties[p];
+
+            const std::string& name = property.first;
+            tableCell = smoothTable->cellAt(1+p, 0);
+            tableCursor = tableCell.firstCursorPosition();
+            tableCursor.insertText(name.c_str());
+
+            const std::string& value = property.second;
+            QTextTableCell valueCell = smoothTable->cellAt(1+p, 1);
+            QTextCursor valueCursor = valueCell.firstCursorPosition();
+            valueCursor.insertText(value.c_str());
+        }
+
+        cursor.movePosition(QTextCursor::End);
     }
-    cursor.movePosition(QTextCursor::End);
 
 
     blockFormat.setAlignment(Qt::AlignLeft);
@@ -207,8 +209,9 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.insertHtml("<h2>Implementations</h2>");
 
     size_t maxPassCount = 0;
-    double minImplGain = INFINITY;
     double minImplTime = INFINITY;
+    double minMinImplGain = INFINITY;
+    double minMeanImplGain = INFINITY;
     size_t implCount = _plot.implementations().size();
     for(size_t i=0; i < implCount; ++i)
     {
@@ -217,12 +220,16 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
         maxPassCount = std::max(maxPassCount,
                 impl.passes.size());
 
-        minImplGain = std::min(minImplGain,
+        minMinImplGain = std::min(minMinImplGain,
                 impl.passes.back().histogram.minimumQuality() -
                 impl.passes.front().histogram.minimumQuality());
 
         minImplTime = std::min(minImplTime,
                 impl.passes.back().timeStamp);
+
+        minMeanImplGain = std::min(minMeanImplGain,
+                impl.passes.back().histogram.geometricMean() -
+                impl.passes.front().histogram.geometricMean());
     }
 
     QTextTableFormat statsTableFormat;
@@ -278,13 +285,67 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
         tableCursor.insertText(QString::number(minGain, 'f'));
         tableCell = implMinQualTable->cellAt(maxPassCount+3, i+1);
         tableCursor = tableCell.firstCursorPosition();
-        tableCursor.insertText(QString::number(minGain / minImplGain, 'f'));
+        tableCursor.insertText(QString::number(minGain / minMinImplGain, 'f'));
     }
     cursor.movePosition(QTextCursor::End);
 
 
     cursor.insertBlock(blockFormat);
-    cursor.insertHtml("<h3>Times</h3>");
+    cursor.insertHtml("<h3>Geometric Mean Quality</h3>");
+    QTextTable* implMeanQualTable = cursor.insertTable(
+        maxPassCount + 4,
+        implCount + 1,
+        statsTableFormat);
+
+    tableCell = implMeanQualTable->cellAt(0, 0);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Passes", tableHeaderCharFormat);
+    tableCell = implMeanQualTable->cellAt(maxPassCount+2, 0);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Gain", tableTotalCharFormat);
+    tableCell = implMeanQualTable->cellAt(maxPassCount+3, 0);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Ratio", tableTotalCharFormat);
+    for(size_t p=0; p < maxPassCount; ++p)
+    {
+        tableCell = implMeanQualTable->cellAt(1+p, 0);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(p));
+    }
+
+    for(size_t i=0; i < implCount; ++i)
+    {
+        const OptimizationImpl& impl = _plot.implementations()[i];
+
+        tableCell = implMeanQualTable->cellAt(0, i+1);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(impl.name.c_str(), tableHeaderCharFormat);
+
+        size_t passCount = impl.passes.size();
+        for(size_t p=0; p < passCount; ++p)
+        {
+            const OptimizationPass& pass = impl.passes[p];
+
+            tableCell = implMeanQualTable->cellAt(1+p, i+1);
+            tableCursor = tableCell.firstCursorPosition();
+            tableCursor.insertText(QString::number(pass.histogram.geometricMean(), 'f'));
+        }
+
+        double meanGain = impl.passes.back().histogram.geometricMean() -
+                         impl.passes.front().histogram.geometricMean();
+
+        tableCell = implMeanQualTable->cellAt(maxPassCount+2, i+1);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(meanGain, 'f'));
+        tableCell = implMeanQualTable->cellAt(maxPassCount+3, i+1);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(meanGain / minMeanImplGain, 'f'));
+    }
+    cursor.movePosition(QTextCursor::End);
+
+
+    cursor.insertBlock(blockFormat);
+    cursor.insertHtml("<h3>Times (seconds)</h3>");
     QTextTable* implTimesTable = cursor.insertTable(
         maxPassCount + 3,
         implCount + 1,
@@ -445,7 +506,7 @@ void SmoothingReport::printMinimumQualityPlot(QPixmap& pixmap) const
     QFont titleFont;
     titleFont.setPointSize(20);
     QGraphicsTextItem* titleText = scene.addText(
-        (_plot.smoothingMethodName() + ": " + _plot.meshModelName()).c_str(), titleFont);
+        (_plot.meshModelName()).c_str(), titleFont);
     titleText->setPos((sceneWidth - titleText->document()->size().width())/2.0, -50.0);
 
     QPainter painter(&pixmap);
@@ -516,7 +577,7 @@ void SmoothingReport::printHistogramPlot(QPixmap& pixmap) const
     QFont titleFont;
     titleFont.setPointSize(20);
     QGraphicsTextItem* titleText = scene.addText(
-        (_plot.smoothingMethodName() + ": " + _plot.meshModelName()).c_str(), titleFont);
+        (_plot.meshModelName()).c_str(), titleFont);
     titleText->setPos((sceneWidth - titleText->document()->size().width())/2.0, 30.0);
 
     QPainter painter(&pixmap);

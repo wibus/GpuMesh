@@ -42,12 +42,12 @@ void QualityLaplaceSmoother::setVertexProgramUniforms(
 
 void QualityLaplaceSmoother::printOptimisationParameters(
         const Mesh& mesh,
-        OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "Quality Laplace");
-    plot.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
-    plot.addSmoothingProperty("Line Gaps", to_string(QLMoveCoeff));
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plotImpl);
+    plotImpl.addSmoothingProperty("Method Name", "Quality Laplace");
+    plotImpl.addSmoothingProperty("Line Sample Count", to_string(PROPOSITION_COUNT));
+    plotImpl.addSmoothingProperty("Line Gaps", to_string(QLMoveCoeff));
 }
 
 void QualityLaplaceSmoother::smoothVertices(

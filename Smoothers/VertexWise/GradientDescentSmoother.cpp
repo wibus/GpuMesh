@@ -51,12 +51,12 @@ void GradientDescentSmoother::setVertexProgramUniforms(
 
 void GradientDescentSmoother::printOptimisationParameters(
         const Mesh& mesh,
-        OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "Local Optimization");
-    plot.addSmoothingProperty("Local Size to Node Shift", to_string(GDLocalSizeToNodeShift));
-    plot.addSmoothingProperty("Security Cycle Count", to_string(GDSecurityCycleCount));
+    AbstractVertexWiseSmoother::printOptimisationParameters(mesh, plotImpl);
+    plotImpl.addSmoothingProperty("Method Name", "Local Optimization");
+    plotImpl.addSmoothingProperty("Local Size to Node Shift", to_string(GDLocalSizeToNodeShift));
+    plotImpl.addSmoothingProperty("Security Cycle Count", to_string(GDSecurityCycleCount));
 }
 
 void GradientDescentSmoother::smoothVertices(

@@ -576,9 +576,9 @@ void AbstractVertexWiseSmoother::setVertexProgramUniforms(
 
 void AbstractVertexWiseSmoother::printOptimisationParameters(
         const Mesh& mesh,
-        OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    plot.addSmoothingProperty("Category", "Vertex-Wise");
+    plotImpl.addSmoothingProperty("Category", "Vertex-Wise");
 }
 
 std::string AbstractVertexWiseSmoother::glslLauncher() const

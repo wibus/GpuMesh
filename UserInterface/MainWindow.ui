@@ -542,26 +542,6 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
-            <widget class="QLabel" name="smoothActiveTechLabel">
-             <property name="text">
-              <string>Active techniques:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QWidget" name="smoothActiveTechLayout" native="true"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="smoothActiveImplLabel">
-             <property name="text">
-              <string>Active Implementations:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QWidget" name="smoothActiveImplLayout" native="true"/>
-           </item>
-           <item>
             <widget class="QPushButton" name="smoothBenchmarkImplButton">
              <property name="text">
               <string>Benchmark Implementations</string>

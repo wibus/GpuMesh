@@ -19,7 +19,7 @@ protected:
 
     virtual void printOptimisationParameters(
             const Mesh& mesh,
-            OptimizationPlot& plot) const override;
+            OptimizationImpl& plotImpl) const override;
 
     virtual void smoothVertices(
             Mesh& mesh,

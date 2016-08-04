@@ -11,6 +11,7 @@
 #include <CellarWorkbench/Image/Image.h>
 #include <CellarWorkbench/GL/GlToolkit.h>
 
+#include "../Dialogs/ConfigComparator.h"
 #include "../SmoothingReport.h"
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
@@ -20,27 +21,11 @@ using namespace cellar;
 
 
 OptimizeTab::OptimizeTab(Ui::MainWindow* ui,
-                     const std::shared_ptr<GpuMeshCharacter>& character) :
+        const std::shared_ptr<GpuMeshCharacter>& character) :
     _ui(ui),
     _character(character),
     _reportWidget(nullptr)
 {
-    _activeTechs = std::map<string, bool>{
-      {std::string("Spring Laplace"),   false },
-      {std::string("Quality Laplace"),  false },
-      {std::string("Gradient Descent"), false },
-      {std::string("Nelder-Mead"),      true  },
-      {std::string("GETMe"),            false },
-    };
-
-    _activeImpls = std::map<string, bool>{
-      {std::string("Serial"), false},
-	  {std::string("Thread"), true },
-      {std::string("GLSL"),   true },
-      {std::string("CUDA"),   true }
-    };
-
-
     // Scehduling
     autoPilotToggled(_ui->scheduleAutoPilotRadio->isChecked());
     connect(_ui->scheduleAutoPilotRadio, &QRadioButton::toggled,
@@ -181,37 +166,42 @@ void OptimizeTab::smoothMesh()
 
 void OptimizeTab::benchmarkImplementations()
 {
-    const string REPORT_PATH = "Reports/Report.pdf";
-    const QString preShootPath = "Reports/PreSmoothingShot.png";
-    const QString postShootPath = "Reports/PostSmoothingShot.png";
+    ConfigComparator comparator(_character);
 
-    Image preSmoothingShot;
-    GlToolkit::takeFramebufferShot(preSmoothingShot);
-    preSmoothingShot.save(preShootPath.toStdString());
+    comparator.show();
+    if(comparator.exec() == QDialog::Accepted)
+    {
+        const string REPORT_PATH = "Reports/Report.pdf";
+        const QString preShootPath = "Reports/PreSmoothingShot.png";
+        const QString postShootPath = "Reports/PostSmoothingShot.png";
 
-    OptimizationPlot plot =
-        _character->benchmarkSmoother(
-            _ui->smoothingTechniqueMenu->currentText().toStdString(),
-            _activeImpls,
-            _schedule);
+        Image preSmoothingShot;
+        GlToolkit::takeFramebufferShot(preSmoothingShot);
+        preSmoothingShot.save(preShootPath.toStdString());
 
-    QApplication::processEvents();
+        OptimizationPlot plot;
+        _character->benchmarkSmoothers(
+            plot, _schedule,
+            comparator.configurations());
 
-    Image postSmoothingShot;
-    GlToolkit::takeFramebufferShot(postSmoothingShot);
-    postSmoothingShot.save(postShootPath.toStdString());
+        QApplication::processEvents();
 
-    SmoothingReport report;
-    report.setPreSmoothingShot(QImage(preShootPath));
-    report.setPostSmoothingShot(QImage(postShootPath));
-    report.setOptimizationPlot(plot);
-    report.save(REPORT_PATH);
+        Image postSmoothingShot;
+        GlToolkit::takeFramebufferShot(postSmoothingShot);
+        postSmoothingShot.save(postShootPath.toStdString());
 
-    delete _reportWidget;
-    _reportWidget = new QTextEdit();
-    _reportWidget->resize(1000, 800);
-    report.display(*_reportWidget);
-    _reportWidget->show();
+        SmoothingReport report;
+        report.setPreSmoothingShot(QImage(preShootPath));
+        report.setPostSmoothingShot(QImage(postShootPath));
+        report.setOptimizationPlot(plot);
+        report.save(REPORT_PATH);
+
+        delete _reportWidget;
+        _reportWidget = new QTextEdit();
+        _reportWidget->resize(1000, 800);
+        report.display(*_reportWidget);
+        _reportWidget->show();
+    }
 }
 
 void OptimizeTab::deployTechniques()
@@ -253,31 +243,4 @@ void OptimizeTab::deployImplementations()
         _ui->smoothingImplementationMenu->setCurrentText(
                     implementations.defaultOption.c_str());
     }
-
-
-    // Define active implementations for benchmarking
-    if(_ui->smoothActiveImplLayout->layout())
-        QWidget().setLayout(_ui->smoothActiveImplLayout->layout());
-
-    map<string, bool> newActiveImpls;
-    QFormLayout* layout = new QFormLayout();
-    for(const auto& name : implementations.options)
-    {
-        QCheckBox* check = new QCheckBox();
-
-        int isActive = true;
-        auto lastStateIt = _activeImpls.find(name);
-        if(lastStateIt != _activeImpls.end())
-            isActive = lastStateIt->second;
-
-        check->setChecked(isActive);
-        newActiveImpls.insert(make_pair(name, isActive));
-
-        connect(check, &QCheckBox::stateChanged,
-                [=](int state) { _activeImpls[name] = state; });
-
-        layout->addRow(QString(name.c_str()), check);
-    }
-    _ui->smoothActiveImplLayout->setLayout(layout);
-    _activeImpls = newActiveImpls;
 }

@@ -45,11 +45,11 @@ void GetmeSmoother::setVertexProgramUniforms(
 
 void GetmeSmoother::printOptimisationParameters(
         const Mesh& mesh,
-        OptimizationPlot& plot) const
+        OptimizationImpl& plotImpl) const
 {
-    AbstractElementWiseSmoother::printOptimisationParameters(mesh, plot);
-    plot.addSmoothingProperty("Method Name", "GETMe");
-    plot.addSmoothingProperty("Lambda", to_string(_lambda));
+    AbstractElementWiseSmoother::printOptimisationParameters(mesh, plotImpl);
+    plotImpl.addSmoothingProperty("Method Name", "GETMe");
+    plotImpl.addSmoothingProperty("Lambda", to_string(_lambda));
 }
 
 void GetmeSmoother::smoothTets(

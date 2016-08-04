@@ -37,6 +37,8 @@ public:
     const AbstractEvaluator& evaluator() const;
     const AbstractTopologist& topologist() const;
 
+    std::shared_ptr<AbstractSampler> samplerPtr() const;
+
     void initialize(const Mesh& mesh);
     void terminate();
     bool initialized() const;

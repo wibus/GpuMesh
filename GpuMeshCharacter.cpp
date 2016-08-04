@@ -571,45 +571,81 @@ void GpuMeshCharacter::smoothMesh(
     std::shared_ptr<AbstractSmoother> smoother;
     if(_availableSmoothers.select(smootherName, smoother))
     {
+        OptimizationImpl impl;
+
         smoother->smoothMesh(
             *_mesh,
             *_meshCrew,
             implementationName,
-            schedule);
+            schedule,
+            impl);
 
         updateSampling();
         updateMeshMeasures();
     }
 }
 
-OptimizationPlot GpuMeshCharacter::benchmarkSmoother(
-        const std::string& smootherName,
-        const map<string, bool>& activeImpls,
-        const Schedule& schedule)
+void GpuMeshCharacter::benchmarkSmoothers(
+        OptimizationPlot& plot,
+        const Schedule& schedule,
+        const std::vector<Configuration>& configurations)
 {
     printStep("Smoothing benchmark "\
-              ": smoother=" + smootherName);
+              ": " + _mesh->modelName);
 
-    OptimizationPlot plot;
+
+    QualityHistogram initialHistogram;
+    _meshCrew->evaluator().evaluateMeshQualityThread(
+        *_mesh, _meshCrew->sampler(), _meshCrew->measurer(),
+        initialHistogram);
+
     _mesh->printPropperties(plot);
     plot.setMeshModelName(_mesh->modelName);
-    plot.setSmoothingMethodName(smootherName);
+    plot.setInitialHistogram(initialHistogram);
 
-    std::shared_ptr<AbstractSmoother> smoother;
-    if(_availableSmoothers.select(smootherName, smoother))
+
+    std::shared_ptr<Mesh> currMesh(new Mesh(*_mesh));
+    std::shared_ptr<AbstractSampler> currSampler = _meshCrew->samplerPtr();
+
+    for(const Configuration& config : configurations)
     {
-        smoother->benchmark(
-            *_mesh,
-            *_meshCrew,
-            activeImpls,
-            schedule,
-            plot);
+        std::shared_ptr<AbstractSampler> sampler;
+        if(_availableSamplers.select(config.samplerName, sampler))
+        {
+            *_mesh = *currMesh;
+            _meshCrew->setSampler(*_mesh, sampler);
 
-        updateSampling();
-        updateMeshMeasures();
+            updateSampling();
+
+            std::shared_ptr<AbstractSmoother> smoother;
+            if(_availableSmoothers.select(config.smootherName, smoother))
+            {
+                OptimizationImpl impl;
+                impl.configuration = config;
+                impl.name = config.smootherName +
+                    "(samp=" + config.samplerName +
+                    ", impl=" + config.implementationName + ")";
+                impl.isTopologicalOperationOn = schedule.topoOperationEnabled;
+
+                printStep("Benchmarking smoothing configuration: "\
+                          ": " + impl.name);
+
+                smoother->smoothMesh(
+                    *_mesh,
+                    *_meshCrew,
+                    config.implementationName,
+                    schedule,
+                    impl);
+
+                plot.addImplementation(impl);
+            }
+        }
     }
 
-    return plot;
+    _meshCrew->setSampler(*_mesh, currSampler);
+
+    updateSampling();
+    updateMeshMeasures();
 }
 
 void GpuMeshCharacter::restructureMesh(int passCount)
