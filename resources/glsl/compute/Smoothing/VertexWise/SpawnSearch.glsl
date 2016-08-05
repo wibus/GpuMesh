@@ -65,50 +65,58 @@ void smoothVert(uint vId)
     float scale = localSize * MoveCoeff;
 
     vec4 offset = offsets[lId];
-    vec3 spawnPos = verts[vId].p + vec3(offset) * scale;
 
-
-    double patchWeight = 0.0;
-    double patchQuality = 1.0;
-    for(uint i=0; i < neigElemCount; ++i)
+    for(int iter=0; iter < 2; ++iter)
     {
-        Tet tetElem = tetElems[i];
-        TetVert tetVert = tetVerts[i];
+        vec3 spawnPos = verts[vId].p + vec3(offset) * scale;
 
-        if(tetElem.v[0] == vId)
-            tetVert.p[0] = spawnPos;
-        else if(tetElem.v[1] == vId)
-            tetVert.p[1] = spawnPos;
-        else if(tetElem.v[2] == vId)
-            tetVert.p[2] = spawnPos;
-        else if(tetElem.v[3] == vId)
-            tetVert.p[3] = spawnPos;
 
-        accumulatePatchQuality(
-            patchQuality, patchWeight,
-            double(tetQuality(tetVert.p, tetElem)));
-    }
-
-    qualities[lId] = finalizePatchQuality(patchQuality, patchWeight);
-
-    barrier();
-
-    if(lId == 0)
-    {
-        uint bestLoc = 0;
-        float bestQual = -1.0/0.0; // -Inf
-
-        for(int i=0; i < SPAWN_COUNT; ++i)
+        double patchWeight = 0.0;
+        double patchQuality = 1.0;
+        for(uint i=0; i < neigElemCount; ++i)
         {
-            if(qualities[i] > bestQual)
-            {
-                bestLoc = i;
-                bestQual = qualities[i];
-            }
+            Tet tetElem = tetElems[i];
+            TetVert tetVert = tetVerts[i];
+
+            if(tetElem.v[0] == vId)
+                tetVert.p[0] = spawnPos;
+            else if(tetElem.v[1] == vId)
+                tetVert.p[1] = spawnPos;
+            else if(tetElem.v[2] == vId)
+                tetVert.p[2] = spawnPos;
+            else if(tetElem.v[3] == vId)
+                tetVert.p[3] = spawnPos;
+
+            accumulatePatchQuality(
+                patchQuality, patchWeight,
+                double(tetQuality(tetVert.p, tetElem)));
         }
 
-        // Update vertex's position
-        verts[vId].p += vec3(offsets[bestLoc]) * scale;
+        qualities[lId] = finalizePatchQuality(patchQuality, patchWeight);
+
+        barrier();
+
+        if(lId == 0)
+        {
+            uint bestLoc = 0;
+            float bestQual = -1.0/0.0; // -Inf
+
+            for(int i=0; i < SPAWN_COUNT; ++i)
+            {
+                if(qualities[i] > bestQual)
+                {
+                    bestLoc = i;
+                    bestQual = qualities[i];
+                }
+            }
+
+            // Update vertex's position
+            verts[vId].p += vec3(offsets[bestLoc]) * scale;
+        }
+
+        barrier();
+
+        scale /= 3.0;
     }
 }
 

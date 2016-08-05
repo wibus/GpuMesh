@@ -69,56 +69,64 @@ __device__ void spawnSearchSmoothVert(uint vId)
     float scale = localSize * SSMoveCoeff;
 
     vec4 offset = offsets[lId];
-    vec3 spawnPos = verts[vId].p + vec3(offset) * scale;
 
-
-    double patchWeight = 0.0;
-    double patchQuality = 1.0;
-    for(uint i=0; i < neigElemCount; ++i)
+    for(int iter=0; iter < 2; ++iter)
     {
-        vec3 tetVert[4] = {
-            toVec3(tetVerts[i].p[0]),
-            toVec3(tetVerts[i].p[1]),
-            toVec3(tetVerts[i].p[2]),
-            toVec3(tetVerts[i].p[3]),
-        };
+        vec3 spawnPos = verts[vId].p + vec3(offset) * scale;
 
-        Tet tetElem = tetElems[i];
 
-        if(tetElem.v[0] == vId)
-            tetVert[0] = spawnPos;
-        else if(tetElem.v[1] == vId)
-            tetVert[1] = spawnPos;
-        else if(tetElem.v[2] == vId)
-            tetVert[2] = spawnPos;
-        else if(tetElem.v[3] == vId)
-            tetVert[3] = spawnPos;
-
-        accumulatePatchQuality(
-            patchQuality, patchWeight,
-            double((*tetQualityImpl)(tetVert, tetElem)));
-    }
-
-    qualities[lId] = finalizePatchQuality(patchQuality, patchWeight);
-
-    __syncthreads();
-
-    if(lId == 0)
-    {
-        uint bestLoc = 0;
-        float bestQual = -1.0/0.0; // -Inf
-
-        for(int i=0; i < SPAWN_COUNT; ++i)
+        double patchWeight = 0.0;
+        double patchQuality = 1.0;
+        for(uint i=0; i < neigElemCount; ++i)
         {
-            if(qualities[i] > bestQual)
-            {
-                bestLoc = i;
-                bestQual = qualities[i];
-            }
+            vec3 tetVert[4] = {
+                toVec3(tetVerts[i].p[0]),
+                toVec3(tetVerts[i].p[1]),
+                toVec3(tetVerts[i].p[2]),
+                toVec3(tetVerts[i].p[3]),
+            };
+
+            Tet tetElem = tetElems[i];
+
+            if(tetElem.v[0] == vId)
+                tetVert[0] = spawnPos;
+            else if(tetElem.v[1] == vId)
+                tetVert[1] = spawnPos;
+            else if(tetElem.v[2] == vId)
+                tetVert[2] = spawnPos;
+            else if(tetElem.v[3] == vId)
+                tetVert[3] = spawnPos;
+
+            accumulatePatchQuality(
+                patchQuality, patchWeight,
+                double((*tetQualityImpl)(tetVert, tetElem)));
         }
 
-        // Update vertex's position
-        verts[vId].p += vec3(offsets[bestLoc]) * scale;
+        qualities[lId] = finalizePatchQuality(patchQuality, patchWeight);
+
+        __syncthreads();
+
+        if(lId == 0)
+        {
+            uint bestLoc = 0;
+            float bestQual = -1.0/0.0; // -Inf
+
+            for(int i=0; i < SPAWN_COUNT; ++i)
+            {
+                if(qualities[i] > bestQual)
+                {
+                    bestLoc = i;
+                    bestQual = qualities[i];
+                }
+            }
+
+            // Update vertex's position
+            verts[vId].p += vec3(offsets[bestLoc]) * scale;
+        }
+
+        __syncthreads();
+
+        scale /= 3.0;
     }
 }
 

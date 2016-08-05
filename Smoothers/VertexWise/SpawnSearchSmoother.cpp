@@ -36,11 +36,11 @@ SpawnSearchSmoother::SpawnSearchSmoother() :
 {
     g_offsets.clear();
 
-    for(int k=0; k<=4; ++k)
+    for(int k=0; k<4; ++k)
     {
-        for(int j=0; j<=4; ++j)
+        for(int j=0; j<4; ++j)
         {
-            for(int i=0; i<=4; ++i)
+            for(int i=0; i<4; ++i)
             {
                 glm::dvec3 offset = glm::dvec3(i, j, k) - glm::dvec3(1.5);
                 g_offsets.push_back(glm::dvec4(offset, glm::length(offset)));
@@ -114,45 +114,50 @@ void SpawnSearchSmoother::smoothVertices(
         double scale = SSMoveCoeff * localSize;
 
 
-        // Define propositions for new vertex's position
-        glm::dvec3 propositions[PROPOSITION_COUNT];
-        for(int p=0; p < PROPOSITION_COUNT; ++p)
+        for(int iter=0; iter < 2; ++iter)
         {
-            propositions[p] = pos + glm::dvec3(g_offsets[p]) * scale;
-        }
-
-        const MeshTopo& topo = topos[vId];
-        if(topo.snapToBoundary->isConstrained())
-        {
-            for(uint p=0; p < PROPOSITION_COUNT; ++p)
-                propositions[p] = (*topo.snapToBoundary)(propositions[p]);
-        }
-
-
-        // Choose best position
-        uint bestProposition = 0;
-        double bestQualityMean = -numeric_limits<double>::infinity();
-        for(uint p=0; p < PROPOSITION_COUNT; ++p)
-        {
-            // Since 'pos' is a reference on vertex's position
-            // modifing its value here should be seen by the evaluator
-            pos = propositions[p];
-
-            // Compute patch quality
-            double patchQuality =
-                crew.evaluator().patchQuality(
-                    mesh, crew.sampler(), crew.measurer(), vId);
-
-            if(patchQuality > bestQualityMean)
+            // Define propositions for new vertex's position
+            glm::dvec3 propositions[PROPOSITION_COUNT];
+            for(int p=0; p < PROPOSITION_COUNT; ++p)
             {
-                bestQualityMean = patchQuality;
-                bestProposition = p;
+                propositions[p] = pos + glm::dvec3(g_offsets[p]) * scale;
             }
+
+            const MeshTopo& topo = topos[vId];
+            if(topo.snapToBoundary->isConstrained())
+            {
+                for(uint p=0; p < PROPOSITION_COUNT; ++p)
+                    propositions[p] = (*topo.snapToBoundary)(propositions[p]);
+            }
+
+
+            // Choose best position
+            uint bestProposition = 0;
+            double bestQualityMean = -numeric_limits<double>::infinity();
+            for(uint p=0; p < PROPOSITION_COUNT; ++p)
+            {
+                // Since 'pos' is a reference on vertex's position
+                // modifing its value here should be seen by the evaluator
+                pos = propositions[p];
+
+                // Compute patch quality
+                double patchQuality =
+                    crew.evaluator().patchQuality(
+                        mesh, crew.sampler(), crew.measurer(), vId);
+
+                if(patchQuality > bestQualityMean)
+                {
+                    bestQualityMean = patchQuality;
+                    bestProposition = p;
+                }
+            }
+
+
+            // Update vertex's position
+            pos = propositions[bestProposition];
+
+            scale /= 3.0;
         }
-
-
-        // Update vertex's position
-        pos = propositions[bestProposition];
     }
 }
 
