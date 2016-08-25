@@ -12,7 +12,18 @@ public:
     SpawnSearchSmoother();
     virtual ~SpawnSearchSmoother();
 
+    virtual void smoothMeshGlsl(
+            Mesh& mesh,
+            const MeshCrew& crew) override;
+
+    virtual void smoothMeshCuda(
+            Mesh& mesh,
+            const MeshCrew& crew) override;
+
 protected:
+    virtual bool verifyMeshForGpuLimitations(
+            const Mesh& mesh) const;
+
     virtual void lauchCudaKernel(
             const NodeGroups::GpuDispatch& dispatch);
 

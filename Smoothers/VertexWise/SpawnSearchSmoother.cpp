@@ -1,5 +1,6 @@
 #include "SpawnSearchSmoother.h"
 
+#include <CellarWorkbench/Misc/Log.h>
 #include <CellarWorkbench/Misc/Distribution.h>
 
 #include "Boundaries/Constraints/AbstractConstraint.h"
@@ -8,6 +9,7 @@
 #include "Measurers/AbstractMeasurer.h"
 
 using namespace std;
+using namespace cellar;
 
 const double SSMoveCoeff = 0.10;
 std::vector<glm::dvec4> g_offsets;
@@ -54,6 +56,73 @@ SpawnSearchSmoother::SpawnSearchSmoother() :
 SpawnSearchSmoother::~SpawnSearchSmoother()
 {
 
+}
+
+void SpawnSearchSmoother::smoothMeshGlsl(
+            Mesh& mesh,
+            const MeshCrew& crew)
+{
+    if(verifyMeshForGpuLimitations(mesh))
+    {
+        AbstractVertexWiseSmoother::smoothMeshGlsl(mesh, crew);
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Mesh won't be touched.", "SpawnSearchSmoother"));
+    }
+}
+
+void SpawnSearchSmoother::smoothMeshCuda(
+            Mesh& mesh,
+            const MeshCrew& crew)
+{
+    if(verifyMeshForGpuLimitations(mesh))
+    {
+        AbstractVertexWiseSmoother::smoothMeshCuda(mesh, crew);
+    }
+    else
+    {
+        getLog().postMessage(new Message('E', false,
+            "Mesh won't be touched.", "SpawnSearchSmoother"));
+    }
+}
+
+bool SpawnSearchSmoother::verifyMeshForGpuLimitations(
+            const Mesh& mesh) const
+{
+    if(!mesh.pris.empty())
+    {
+        getLog().postMessage(new Message('E', false,
+            "This mesh contains prismatic elements. "\
+            "This smoother does not support this type of element yet.",
+            "SpawnSearchSmoother"));
+        return false;
+    }
+
+    if(!mesh.hexs.empty())
+    {
+        getLog().postMessage(new Message('E', false,
+            "This mesh contains hexahedral elements. "\
+            "This smoother does not support this type of element yet.",
+            "SpawnSearchSmoother"));
+        return false;
+    }
+
+    for(const MeshTopo& topo : mesh.topos)
+    {
+        if(topo.neighborElems.size() > PROPOSITION_COUNT)
+        {
+            getLog().postMessage(new Message('E', false,
+                "Some nodes have too many neighbor elements. "\
+                "Maximum " + std::to_string(PROPOSITION_COUNT) +
+                ". A node with " + std::to_string(topo.neighborElems.size()) + " found.",
+                "SpawnSearchSmoother"));
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void SpawnSearchSmoother::lauchCudaKernel(
