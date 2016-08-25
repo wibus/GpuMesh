@@ -63,7 +63,7 @@ double MetricConformityEvaluator::metricConformity(
     if(!std::isnan(tNc_frobenius2))
     {
         double Fk_sign = sign(determinant(Fk));
-        return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
+        return Fk_sign / sqrt(1.0 + sqrt(tNc_frobenius2));
     }
     else
     {

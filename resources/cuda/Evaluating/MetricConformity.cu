@@ -44,7 +44,7 @@ __device__ float metricConformity(const mat3& Fk, const mat3& Ms)
             dot(tNc[2], tNc[2]);
 
     float Fk_sign = sign(determinant(Fk));
-    return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
+    return Fk_sign / sqrt(1.0 + sqrt(tNc_frobenius2));
 }
 
 __device__ float metricConformityTetQuality(const vec3 vp[TET_VERTEX_COUNT], const Tet& tet)

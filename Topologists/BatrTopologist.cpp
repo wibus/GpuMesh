@@ -196,7 +196,7 @@ size_t BatrTopologist::edgeSplitMerge(
 
                 if(candidateDist < minEdgeLength())
                 {
-                    double candidatePriority = 1.0 / candidateDist;
+                    double candidatePriority = minEdgeLength() / candidateDist;
 
                     if(candidatePriority > priority)
                     {
@@ -214,7 +214,7 @@ size_t BatrTopologist::edgeSplitMerge(
                 }
                 else if(candidateDist > maxEdgeLength())
                 {
-                    double candidatePriority = candidateDist;
+                    double candidatePriority = candidateDist / maxEdgeLength();
 
                     if(candidatePriority > priority)
                     {
@@ -253,6 +253,13 @@ size_t BatrTopologist::edgeSplitMerge(
             std::vector<uint> nExElems;
             findExclusiveElems(mesh, nId, ringElems, nExElems);
 
+            double minQuality = crew.evaluator().patchQuality(
+                mesh, crew.sampler(), crew.measurer(), vId);
+
+            minQuality = glm::max(
+                minQuality / priority,
+                _minAcceptableGenQuality);
+
 
             if(dist < minEdgeLength())
             {
@@ -274,7 +281,7 @@ size_t BatrTopologist::edgeSplitMerge(
                 {
                     double tetQual = crew.evaluator().tetQuality(mesh,
                             crew.sampler(), crew.measurer(), tets[dElem]);
-                    if(tetQual <= _minAcceptableGenQuality)
+                    if(tetQual <= minQuality)
                     {
                         isConformal = false;
                         break;
@@ -435,8 +442,8 @@ size_t BatrTopologist::edgeSplitMerge(
                             crew.sampler(), crew.measurer(), vTet);
                     double nTetQual = crew.evaluator().tetQuality(mesh,
                             crew.sampler(), crew.measurer(), nTet);
-                    if(vTetQual <= _minAcceptableGenQuality ||
-                       nTetQual <= _minAcceptableGenQuality)
+                    if(vTetQual <= minQuality ||
+                       nTetQual <= minQuality)
                     {
                         isConformal = false;
                         break;

@@ -45,7 +45,7 @@ float metricConformity(in mat3 Fk, in mat3 Ms)
             dot(tNc[2], tNc[2]);
 
     float Fk_sign = sign(determinant(Fk));
-    return Fk_sign / (1.0 + sqrt(tNc_frobenius2));
+    return Fk_sign / sqrt(1.0 + sqrt(tNc_frobenius2));
 }
 
 float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
