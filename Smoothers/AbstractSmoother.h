@@ -74,9 +74,9 @@ protected:
     int _relocPassId;
     int _globalPassId;
     double _lastPassMinQuality;
-    double _lastPassGeomQuality;
+    double _lastPassQualityMean;
     double _lastIterationMinQuality;
-    double _lastIterationGeomQuality;
+    double _lastIterationQualityMean;
 
     static const int INITIAL_PASS_ID;
     static const int COMPARE_PASS_ID;

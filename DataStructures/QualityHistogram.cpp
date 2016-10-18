@@ -4,19 +4,19 @@
 
 
 QualityHistogram::QualityHistogram() :
+    _buckets(40, 0),
     _sampleCount(0),
     _minimumQuality(1.0),
-    _invQualityLogSum(0.0),
-    _buckets(40, 0)
+    _invQualitySum(0.0)
 {
 
 }
 
 QualityHistogram::QualityHistogram(std::size_t bucketCount) :
+    _buckets(bucketCount, 0),
     _sampleCount(0),
     _minimumQuality(1.0),
-    _invQualityLogSum(0.0),
-    _buckets(bucketCount, 0)
+    _invQualitySum(0.0)
 {
 
 }
@@ -30,7 +30,7 @@ void QualityHistogram::clear()
 {
     _sampleCount = 0;
     _minimumQuality = 1.0;
-    _invQualityLogSum = 0.0;
+    _invQualitySum = 0.0;
     std::fill(_buckets.begin(), _buckets.end(), 0);
 }
 
@@ -55,16 +55,20 @@ void QualityHistogram::setMinimumQuality(double minimum)
     _minimumQuality = minimum;
 }
 
-void QualityHistogram::setInvQualityLogSum(double sum)
+void QualityHistogram::setInvQualitySum(double sum)
 {
-    _invQualityLogSum = sum;
+    _invQualitySum = sum;
 }
 
 void QualityHistogram::add(double value)
 {
     ++_sampleCount;
     _minimumQuality = glm::min(_minimumQuality, value);
-    _invQualityLogSum += glm::log(1.0 / value);
+
+    if(value > 0.0)
+        _invQualitySum += 1.0 / value;
+    else
+        _invQualitySum = INFINITY;
 
     size_t bucketCount = _buckets.size();
     size_t b = glm::clamp(size_t(value * bucketCount), size_t(0), bucketCount-1);
@@ -80,7 +84,7 @@ void QualityHistogram::merge(const QualityHistogram& histogram)
 
     _sampleCount += histogram._sampleCount;
     _minimumQuality = glm::min(_minimumQuality, histogram._minimumQuality);
-    _invQualityLogSum += histogram._invQualityLogSum;
+    _invQualitySum += histogram._invQualitySum;
 
     size_t bucketCount = _buckets.size();
     for(size_t i=0; i < bucketCount; ++i)
@@ -89,5 +93,5 @@ void QualityHistogram::merge(const QualityHistogram& histogram)
 
 double QualityHistogram::computeGain(const QualityHistogram& reference) const
 {
-    return geometricMean() - reference.geometricMean();
+    return harmonicMean() - reference.harmonicMean();
 }

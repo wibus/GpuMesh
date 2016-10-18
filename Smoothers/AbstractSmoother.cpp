@@ -121,13 +121,13 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         getLog().postMessage(new Message('I', true,
             std::string("Initial mesh quality : ") +
             "min=" + to_string(histogram.minimumQuality()) +
-            "\t mean=" + to_string(histogram.geometricMean()),
+            "\t mean=" + to_string(histogram.harmonicMean()),
             "AbstractSmoother"));
 
         _lastPassMinQuality = histogram.minimumQuality();
-        _lastPassGeomQuality = histogram.geometricMean();
+        _lastPassQualityMean = histogram.harmonicMean();
         _lastIterationMinQuality = histogram.minimumQuality();
-        _lastIterationGeomQuality = histogram.geometricMean();
+        _lastIterationQualityMean = histogram.harmonicMean();
 
         _optimizationPasses.clear();
         _implBeginTimeStamp = statsNow;
@@ -141,11 +141,11 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
             std::string("Topo/Reloc pass quality " +
                   to_string(_globalPassId) + " : ") +
             "min=" + to_string(histogram.minimumQuality()) +
-            "\t mean=" + to_string(histogram.geometricMean()),
+            "\t mean=" + to_string(histogram.harmonicMean()),
             "AbstractSmoother"));
 
         double minGain = histogram.minimumQuality() - _lastPassMinQuality;
-        double geomGain = histogram.geometricMean() - _lastPassGeomQuality;
+        double geomGain = histogram.harmonicMean() - _lastPassQualityMean;
 
         if(_schedule.autoPilotEnabled)
         {
@@ -158,7 +158,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         }
 
         _lastPassMinQuality = histogram.minimumQuality();
-        _lastPassGeomQuality = histogram.geometricMean();
+        _lastPassQualityMean = histogram.harmonicMean();
 
         ++_globalPassId;
         _relocPassId = 0;
@@ -169,11 +169,11 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
             "Smooth pass " + to_string(_globalPassId) + "|" +
                              to_string(_relocPassId) + " : " +
             "min=" + to_string(histogram.minimumQuality()) +
-            "\t mean=" + to_string(histogram.geometricMean()),
+            "\t mean=" + to_string(histogram.harmonicMean()),
             "AbstractSmoother"));
 
         double minGain = histogram.minimumQuality() - _lastIterationMinQuality;
-        double geomGain = histogram.geometricMean() - _lastIterationGeomQuality;
+        double geomGain = histogram.harmonicMean() - _lastIterationQualityMean;
 
         if(_schedule.autoPilotEnabled && _relocPassId > 0)
         {
@@ -191,7 +191,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         _optimizationPasses.push_back(stats);
 
         _lastIterationMinQuality = histogram.minimumQuality();
-        _lastIterationGeomQuality = histogram.geometricMean();
+        _lastIterationQualityMean = histogram.harmonicMean();
 
         ++_relocPassId;
     }

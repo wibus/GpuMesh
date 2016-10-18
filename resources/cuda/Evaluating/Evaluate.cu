@@ -13,7 +13,7 @@ __device__ float hexQuality(const Hex& hex);
 
 
 __device__ int qualMin;
-__device__ float invLogSum;
+__device__ float invSum;
 
 __constant__ uint hists_length;
 __device__ int* hists;
@@ -24,7 +24,7 @@ __device__ int* hists;
 __device__ void commit(uint gid, float q)
 {
     atomicMin(&qualMin, int(q * MIN_MAX));
-    atomicAdd(&invLogSum, log(1.0 / q));
+    atomicAdd(&invSum, 1.0 / q);
 
     int bucket = int(max(q * hists_length, 0.0));
     atomicAdd(&hists[bucket], 1);
@@ -62,8 +62,8 @@ void evaluateCudaMeshQuality(
     int h_qualMin = MIN_MAX;
     cudaMemcpyToSymbol(qualMin, &h_qualMin, sizeof(qualMin));
 
-    float h_invLogSum = 0.0f;
-    cudaMemcpyToSymbol(invLogSum, &h_invLogSum, sizeof(invLogSum));
+    float h_invSum = 0.0f;
+    cudaMemcpyToSymbol(invSum, &h_invSum, sizeof(invSum));
 
 
     int* d_hists = nullptr;
@@ -82,14 +82,14 @@ void evaluateCudaMeshQuality(
     cudaCheckErrors("CUDA error during evaluation");
 
     cudaMemcpyFromSymbol(&h_qualMin, qualMin, sizeof(h_qualMin));
-    cudaMemcpyFromSymbol(&h_invLogSum, invLogSum, sizeof(h_invLogSum));
+    cudaMemcpyFromSymbol(&h_invSum, invSum, sizeof(h_invSum));
     cudaMemcpy(h_hists, d_hists, histsSize, cudaMemcpyDeviceToHost);
 
     // Get minimum quality
     histogram.setMinimumQuality(h_qualMin / double(MIN_MAX));
 
     // Get inverse log quality sum
-    histogram.setInvQualityLogSum(h_invLogSum);
+    histogram.setInvQualitySum(h_invSum);
 
     // Free CUDA memory
     cudaFree(d_hists);

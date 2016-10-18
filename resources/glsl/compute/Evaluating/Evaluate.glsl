@@ -3,7 +3,7 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 layout(shared, binding = EVALUATE_QUAL_BUFFER_BINDING) buffer Quals
 {
     int qualMin;
-    float invLogSum;
+    float invSum;
 };
 
 layout(shared, binding = EVALUATE_HIST_BUFFER_BINDING) buffer Hists
@@ -24,7 +24,7 @@ float hexQuality(inout Hex hex);
 void commit(uint gid, float q)
 {
     atomicMin(qualMin, int(q * MIN_MAX));
-    atomicAdd(invLogSum, log(1.0 / q));
+    atomicAdd(invSum, 1.0 / q);
 
     // ! Driver linker bug :
     // Makes the linker segfautl

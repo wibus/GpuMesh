@@ -228,8 +228,8 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
                 impl.passes.back().timeStamp);
 
         minMeanImplGain = std::min(minMeanImplGain,
-                impl.passes.back().histogram.geometricMean() -
-                impl.passes.front().histogram.geometricMean());
+                impl.passes.back().histogram.harmonicMean() -
+                impl.passes.front().histogram.harmonicMean());
     }
 
     QTextTableFormat statsTableFormat;
@@ -291,7 +291,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
 
 
     cursor.insertBlock(blockFormat);
-    cursor.insertHtml("<h3>Geometric Mean Quality</h3>");
+    cursor.insertHtml("<h3>Mean Quality</h3>");
     QTextTable* implMeanQualTable = cursor.insertTable(
         maxPassCount + 4,
         implCount + 1,
@@ -328,11 +328,11 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
 
             tableCell = implMeanQualTable->cellAt(1+p, i+1);
             tableCursor = tableCell.firstCursorPosition();
-            tableCursor.insertText(QString::number(pass.histogram.geometricMean(), 'f'));
+            tableCursor.insertText(QString::number(pass.histogram.harmonicMean(), 'f'));
         }
 
-        double meanGain = impl.passes.back().histogram.geometricMean() -
-                         impl.passes.front().histogram.geometricMean();
+        double meanGain = impl.passes.back().histogram.harmonicMean() -
+                         impl.passes.front().histogram.harmonicMean();
 
         tableCell = implMeanQualTable->cellAt(maxPassCount+2, i+1);
         tableCursor = tableCell.firstCursorPosition();

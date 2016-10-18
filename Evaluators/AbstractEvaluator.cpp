@@ -381,7 +381,7 @@ void AbstractEvaluator::evaluateMesh(
     else
     {
         histogram.setMinimumQuality(nan(""));
-        histogram.setInvQualityLogSum(nan(""));
+        histogram.setInvQualitySum(nan(""));
     }
 }
 
@@ -486,11 +486,11 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     {
         QualBuff() :
             qualMin(MAX_INTEGER_VALUE),
-            invLogSum(0.0)
+            invSum(0.0)
         {}
 
         GLint qualMin;
-        GLfloat invLogSum;
+        GLfloat invSum;
     };
 
     // Workgroup integer accum VS. Mesh float accum for mean quality computation
@@ -556,7 +556,7 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     histogram.setMinimumQuality(quals->qualMin / MAX_INTEGER_VALUE);
 
     // Get inverse quality log sum
-    histogram.setInvQualityLogSum(quals->invLogSum);
+    histogram.setInvQualitySum(quals->invSum);
 
     histogram.setSampleCount(elemCount);
 
@@ -702,7 +702,7 @@ void AbstractEvaluator::benchmark(
                     getLog().postMessage(new Message('I', false,
                        "Benchmark progress : " + to_string(progress) + "%\t" +
                        "(min=" + to_string(histogram.minimumQuality()) +
-                       ", mean=" + to_string(histogram.geometricMean()) + ")",
+                       ", mean=" + to_string(histogram.harmonicMean()) + ")",
                        "AbstractEvaluator"));
                     m += markSize;
                 }
