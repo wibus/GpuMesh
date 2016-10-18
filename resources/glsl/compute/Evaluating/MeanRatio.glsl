@@ -82,11 +82,11 @@ float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
     }
     else
     {
-        float geomMean = exp( (-1.0 / 6.0) *
-            (log(1.0/qual0) + log(1.0/qual1) + log(1.0/qual2) +
-             log(1.0/qual3) + log(1.0/qual4) + log(1.0/qual5)));
+        double mean = 6.0 / (
+            1/qual0 + 1/qual1 + 1/qual2 +
+            1/qual3 + 1/qual4 + 1/qual5);
 
-        return geomMean;
+        return mean;
     }
 }
 
@@ -141,10 +141,10 @@ float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
     }
     else
     {
-        float geomMean = exp( (-1.0 / 8.0) *
-            (log(1.0/qual0) + log(1.0/qual1) + log(1.0/qual2) + log(1.0/qual3) +
-             log(1.0/qual4) + log(1.0/qual5) + log(1.0/qual6) + log(1.0/qual7)));
+        double mean = 8.0 / (
+            1/qual0 + 1/qual1 + 1/qual2 + 1/qual3 +
+            1/qual4 + 1/qual5 + 1/qual6 + 1/qual7);
 
-        return geomMean;
+        return mean;
     }
 }

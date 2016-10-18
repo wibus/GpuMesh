@@ -59,22 +59,24 @@ __device__ void accumulatePatchQuality(
         double& patchWeight,
         double elemQuality)
 {
-    patchQuality = min(patchQuality, elemQuality);
-    /*
-    patchQuality = min(
-        min(patchQuality, elemQuality),  // If sign(patch) != sign(elem)
-        min(patchQuality * elemQuality,  // If sign(patch) & sign(elem) > 0
-            patchQuality + elemQuality));// If sign(patch) & sign(elem) < 0
-            */
+    if(patchQuality > 0.0 &&  elemQuality > 0.0)
+    {
+        patchWeight += 1.0;
+        patchQuality += 1/elemQuality;
+    }
+    else
+    {
+        patchWeight = 0.0;
+        patchQuality = min(patchQuality, elemQuality);
+    }
 }
 
 __device__ float finalizePatchQuality(double patchQuality, double patchWeight)
 {
-    return float(patchQuality);
-    /*
-    double s = sign(patchQuality);
-    return float(s * sqrt(s*patchQuality));
-    */
+    if(patchWeight != 0.0)
+        return patchWeight/patchQuality;
+    else
+        return patchQuality;
 }
 
 __device__ float patchQuality(uint vId)
