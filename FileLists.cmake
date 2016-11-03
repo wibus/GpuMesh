@@ -431,6 +431,11 @@ QT5_ADD_RESOURCES(GpuMesh_RESOURCES
     ${GpuMesh_SRC_DIR}/resources/GpuMesh.qrc)
 
 
+# Doc
+SET(GpuMesh_DOC
+    ${GpuMesh_SRC_DIR}/doc/Mémoire/fixnewline.py)
+
+
 ## Global ##
 SET(GpuMesh_CONFIG_FILES
     ${GpuMesh_SRC_DIR}/CMakeLists.txt
@@ -446,4 +451,5 @@ SET(GpuMesh_SRC_FILES
     ${GpuMesh_BACKGROUND_TEX}
     ${GpuMesh_RESOURCES}
     ${GpuMesh_CONFIG_FILES}
-    ${GpuMesh_MOC_CPP_FILES})
+    ${GpuMesh_MOC_CPP_FILES}
+    ${GpuMesh_DOC})
