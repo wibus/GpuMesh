@@ -52,7 +52,7 @@ double MetricFreeMeasurer::tetVolume(
         vp[3] - vp[1],
         vp[3] - vp[2]));
 
-    return detSum / 6.0;
+    return sampler.scalingCube() * detSum / 6.0;
 }
 
 double MetricFreeMeasurer::priVolume(
@@ -71,7 +71,7 @@ double MetricFreeMeasurer::priVolume(
     detSum += glm::determinant(glm::dmat3(e02, e32, e42));
     detSum += glm::determinant(glm::dmat3(e12, e02, e42));
 
-    return detSum / 6.0;
+    return sampler.scalingCube() * detSum / 6.0;
 }
 
 double MetricFreeMeasurer::hexVolume(
@@ -101,7 +101,7 @@ double MetricFreeMeasurer::hexVolume(
         vp[4] - vp[6],
         vp[4] - vp[3]));
 
-    return detSum / 6.0;
+    return sampler.scalingCube() * detSum / 6.0;
 }
 
 glm::dvec3 MetricFreeMeasurer::computeVertexEquilibrium(

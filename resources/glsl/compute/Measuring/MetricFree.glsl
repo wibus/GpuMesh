@@ -1,4 +1,6 @@
 uniform float MetricScaling;
+uniform float MetricScalingSqr;
+uniform float MetricScalingCube;
 
 // Element Volume
 float riemannianDistance(in vec3 a, in vec3 b, inout uint cachedRefTet)
@@ -19,7 +21,7 @@ float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
         vp[3] - vp[1],
         vp[3] - vp[2]));
 
-    return detSum / 6.0;
+    return MetricScalingCube * detSum / 6.0;
 }
 
 float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
@@ -36,7 +38,7 @@ float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
     detSum += determinant(mat3(e12, e02, e42));
 
 
-    return detSum / 6.0;
+    return MetricScalingCube * detSum / 6.0;
 }
 
 float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
@@ -63,7 +65,7 @@ float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
         vp[4] - vp[6],
         vp[4] - vp[3]));
 
-    return detSum / 6.0;
+    return MetricScalingCube * detSum / 6.0;
 }
 
 

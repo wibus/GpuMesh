@@ -7,6 +7,8 @@
 __device__ metricAtFct metricAt = nullptr;
 
 __constant__ float MetricScaling = 1.0;
+__constant__ float MetricScalingSqr = 1.0;
+__constant__ float MetricScalingCube = 1.0;
 
 
 
@@ -92,4 +94,16 @@ void setCudaMetricScaling(double scaling)
 {
     float h_scaling = scaling;
     cudaMemcpyToSymbol(MetricScaling, &h_scaling, sizeof(h_scaling));
+}
+
+void setCudaMetricScalingSqr(double scalingSqr)
+{
+    float h_scalingSqr = scalingSqr;
+    cudaMemcpyToSymbol(MetricScalingSqr, &h_scalingSqr, sizeof(h_scalingSqr));
+}
+
+void setCudaMetricScalingCube(double scalingCube)
+{
+    float h_scalingCube = scalingCube;
+    cudaMemcpyToSymbol(MetricScalingCube, &h_scalingCube, sizeof(h_scalingCube));
 }

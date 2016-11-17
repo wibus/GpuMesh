@@ -36,6 +36,8 @@ public:
 
 
     double scaling() const;
+    double scalingSqr() const;
+    double scalingCube() const;
     virtual void setScaling(double scaling);
 
 
@@ -90,6 +92,8 @@ protected:
 
 private:
     double _scaling;
+    double _scaling2;
+    double _scaling3;
     std::string _samplingName;
     std::string _samplingShader;
     std::string _baseShader;
@@ -102,6 +106,16 @@ private:
 inline double AbstractSampler::scaling() const
 {
     return _scaling;
+}
+
+inline double AbstractSampler::scalingSqr() const
+{
+    return _scaling2;
+}
+
+inline double AbstractSampler::scalingCube() const
+{
+    return _scaling3;
 }
 
 #endif // GPUMESH_ABSTRACTSAMPLER

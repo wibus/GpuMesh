@@ -8,12 +8,16 @@
 
 
 void setCudaMetricScaling(double scaling);
+void setCudaMetricScalingSqr(double scalingSqr);
+void setCudaMetricScalingCube(double scalingCube);
 
 AbstractSampler::AbstractSampler(
         const std::string& name,
         const std::string& shader,
         const installCudaFct installCuda) :
     _scaling(1.0),
+    _scaling2(1.0),
+    _scaling3(1.0),
     _samplingName(name),
     _samplingShader(shader),
     _baseShader(":/glsl/compute/Sampling/Base.glsl"),
@@ -30,6 +34,8 @@ AbstractSampler::~AbstractSampler()
 void AbstractSampler::setScaling(double scaling)
 {
     _scaling = scaling;
+    _scaling2 = _scaling * scaling;
+    _scaling3 = _scaling2 * scaling;
 }
 
 std::string AbstractSampler::samplingShader() const
@@ -62,12 +68,16 @@ void AbstractSampler::setPluginGlslUniforms(
         const cellar::GlProgram& program) const
 {
     program.setFloat("MetricScaling", scaling());
+    program.setFloat("MetricScalingSqr", scalingSqr());
+    program.setFloat("MetricScalingCube", scalingCube());
 }
 
 void AbstractSampler::setPluginCudaUniforms(
         const Mesh& mesh) const
 {
     setCudaMetricScaling(scaling());
+    setCudaMetricScalingSqr(scalingSqr());
+    setCudaMetricScalingCube(scalingCube());
 }
 
 void AbstractSampler::updateGlslData(const Mesh& mesh) const
