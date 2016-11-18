@@ -82,7 +82,7 @@ float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
     }
     else
     {
-        double mean = 6.0 / (
+        float mean = 6.0 / (
             1/qual0 + 1/qual1 + 1/qual2 +
             1/qual3 + 1/qual4 + 1/qual5);
 
@@ -141,7 +141,7 @@ float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
     }
     else
     {
-        double mean = 8.0 / (
+        float mean = 8.0 / (
             1/qual0 + 1/qual1 + 1/qual2 + 1/qual3 +
             1/qual4 + 1/qual5 + 1/qual6 + 1/qual7);
 
