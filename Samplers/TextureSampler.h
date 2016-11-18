@@ -64,4 +64,4 @@ private:
     mutable GLuint _sideTriTex;
 };
 
-#endif // GPUMESH_UNIFORMSAMPLER
+#endif // GPUMESH_TEXTURESAMPLER

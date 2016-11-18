@@ -41,7 +41,6 @@
         <file>glsl/compute/Evaluating/MetricConformity.glsl</file>
         <file>glsl/compute/Sampling/Analytic.glsl</file>
         <file>glsl/compute/Sampling/Base.glsl</file>
-        <file>glsl/compute/Sampling/Dummy.glsl</file>
         <file>glsl/compute/Sampling/KdTree.glsl</file>
         <file>glsl/compute/Sampling/Local.glsl</file>
         <file>glsl/vertex/BoldEdge.vert</file>
@@ -50,5 +49,6 @@
         <file>glsl/compute/Smoothing/VertexWise/NelderMead.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/SpawnSearch.glsl</file>
         <file>glsl/compute/Sampling/Texture.glsl</file>
+        <file>glsl/compute/Sampling/Uniform.glsl</file>
     </qresource>
 </RCC>

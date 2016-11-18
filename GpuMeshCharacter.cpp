@@ -21,7 +21,7 @@
 
 #include "DataStructures/GpuMesh.h"
 #include "Samplers/AnalyticSampler.h"
-#include "Samplers/DummySampler.h"
+#include "Samplers/UniformSampler.h"
 #include "Samplers/TextureSampler.h"
 #include "Samplers/KdTreeSampler.h"
 #include "Samplers/LocalSampler.h"
@@ -53,7 +53,7 @@ using namespace prop2;
 using namespace scaena;
 
 
-const std::string NO_METRIC_SAMPLING = "None";
+const std::string NO_METRIC_SAMPLING = "Uniform";
 const glm::vec3 GpuMeshCharacter::nullVec = glm::vec3(0, 0, 0);
 const glm::vec3 GpuMeshCharacter::upVec = glm::vec3(0, 0, 1);
 
@@ -97,7 +97,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableSamplers.setDefault("Analytic");
     _availableSamplers.setContent({
-        {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new DummySampler())},
+        {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new UniformSampler())},
         {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
         {string("Texture"),  shared_ptr<AbstractSampler>(new TextureSampler())},
         {string("Kd-Tree"),  shared_ptr<AbstractSampler>(new KdTreeSampler())},
@@ -213,7 +213,7 @@ void GpuMeshCharacter::enterStage()
 
 
     // Assess evaluators validy
-    DummySampler verifSampler;
+    UniformSampler verifSampler;
     MetricWiseMeasurer verifMeasurer;
     for(auto evalName : _availableEvaluators.details().options)
     {

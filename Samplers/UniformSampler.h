@@ -1,14 +1,14 @@
-#ifndef GPUMESH_DUMMYSAMPLER
-#define GPUMESH_DUMMYSAMPLER
+#ifndef GPUMESH_UNIFORMSAMPLER
+#define GPUMESH_UNIFORMSAMPLER
 
 #include "AbstractSampler.h"
 
 
-class DummySampler : public AbstractSampler
+class UniformSampler : public AbstractSampler
 {
 public:
-    DummySampler();
-    virtual ~DummySampler();
+    UniformSampler();
+    virtual ~UniformSampler();
 
 
     virtual bool isMetricWise() const override;
@@ -30,4 +30,4 @@ private:
     std::shared_ptr<Mesh> _debugMesh;
 };
 
-#endif // GPUMESH_DUMMYSAMPLER
+#endif // GPUMESH_UNIFORMSAMPLER
