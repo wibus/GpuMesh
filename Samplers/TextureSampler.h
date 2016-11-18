@@ -1,18 +1,18 @@
-#ifndef GPUMESH_UNIFORMSAMPLER
-#define GPUMESH_UNIFORMSAMPLER
+#ifndef GPUMESH_TEXTURESAMPLER
+#define GPUMESH_TEXTURESAMPLER
 
 #include <GL3/gl3w.h>
 
 #include "AbstractSampler.h"
 
-class UniformGrid;
+class TextureGrid;
 
 
-class UniformSampler : public AbstractSampler
+class TextureSampler : public AbstractSampler
 {
 public:
-    UniformSampler();
-    virtual ~UniformSampler();
+    TextureSampler();
+    virtual ~TextureSampler();
 
 
     virtual bool isMetricWise() const override;
@@ -49,14 +49,14 @@ public:
 
 protected:
     glm::ivec3 cellId(
-            const UniformGrid& grid,
+            const TextureGrid& grid,
             const glm::dvec3& vertPos) const;
 
-    void meshGrid(UniformGrid& grid, Mesh& mesh);
+    void meshGrid(TextureGrid& grid, Mesh& mesh);
 
 
 private:
-    std::unique_ptr<UniformGrid> _grid;
+    std::unique_ptr<TextureGrid> _grid;
     std::shared_ptr<Mesh> _debugMesh;
     glm::mat4 _transform;
 

@@ -161,11 +161,11 @@ void ConfigComparator::defaultList()
     _ui->implementationTable->setItem(1, 1, new QTableWidgetItem("Nelder-Mead"));
     _ui->implementationTable->setItem(1, 2, new QTableWidgetItem("Thread"));
 
-    _ui->implementationTable->setItem(2, 0, new QTableWidgetItem("Uniform"));
+    _ui->implementationTable->setItem(2, 0, new QTableWidgetItem("Texture"));
     _ui->implementationTable->setItem(2, 1, new QTableWidgetItem("Spawn Search"));
     _ui->implementationTable->setItem(2, 2, new QTableWidgetItem("GLSL"));
 
-    _ui->implementationTable->setItem(3, 0, new QTableWidgetItem("Uniform"));
+    _ui->implementationTable->setItem(3, 0, new QTableWidgetItem("Texture"));
     _ui->implementationTable->setItem(3, 1, new QTableWidgetItem("Spawn Search"));
     _ui->implementationTable->setItem(3, 2, new QTableWidgetItem("CUDA"));
 }

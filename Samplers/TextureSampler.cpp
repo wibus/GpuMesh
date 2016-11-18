@@ -1,4 +1,4 @@
-#include "UniformSampler.h"
+#include "TextureSampler.h"
 
 #include <GLM/gtc/matrix_transform.hpp>
 
@@ -30,10 +30,10 @@ struct ElemValue
 const Metric ISOTROPIC_METRIC(1.0);
 
 
-class UniformGrid
+class TextureGrid
 {
 public:
-    UniformGrid(const glm::ivec3& size,
+    TextureGrid(const glm::ivec3& size,
                 const glm::dvec3& extents,
                 const glm::dvec3& minBounds):
         size(size),
@@ -63,22 +63,22 @@ private:
 
 
 // CUDA Drivers Interface
-void installCudaUniformSampler();
-void updateCudaUniformTextures(
+void installCudaTextureSampler();
+void updateCudaSamplerTextures(
         const std::vector<glm::vec4>& topLineBuff,
         const std::vector<glm::vec4>& sideTriBuff,
         const glm::mat4& texTransform,
         const glm::ivec3 texDims);
 
 
-UniformSampler::UniformSampler() :
-    AbstractSampler("Uniform", ":/glsl/compute/Sampling/Uniform.glsl", installCudaUniformSampler),
+TextureSampler::TextureSampler() :
+    AbstractSampler("Texture", ":/glsl/compute/Sampling/Texture.glsl", installCudaTextureSampler),
     _topLineTex(0),
     _sideTriTex(0)
 {
 }
 
-UniformSampler::~UniformSampler()
+TextureSampler::~TextureSampler()
 {
     glDeleteTextures(1, &_topLineTex);
     _topLineTex = 0;
@@ -86,12 +86,12 @@ UniformSampler::~UniformSampler()
     _sideTriTex = 0;
 }
 
-bool UniformSampler::isMetricWise() const
+bool TextureSampler::isMetricWise() const
 {
     return true;
 }
 
-void UniformSampler::setPluginGlslUniforms(
+void TextureSampler::setPluginGlslUniforms(
         const Mesh& mesh,
         const cellar::GlProgram& program) const
 {
@@ -109,13 +109,13 @@ void UniformSampler::setPluginGlslUniforms(
     glBindTexture(GL_TEXTURE_3D, _topLineTex);
 }
 
-void UniformSampler::setPluginCudaUniforms(
+void TextureSampler::setPluginCudaUniforms(
         const Mesh& mesh) const
 {
     AbstractSampler::setPluginCudaUniforms(mesh);
 }
 
-void UniformSampler::updateGlslData(const Mesh& mesh) const
+void TextureSampler::updateGlslData(const Mesh& mesh) const
 {
     if(_topLineTex == 0)
         glGenTextures(1, &_topLineTex);
@@ -176,7 +176,7 @@ void UniformSampler::updateGlslData(const Mesh& mesh) const
     glBindTexture(GL_TEXTURE_3D, 0);
 }
 
-void UniformSampler::updateCudaData(const Mesh& mesh) const
+void TextureSampler::updateCudaData(const Mesh& mesh) const
 {
     glm::ivec3 size = _grid->size;
     size_t cellCount = size.x * size.y * size.z;
@@ -207,10 +207,10 @@ void UniformSampler::updateCudaData(const Mesh& mesh) const
         }
     }
 
-    updateCudaUniformTextures(topLineBuff, sideTriBuff, _transform, size);
+    updateCudaSamplerTextures(topLineBuff, sideTriBuff, _transform, size);
 }
 
-void UniformSampler::clearGlslMemory(const Mesh& mesh) const
+void TextureSampler::clearGlslMemory(const Mesh& mesh) const
 {
     glBindTexture(GL_TEXTURE_3D, _topLineTex);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F,
@@ -223,17 +223,17 @@ void UniformSampler::clearGlslMemory(const Mesh& mesh) const
     glBindTexture(GL_TEXTURE_3D, 0);
 }
 
-void UniformSampler::clearCudaMemory(const Mesh& mesh) const
+void TextureSampler::clearCudaMemory(const Mesh& mesh) const
 {
     glm::ivec3 size = glm::ivec3(0, 0, 0);
     std::vector<glm::vec4> topLineBuff;
     std::vector<glm::vec4> sideTriBuff;
 
-    updateCudaUniformTextures(
+    updateCudaSamplerTextures(
         topLineBuff, sideTriBuff, _transform, size);
 }
 
-void UniformSampler::setReferenceMesh(
+void TextureSampler::setReferenceMesh(
         const Mesh& mesh)
 {
     _debugMesh.reset();
@@ -254,18 +254,18 @@ void UniformSampler::setReferenceMesh(
     _transform *= glm::translate(glm::mat4(),
         glm::vec3(-minBounds));
 
-    _grid.reset(new UniformGrid(
+    _grid.reset(new TextureGrid(
         size, extents, minBounds));
 
 
     getLog().postMessage(new Message('I', false,
-        "Sampling mesh metric in a Uniform grid",
-        "UniformSampler"));
+        "Sampling mesh metric in a texture",
+        "TextureSampler"));
     getLog().postMessage(new Message('I', false,
         "Grid size: (" + std::to_string(size.x) + ", " +
                          std::to_string(size.y) + ", " +
                          std::to_string(size.z) + ")",
-        "UniformSampler"));
+        "TextureSampler"));
 
     LocalSampler localSampler;
     localSampler.setScaling(scaling());
@@ -326,7 +326,7 @@ void UniformSampler::setReferenceMesh(
     }
 }
 
-Metric UniformSampler::metricAt(
+Metric TextureSampler::metricAt(
         const glm::dvec3& position,
         uint& cachedRefTet) const
 {
@@ -371,12 +371,12 @@ Metric UniformSampler::metricAt(
     return mxyz;
 }
 
-void UniformSampler::releaseDebugMesh()
+void TextureSampler::releaseDebugMesh()
 {
     _debugMesh.reset();
 }
 
-const Mesh& UniformSampler::debugMesh()
+const Mesh& TextureSampler::debugMesh()
 {
     if(_debugMesh.get() == nullptr)
     {
@@ -386,7 +386,7 @@ const Mesh& UniformSampler::debugMesh()
         {
             meshGrid(*_grid.get(), *_debugMesh);
 
-            _debugMesh->modelName = "Uniform Sampling Mesh";
+            _debugMesh->modelName = "Texture Sampling Mesh";
             _debugMesh->compileTopology();
         }
     }
@@ -394,8 +394,8 @@ const Mesh& UniformSampler::debugMesh()
     return *_debugMesh;
 }
 
-inline glm::ivec3 UniformSampler::cellId(
-        const UniformGrid& grid,
+inline glm::ivec3 TextureSampler::cellId(
+        const TextureGrid& grid,
         const glm::dvec3& vertPos) const
 {
     glm::dvec3 origDist = vertPos - grid.minBounds;
@@ -407,7 +407,7 @@ inline glm::ivec3 UniformSampler::cellId(
     return cellId;
 }
 
-void UniformSampler::meshGrid(UniformGrid& grid, Mesh& mesh)
+void TextureSampler::meshGrid(TextureGrid& grid, Mesh& mesh)
 {
     const glm::ivec3 gridSize(grid.size);
 

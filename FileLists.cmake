@@ -37,7 +37,7 @@ SET(GpuMesh_DATASTRUCTURES_HEADERS
 SET(GpuMesh_SAMPLERS_HEADERS
     ${GpuMesh_SRC_DIR}/Samplers/AbstractSampler.h
     ${GpuMesh_SRC_DIR}/Samplers/AnalyticSampler.h
-    ${GpuMesh_SRC_DIR}/Samplers/UniformSampler.h
+    ${GpuMesh_SRC_DIR}/Samplers/TextureSampler.h
     ${GpuMesh_SRC_DIR}/Samplers/KdTreeSampler.h
     ${GpuMesh_SRC_DIR}/Samplers/DummySampler.h
     ${GpuMesh_SRC_DIR}/Samplers/LocalSampler.h)
@@ -160,7 +160,7 @@ SET(GpuMesh_DATASTRUCTURES_SOURCES
 SET(GpuMesh_SAMPLERS_SOURCES
     ${GpuMesh_SRC_DIR}/Samplers/AbstractSampler.cpp
     ${GpuMesh_SRC_DIR}/Samplers/AnalyticSampler.cpp
-    ${GpuMesh_SRC_DIR}/Samplers/UniformSampler.cpp
+    ${GpuMesh_SRC_DIR}/Samplers/TextureSampler.cpp
     ${GpuMesh_SRC_DIR}/Samplers/KdTreeSampler.cpp
     ${GpuMesh_SRC_DIR}/Samplers/DummySampler.cpp
     ${GpuMesh_SRC_DIR}/Samplers/LocalSampler.cpp)
@@ -307,7 +307,7 @@ SET(GpuMesh_DISCRETIZING_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Sampling/Analytic.glsl
     ${GpuMesh_GLSL_DIR}/compute/Sampling/KdTree.glsl
     ${GpuMesh_GLSL_DIR}/compute/Sampling/Local.glsl
-    ${GpuMesh_GLSL_DIR}/compute/Sampling/Uniform.glsl)
+    ${GpuMesh_GLSL_DIR}/compute/Sampling/Texture.glsl)
 
 SET(GpuMesh_EVALUATING_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Evaluating/Base.glsl
@@ -370,7 +370,7 @@ SET(GpuMesh_DISCRETIZING_CUDA
     ${GpuMesh_CUDA_DIR}/Sampling/Analytic.cu
     ${GpuMesh_CUDA_DIR}/Sampling/KdTree.cu
     ${GpuMesh_CUDA_DIR}/Sampling/Local.cu
-    ${GpuMesh_CUDA_DIR}/Sampling/Uniform.cu)
+    ${GpuMesh_CUDA_DIR}/Sampling/Texture.cu)
 
 SET(GpuMesh_EVALUATING_CUDA
     ${GpuMesh_CUDA_DIR}/Evaluating/Base.cuh

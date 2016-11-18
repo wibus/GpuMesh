@@ -22,7 +22,7 @@
 #include "DataStructures/GpuMesh.h"
 #include "Samplers/AnalyticSampler.h"
 #include "Samplers/DummySampler.h"
-#include "Samplers/UniformSampler.h"
+#include "Samplers/TextureSampler.h"
 #include "Samplers/KdTreeSampler.h"
 #include "Samplers/LocalSampler.h"
 #include "Evaluators/MeanRatioEvaluator.h"
@@ -99,7 +99,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSamplers.setContent({
         {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new DummySampler())},
         {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
-        {string("Uniform"),  shared_ptr<AbstractSampler>(new UniformSampler())},
+        {string("Texture"),  shared_ptr<AbstractSampler>(new TextureSampler())},
         {string("Kd-Tree"),  shared_ptr<AbstractSampler>(new KdTreeSampler())},
         {string("Local"),    shared_ptr<AbstractSampler>(new LocalSampler())},
     });

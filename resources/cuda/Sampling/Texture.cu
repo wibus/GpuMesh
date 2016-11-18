@@ -8,7 +8,7 @@ texture<float4, 3> SideTriTex;
 __constant__ mat4* TexTransform;
 
 
-__device__ mat3 uniformMetricAt(const vec3& position, uint& cachedRefTet)
+__device__ mat3 textureMetricAt(const vec3& position, uint& cachedRefTet)
 {
     vec3 coor = vec3(*TexTransform * vec4(position, 1.0));
 
@@ -23,15 +23,15 @@ __device__ mat3 uniformMetricAt(const vec3& position, uint& cachedRefTet)
 }
 
 
-__device__ metricAtFct uniformMetricAtPtr = uniformMetricAt;
+__device__ metricAtFct textureMetricAtPtr = textureMetricAt;
 
 
 // CUDA Drivers
 
-void installCudaUniformSampler()
+void installCudaTextureSampler()
 {
     metricAtFct d_metricAt = nullptr;
-    cudaMemcpyFromSymbol(&d_metricAt, uniformMetricAtPtr, sizeof(metricAtFct));
+    cudaMemcpyFromSymbol(&d_metricAt, textureMetricAtPtr, sizeof(metricAtFct));
     cudaMemcpyToSymbol(metricAt, &d_metricAt, sizeof(metricAtFct));
 
     // Setup texture reference parameters
@@ -48,7 +48,7 @@ void installCudaUniformSampler()
     SideTriTex.addressMode[2] = cudaAddressModeClamp;
 
     if(verboseCuda)
-        printf("I -> CUDA \tUniform Discritizer installed\n");
+        printf("I -> CUDA \tTexture Discritizer installed\n");
 }
 
 
@@ -60,7 +60,7 @@ cudaArray* d_topLineArray = nullptr;
 glm::ivec3 d_sideTriExtents(0, 0, 0);
 cudaArray* d_sideTriArray = nullptr;
 
-void updateCudaUniformTextures(
+void updateCudaSamplerTextures(
         const std::vector<glm::vec4>& topLineBuff,
         const std::vector<glm::vec4>& sideTriBuff,
         const glm::mat4& texTransform,
