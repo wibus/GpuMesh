@@ -253,19 +253,6 @@ size_t BatrTopologist::edgeSplitMerge(
             std::vector<uint> nExElems;
             findExclusiveElems(mesh, nId, ringElems, nExElems);
 
-            double minQuality = 1.0;
-            for(size_t vE=0; vE < vTopo.neighborElems.size(); ++vE)
-            {
-                minQuality = glm::min(minQuality,
-                    crew.evaluator().tetQuality(mesh,
-                        crew.sampler(), crew.measurer(),
-                        mesh.tets[vTopo.neighborElems[vE].id]));
-            }
-
-            minQuality = glm::max(
-                minQuality / priority,
-                _minAcceptableGenQuality);
-
 
             if(dist < minEdgeLength())
             {
@@ -276,9 +263,23 @@ size_t BatrTopologist::edgeSplitMerge(
                 std::vector<uint> allExElems(vExElems.begin(), vExElems.end());
                 allExElems.insert(allExElems.end(), nExElems.begin(), nExElems.end());
 
-
                 glm::dvec3 middle = (vert.p + neig.p) /2.0;
                 middle = (*constraint)(middle);
+
+
+                double minQuality = 1.0;
+                for(uint dElem : allExElems)
+                {
+                    minQuality = glm::min(minQuality,
+                        crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(),
+                            mesh.tets[dElem]));
+                }
+
+                minQuality = glm::max(
+                    minQuality / priority,
+                    _minAcceptableGenQuality);
+
 
                 verts[vId].p = verts[nId].p = middle;
 
@@ -427,6 +428,20 @@ size_t BatrTopologist::edgeSplitMerge(
                     aliveVerts[wId] = true;
                     vertsToTry[wId] = true;
                 }
+
+
+                double minQuality = 1.0;
+                for(uint rElem : ringElems)
+                {
+                    minQuality = glm::min(minQuality,
+                        crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(),
+                            mesh.tets[rElem]));
+                }
+
+                minQuality = glm::max(
+                    minQuality / priority,
+                    _minAcceptableGenQuality);
 
 
                 bool isConformal = true;
