@@ -722,22 +722,26 @@ size_t BatrTopologist::faceSwapping(
                         }
 
 
-                        double minQual = crew.evaluator().tetQuality(
+                        double tQual = crew.evaluator().tetQuality(
                             mesh, crew.sampler(), crew.measurer(), tet);
-                        minQual = glm::min(minQual, crew.evaluator().tetQuality(
-                            mesh, crew.sampler(), crew.measurer(), ntet));
+                        double nQual = crew.evaluator().tetQuality(
+                            mesh, crew.sampler(), crew.measurer(), ntet);
+                        double hQual = 2.0 / (1.0/tQual + 1.0/nQual);
 
                         MeshTet newTet0(tOp, tri[0], tri[1], nOp, tet.c[0]);
                         MeshTet newTet1(tOp, tri[1], tri[2], nOp, tet.c[0]);
                         MeshTet newTet2(tOp, tri[2], tri[0], nOp, tet.c[0]);
 
                         // Check if it would produce a ring of better quality
-                        if(minQual > crew.evaluator().tetQuality(mesh,
-                                crew.sampler(), crew.measurer(), newTet0) ||
-                           minQual > crew.evaluator().tetQuality(mesh,
-                                crew.sampler(), crew.measurer(), newTet1) ||
-                           minQual > crew.evaluator().tetQuality(mesh,
-                                crew.sampler(), crew.measurer(), newTet2))
+                        double qual0 = crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), newTet0);
+                        double qual1 = crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), newTet1);
+                        double qual2 = crew.evaluator().tetQuality(mesh,
+                            crew.sampler(), crew.measurer(), newTet2);
+
+                        double newHQual = 3.0 / (1/qual0 + 1/qual1 + 1/qual2);
+                        if(newHQual < hQual)
                         {
                             continue;
                         }
