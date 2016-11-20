@@ -253,8 +253,14 @@ size_t BatrTopologist::edgeSplitMerge(
             std::vector<uint> nExElems;
             findExclusiveElems(mesh, nId, ringElems, nExElems);
 
-            double minQuality = crew.evaluator().patchQuality(
-                mesh, crew.sampler(), crew.measurer(), vId);
+            double minQuality = 1.0;
+            for(size_t vE=0; vE < vTopo.neighborElems.size(); ++vE)
+            {
+                minQuality = glm::min(minQuality,
+                    crew.evaluator().tetQuality(mesh,
+                        crew.sampler(), crew.measurer(),
+                        mesh.tets[vTopo.neighborElems[vE].id]));
+            }
 
             minQuality = glm::max(
                 minQuality / priority,
