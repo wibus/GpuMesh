@@ -1,4 +1,5 @@
 const uint SPAWN_COUNT = 64;
+const uint ELEM_SLOT_COUNT = 128;
 
 layout (local_size_x = SPAWN_COUNT, local_size_y = 1, local_size_z = 1) in;
 
@@ -13,8 +14,8 @@ struct TetVert
     vec3 p[TET_VERTEX_COUNT];
 };
 
-shared Tet tetElems[SPAWN_COUNT];
-shared TetVert tetVerts[SPAWN_COUNT];
+shared Tet tetElems[ELEM_SLOT_COUNT];
+shared TetVert tetVerts[ELEM_SLOT_COUNT];
 shared float qualities[SPAWN_COUNT];
 uniform float MoveCoeff;
 
@@ -42,15 +43,17 @@ void smoothVert(uint vId)
     Topo topo = topos[vId];
 
     uint neigElemCount = topo.neigElemCount;
+    uint firstLoad = (neigElemCount * lId) / gl_WorkGroupSize.x;
+    uint lastLoad = (neigElemCount * (lId+1)) / gl_WorkGroupSize.x;
 
-    if(lId < neigElemCount)
+    for(uint eId = firstLoad; eId < lastLoad; ++eId)
     {
-        NeigElem elem = neigElems[topo.neigElemBase + lId];
+        NeigElem elem = neigElems[topo.neigElemBase + eId];
 
         Tet tet = tets[elem.id];
-        tetElems[lId] = tet;
+        tetElems[eId] = tet;
 
-        tetVerts[lId] = TetVert(vec3[](
+        tetVerts[eId] = TetVert(vec3[](
             verts[tet.v[0]].p,
             verts[tet.v[1]].p,
             verts[tet.v[2]].p,

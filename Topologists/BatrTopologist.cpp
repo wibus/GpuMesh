@@ -619,8 +619,8 @@ size_t BatrTopologist::edgeSplitMerge(
     getLog().postMessage(new Message('I', false,
         "Edge split/merge: " +
         std::to_string(passCount) + " passes \t(" +
-        std::to_string(edgeSplitCount) + " split, " +
-        std::to_string(vertMergeCount) + " merge)",
+        std::to_string(edgeSplitCount) + " splits, " +
+        std::to_string(vertMergeCount) + " merges)",
         "BatrTopologist"));
 
 
@@ -823,7 +823,7 @@ size_t BatrTopologist::faceSwapping(
     getLog().postMessage(new Message('I', false,
         "Face swap:        " +
         std::to_string(passCount) + " passes \t(" +
-        std::to_string(faceSwapCount) + " swap)",
+        std::to_string(faceSwapCount) + " swaps)",
         "BatrTopologist"));
 
     if(!emergencyExit)
@@ -1255,7 +1255,7 @@ size_t BatrTopologist::edgeSwapping(
     getLog().postMessage(new Message('I', false,
         "Edge swap:        " +
         std::to_string(passCount) + " passes \t(" +
-        std::to_string(totalEdgeSwapCount) + " swap)",
+        std::to_string(totalEdgeSwapCount) + " swaps)",
         "BatrTopologist"));
 
 //    for(auto rIt = edgeSwapCounters.begin();

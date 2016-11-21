@@ -2,6 +2,7 @@
 #include <DataStructures/NodeGroups.h>
 
 #define SPAWN_COUNT uint(64)
+#define ELEM_SLOT_COUNT uint(128)
 
 
 struct TetVert
@@ -14,8 +15,8 @@ struct TetVert
 __constant__ uint offsets_length;
 __device__ vec4* offsets;
 
-__shared__ Tet tetElems[SPAWN_COUNT];
-__shared__ TetVert tetVerts[SPAWN_COUNT];
+__shared__ Tet tetElems[ELEM_SLOT_COUNT];
+__shared__ TetVert tetVerts[ELEM_SLOT_COUNT];
 __shared__ float qualities[SPAWN_COUNT];
 __constant__ float SSMoveCoeff = 0.10;
 
@@ -47,19 +48,21 @@ __device__ void spawnSearchSmoothVert(uint vId)
     uint lId = threadIdx.x;
     Topo topo = topos[vId];
 
-    uint neigElemCount = topo.neigElemCount;
+    uint neigElemCount = topo.neigElemCount;    
+    uint firstLoad = (neigElemCount * lId) / blockDim.x;
+    uint lastLoad = (neigElemCount * (lId+1)) / blockDim.x;
 
-    if(lId < neigElemCount)
+    for(uint eId = firstLoad; eId < lastLoad; ++eId)
     {
-        NeigElem elem = neigElems[topo.neigElemBase + lId];
+        NeigElem elem = neigElems[topo.neigElemBase + eId];
 
         Tet tet = tets[elem.id];
-        tetElems[lId] = tet;
+        tetElems[eId] = tet;
 
-        tetVerts[lId].p[0] = toFloat3(verts[tet.v[0]].p);
-        tetVerts[lId].p[1] = toFloat3(verts[tet.v[1]].p);
-        tetVerts[lId].p[2] = toFloat3(verts[tet.v[2]].p);
-        tetVerts[lId].p[3] = toFloat3(verts[tet.v[3]].p);
+        tetVerts[eId].p[0] = toFloat3(verts[tet.v[0]].p);
+        tetVerts[eId].p[1] = toFloat3(verts[tet.v[1]].p);
+        tetVerts[eId].p[2] = toFloat3(verts[tet.v[2]].p);
+        tetVerts[eId].p[3] = toFloat3(verts[tet.v[3]].p);
     }
 
     __syncthreads();
