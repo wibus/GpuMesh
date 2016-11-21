@@ -271,21 +271,24 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
                             group.subsurfaceRange.end -
                             group.subsurfaceRange.begin;
 
-                    subsurfaceSize *= sizeof(GpuVert);
-                    size_t subsurfaceBase = group.subsurfaceRange.begin * sizeof(GpuVert);
-                    GpuVert* boundVerts = static_cast<GpuVert*>(
-                        glMapBufferRange(GL_SHADER_STORAGE_BUFFER,
-                            subsurfaceBase, subsurfaceSize,
-                            GL_MAP_READ_BIT));
-
-                    for(size_t vId = group.subsurfaceRange.begin, bId=0;
-                        vId < group.subsurfaceRange.end; ++vId, ++bId)
+                    if(subsurfaceSize > 0)
                     {
-                        MeshVert vert(boundVerts[bId]);
-                        mesh.verts[vId] = vert;
-                    }
+                        subsurfaceSize *= sizeof(GpuVert);
+                        size_t subsurfaceBase = group.subsurfaceRange.begin * sizeof(GpuVert);
+                        GpuVert* boundVerts = static_cast<GpuVert*>(
+                            glMapBufferRange(GL_SHADER_STORAGE_BUFFER,
+                                subsurfaceBase, subsurfaceSize,
+                                GL_MAP_READ_BIT));
 
-                    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+                        for(size_t vId = group.subsurfaceRange.begin, bId=0;
+                            vId < group.subsurfaceRange.end; ++vId, ++bId)
+                        {
+                            MeshVert vert(boundVerts[bId]);
+                            mesh.verts[vId] = vert;
+                        }
+
+                        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+                    }
                 }
 
 
