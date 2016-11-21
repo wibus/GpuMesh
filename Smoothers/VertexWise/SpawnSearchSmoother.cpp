@@ -125,7 +125,7 @@ bool SpawnSearchSmoother::verifyMeshForGpuLimitations(
     return true;
 }
 
-void SpawnSearchSmoother::lauchCudaKernel(
+void SpawnSearchSmoother::launchCudaKernel(
             const NodeGroups::GpuDispatch& dispatch)
 {
     smoothCudaSpawnVertices(dispatch);

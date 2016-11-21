@@ -35,7 +35,7 @@ public:
 
 
 protected:    
-    virtual void lauchCudaKernel(
+    virtual void launchCudaKernel(
             const NodeGroups::GpuDispatch& dispatch);
 
     virtual void initializeProgram(

@@ -24,7 +24,7 @@ protected:
     virtual bool verifyMeshForGpuLimitations(
             const Mesh& mesh) const;
 
-    virtual void lauchCudaKernel(
+    virtual void launchCudaKernel(
             const NodeGroups::GpuDispatch& dispatch);
 
     virtual void setVertexProgramUniforms(
