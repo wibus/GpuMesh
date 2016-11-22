@@ -60,10 +60,10 @@ protected:
     virtual glm::ivec3 layoutWorkgroups(
             const NodeGroups::GpuDispatch& dispatch) const;
 
+    virtual size_t nodesPerBlock() const;
+
 
 private:
-    static const size_t WORKGROUP_SIZE;
-
     bool _initialized;
     std::string _samplingShader;
     std::string _measureShader;

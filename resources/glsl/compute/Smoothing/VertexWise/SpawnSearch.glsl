@@ -39,9 +39,9 @@ float computeLocalElementSize(in uint vId);
 // ENTRY POINT //
 void smoothVert(uint vId)
 {
-    uint lId = gl_LocalInvocationIndex;
-    Topo topo = topos[vId];
+    uint lId = gl_LocalInvocationID.x;
 
+    Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
     uint firstLoad = (neigElemCount * lId) / gl_WorkGroupSize.x;
     uint lastLoad = (neigElemCount * (lId+1)) / gl_WorkGroupSize.x;
@@ -102,9 +102,9 @@ void smoothVert(uint vId)
         if(lId == 0)
         {
             uint bestLoc = 0;
-            float bestQual = -1.0/0.0; // -Inf
+            float bestQual = qualities[0];
 
-            for(int i=0; i < SPAWN_COUNT; ++i)
+            for(int i=1; i < SPAWN_COUNT; ++i)
             {
                 if(qualities[i] > bestQual)
                 {

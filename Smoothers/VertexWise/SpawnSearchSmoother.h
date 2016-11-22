@@ -24,9 +24,6 @@ protected:
     virtual bool verifyMeshForGpuLimitations(
             const Mesh& mesh) const;
 
-    virtual void launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch);
-
     virtual void setVertexProgramUniforms(
             const Mesh& mesh,
             cellar::GlProgram& program) override;
@@ -40,13 +37,15 @@ protected:
             const MeshCrew& crew,
             const std::vector<uint>& vIds) override;
 
+    virtual void launchCudaKernel(
+            const NodeGroups::GpuDispatch& dispatch) override;
+
     virtual std::string glslLauncher() const override;
 
-    virtual glm::ivec3 layoutWorkgroups(
-            const NodeGroups::GpuDispatch& dispatch) const override;
+    virtual size_t nodesPerBlock() const override;
 
 private:
-    static const int PROPOSITION_COUNT;
+    static const int SPAWN_COUNT;
 
     GLuint _offsetsSsbo;
 };

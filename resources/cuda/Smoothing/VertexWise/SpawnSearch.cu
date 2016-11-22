@@ -46,8 +46,8 @@ __device__ inline vec3 toVec3(const float3& v)
 __device__ void spawnSearchSmoothVert(uint vId)
 {
     uint lId = threadIdx.x;
-    Topo topo = topos[vId];
 
+    Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;    
     uint firstLoad = (neigElemCount * lId) / blockDim.x;
     uint lastLoad = (neigElemCount * (lId+1)) / blockDim.x;
@@ -112,9 +112,9 @@ __device__ void spawnSearchSmoothVert(uint vId)
         if(lId == 0)
         {
             uint bestLoc = 0;
-            float bestQual = -1.0/0.0; // -Inf
+            float bestQual = qualities[0];
 
-            for(int i=0; i < SPAWN_COUNT; ++i)
+            for(int i=1; i < SPAWN_COUNT; ++i)
             {
                 if(qualities[i] > bestQual)
                 {

@@ -27,7 +27,7 @@ void smoothCudaSpawnVertices(
         const NodeGroups::GpuDispatch& dispatch);
 
 
-const int SpawnSearchSmoother::PROPOSITION_COUNT = 64;
+const int SpawnSearchSmoother::SPAWN_COUNT = 64;
 
 
 SpawnSearchSmoother::SpawnSearchSmoother() :
@@ -125,12 +125,6 @@ bool SpawnSearchSmoother::verifyMeshForGpuLimitations(
     return true;
 }
 
-void SpawnSearchSmoother::launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch)
-{
-    smoothCudaSpawnVertices(dispatch);
-}
-
 void SpawnSearchSmoother::setVertexProgramUniforms(
         const Mesh& mesh,
         cellar::GlProgram& program)
@@ -186,8 +180,8 @@ void SpawnSearchSmoother::smoothVertices(
         for(int iter=0; iter < 2; ++iter)
         {
             // Define propositions for new vertex's position
-            glm::dvec3 propositions[PROPOSITION_COUNT];
-            for(int p=0; p < PROPOSITION_COUNT; ++p)
+            glm::dvec3 propositions[SPAWN_COUNT];
+            for(int p=0; p < SPAWN_COUNT; ++p)
             {
                 propositions[p] = pos + glm::dvec3(g_offsets[p]) * scale;
             }
@@ -195,7 +189,7 @@ void SpawnSearchSmoother::smoothVertices(
             const MeshTopo& topo = topos[vId];
             if(topo.snapToBoundary->isConstrained())
             {
-                for(uint p=0; p < PROPOSITION_COUNT; ++p)
+                for(uint p=0; p < SPAWN_COUNT; ++p)
                     propositions[p] = (*topo.snapToBoundary)(propositions[p]);
             }
 
@@ -203,7 +197,7 @@ void SpawnSearchSmoother::smoothVertices(
             // Choose best position
             uint bestProposition = 0;
             double bestQualityMean = -numeric_limits<double>::infinity();
-            for(uint p=0; p < PROPOSITION_COUNT; ++p)
+            for(uint p=0; p < SPAWN_COUNT; ++p)
             {
                 // Since 'pos' is a reference on vertex's position
                 // modifing its value here should be seen by the evaluator
@@ -230,13 +224,18 @@ void SpawnSearchSmoother::smoothVertices(
     }
 }
 
+void SpawnSearchSmoother::launchCudaKernel(
+            const NodeGroups::GpuDispatch& dispatch)
+{
+    smoothCudaSpawnVertices(dispatch);
+}
+
 std::string SpawnSearchSmoother::glslLauncher() const
 {
     return "";
 }
 
-glm::ivec3 SpawnSearchSmoother::layoutWorkgroups(
-        const NodeGroups::GpuDispatch& dispatch) const
+size_t SpawnSearchSmoother::nodesPerBlock() const
 {
-    return glm::ivec3(dispatch.gpuBufferSize, 1, 1);
+    return 1;
 }
