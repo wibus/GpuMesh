@@ -27,6 +27,14 @@ void installCudaGradientDescentSmoother()
 }
 
 
+GradientDescentSmoother::GradientDescentSmoother(
+        const std::vector<std::string>& smoothShaders,
+        const installCudaFct installCuda) :
+    AbstractVertexWiseSmoother(smoothShaders, installCuda)
+{
+
+}
+
 GradientDescentSmoother::GradientDescentSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/GradientDescent.glsl"},

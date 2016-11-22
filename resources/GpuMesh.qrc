@@ -50,5 +50,6 @@
         <file>glsl/compute/Smoothing/VertexWise/SpawnSearch.glsl</file>
         <file>glsl/compute/Sampling/Texture.glsl</file>
         <file>glsl/compute/Sampling/Uniform.glsl</file>
+        <file>glsl/compute/Smoothing/VertexWise/PatchGradDsnt.glsl</file>
     </qresource>
 </RCC>

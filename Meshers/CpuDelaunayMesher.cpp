@@ -216,6 +216,8 @@ void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
     size_t surfVertCount = glm::sqrt(vertexCount) * 10;
     surfVertCount = glm::min(surfVertCount, vertexCount);
 
+    srand(0);
+
     vertices.resize(vertexCount);
     for(int v=0; v < surfVertCount; ++v)
         vertices[v] = glm::sphericalRand(SphereBoundary::RADIUS);

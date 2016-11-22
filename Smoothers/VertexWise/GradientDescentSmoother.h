@@ -7,6 +7,11 @@
 
 class GradientDescentSmoother : public AbstractVertexWiseSmoother
 {
+protected:
+    GradientDescentSmoother(
+        const std::vector<std::string>& smoothShaders,
+        const installCudaFct installCuda);
+
 public:
     GradientDescentSmoother();
     virtual ~GradientDescentSmoother();
