@@ -252,7 +252,7 @@ double AbstractEvaluator::patchQuality(
     size_t neigElemCount = topo.neighborElems.size();
 
     double patchWeight = 0.0;
-    double patchQuality = 1.0;
+    double patchQuality = 0.0;
     for(size_t n=0; n < neigElemCount; ++n)
     {
         const MeshNeigElem& neigElem = topo.neighborElems[n];
@@ -767,14 +767,14 @@ void AbstractEvaluator::accumulatePatchQuality(
         double& patchWeight,
         double elemQuality) const
 {
-    if(patchQuality > 0.0 &&  elemQuality > 0.0)
+    if(patchWeight != -1.0 && elemQuality > 0.0)
     {
         patchWeight += 1.0;
         patchQuality += 1/elemQuality;
     }
     else
     {
-        patchWeight = 0.0;
+        patchWeight = -1.0;
         patchQuality = min(patchQuality, elemQuality);
     }
 }
@@ -783,7 +783,7 @@ double AbstractEvaluator::finalizePatchQuality(
         double patchQuality,
         double patchWeight) const
 {
-    if(patchWeight != 0.0)
+    if(patchWeight > 0.0)
         return patchWeight/patchQuality;
     else
         return patchQuality;

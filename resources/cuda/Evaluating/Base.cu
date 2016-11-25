@@ -59,21 +59,21 @@ __device__ void accumulatePatchQuality(
         double& patchWeight,
         double elemQuality)
 {
-    if(patchQuality > 0.0 &&  elemQuality > 0.0)
+    if(patchWeight != -1.0 &&  elemQuality > 0.0)
     {
         patchWeight += 1.0;
         patchQuality += 1/elemQuality;
     }
     else
     {
-        patchWeight = 0.0;
+        patchWeight = -1.0;
         patchQuality = min(patchQuality, elemQuality);
     }
 }
 
 __device__ float finalizePatchQuality(double patchQuality, double patchWeight)
 {
-    if(patchWeight != 0.0)
+    if(patchWeight > 0.0)
         return patchWeight/patchQuality;
     else
         return patchQuality;
@@ -84,7 +84,7 @@ __device__ float patchQuality(uint vId)
     Topo topo = topos[vId];
 
     double patchWeight = 0.0;
-    double patchQuality = 1.0;
+    double patchQuality = 0.0;
     uint neigElemCount = topo.neigElemCount;
     for(uint i=0, n = topo.neigElemBase; i < neigElemCount; ++i, ++n)
     {
