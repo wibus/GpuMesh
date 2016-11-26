@@ -22,26 +22,16 @@ protected:
             const Mesh& mesh) const;
 
     virtual void launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch);
-
-    virtual void setVertexProgramUniforms(
-            const Mesh& mesh,
-            cellar::GlProgram& program) override;
-
-    virtual void printOptimisationParameters(
-            const Mesh& mesh,
-            OptimizationImpl& plotImpl) const override;
-
-    virtual void smoothVertices(
-            Mesh& mesh,
-            const MeshCrew& crew,
-            const std::vector<uint>& vIds) override;
+            const NodeGroups::GpuDispatch& dispatch) override;
 
     virtual std::string glslLauncher() const override;
 
-    virtual glm::ivec3 layoutWorkgroups(
-            const NodeGroups::GpuDispatch& dispatch) const override;
+    virtual size_t nodesPerBlock() const override;
 
+protected:
+    static const int POSITION_THREAD_COUNT;
+    static const int ELEMENT_THREAD_COUNT;
+    static const int ELEMENT_SLOT_COUNT;
 };
 
 #endif // GPUMESH_PATCHGRADDSNTSMOOTHER
