@@ -2,52 +2,44 @@ const uint POSITION_THREAD_COUNT = 8;
 const uint ELEMENT_THREAD_COUNT = 32;
 const uint ELEMENT_SLOT_COUNT = 96;
 
+const uint GRAD_SAMP_COUNT = 6;
+const uint LINE_SAMP_COUNT = 8;
+
 layout (local_size_x = POSITION_THREAD_COUNT, local_size_y = ELEMENT_THREAD_COUNT, local_size_z = 1) in;
 
-uniform float MoveCoeff;
-uniform int SecurityCycleCount;
-uniform float LocalSizeToNodeShift;
+struct PatchElem
+{
+    uint type;
+    uint n;
+
+    Tet tet;
+    Pri pri;
+    Hex hex;
+    vec3 p[HEX_VERTEX_COUNT];
+};
 
 // Independent group range
 uniform int GroupBase;
 uniform int GroupSize;
 
+uniform int SecurityCycleCount;
+uniform float LocalSizeToNodeShift;
+
 shared float nodeShift;
 shared vec3 lineShift;
+shared PatchElem patchElems[ELEMENT_SLOT_COUNT];
 shared float elemQual[POSITION_THREAD_COUNT][ELEMENT_SLOT_COUNT];
 shared float patchQual[POSITION_THREAD_COUNT];
-shared vec3 propositions[POSITION_THREAD_COUNT];
 
-const uint GRAD_SAMP_COUNT = 6;
-const vec3 GRAD_SAMPS[GRAD_SAMP_COUNT] = vec3[](
-    vec3(-1, 0, 0),
-    vec3( 1, 0, 0),
-    vec3(0, -1, 0),
-    vec3(0,  1, 0),
-    vec3(0, 0, -1),
-    vec3(0, 0,  1)
-);
-
-const uint LINE_SAMP_COUNT = 8;
-const float LINE_SAMPS[LINE_SAMP_COUNT] = float[](
-    -0.25,
-     0.00,
-     0.25,
-     0.50,
-     0.75,
-     1.00,
-     1.25,
-     1.50
-);
 
 // Smoothing Helper
 float computeLocalElementSize(in uint vId);
-float patchQuality(in uint vId);
-
-
-// Externally defined
 float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
-float finalizePatchQuality(in double patchQuality, in double patchWeight);
+float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
+float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
+float finalizePatchQuality(
+        in double patchQuality,
+        in double patchWeight);
 void accumulatePatchQuality(
         inout double patchQuality,
         inout double patchWeight,
@@ -57,25 +49,84 @@ void accumulatePatchQuality(
 // ENTRY POINT //
 void smoothVert(uint vId)
 {
+    const vec3 GRAD_SAMPS[GRAD_SAMP_COUNT] = vec3[](
+        vec3(-1, 0, 0), vec3( 1, 0, 0), vec3(0, -1, 0),
+        vec3(0,  1, 0), vec3(0, 0, -1), vec3(0, 0,  1)
+    );
+
+    const float LINE_SAMPS[LINE_SAMP_COUNT] = float[](
+        -0.25, 0.00, 0.25, 0.50,
+         0.75, 1.00, 1.25, 1.50
+    );
+
     uint pId = gl_LocalInvocationID.x;
     uint eId = gl_LocalInvocationID.y;
 
     Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
-    NeigElem elem = neigElems[topo.neigElemBase + eId];
+    uint eBeg = (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint eEnd = ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
 
-    Tet tetElem = tets[elem.id];
-    vec3[TET_VERTEX_COUNT] tetVerts = vec3[](
-        verts[tetElem.v[0]].p,
-        verts[tetElem.v[1]].p,
-        verts[tetElem.v[2]].p,
-        verts[tetElem.v[3]].p
-    );
+    if(pId == 0)
+    {
+        for(uint e = eBeg; e < eEnd; ++e)
+        {
+            NeigElem elem = neigElems[topo.neigElemBase + e];
+            patchElems[e].type = elem.type;
+            patchElems[e].n = 0;
 
-    uint nId = 3;
-    if(tetElem.v[0] == vId) nId = 0;
-    else if(tetElem.v[1] == vId) nId = 1;
-    else if(tetElem.v[2] == vId) nId = 2;
+            switch(patchElems[e].type)
+            {
+            case TET_ELEMENT_TYPE :
+                patchElems[e].tet = tets[elem.id];
+                patchElems[e].p[0] = verts[patchElems[e].tet.v[0]].p;
+                patchElems[e].p[1] = verts[patchElems[e].tet.v[1]].p;
+                patchElems[e].p[2] = verts[patchElems[e].tet.v[2]].p;
+                patchElems[e].p[3] = verts[patchElems[e].tet.v[3]].p;
+
+                if(patchElems[e].tet.v[1] == vId) patchElems[e].n = 1;
+                else if(patchElems[e].tet.v[2] == vId) patchElems[e].n = 2;
+                else if(patchElems[e].tet.v[3] == vId) patchElems[e].n = 3;
+                break;
+
+            case PRI_ELEMENT_TYPE :
+                patchElems[e].pri = pris[elem.id];
+                patchElems[e].p[0] = verts[patchElems[e].pri.v[0]].p;
+                patchElems[e].p[1] = verts[patchElems[e].pri.v[1]].p;
+                patchElems[e].p[2] = verts[patchElems[e].pri.v[2]].p;
+                patchElems[e].p[3] = verts[patchElems[e].pri.v[3]].p;
+                patchElems[e].p[4] = verts[patchElems[e].pri.v[4]].p;
+                patchElems[e].p[5] = verts[patchElems[e].pri.v[5]].p;
+
+                if(patchElems[e].pri.v[1] == vId) patchElems[e].n = 1;
+                else if(patchElems[e].pri.v[2] == vId) patchElems[e].n = 2;
+                else if(patchElems[e].pri.v[3] == vId) patchElems[e].n = 3;
+                else if(patchElems[e].pri.v[4] == vId) patchElems[e].n = 4;
+                else if(patchElems[e].pri.v[5] == vId) patchElems[e].n = 5;
+                break;
+
+            case HEX_ELEMENT_TYPE :
+                patchElems[e].hex = hexs[elem.id];
+                patchElems[e].p[0] = verts[patchElems[e].hex.v[0]].p;
+                patchElems[e].p[1] = verts[patchElems[e].hex.v[1]].p;
+                patchElems[e].p[2] = verts[patchElems[e].hex.v[2]].p;
+                patchElems[e].p[3] = verts[patchElems[e].hex.v[3]].p;
+                patchElems[e].p[4] = verts[patchElems[e].hex.v[4]].p;
+                patchElems[e].p[5] = verts[patchElems[e].hex.v[5]].p;
+                patchElems[e].p[6] = verts[patchElems[e].hex.v[6]].p;
+                patchElems[e].p[7] = verts[patchElems[e].hex.v[7]].p;
+
+                if(patchElems[e].hex.v[1] == vId) patchElems[e].n = 1;
+                else if(patchElems[e].hex.v[2] == vId) patchElems[e].n = 2;
+                else if(patchElems[e].hex.v[3] == vId) patchElems[e].n = 3;
+                else if(patchElems[e].hex.v[4] == vId) patchElems[e].n = 4;
+                else if(patchElems[e].hex.v[5] == vId) patchElems[e].n = 5;
+                else if(patchElems[e].hex.v[6] == vId) patchElems[e].n = 6;
+                else if(patchElems[e].hex.v[7] == vId) patchElems[e].n = 7;
+                break;
+            }
+        }
+    }
 
     if(pId == 0 && eId == 0)
     {
@@ -93,11 +144,52 @@ void smoothVert(uint vId)
     {
         vec3 pos = verts[vId].p;
 
-        if(eId < neigElemCount && pId < GRAD_SAMP_COUNT)
+        if(pId < GRAD_SAMP_COUNT)
         {
-            // Define patch quality gradient samples
-            tetVerts[nId] = pos + GRAD_SAMPS[pId] * nodeShift;
-            elemQual[pId][eId] = tetQuality(tetVerts, tetElem);
+            for(uint e = eBeg; e < eEnd; ++e)
+            {
+                vec3 newPos = pos + GRAD_SAMPS[pId] * nodeShift;
+
+                switch(patchElems[e].type)
+                {
+                case TET_ELEMENT_TYPE :
+                    vec3 tetPos[TET_VERTEX_COUNT] = vec3[](
+                        patchElems[e].p[0],
+                        patchElems[e].p[1],
+                        patchElems[e].p[2],
+                        patchElems[e].p[3]
+                    );
+                    tetPos[patchElems[e].n] = newPos;
+                    elemQual[pId][e] = tetQuality(tetPos, patchElems[e].tet);
+                    break;
+                case PRI_ELEMENT_TYPE :
+                    vec3 priPos[PRI_VERTEX_COUNT] = vec3[](
+                        patchElems[e].p[0],
+                        patchElems[e].p[1],
+                        patchElems[e].p[2],
+                        patchElems[e].p[3],
+                        patchElems[e].p[4],
+                        patchElems[e].p[5]
+                    );
+                    priPos[patchElems[e].n] = newPos;
+                    elemQual[pId][e] = priQuality(priPos, patchElems[e].pri);
+                    break;
+                case HEX_ELEMENT_TYPE :
+                    vec3 hexPos[HEX_VERTEX_COUNT] = vec3[](
+                        patchElems[e].p[0],
+                        patchElems[e].p[1],
+                        patchElems[e].p[2],
+                        patchElems[e].p[3],
+                        patchElems[e].p[4],
+                        patchElems[e].p[5],
+                        patchElems[e].p[6],
+                        patchElems[e].p[7]
+                    );
+                    hexPos[patchElems[e].n] = newPos;
+                    elemQual[pId][e] = hexQuality(hexPos, patchElems[e].hex);
+                    break;
+                }
+            }
         }
 
         barrier();
@@ -135,10 +227,49 @@ void smoothVert(uint vId)
         if(lineShift == vec3(0.0))
             break;
 
-        if(eId < neigElemCount)
+        for(uint e = eBeg; e < eEnd; ++e)
         {
-            tetVerts[nId] = pos + lineShift * LINE_SAMPS[pId];
-            elemQual[pId][eId] = tetQuality(tetVerts, tetElem);
+            vec3 newPos = pos + lineShift * LINE_SAMPS[pId];
+
+            switch(patchElems[e].type)
+            {
+            case TET_ELEMENT_TYPE :
+                vec3 tetPos[TET_VERTEX_COUNT] = vec3[](
+                    patchElems[e].p[0],
+                    patchElems[e].p[1],
+                    patchElems[e].p[2],
+                    patchElems[e].p[3]
+                );
+                tetPos[patchElems[e].n] = newPos;
+                elemQual[pId][e] = tetQuality(tetPos, patchElems[e].tet);
+                break;
+            case PRI_ELEMENT_TYPE :
+                vec3 priPos[PRI_VERTEX_COUNT] = vec3[](
+                    patchElems[e].p[0],
+                    patchElems[e].p[1],
+                    patchElems[e].p[2],
+                    patchElems[e].p[3],
+                    patchElems[e].p[4],
+                    patchElems[e].p[5]
+                );
+                priPos[patchElems[e].n] = newPos;
+                elemQual[pId][e] = priQuality(priPos, patchElems[e].pri);
+                break;
+            case HEX_ELEMENT_TYPE :
+                vec3 hexPos[HEX_VERTEX_COUNT] = vec3[](
+                    patchElems[e].p[0],
+                    patchElems[e].p[1],
+                    patchElems[e].p[2],
+                    patchElems[e].p[3],
+                    patchElems[e].p[4],
+                    patchElems[e].p[5],
+                    patchElems[e].p[6],
+                    patchElems[e].p[7]
+                );
+                hexPos[patchElems[e].n] = newPos;
+                elemQual[pId][e] = hexQuality(hexPos, patchElems[e].hex);
+                break;
+            }
         }
 
         barrier();
@@ -153,7 +284,6 @@ void smoothVert(uint vId)
                     double(elemQual[pId][e]));
 
             patchQual[pId] = finalizePatchQuality(patchQuality, patchWeight);
-            propositions[pId] = tetVerts[nId];
         }
 
         barrier();
@@ -172,7 +302,7 @@ void smoothVert(uint vId)
             }
 
             // Update vertex's position
-            verts[vId].p = propositions[bestProposition];
+            verts[vId].p = pos + lineShift * LINE_SAMPS[bestProposition];
 
             // Scale node shift and stop if it is too small
             nodeShift *= abs(LINE_SAMPS[bestProposition]);
