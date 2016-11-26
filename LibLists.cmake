@@ -1,6 +1,6 @@
 # CUDA
 FIND_PACKAGE(CUDA REQUIRED)
-LIST(APPEND CUDA_NVCC_FLAGS "-arch=sm_35;-std=c++11;--expt-relaxed-constexpr")
+LIST(APPEND CUDA_NVCC_FLAGS "-arch=sm_35;-std=c++11;--expt-relaxed-constexpr;-Xptxas; -v")
 SET(CUDA_PROPAGATE_HOST_FLAGS FALSE)
 SET(CUDA_SEPARABLE_COMPILATION ON)
 

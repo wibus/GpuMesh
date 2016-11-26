@@ -92,6 +92,8 @@ __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4])
 // CUDA Drivers
 void setCudaMetricScaling(double scaling)
 {
+    cudaCheckErrors("CUDA error before sampler scaling");
+
     float h_scaling = scaling;
     cudaMemcpyToSymbol(MetricScaling, &h_scaling, sizeof(h_scaling));
 }
@@ -106,4 +108,6 @@ void setCudaMetricScalingCube(double scalingCube)
 {
     float h_scalingCube = scalingCube;
     cudaMemcpyToSymbol(MetricScalingCube, &h_scalingCube, sizeof(h_scalingCube));
+
+    cudaCheckErrors("CUDA error after sampler scaling");
 }

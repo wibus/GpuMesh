@@ -4,14 +4,14 @@ const uint ELEM_SLOT_COUNT = 128;
 layout (local_size_x = SPAWN_COUNT, local_size_y = 1, local_size_z = 1) in;
 
 
-layout(shared, binding = SPAWN_OFFSETS_BUFFER_BINDING) buffer Offsets
-{
-    vec4 offsets[];
-};
-
 struct TetVert
 {
     vec3 p[TET_VERTEX_COUNT];
+};
+
+layout(shared, binding = SPAWN_OFFSETS_BUFFER_BINDING) buffer Offsets
+{
+    vec4 offsets[];
 };
 
 shared Tet tetElems[ELEM_SLOT_COUNT];
@@ -61,8 +61,6 @@ void smoothVert(uint vId)
         ));
     }
 
-    barrier();
-
     // Compute local element size
     float localSize = computeLocalElementSize(vId);
     float scale = localSize * MoveCoeff;
@@ -71,11 +69,13 @@ void smoothVert(uint vId)
 
     for(int iter=0; iter < 2; ++iter)
     {
+        barrier();
+
         vec3 spawnPos = verts[vId].p + vec3(offset) * scale;
 
 
         double patchWeight = 0.0;
-        double patchQuality = 1.0;
+        double patchQuality = 0.0;
         for(uint i=0; i < neigElemCount; ++i)
         {
             Tet tetElem = tetElems[i];
@@ -116,8 +116,6 @@ void smoothVert(uint vId)
             // Update vertex's position
             verts[vId].p += vec3(offsets[bestLoc]) * scale;
         }
-
-        barrier();
 
         scale /= 3.0;
     }

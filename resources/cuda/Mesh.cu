@@ -328,3 +328,8 @@ void updateCudaRefMetrics(
 
     cudaCheckErrors("Ref metrics update");
 }
+
+void cppCudaCheckErrors(const char* msg)
+{
+    cudaCheckErrors(msg);
+}

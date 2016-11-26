@@ -111,11 +111,11 @@ bool SpawnSearchSmoother::verifyMeshForGpuLimitations(
 
 //    for(const MeshTopo& topo : mesh.topos)
 //    {
-//        if(topo.neighborElems.size() > PROPOSITION_COUNT)
+//        if(topo.neighborElems.size() > SPAWN_COUNT)
 //        {
 //            getLog().postMessage(new Message('E', false,
 //                "Some nodes have too many neighbor elements. "\
-//                "Maximum " + std::to_string(PROPOSITION_COUNT) +
+//                "Maximum " + std::to_string(SPAWN_COUNT) +
 //                ". A node with " + std::to_string(topo.neighborElems.size()) + " found.",
 //                "SpawnSearchSmoother"));
 //            return false;

@@ -33,16 +33,6 @@ __device__ float finalizePatchQuality(
 
 
 // ENTRY POINT //
-__device__ inline float3 toFloat3(const vec3& v)
-{
-    return make_float3(v.x, v.y, v.z);
-}
-
-__device__ inline vec3 toVec3(const float3& v)
-{
-    return vec3(v.x, v.y, v.z);
-}
-
 __device__ void spawnSearchSmoothVert(uint vId)
 {
     uint lId = threadIdx.x;
@@ -65,8 +55,6 @@ __device__ void spawnSearchSmoothVert(uint vId)
         tetVerts[eId].p[3] = toFloat3(verts[tet.v[3]].p);
     }
 
-    __syncthreads();
-
     // Compute local element size
     float localSize = computeLocalElementSize(vId);
     float scale = localSize * SSMoveCoeff;
@@ -75,11 +63,13 @@ __device__ void spawnSearchSmoothVert(uint vId)
 
     for(int iter=0; iter < 2; ++iter)
     {
+        __syncthreads();
+
         vec3 spawnPos = verts[vId].p + vec3(offset) * scale;
 
 
         double patchWeight = 0.0;
-        double patchQuality = 1.0;
+        double patchQuality = 0.0;
         for(uint i=0; i < neigElemCount; ++i)
         {
             vec3 tetVert[4] = {
@@ -126,8 +116,6 @@ __device__ void spawnSearchSmoothVert(uint vId)
             // Update vertex's position
             verts[vId].p += vec3(offsets[bestLoc]) * scale;
         }
-
-        __syncthreads();
 
         scale /= 3.0;
     }
