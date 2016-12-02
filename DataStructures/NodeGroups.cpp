@@ -379,6 +379,14 @@ void NodeGroups::determinePositions(Mesh& mesh,
             {
                 if(groups[a] == groups[b])
                 {
+                    // Inside type-group sets, nodes are sorted by their
+                    // number of neighbor elements. This enables us to balance
+                    // CPU and GPU dispatches. CPU dispatches needs a uniform
+                    // distribution of neighborhood sizes. GPU dispatches prefer
+                    // workgroups(blocks) with of nodes with equal number of neighbors
+
+                    // See dispatchCpuWorkgroups() and dispatchGpuWorkgroups()
+                    // to know how dispatches are built based on this sorting
                     return topos[a].neighborElems.size() <
                             topos[b].neighborElems.size();
                 }
@@ -565,6 +573,9 @@ void NodeGroups::dispatchCpuWorkgroups()
         size_t maxDispatchSize = glm::ceil(double(allGroupSize) / _cpuWorkgroupSize);
         for(size_t w=0; w < _cpuWorkgroupSize; ++w)
         {
+            // Nodes are sorted according to their number of neighbor elements
+            // This distribution pattern makes sure CPU dispatches are well balanced
+
             group.allDispatchedNodes[w].reserve(maxDispatchSize);
             for(size_t v = w; v < allGroupSize; v += _cpuWorkgroupSize)
             {
@@ -597,6 +608,9 @@ void NodeGroups::dispatchGpuWorkgroups()
         size_t maxDispatchSize = glm::ceil(double(cpuGroupSize) / _cpuWorkgroupSize);
         for(size_t w=0; w < _cpuWorkgroupSize; ++w)
         {
+            // Nodes are sorted according to their number of neighbor elements
+            // This distribution pattern makes sure CPU dispatches are well balanced
+
             group.cpuOnlyDispatchedNodes[w].reserve(maxDispatchSize);
             for(size_t v = w; v < cpuGroupSize; v += _cpuWorkgroupSize)
             {
