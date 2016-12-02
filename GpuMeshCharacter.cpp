@@ -604,6 +604,7 @@ void GpuMeshCharacter::benchmarkSmoothers(
     _mesh->printPropperties(plot);
     plot.setMeshModelName(_mesh->modelName);
     plot.setInitialHistogram(initialHistogram);
+    plot.setNodeGroups(_mesh->nodeGroups());
 
 
     std::shared_ptr<Mesh> currMesh(new Mesh(*_mesh));

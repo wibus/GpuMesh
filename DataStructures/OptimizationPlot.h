@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 
+#include "NodeGroups.h"
 #include "QualityHistogram.h"
 
 typedef std::vector<std::pair<std::string, std::string>> Properties;
@@ -43,19 +44,23 @@ public:
 
     void setMeshModelName(const std::string& name);
 
+    void setNodeGroups(const NodeGroups& groups);
+
     void addMeshProperty(const std::string& name, const std::string& value);
 
     void setInitialHistogram(const QualityHistogram& histogram);
 
     void addImplementation(const OptimizationImpl& impl);
 
-    const Properties& meshProperties() const;
+    const NodeGroups& nodeGroups() const;
     const std::string& meshModelName() const;
+    const Properties& meshProperties() const;
     const QualityHistogram& initialHistogram() const;
     const std::vector<OptimizationImpl>& implementations() const;
 
 
 private:
+    NodeGroups _nodeGroups;
     Properties _meshProperties;
     std::string _meshModelName;
     QualityHistogram _initialHistogram;

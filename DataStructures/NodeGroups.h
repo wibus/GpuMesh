@@ -43,6 +43,8 @@ public:
 
         size_t begin;
         size_t end;
+
+        size_t size() const {return end - begin;}
     };
 
     struct GpuDispatch
@@ -98,14 +100,14 @@ public:
 
 private:
 
-    const int NO_GROUP = -2;
-    const int UNSET_GROUP = -1;
+    static const int NO_GROUP;
+    static const int UNSET_GROUP;
 
-    const int UNSET_TYPE = -1;
-    const int FIXED_TYPE = 0;
-    const int BOUND_TYPE = 1;
-    const int SUBSU_TYPE = 2;
-    const int INTER_TYPE = 3;
+    static const int UNSET_TYPE;
+    static const int FIXED_TYPE;
+    static const int BOUND_TYPE;
+    static const int SUBSU_TYPE;
+    static const int INTER_TYPE;
 
 
     /// @brief Independent vertex groups compilation

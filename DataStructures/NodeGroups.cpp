@@ -12,6 +12,16 @@
 using namespace cellar;
 
 
+const int NodeGroups::NO_GROUP = -2;
+const int NodeGroups::UNSET_GROUP = -1;
+
+const int NodeGroups::UNSET_TYPE = -1;
+const int NodeGroups::FIXED_TYPE = 0;
+const int NodeGroups::BOUND_TYPE = 1;
+const int NodeGroups::SUBSU_TYPE = 2;
+const int NodeGroups::INTER_TYPE = 3;
+
+
 NodeGroups::Range::Range() :
     begin(0),
     end(0)

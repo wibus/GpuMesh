@@ -46,6 +46,7 @@ bool SmoothingReport::save(const std::string& fileName) const
     writer.setPageMargins(QMargins(10, 10, 10, 10),
                           QPageLayout::Millimeter);
     writer.setPageSize(QPagedPaintDevice::Letter);
+    writer.setPageOrientation(QPageLayout::Landscape);
     writer.setTitle((_plot.meshModelName()).c_str());
 
     qreal textWidth = writer.pageLayout().paintRectPoints().width();
@@ -66,7 +67,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
 {
     document.clear();
 
-    qreal textWidth = qreal(800);
+    qreal textWidth = qreal(1200);
     qreal docWidth = document.textWidth();
     if(docWidth > 0)
         textWidth = docWidth;
@@ -74,7 +75,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     float dHdW = float(_preSmoothingShot.height()) /
                  float(_preSmoothingShot.width());
 
-    QPixmap plotPixmap = QPixmap(QSize(800, 800 * dHdW));
+    QPixmap plotPixmap = QPixmap(QSize(textWidth, textWidth * dHdW));
     plotPixmap.fill(Qt::transparent);
     printHistogramPlot(plotPixmap);
 
@@ -129,7 +130,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     tableTotalCharFormat.setFontWeight(QFont::Bold);
 
     QTextTableFormat propertyTableFormat;
-    propertyTableFormat.setWidth(textWidth * 0.45);
+    propertyTableFormat.setWidth(textWidth * 0.60);
     propertyTableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
 
     QTextTableCell tableCell;
@@ -165,6 +166,55 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
         QTextCursor valueCursor = valueCell.firstCursorPosition();
         valueCursor.insertText(value.c_str());
     }
+    cursor.movePosition(QTextCursor::End);
+
+
+
+
+    cursor.insertBlock(blockFormat);
+    cursor.insertHtml("<h3>Node Groups</h3>");
+
+    QTextTableFormat groupsTableFormat;
+    groupsTableFormat.setWidth(textWidth);
+    groupsTableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
+    size_t groupCount = _plot.nodeGroups().parallelGroups().size();
+
+    QTextTable* groupsTable = cursor.insertTable(groupCount+1, 3+1, groupsTableFormat);
+    tableCell = groupsTable->cellAt(0, 0);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Type", tableHeaderCharFormat);
+    tableCell = groupsTable->cellAt(0, 1);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Boundary", tableHeaderCharFormat);
+    tableCell = groupsTable->cellAt(0, 2);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Subsurface", tableHeaderCharFormat);
+    tableCell = groupsTable->cellAt(0, 3);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Interior", tableHeaderCharFormat);
+
+    for(size_t g=0; g < groupCount; ++g)
+    {
+        const NodeGroups::ParallelGroup& group =
+                _plot.nodeGroups().parallelGroups()[g];
+
+        tableCell = groupsTable->cellAt(1+g, 0);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText("Group " + QString().number(g));
+
+        tableCell = groupsTable->cellAt(1+g, 1);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(group.boundaryRange.size()));
+
+        tableCell = groupsTable->cellAt(1+g, 2);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(group.subsurfaceRange.size()));
+
+        tableCell = groupsTable->cellAt(1+g, 3);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(group.interiorRange.size()));
+    }
+
     cursor.movePosition(QTextCursor::End);
 
 
@@ -233,7 +283,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     }
 
     QTextTableFormat statsTableFormat;
-    statsTableFormat.setWidth(textWidth * (implCount+1) / 5.0f);
+    statsTableFormat.setWidth(textWidth * (implCount+1) / 7.0f);
     statsTableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
 
     cursor.insertBlock(blockFormat);

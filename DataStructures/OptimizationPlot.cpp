@@ -22,6 +22,11 @@ void OptimizationPlot::setMeshModelName(const std::string& name)
     _meshModelName = name;
 }
 
+void OptimizationPlot::setNodeGroups(const NodeGroups& groups)
+{
+    _nodeGroups = groups;
+}
+
 void OptimizationPlot::addMeshProperty(const std::string& name, const std::string& value)
 {
     _meshProperties.push_back(make_pair(name, value));
@@ -35,6 +40,11 @@ void OptimizationPlot::setInitialHistogram(const QualityHistogram& histogram)
 void OptimizationPlot::addImplementation(const OptimizationImpl& impl)
 {
     _implementations.push_back(impl);
+}
+
+const NodeGroups& OptimizationPlot::nodeGroups() const
+{
+    return _nodeGroups;
 }
 
 const Properties& OptimizationPlot::meshProperties() const
