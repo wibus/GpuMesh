@@ -315,6 +315,7 @@ void NodeGroups::determinePositions(Mesh& mesh,
         const std::vector<int> &groups,
         std::vector<int>& positions)
 {
+    const auto& topos = mesh.topos;
     size_t vertCount = mesh.verts.size();
 
     //////////////////
@@ -361,9 +362,21 @@ void NodeGroups::determinePositions(Mesh& mesh,
         if(types[a] == types[b])
         {
             if(types[a] == FIXED_TYPE)
+            {
                 return false;
+            }
             else
-                return groups[a] < groups[b];
+            {
+                if(groups[a] == groups[b])
+                {
+                    return topos[a].neighborElems.size() <
+                            topos[b].neighborElems.size();
+                }
+                else
+                {
+                    return groups[a] < groups[b];
+                }
+            }
         }
         else
         {
@@ -525,14 +538,16 @@ void NodeGroups::dispatchCpuWorkgroups()
     {
         group.allDispatchedNodes.clear();
         group.allDispatchedNodes.resize(_cpuWorkgroupSize);
-        size_t groupSize = group.undispatchedNodes.size();
+        size_t allGroupSize = group.undispatchedNodes.size();
+        size_t maxDispatchSize = glm::ceil(double(allGroupSize) / _cpuWorkgroupSize);
         for(size_t w=0; w < _cpuWorkgroupSize; ++w)
         {
-            size_t begin = (w * groupSize) / _cpuWorkgroupSize;
-            size_t end = ((w+1) * groupSize) / _cpuWorkgroupSize;
-            group.allDispatchedNodes[w] = std::vector<uint>(
-                group.undispatchedNodes.begin() + begin,
-                group.undispatchedNodes.begin() + end);
+            group.allDispatchedNodes[w].reserve(maxDispatchSize);
+            for(size_t v = w; v < allGroupSize; v += _cpuWorkgroupSize)
+            {
+                group.allDispatchedNodes[w].push_back(
+                    group.undispatchedNodes[v]);
+            }
         }
     }
 }
@@ -548,13 +563,15 @@ void NodeGroups::dispatchGpuWorkgroups()
         group.cpuOnlyDispatchedNodes.clear();
         group.cpuOnlyDispatchedNodes.resize(_cpuWorkgroupSize);
         size_t cpuGroupSize = group.boundaryRange.end - group.boundaryRange.begin;
+        size_t maxDispatchSize = glm::ceil(double(cpuGroupSize) / _cpuWorkgroupSize);
         for(size_t w=0; w < _cpuWorkgroupSize; ++w)
         {
-            size_t begin = (w * cpuGroupSize) / _cpuWorkgroupSize;
-            size_t end = ((w+1) * cpuGroupSize) / _cpuWorkgroupSize;
-            group.cpuOnlyDispatchedNodes[w] = std::vector<uint>(
-                group.undispatchedNodes.begin() + begin,
-                group.undispatchedNodes.begin() + end);
+            group.cpuOnlyDispatchedNodes[w].reserve(maxDispatchSize);
+            for(size_t v = w; v < cpuGroupSize; v += _cpuWorkgroupSize)
+            {
+                group.cpuOnlyDispatchedNodes[w].push_back(
+                    group.undispatchedNodes[v]);
+            }
         }
     }
 }
