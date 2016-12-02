@@ -531,14 +531,27 @@ void NodeGroups::clusterNodes(Mesh& mesh,
         size_t cpuGroupSize = group.boundaryRange.end - group.boundaryRange.begin;
         size_t gpuGroupSize = group.undispatchedNodes.size() - cpuGroupSize;
 
-        group.gpuDispatch.gpuBufferBase =
-                _gpuGroupsBuffer.size();
-        group.gpuDispatch.gpuBufferSize =
-                gpuGroupSize;
+        if(gpuGroupSize > 128)
+        {
+            group.gpuDispatch.gpuBufferBase =
+                    _gpuGroupsBuffer.size();
+            group.gpuDispatch.gpuBufferSize =
+                    gpuGroupSize;
 
-        _gpuGroupsBuffer.insert(_gpuGroupsBuffer.end(),
-            group.undispatchedNodes.begin() + cpuGroupSize,
-            group.undispatchedNodes.end());
+            _gpuGroupsBuffer.insert(_gpuGroupsBuffer.end(),
+                group.undispatchedNodes.begin() + cpuGroupSize,
+                group.undispatchedNodes.end());
+        }
+        else
+        {
+            getLog().postMessage(new Message('D', false, "GPU dispatch of " +
+                std::to_string(gpuGroupSize) + " skipped", "NodeGroups"));
+
+            group.gpuDispatch.gpuBufferBase =
+                    _gpuGroupsBuffer.size();
+            group.gpuDispatch.gpuBufferSize =
+                    0;
+        }
     }
 }
 
@@ -572,7 +585,15 @@ void NodeGroups::dispatchGpuWorkgroups()
 
         group.cpuOnlyDispatchedNodes.clear();
         group.cpuOnlyDispatchedNodes.resize(_cpuWorkgroupSize);
-        size_t cpuGroupSize = group.boundaryRange.end - group.boundaryRange.begin;
+
+        size_t cpuGroupSize = group.boundaryRange.end -
+                group.boundaryRange.begin;
+
+        if(group.gpuDispatch.gpuBufferSize == 0)
+        {
+            cpuGroupSize = group.undispatchedNodes.size();
+        }
+
         size_t maxDispatchSize = glm::ceil(double(cpuGroupSize) / _cpuWorkgroupSize);
         for(size_t w=0; w < _cpuWorkgroupSize; ++w)
         {
