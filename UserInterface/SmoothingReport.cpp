@@ -170,7 +170,6 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
 
 
 
-
     cursor.insertBlock(blockFormat);
     cursor.insertHtml("<h3>Node Groups</h3>");
 
@@ -260,8 +259,8 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
 
     size_t maxPassCount = 0;
     double minImplTime = INFINITY;
-    double minMinImplGain = INFINITY;
     double minMeanImplGain = INFINITY;
+    double minMinImplGain = INFINITY;
     size_t implCount = _plot.implementations().size();
     for(size_t i=0; i < implCount; ++i)
     {
@@ -271,15 +270,15 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
                 impl.passes.size());
 
         minMinImplGain = std::min(minMinImplGain,
-                impl.passes.back().histogram.minimumQuality() -
-                impl.passes.front().histogram.minimumQuality());
+                impl.finalHistogram.minimumQuality() -
+                _plot.initialHistogram().minimumQuality());
+
+        minMeanImplGain = std::min(minMeanImplGain,
+                impl.finalHistogram.harmonicMean() -
+                _plot.initialHistogram().harmonicMean());
 
         minImplTime = std::min(minImplTime,
                 impl.passes.back().timeStamp);
-
-        minMeanImplGain = std::min(minMeanImplGain,
-                impl.passes.back().histogram.harmonicMean() -
-                impl.passes.front().histogram.harmonicMean());
     }
 
     QTextTableFormat statsTableFormat;
@@ -289,7 +288,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.insertBlock(blockFormat);
     cursor.insertHtml("<h3>Minimum Quality</h3>");
     QTextTable* implMinQualTable = cursor.insertTable(
-        maxPassCount + 4,
+        maxPassCount + 5,
         implCount + 1,
         statsTableFormat);
 
@@ -298,8 +297,11 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     tableCursor.insertText("Passes", tableHeaderCharFormat);
     tableCell = implMinQualTable->cellAt(maxPassCount+2, 0);
     tableCursor = tableCell.firstCursorPosition();
-    tableCursor.insertText("Gain", tableTotalCharFormat);
+    tableCursor.insertText("Final", tableTotalCharFormat);
     tableCell = implMinQualTable->cellAt(maxPassCount+3, 0);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Gain", tableTotalCharFormat);
+    tableCell = implMinQualTable->cellAt(maxPassCount+4, 0);
     tableCursor = tableCell.firstCursorPosition();
     tableCursor.insertText("Ratio", tableTotalCharFormat);
     for(size_t p=0; p < maxPassCount; ++p)
@@ -327,13 +329,17 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
             tableCursor.insertText(QString::number(pass.histogram.minimumQuality(), 'f'));
         }
 
-        double minGain = impl.passes.back().histogram.minimumQuality() -
-                         impl.passes.front().histogram.minimumQuality();
+        double finalMin = impl.finalHistogram.minimumQuality();
+        double minGain = impl.finalHistogram.minimumQuality() -
+                         _plot.initialHistogram().minimumQuality();
 
         tableCell = implMinQualTable->cellAt(maxPassCount+2, i+1);
         tableCursor = tableCell.firstCursorPosition();
-        tableCursor.insertText(QString::number(minGain, 'f'));
+        tableCursor.insertText(QString::number(finalMin, 'f'));
         tableCell = implMinQualTable->cellAt(maxPassCount+3, i+1);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(minGain, 'f'));
+        tableCell = implMinQualTable->cellAt(maxPassCount+4, i+1);
         tableCursor = tableCell.firstCursorPosition();
         tableCursor.insertText(QString::number(minGain / minMinImplGain, 'f'));
     }
@@ -343,7 +349,7 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     cursor.insertBlock(blockFormat);
     cursor.insertHtml("<h3>Mean Quality</h3>");
     QTextTable* implMeanQualTable = cursor.insertTable(
-        maxPassCount + 4,
+        maxPassCount + 5,
         implCount + 1,
         statsTableFormat);
 
@@ -352,8 +358,11 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
     tableCursor.insertText("Passes", tableHeaderCharFormat);
     tableCell = implMeanQualTable->cellAt(maxPassCount+2, 0);
     tableCursor = tableCell.firstCursorPosition();
-    tableCursor.insertText("Gain", tableTotalCharFormat);
+    tableCursor.insertText("Final", tableTotalCharFormat);
     tableCell = implMeanQualTable->cellAt(maxPassCount+3, 0);
+    tableCursor = tableCell.firstCursorPosition();
+    tableCursor.insertText("Gain", tableTotalCharFormat);
+    tableCell = implMeanQualTable->cellAt(maxPassCount+4, 0);
     tableCursor = tableCell.firstCursorPosition();
     tableCursor.insertText("Ratio", tableTotalCharFormat);
     for(size_t p=0; p < maxPassCount; ++p)
@@ -381,13 +390,17 @@ void SmoothingReport::print(QTextDocument& document, bool paged) const
             tableCursor.insertText(QString::number(pass.histogram.harmonicMean(), 'f'));
         }
 
-        double meanGain = impl.passes.back().histogram.harmonicMean() -
-                         impl.passes.front().histogram.harmonicMean();
+        double finalMean = impl.finalHistogram.harmonicMean();
+        double meanGain = impl.finalHistogram.harmonicMean() -
+                         _plot.initialHistogram().harmonicMean();
 
         tableCell = implMeanQualTable->cellAt(maxPassCount+2, i+1);
         tableCursor = tableCell.firstCursorPosition();
-        tableCursor.insertText(QString::number(meanGain, 'f'));
+        tableCursor.insertText(QString::number(finalMean, 'f'));
         tableCell = implMeanQualTable->cellAt(maxPassCount+3, i+1);
+        tableCursor = tableCell.firstCursorPosition();
+        tableCursor.insertText(QString::number(meanGain, 'f'));
+        tableCell = implMeanQualTable->cellAt(maxPassCount+4, i+1);
         tableCursor = tableCell.firstCursorPosition();
         tableCursor.insertText(QString::number(meanGain / minMeanImplGain, 'f'));
     }
@@ -596,9 +609,9 @@ void SmoothingReport::printHistogramPlot(QPixmap& pixmap) const
     std::vector<const QualityHistogram*> hists;
     hists.push_back(&_plot.initialHistogram());
     for(const OptimizationImpl& impl : _plot.implementations())
-        hists.push_back(&impl.passes.back().histogram);
+        hists.push_back(&impl.finalHistogram);
 
-    // Initial Histogram (Bands)
+    // Histogram (Bands)
     double offset = 0.0;
     size_t bucketCount = initHist.bucketCount();
     double bandWidth = sceneWidth / (bucketCount * (hists.size()+1));

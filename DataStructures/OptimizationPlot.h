@@ -30,6 +30,7 @@ struct OptimizationImpl
     Configuration configuration;
     bool isTopologicalOperationOn;
     Properties smoothingProperties;
+    QualityHistogram finalHistogram;
     std::vector<OptimizationPass> passes;
 
     void addSmoothingProperty(const std::string& name, const std::string& value);

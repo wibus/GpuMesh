@@ -596,6 +596,14 @@ void GpuMeshCharacter::benchmarkSmoothers(
               ": " + _mesh->modelName);
 
 
+    std::shared_ptr<Mesh> currMesh(new Mesh(*_mesh));
+    std::shared_ptr<AbstractSampler> currSampler = _meshCrew->samplerPtr();
+
+    std::shared_ptr<AbstractSampler> analyticSampler;
+    _availableSamplers.select("Analytic", analyticSampler);
+    _meshCrew->setSampler(*_mesh, analyticSampler);
+    updateSampling();
+
     QualityHistogram initialHistogram;
     _meshCrew->evaluator().evaluateMeshQualityThread(
         *_mesh, _meshCrew->sampler(), _meshCrew->measurer(),
@@ -605,10 +613,6 @@ void GpuMeshCharacter::benchmarkSmoothers(
     plot.setMeshModelName(_mesh->modelName);
     plot.setInitialHistogram(initialHistogram);
     plot.setNodeGroups(_mesh->nodeGroups());
-
-
-    std::shared_ptr<Mesh> currMesh(new Mesh(*_mesh));
-    std::shared_ptr<AbstractSampler> currSampler = _meshCrew->samplerPtr();
 
     for(const Configuration& config : configurations)
     {
@@ -639,6 +643,13 @@ void GpuMeshCharacter::benchmarkSmoothers(
                     config.implementationName,
                     schedule,
                     impl);
+
+                _meshCrew->setSampler(*_mesh, analyticSampler);
+                updateSampling();
+
+                _meshCrew->evaluator().evaluateMeshQualityThread(
+                    *_mesh, _meshCrew->sampler(), _meshCrew->measurer(),
+                    impl.finalHistogram);
 
                 plot.addImplementation(impl);
             }

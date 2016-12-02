@@ -539,7 +539,10 @@ void NodeGroups::clusterNodes(Mesh& mesh,
         size_t cpuGroupSize = group.boundaryRange.end - group.boundaryRange.begin;
         size_t gpuGroupSize = group.undispatchedNodes.size() - cpuGroupSize;
 
-        if(gpuGroupSize > 128)
+        // This threshold makes sure small dispatch aren't sent to the GPU
+        // Small dispatch may produce more latency that parallelism mar recover
+        size_t gpuGroupSizeThreshold = 16;
+        if(gpuGroupSize >= gpuGroupSizeThreshold)
         {
             group.gpuDispatch.gpuBufferBase =
                     _gpuGroupsBuffer.size();
