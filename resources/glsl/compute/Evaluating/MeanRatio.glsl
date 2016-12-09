@@ -25,7 +25,7 @@ float cornerQuality(in mat3 Fk)
     return sign(Fk_det) * 3.0 * pow(abs(Fk_det), 2.0/3.0) / Fk_frobenius2;
 }
 
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
+float tetQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Tet tet)
 {
     vec3 e03 = riemannianSegment(vp[0], vp[3], tet.c[0]);
     vec3 e13 = riemannianSegment(vp[1], vp[3], tet.c[0]);
@@ -39,7 +39,7 @@ float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
     return qual0;
 }
 
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
+float priQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Pri pri)
 {
     vec3 e03 = riemannianSegment(vp[0], vp[3], pri.c[0]);
     vec3 e14 = riemannianSegment(vp[1], vp[4], pri.c[1]);
@@ -90,7 +90,7 @@ float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
     }
 }
 
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
+float hexQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Hex hex)
 {
     // Since hex's corner matrix is the identity matrix,
     // there's no need to define Fr_HEX_INV.

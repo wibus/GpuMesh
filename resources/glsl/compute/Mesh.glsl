@@ -6,6 +6,35 @@
 #extension GL_NV_shader_atomic_float : enable
 
 
+//////////////////////////////////
+// Mesh elements decompositions //
+//////////////////////////////////
+
+// Tetrahedron
+const int TET_ELEMENT_TYPE = 0;
+const uint TET_VERTEX_COUNT = 4;
+
+
+// Pyramid
+const int PYR_ELEMENT_TYPE = 1;
+const uint PYR_VERTEX_COUNT = 5;
+
+
+// Prism
+const int PRI_ELEMENT_TYPE = 2;
+const uint PRI_VERTEX_COUNT = 6;
+
+
+// Hexahedron
+const int HEX_ELEMENT_TYPE = 3;
+const uint HEX_VERTEX_COUNT = 8;
+
+
+// Vertex count in parameters
+const int PARAM_VERTEX_COUNT = 8;
+
+
+
 ////////////////////
 // Mesh tructures //
 ////////////////////
@@ -54,6 +83,16 @@ struct NeigElem
     int type;
     uint id;
 };
+
+struct PatchElem
+{
+    uint n;
+    uint type;
+
+    Tet tet; Pri pri; Hex hex;
+    vec3 p[PARAM_VERTEX_COUNT];
+};
+
 
 // Topology indirection table
 // type == -1 : fixed vertex
@@ -143,23 +182,3 @@ layout(std140, binding = REF_METRICS_BUFFER_BINDING) buffer RefMetrics
     mat4 refMetrics[];
 };
 
-
-
-
-//////////////////////////////////
-// Mesh elements decompositions //
-//////////////////////////////////
-
-// Tetrahedron
-const int TET_ELEMENT_TYPE = 0;
-const uint TET_VERTEX_COUNT = 4;
-
-
-// Prism
-const int PRI_ELEMENT_TYPE = 1;
-const uint PRI_VERTEX_COUNT = 6;
-
-
-// Hexahedron
-const int HEX_ELEMENT_TYPE = 2;
-const uint HEX_VERTEX_COUNT = 8;

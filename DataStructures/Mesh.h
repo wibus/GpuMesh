@@ -150,7 +150,7 @@ struct MeshPri
     inline uint operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
 
-    static const int ELEMENT_TYPE = 1;
+    static const int ELEMENT_TYPE = 2;
     static const uint VERTEX_COUNT = 6;
     static const uint EDGE_COUNT = 9;
     static const MeshEdge edges[EDGE_COUNT];
@@ -188,7 +188,7 @@ struct MeshHex
     inline uint operator[] (uint i) { return v[i]; }
     inline const uint& operator[] (uint i) const { return v[i]; }
 
-    static const int ELEMENT_TYPE = 2;
+    static const int ELEMENT_TYPE = 3;
     static const uint VERTEX_COUNT = 8;
     static const uint EDGE_COUNT = 12;
     static const MeshEdge edges[EDGE_COUNT];

@@ -6,6 +6,31 @@
 using namespace glm;
 
 
+//////////////////////////////////
+// Mesh elements decompositions //
+//////////////////////////////////
+
+// Tetrahedron
+#define TET_ELEMENT_TYPE int(0)
+#define TET_VERTEX_COUNT uint(4)
+
+
+// Pyramid
+#define PYR_ELEMENT_TYPE int(1)
+#define PYR_VERTEX_COUNT uint(5)
+
+
+// Prism
+#define PRI_ELEMENT_TYPE int(2)
+#define PRI_VERTEX_COUNT uint(6)
+
+
+// Hexahedron
+#define HEX_ELEMENT_TYPE int(3)
+#define HEX_VERTEX_COUNT uint(8)
+
+
+
 ////////////////////
 // Mesh tructures //
 ////////////////////
@@ -111,25 +136,6 @@ extern __device__ mat4* refMetrics;
 extern __constant__ int GroupBase;
 extern __constant__ int GroupSize;
 
-
-
-//////////////////////////////////
-// Mesh elements decompositions //
-//////////////////////////////////
-
-// Tetrahedron
-#define TET_ELEMENT_TYPE int(0)
-#define TET_VERTEX_COUNT uint(4)
-
-
-// Prism
-#define PRI_ELEMENT_TYPE int(1)
-#define PRI_VERTEX_COUNT uint(6)
-
-
-// Hexahedron
-#define HEX_ELEMENT_TYPE int(2)
-#define HEX_VERTEX_COUNT uint(8)
 
 
 

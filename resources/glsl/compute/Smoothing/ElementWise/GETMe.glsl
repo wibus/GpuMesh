@@ -2,12 +2,12 @@ uniform float Lambda;
 
 
 // Quality Interface
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
-float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
-float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
-float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
+float tetQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Tet tet);
+float priQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Pri pri);
+float hexQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Hex hex);
+float tetVolume(in vec3 vp[PARAM_VERTEX_COUNT], inout Tet tet);
+float priVolume(in vec3 vp[PARAM_VERTEX_COUNT], inout Pri pri);
+float hexVolume(in vec3 vp[PARAM_VERTEX_COUNT], inout Hex hex);
 
 // Vertex Accum
 void addPosition(in uint vId, in vec3 pos, in float weight);

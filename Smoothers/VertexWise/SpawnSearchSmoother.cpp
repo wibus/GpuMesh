@@ -91,23 +91,23 @@ void SpawnSearchSmoother::smoothMeshCuda(
 bool SpawnSearchSmoother::verifyMeshForGpuLimitations(
             const Mesh& mesh) const
 {
-    if(!mesh.pris.empty())
-    {
-        getLog().postMessage(new Message('E', false,
-            "This mesh contains prismatic elements. "\
-            "This smoother does not support this type of element yet.",
-            "SpawnSearchSmoother"));
-        return false;
-    }
+//    if(!mesh.pris.empty())
+//    {
+//        getLog().postMessage(new Message('E', false,
+//            "This mesh contains prismatic elements. "\
+//            "This smoother does not support this type of element yet.",
+//            "SpawnSearchSmoother"));
+//        return false;
+//    }
 
-    if(!mesh.hexs.empty())
-    {
-        getLog().postMessage(new Message('E', false,
-            "This mesh contains hexahedral elements. "\
-            "This smoother does not support this type of element yet.",
-            "SpawnSearchSmoother"));
-        return false;
-    }
+//    if(!mesh.hexs.empty())
+//    {
+//        getLog().postMessage(new Message('E', false,
+//            "This mesh contains hexahedral elements. "\
+//            "This smoother does not support this type of element yet.",
+//            "SpawnSearchSmoother"));
+//        return false;
+//    }
 
 //    for(const MeshTopo& topo : mesh.topos)
 //    {

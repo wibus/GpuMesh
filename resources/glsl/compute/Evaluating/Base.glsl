@@ -3,9 +3,9 @@
 ///////////////////////////////
 
 // Externally defined
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri);
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex);
+float tetQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Tet tet);
+float priQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Pri pri);
+float hexQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Hex hex);
 
 // Internally defined
 float tetQuality(inout Tet tet);
@@ -26,7 +26,11 @@ float tetQuality(inout Tet tet)
         verts[tet.v[0]].p,
         verts[tet.v[1]].p,
         verts[tet.v[2]].p,
-        verts[tet.v[3]].p
+        verts[tet.v[3]].p,
+        vec3(0),
+        vec3(0),
+        vec3(0),
+        vec3(0)
     );
 
     return tetQuality(vp, tet);
@@ -40,7 +44,9 @@ float priQuality(inout Pri pri)
         verts[pri.v[2]].p,
         verts[pri.v[3]].p,
         verts[pri.v[4]].p,
-        verts[pri.v[5]].p
+        verts[pri.v[5]].p,
+        vec3(0),
+        vec3(0)
     );
 
     return priQuality(vp, pri);

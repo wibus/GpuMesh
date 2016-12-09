@@ -13,7 +13,7 @@ vec3 riemannianSegment(in vec3 a, in vec3 b, inout uint cachedRefTet)
     return (b - a) * MetricScaling;
 }
 
-float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
+float tetVolume(in vec3 vp[PARAM_VERTEX_COUNT], inout Tet tet)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(
@@ -24,7 +24,7 @@ float tetVolume(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
     return MetricScalingCube * detSum / 6.0;
 }
 
-float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
+float priVolume(in vec3 vp[PARAM_VERTEX_COUNT], inout Pri pri)
 {
     vec3 e02 = vp[2] - vp[0];
     vec3 e12 = vp[2] - vp[1];
@@ -41,7 +41,7 @@ float priVolume(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
     return MetricScalingCube * detSum / 6.0;
 }
 
-float hexVolume(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
+float hexVolume(in vec3 vp[PARAM_VERTEX_COUNT], inout Hex hex)
 {
     float detSum = 0.0;
     detSum += determinant(mat3(

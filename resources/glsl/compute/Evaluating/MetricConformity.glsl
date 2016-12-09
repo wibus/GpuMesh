@@ -48,7 +48,7 @@ float metricConformity(in mat3 Fk, in mat3 Ms)
     return Fk_sign / sqrt(1.0 + sqrt(tNc_frobenius2));
 }
 
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
+float tetQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Tet tet)
 {
     vec3 e03 = vp[3] - vp[0];
     vec3 e13 = vp[3] - vp[1];
@@ -63,7 +63,7 @@ float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet)
     return qual0;
 }
 
-float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
+float priQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Pri pri)
 {
     vec3 e03 = vp[3] - vp[0];
     vec3 e14 = vp[4] - vp[1];
@@ -120,7 +120,7 @@ float priQuality(in vec3 vp[PRI_VERTEX_COUNT], inout Pri pri)
     }
 }
 
-float hexQuality(in vec3 vp[HEX_VERTEX_COUNT], inout Hex hex)
+float hexQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Hex hex)
 {
     vec3 e01 = vp[1] - vp[0];
     vec3 e03 = vp[3] - vp[0];

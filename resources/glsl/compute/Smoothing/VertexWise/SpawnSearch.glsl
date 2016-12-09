@@ -3,37 +3,31 @@ const uint ELEM_SLOT_COUNT = 128;
 
 layout (local_size_x = SPAWN_COUNT, local_size_y = 1, local_size_z = 1) in;
 
-
-struct TetVert
-{
-    vec3 p[TET_VERTEX_COUNT];
-};
-
 layout(shared, binding = SPAWN_OFFSETS_BUFFER_BINDING) buffer Offsets
 {
     vec4 offsets[];
 };
 
-shared Tet tetElems[ELEM_SLOT_COUNT];
-shared TetVert tetVerts[ELEM_SLOT_COUNT];
+shared PatchElem patchElems[ELEM_SLOT_COUNT];
 shared float qualities[SPAWN_COUNT];
 uniform float MoveCoeff;
+
 
 // Independent group range
 uniform int GroupBase;
 uniform int GroupSize;
 
 
-// Externally defined
-float tetQuality(in vec3 vp[TET_VERTEX_COUNT], inout Tet tet);
+// Smoothing helper
+float computeLocalElementSize(in uint vId);
+float tetQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Tet tet);
+float priQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Pri pri);
+float hexQuality(in vec3 vp[PARAM_VERTEX_COUNT], inout Hex hex);
 float finalizePatchQuality(in double patchQuality, in double patchWeight);
 void accumulatePatchQuality(
         inout double patchQuality,
         inout double patchWeight,
         in double elemQuality);
-
-// Smoothing helper
-float computeLocalElementSize(in uint vId);
 
 
 // ENTRY POINT //
@@ -46,19 +40,62 @@ void smoothVert(uint vId)
     uint firstLoad = (neigElemCount * lId) / gl_WorkGroupSize.x;
     uint lastLoad = (neigElemCount * (lId+1)) / gl_WorkGroupSize.x;
 
-    for(uint eId = firstLoad; eId < lastLoad; ++eId)
+    for(uint e = firstLoad; e < lastLoad; ++e)
     {
-        NeigElem elem = neigElems[topo.neigElemBase + eId];
+        NeigElem elem = neigElems[topo.neigElemBase + e];
+        patchElems[e].type = elem.type;
+        patchElems[e].n = 0;
 
-        Tet tet = tets[elem.id];
-        tetElems[eId] = tet;
+        switch(patchElems[e].type)
+        {
+        case TET_ELEMENT_TYPE :
+            patchElems[e].tet = tets[elem.id];
+            patchElems[e].p[0] = verts[patchElems[e].tet.v[0]].p;
+            patchElems[e].p[1] = verts[patchElems[e].tet.v[1]].p;
+            patchElems[e].p[2] = verts[patchElems[e].tet.v[2]].p;
+            patchElems[e].p[3] = verts[patchElems[e].tet.v[3]].p;
 
-        tetVerts[eId] = TetVert(vec3[](
-            verts[tet.v[0]].p,
-            verts[tet.v[1]].p,
-            verts[tet.v[2]].p,
-            verts[tet.v[3]].p
-        ));
+            if(patchElems[e].tet.v[1] == vId) patchElems[e].n = 1;
+            else if(patchElems[e].tet.v[2] == vId) patchElems[e].n = 2;
+            else if(patchElems[e].tet.v[3] == vId) patchElems[e].n = 3;
+            break;
+
+        case PRI_ELEMENT_TYPE :
+            patchElems[e].pri = pris[elem.id];
+            patchElems[e].p[0] = verts[patchElems[e].pri.v[0]].p;
+            patchElems[e].p[1] = verts[patchElems[e].pri.v[1]].p;
+            patchElems[e].p[2] = verts[patchElems[e].pri.v[2]].p;
+            patchElems[e].p[3] = verts[patchElems[e].pri.v[3]].p;
+            patchElems[e].p[4] = verts[patchElems[e].pri.v[4]].p;
+            patchElems[e].p[5] = verts[patchElems[e].pri.v[5]].p;
+
+            if(patchElems[e].pri.v[1] == vId) patchElems[e].n = 1;
+            else if(patchElems[e].pri.v[2] == vId) patchElems[e].n = 2;
+            else if(patchElems[e].pri.v[3] == vId) patchElems[e].n = 3;
+            else if(patchElems[e].pri.v[4] == vId) patchElems[e].n = 4;
+            else if(patchElems[e].pri.v[5] == vId) patchElems[e].n = 5;
+            break;
+
+        case HEX_ELEMENT_TYPE :
+            patchElems[e].hex = hexs[elem.id];
+            patchElems[e].p[0] = verts[patchElems[e].hex.v[0]].p;
+            patchElems[e].p[1] = verts[patchElems[e].hex.v[1]].p;
+            patchElems[e].p[2] = verts[patchElems[e].hex.v[2]].p;
+            patchElems[e].p[3] = verts[patchElems[e].hex.v[3]].p;
+            patchElems[e].p[4] = verts[patchElems[e].hex.v[4]].p;
+            patchElems[e].p[5] = verts[patchElems[e].hex.v[5]].p;
+            patchElems[e].p[6] = verts[patchElems[e].hex.v[6]].p;
+            patchElems[e].p[7] = verts[patchElems[e].hex.v[7]].p;
+
+            if(patchElems[e].hex.v[1] == vId) patchElems[e].n = 1;
+            else if(patchElems[e].hex.v[2] == vId) patchElems[e].n = 2;
+            else if(patchElems[e].hex.v[3] == vId) patchElems[e].n = 3;
+            else if(patchElems[e].hex.v[4] == vId) patchElems[e].n = 4;
+            else if(patchElems[e].hex.v[5] == vId) patchElems[e].n = 5;
+            else if(patchElems[e].hex.v[6] == vId) patchElems[e].n = 6;
+            else if(patchElems[e].hex.v[7] == vId) patchElems[e].n = 7;
+            break;
+        }
     }
 
     // Compute local element size
@@ -78,21 +115,36 @@ void smoothVert(uint vId)
         double patchQuality = 0.0;
         for(uint i=0; i < neigElemCount; ++i)
         {
-            Tet tetElem = tetElems[i];
-            TetVert tetVert = tetVerts[i];
+            vec3 vertPos[] = vec3[](
+                patchElems[i].p[0],
+                patchElems[i].p[1],
+                patchElems[i].p[2],
+                patchElems[i].p[3],
+                patchElems[i].p[4],
+                patchElems[i].p[5],
+                patchElems[i].p[6],
+                patchElems[i].p[7]
+            );
 
-            if(tetElem.v[0] == vId)
-                tetVert.p[0] = spawnPos;
-            else if(tetElem.v[1] == vId)
-                tetVert.p[1] = spawnPos;
-            else if(tetElem.v[2] == vId)
-                tetVert.p[2] = spawnPos;
-            else if(tetElem.v[3] == vId)
-                tetVert.p[3] = spawnPos;
+            vertPos[patchElems[i].n] = spawnPos;
+
+            float qual = 0.0;
+            switch(patchElems[i].type)
+            {
+            case TET_ELEMENT_TYPE :
+                qual = tetQuality(vertPos, patchElems[i].tet);
+                break;
+            case PRI_ELEMENT_TYPE :
+                qual = priQuality(vertPos, patchElems[i].pri);
+                break;
+            case HEX_ELEMENT_TYPE :
+                qual = hexQuality(vertPos, patchElems[i].hex);
+                break;
+            }
 
             accumulatePatchQuality(
                 patchQuality, patchWeight,
-                double(tetQuality(tetVert.p, tetElem)));
+                double(qual));
         }
 
         qualities[lId] = finalizePatchQuality(patchQuality, patchWeight);
