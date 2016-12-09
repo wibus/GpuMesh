@@ -11,38 +11,40 @@
 #define GRAD_SAMP_COUNT uint(6)
 #define LINE_SAMP_COUNT uint(8)
 
-struct PatchElem
+#define MIN_MAX 2147483647
+
+
+namespace pgd
 {
-    __device__ PatchElem() {}
+    struct PatchElem
+    {
+        __device__ PatchElem() {}
 
-    uint type;
-    uint n;
+        uint type;
+        uint n;
 
-    Tet tet;
-    Pri pri;
-    Hex hex;
-    vec3 p[HEX_VERTEX_COUNT];
-};
+        Tet tet;
+        Pri pri;
+        Hex hex;
+        vec3 p[HEX_VERTEX_COUNT];
+    };
 
-__constant__ int PGDSecurityCycleCount;
-__constant__ float PGDLocalSizeToNodeShift;
+    __constant__ int SECURITY_CYCLE_COUNT;
+    __constant__ float LOCAL_SIZE_TO_NODE_SHIFT;
 
-__shared__ float nodeShift;
-__shared__ float3 lineShift;
-__shared__ extern PatchElem patchElems[];
-__shared__ float elemQual[POSITION_THREAD_COUNT][ELEMENT_SLOT_COUNT];
-__shared__ float patchQual[POSITION_THREAD_COUNT];
+    __shared__ float nodeShift;
+    __shared__ float3 lineShift;
+    __shared__ extern PatchElem patchElems[];
+    __shared__ int patchMin[POSITION_THREAD_COUNT];
+    __shared__ float patchMean[POSITION_THREAD_COUNT];
+    __shared__ float patchQual[POSITION_THREAD_COUNT];
+}
+
+using namespace pgd;
 
 
 // Smoothing Helper
 __device__ float computeLocalElementSize(uint vId);
-__device__ void accumulatePatchQuality(
-        double& patchQuality,
-        double& patchWeight,
-        double elemQuality);
-__device__ float finalizePatchQuality(
-        double patchQuality,
-        double patchWeight);
 
 
 // ENTRY POINT //
@@ -127,19 +129,25 @@ __device__ void patchGradDsntSmoothVert(uint vId)
         }
     }
 
+    if(eId == 0)
+    {
+        patchMin[pId] = MIN_MAX;
+        patchMean[pId] = 0.0;
+    }
+
     if(pId == 0 && eId == 0)
     {
         // Compute local element size
         float localSize = computeLocalElementSize(vId);
 
         // Initialize node shift distance
-        nodeShift = localSize * PGDLocalSizeToNodeShift;
+        nodeShift = localSize * LOCAL_SIZE_TO_NODE_SHIFT;
     }
 
     __syncthreads();
 
     float originalNodeShift = nodeShift;
-    for(int c=0; c < PGDSecurityCycleCount; ++c)
+    for(int c=0; c < SECURITY_CYCLE_COUNT; ++c)
     {
         vec3 pos = verts[vId].p;
 
@@ -160,33 +168,36 @@ __device__ void patchGradDsntSmoothVert(uint vId)
 
                 vertPos[patchElems[e].n] = pos + GRAD_SAMPS[pId] * nodeShift;
 
+                float qual = 0.0;
                 switch(patchElems[e].type)
                 {
                 case TET_ELEMENT_TYPE :
-                    elemQual[pId][e] = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                    qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
                     break;
                 case PRI_ELEMENT_TYPE :
-                    elemQual[pId][e] = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                    qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
                     break;
                 case HEX_ELEMENT_TYPE :
-                    elemQual[pId][e] = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                    qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
                     break;
                 }
+
+                atomicMin(&patchMin[pId], qual * MIN_MAX);
+                atomicAdd(&patchMean[pId], 1.0 / qual);
             }
         }
 
         __syncthreads();
 
-        if(eId == 0 && pId < GRAD_SAMP_COUNT)
+        if(eId == 0)
         {
-            double patchWeight = 0.0;
-            double patchQuality = 0.0;
-            for(uint e = 0; e < neigElemCount; ++e)
-                accumulatePatchQuality(
-                    patchQuality, patchWeight,
-                    double(elemQual[pId][e]));
+            if(patchMin[pId] <= 0.0)
+                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
+            else
+                patchQual[pId] = neigElemCount / patchMean[pId];
 
-            patchQual[pId] = finalizePatchQuality(patchQuality, patchWeight);
+            patchMin[pId] = MIN_MAX;
+            patchMean[pId] = 0.0;
         }
 
         __syncthreads();
@@ -228,32 +239,36 @@ __device__ void patchGradDsntSmoothVert(uint vId)
             };
 
             vertPos[patchElems[e].n] = pos + toVec3(lineShift) * LINE_SAMPS[pId];
+
+            float qual = 0.0;
             switch(patchElems[e].type)
             {
             case TET_ELEMENT_TYPE :
-                elemQual[pId][e] = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
                 break;
             case PRI_ELEMENT_TYPE :
-                elemQual[pId][e] = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
                 break;
             case HEX_ELEMENT_TYPE :
-                elemQual[pId][e] = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
                 break;
             }
+
+            atomicMin(&patchMin[pId], qual * MIN_MAX);
+            atomicAdd(&patchMean[pId], 1.0 / qual);
         }
 
         __syncthreads();
 
         if(eId == 0)
         {
-            double patchWeight = 0.0;
-            double patchQuality = 0.0;
-            for(uint e = 0; e < neigElemCount; ++e)
-                accumulatePatchQuality(
-                    patchQuality, patchWeight,
-                    double(elemQual[pId][e]));
+            if(patchMin[pId] <= 0.0)
+                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
+            else
+                patchQual[pId] = neigElemCount / patchMean[pId];
 
-            patchQual[pId] = finalizePatchQuality(patchQuality, patchWeight);
+            patchMin[pId] = 1.0;
+            patchMean[pId] = 0.0;
         }
 
         __syncthreads();
@@ -312,8 +327,8 @@ void installCudaPatchGradDsntSmoother(
 //    cudaMemcpyFromSymbol(&d_smoothVert, patchGradDsntSmoothVertPtr, sizeof(smoothVertFct));
 //    cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
-    cudaMemcpyToSymbol(PGDSecurityCycleCount, &h_securityCycleCount, sizeof(int));
-    cudaMemcpyToSymbol(PGDLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
+    cudaMemcpyToSymbol(SECURITY_CYCLE_COUNT, &h_securityCycleCount, sizeof(int));
+    cudaMemcpyToSymbol(LOCAL_SIZE_TO_NODE_SHIFT, &h_localSizeToNodeShift, sizeof(float));
 
 
     if(verboseCuda)

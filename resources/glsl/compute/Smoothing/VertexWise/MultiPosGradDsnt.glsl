@@ -5,8 +5,6 @@ const uint ELEMENT_SLOT_COUNT = 96;
 const uint GRAD_SAMP_COUNT = 6;
 const uint LINE_SAMP_COUNT = 8;
 
-const int MIN_MAX = 2147483647;
-
 layout (local_size_x = POSITION_THREAD_COUNT, local_size_y = ELEMENT_THREAD_COUNT, local_size_z = 1) in;
 
 struct PatchElem
@@ -30,8 +28,7 @@ uniform float LocalSizeToNodeShift;
 shared float nodeShift;
 shared vec3 lineShift;
 shared PatchElem patchElems[ELEMENT_SLOT_COUNT];
-shared int patchMin[POSITION_THREAD_COUNT];
-shared float patchMean[POSITION_THREAD_COUNT];
+shared float elemQual[POSITION_THREAD_COUNT][ELEMENT_SLOT_COUNT];
 shared float patchQual[POSITION_THREAD_COUNT];
 
 
@@ -131,12 +128,6 @@ void smoothVert(uint vId)
         }
     }
 
-    if(eId == 0)
-    {
-        patchMin[pId] = MIN_MAX;
-        patchMean[pId] = 0.0;
-    }
-
     if(pId == 0 && eId == 0)
     {
         // Compute local element size
@@ -159,7 +150,6 @@ void smoothVert(uint vId)
             {
                 vec3 newPos = pos + GRAD_SAMPS[pId] * nodeShift;
 
-                float qual = 0.0;
                 switch(patchElems[e].type)
                 {
                 case TET_ELEMENT_TYPE :
@@ -170,7 +160,7 @@ void smoothVert(uint vId)
                         patchElems[e].p[3]
                     );
                     tetPos[patchElems[e].n] = newPos;
-                    qual = tetQuality(tetPos, patchElems[e].tet);
+                    elemQual[pId][e] = tetQuality(tetPos, patchElems[e].tet);
                     break;
                 case PRI_ELEMENT_TYPE :
                     vec3 priPos[PRI_VERTEX_COUNT] = vec3[](
@@ -182,7 +172,7 @@ void smoothVert(uint vId)
                         patchElems[e].p[5]
                     );
                     priPos[patchElems[e].n] = newPos;
-                    qual = priQuality(priPos, patchElems[e].pri);
+                    elemQual[pId][e] = priQuality(priPos, patchElems[e].pri);
                     break;
                 case HEX_ELEMENT_TYPE :
                     vec3 hexPos[HEX_VERTEX_COUNT] = vec3[](
@@ -196,26 +186,24 @@ void smoothVert(uint vId)
                         patchElems[e].p[7]
                     );
                     hexPos[patchElems[e].n] = newPos;
-                    qual = hexQuality(hexPos, patchElems[e].hex);
+                    elemQual[pId][e] = hexQuality(hexPos, patchElems[e].hex);
                     break;
                 }
-
-                atomicMin(patchMin[pId], int(qual * MIN_MAX));
-                atomicAdd(patchMean[pId], 1.0 / qual);
             }
         }
 
         barrier();
 
-        if(eId == 0)
+        if(eId == 0 && pId < GRAD_SAMP_COUNT)
         {
-            if(patchMin[pId] <= 0.0)
-                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
-            else
-                patchQual[pId] = neigElemCount / patchMean[pId];
+            double patchWeight = 0.0;
+            double patchQuality = 0.0;
+            for(uint e = 0; e < neigElemCount; ++e)
+                accumulatePatchQuality(
+                    patchQuality, patchWeight,
+                    double(elemQual[pId][e]));
 
-            patchMin[pId] = MIN_MAX;
-            patchMean[pId] = 0.0;
+            patchQual[pId] = finalizePatchQuality(patchQuality, patchWeight);
         }
 
         barrier();
@@ -243,7 +231,6 @@ void smoothVert(uint vId)
         {
             vec3 newPos = pos + lineShift * LINE_SAMPS[pId];
 
-            float qual = 0.0;
             switch(patchElems[e].type)
             {
             case TET_ELEMENT_TYPE :
@@ -254,7 +241,7 @@ void smoothVert(uint vId)
                     patchElems[e].p[3]
                 );
                 tetPos[patchElems[e].n] = newPos;
-                qual = tetQuality(tetPos, patchElems[e].tet);
+                elemQual[pId][e] = tetQuality(tetPos, patchElems[e].tet);
                 break;
             case PRI_ELEMENT_TYPE :
                 vec3 priPos[PRI_VERTEX_COUNT] = vec3[](
@@ -266,7 +253,7 @@ void smoothVert(uint vId)
                     patchElems[e].p[5]
                 );
                 priPos[patchElems[e].n] = newPos;
-                qual = priQuality(priPos, patchElems[e].pri);
+                elemQual[pId][e] = priQuality(priPos, patchElems[e].pri);
                 break;
             case HEX_ELEMENT_TYPE :
                 vec3 hexPos[HEX_VERTEX_COUNT] = vec3[](
@@ -280,25 +267,23 @@ void smoothVert(uint vId)
                     patchElems[e].p[7]
                 );
                 hexPos[patchElems[e].n] = newPos;
-                qual = hexQuality(hexPos, patchElems[e].hex);
+                elemQual[pId][e] = hexQuality(hexPos, patchElems[e].hex);
                 break;
             }
-
-            atomicMin(patchMin[pId], int(qual * MIN_MAX));
-            atomicAdd(patchMean[pId], 1.0 / qual);
         }
 
         barrier();
 
         if(eId == 0)
         {
-            if(patchMin[pId] <= 0.0)
-                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
-            else
-                patchQual[pId] = neigElemCount / patchMean[pId];
+            double patchWeight = 0.0;
+            double patchQuality = 0.0;
+            for(uint e = 0; e < neigElemCount; ++e)
+                accumulatePatchQuality(
+                    patchQuality, patchWeight,
+                    double(elemQual[pId][e]));
 
-            patchMin[pId] = MIN_MAX;
-            patchMean[pId] = 0.0;
+            patchQual[pId] = finalizePatchQuality(patchQuality, patchWeight);
         }
 
         barrier();

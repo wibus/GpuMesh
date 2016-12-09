@@ -1,7 +1,12 @@
 #include "Base.cuh"
 
-__constant__ int GDSecurityCycleCount;
-__constant__ float GDLocalSizeToNodeShift;
+namespace gd
+{
+    __constant__ int SECURITY_CYCLE_COUNT;
+    __constant__ float LOCAL_SIZE_TONODE_SHIFT;
+}
+
+using namespace gd;
 
 
 // Smoothing Helper
@@ -16,10 +21,10 @@ __device__ void gradientDescentSmoothVert(uint vId)
     float localSize = computeLocalElementSize(vId);
 
     // Initialize node shift distance
-    float nodeShift = localSize * GDLocalSizeToNodeShift;
+    float nodeShift = localSize * LOCAL_SIZE_TONODE_SHIFT;
     float originalNodeShift = nodeShift;
 
-    for(int c=0; c < GDSecurityCycleCount; ++c)
+    for(int c=0; c < SECURITY_CYCLE_COUNT; ++c)
     {
         // Define patch quality gradient samples
         vec3 pos = verts[vId].p;
@@ -119,8 +124,8 @@ void installCudaGradientDescentSmoother(
     cudaMemcpyFromSymbol(&d_smoothVert, gradientDescentSmoothVertPtr, sizeof(smoothVertFct));
     cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
-    cudaMemcpyToSymbol(GDSecurityCycleCount, &h_securityCycleCount, sizeof(int));
-    cudaMemcpyToSymbol(GDLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
+    cudaMemcpyToSymbol(SECURITY_CYCLE_COUNT, &h_securityCycleCount, sizeof(int));
+    cudaMemcpyToSymbol(LOCAL_SIZE_TONODE_SHIFT, &h_localSizeToNodeShift, sizeof(float));
 
 
     if(verboseCuda)
