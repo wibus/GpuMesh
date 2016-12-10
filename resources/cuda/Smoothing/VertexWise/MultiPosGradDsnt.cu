@@ -11,6 +11,8 @@
 #define GRAD_SAMP_COUNT uint(6)
 #define LINE_SAMP_COUNT uint(8)
 
+#define MIN_MAX 2147483647
+
 
 namespace mpgd
 {
@@ -20,21 +22,16 @@ namespace mpgd
     __shared__ float nodeShift;
     __shared__ float3 lineShift;
     __shared__ extern PatchElem patchElems[];
-    __shared__ float elemQual[POSITION_THREAD_COUNT][ELEMENT_SLOT_COUNT];
+    __shared__ int patchMin[POSITION_THREAD_COUNT];
+    __shared__ float patchMean[POSITION_THREAD_COUNT];
     __shared__ float patchQual[POSITION_THREAD_COUNT];
 }
 
 using namespace mpgd;
 
+
 // Smoothing Helper
 __device__ float computeLocalElementSize(uint vId);
-__device__ void accumulatePatchQuality(
-        double& patchQuality,
-        double& patchWeight,
-        double elemQuality);
-__device__ float finalizePatchQuality(
-        double patchQuality,
-        double patchWeight);
 
 
 // ENTRY POINT //
@@ -119,6 +116,12 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
         }
     }
 
+    if(eId == 0)
+    {
+        patchMin[pId] = MIN_MAX;
+        patchMean[pId] = 0.0;
+    }
+
     if(pId == 0 && eId == 0)
     {
         // Compute local element size
@@ -152,18 +155,22 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
 
                 vertPos[patchElems[e].n] = pos + GRAD_SAMPS[pId] * nodeShift;
 
+                float qual = 0.0;
                 switch(patchElems[e].type)
                 {
                 case TET_ELEMENT_TYPE :
-                    elemQual[pId][e] = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                    qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
                     break;
                 case PRI_ELEMENT_TYPE :
-                    elemQual[pId][e] = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                    qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
                     break;
                 case HEX_ELEMENT_TYPE :
-                    elemQual[pId][e] = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                    qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
                     break;
                 }
+
+                atomicMin(&patchMin[pId], qual * MIN_MAX);
+                atomicAdd(&patchMean[pId], 1.0 / qual);
             }
         }
 
@@ -171,14 +178,13 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
 
         if(eId == 0 && pId < GRAD_SAMP_COUNT)
         {
-            double patchWeight = 0.0;
-            double patchQuality = 0.0;
-            for(uint e = 0; e < neigElemCount; ++e)
-                accumulatePatchQuality(
-                    patchQuality, patchWeight,
-                    double(elemQual[pId][e]));
+            if(patchMin[pId] <= 0.0)
+                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
+            else
+                patchQual[pId] = neigElemCount / patchMean[pId];
 
-            patchQual[pId] = finalizePatchQuality(patchQuality, patchWeight);
+            patchMin[pId] = MIN_MAX;
+            patchMean[pId] = 0.0;
         }
 
         __syncthreads();
@@ -220,32 +226,36 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
             };
 
             vertPos[patchElems[e].n] = pos + toVec3(lineShift) * LINE_SAMPS[pId];
+
+            float qual = 0.0;
             switch(patchElems[e].type)
             {
             case TET_ELEMENT_TYPE :
-                elemQual[pId][e] = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
                 break;
             case PRI_ELEMENT_TYPE :
-                elemQual[pId][e] = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
                 break;
             case HEX_ELEMENT_TYPE :
-                elemQual[pId][e] = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
                 break;
             }
+
+            atomicMin(&patchMin[pId], qual * MIN_MAX);
+            atomicAdd(&patchMean[pId], 1.0 / qual);
         }
 
         __syncthreads();
 
         if(eId == 0)
         {
-            double patchWeight = 0.0;
-            double patchQuality = 0.0;
-            for(uint e = 0; e < neigElemCount; ++e)
-                accumulatePatchQuality(
-                    patchQuality, patchWeight,
-                    double(elemQual[pId][e]));
+            if(patchMin[pId] <= 0.0)
+                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
+            else
+                patchQual[pId] = neigElemCount / patchMean[pId];
 
-            patchQual[pId] = finalizePatchQuality(patchQuality, patchWeight);
+            patchMin[pId] = 1.0;
+            patchMean[pId] = 0.0;
         }
 
         __syncthreads();

@@ -42,6 +42,7 @@
 #include "Smoothers/VertexWise/SpringLaplaceSmoother.h"
 #include "Smoothers/VertexWise/QualityLaplaceSmoother.h"
 #include "Smoothers/VertexWise/GradientDescentSmoother.h"
+#include "Smoothers/VertexWise/MultiPosGradDsntSmoother.h"
 #include "Smoothers/VertexWise/PatchGradDsntSmoother.h"
 #include "Smoothers/VertexWise/NelderMeadSmoother.h"
 #include "Smoothers/VertexWise/SpawnSearchSmoother.h"
@@ -116,7 +117,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Spring Laplace"),   shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),  shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},
         {string("Gradient Descent"), shared_ptr<AbstractSmoother>(new GradientDescentSmoother())},
-        {string("Patch Grad Dsnt"),  shared_ptr<AbstractSmoother>(new PatchGradDsntSmoother())},
+        {string("Multi Pos GD"),     shared_ptr<AbstractSmoother>(new MultiPosGradDsntSmoother())},
+        {string("Patch GD"),         shared_ptr<AbstractSmoother>(new PatchGradDsntSmoother())},
         {string("Nelder-Mead"),      shared_ptr<AbstractSmoother>(new NelderMeadSmoother())},
         {string("Spawn Search"),     shared_ptr<AbstractSmoother>(new SpawnSearchSmoother())},
         {string("GETMe"),            shared_ptr<AbstractSmoother>(new GetmeSmoother())},
