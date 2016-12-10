@@ -80,6 +80,20 @@ struct NeigElem
     uint id;
 };
 
+struct PatchElem
+{
+    __device__ PatchElem() {}
+
+    uint type;
+    uint n;
+
+    Tet tet;
+    Pri pri;
+    Hex hex;
+    vec3 p[HEX_VERTEX_COUNT];
+};
+
+
 // Topology indirection table
 // type == -1 : fixed vertex
 // type ==  0 : free vertex

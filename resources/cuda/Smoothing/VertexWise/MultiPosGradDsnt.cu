@@ -14,19 +14,6 @@
 
 namespace mpgd
 {
-    struct PatchElem
-    {
-        __device__ PatchElem() {}
-
-        uint type;
-        uint n;
-
-        Tet tet;
-        Pri pri;
-        Hex hex;
-        vec3 p[HEX_VERTEX_COUNT];
-    };
-
     __constant__ int SECURITY_CYCLE_COUNT;
     __constant__ float LOCAL_SIZE_TO_NODE_SHIFT;
 
