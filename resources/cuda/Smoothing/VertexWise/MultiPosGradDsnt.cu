@@ -11,8 +11,6 @@
 #define GRAD_SAMP_COUNT uint(6)
 #define LINE_SAMP_COUNT uint(8)
 
-#define MIN_MAX 2147483647
-
 
 namespace mpgd
 {
@@ -22,8 +20,6 @@ namespace mpgd
     __shared__ float nodeShift;
     __shared__ float3 lineShift;
     __shared__ extern PatchElem patchElems[];
-    __shared__ int patchMin[POSITION_THREAD_COUNT];
-    __shared__ float patchMean[POSITION_THREAD_COUNT];
     __shared__ float patchQual[POSITION_THREAD_COUNT];
 }
 
@@ -48,81 +44,71 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
     };
 
     uint pId = threadIdx.x;
-    uint eId = threadIdx.y;
 
     Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
-    uint eBeg = (eId * neigElemCount) / PATCH_THREAD_COUNT;
-    uint eEnd = ((eId+1) * neigElemCount) / PATCH_THREAD_COUNT;
+    uint eBeg = (pId * neigElemCount) / POSITION_THREAD_COUNT;
+    uint eEnd = ((pId+1) * neigElemCount) / POSITION_THREAD_COUNT;
 
-    if(pId == 0)
+    for(uint e = eBeg; e < eEnd; ++e)
     {
-        for(uint e = eBeg; e < eEnd; ++e)
+        NeigElem elem = neigElems[topo.neigElemBase + e];
+        patchElems[e].type = elem.type;
+        patchElems[e].n = 0;
+
+        switch(patchElems[e].type)
         {
-            NeigElem elem = neigElems[topo.neigElemBase + e];
-            patchElems[e].type = elem.type;
-            patchElems[e].n = 0;
+        case TET_ELEMENT_TYPE :
+            patchElems[e].tet = tets[elem.id];
+            patchElems[e].p[0] = verts[patchElems[e].tet.v[0]].p;
+            patchElems[e].p[1] = verts[patchElems[e].tet.v[1]].p;
+            patchElems[e].p[2] = verts[patchElems[e].tet.v[2]].p;
+            patchElems[e].p[3] = verts[patchElems[e].tet.v[3]].p;
 
-            switch(patchElems[e].type)
-            {
-            case TET_ELEMENT_TYPE :
-                patchElems[e].tet = tets[elem.id];
-                patchElems[e].p[0] = verts[patchElems[e].tet.v[0]].p;
-                patchElems[e].p[1] = verts[patchElems[e].tet.v[1]].p;
-                patchElems[e].p[2] = verts[patchElems[e].tet.v[2]].p;
-                patchElems[e].p[3] = verts[patchElems[e].tet.v[3]].p;
+            if(patchElems[e].tet.v[1] == vId) patchElems[e].n = 1;
+            else if(patchElems[e].tet.v[2] == vId) patchElems[e].n = 2;
+            else if(patchElems[e].tet.v[3] == vId) patchElems[e].n = 3;
+            break;
 
-                if(patchElems[e].tet.v[1] == vId) patchElems[e].n = 1;
-                else if(patchElems[e].tet.v[2] == vId) patchElems[e].n = 2;
-                else if(patchElems[e].tet.v[3] == vId) patchElems[e].n = 3;
-                break;
+        case PRI_ELEMENT_TYPE :
+            patchElems[e].pri = pris[elem.id];
+            patchElems[e].p[0] = verts[patchElems[e].pri.v[0]].p;
+            patchElems[e].p[1] = verts[patchElems[e].pri.v[1]].p;
+            patchElems[e].p[2] = verts[patchElems[e].pri.v[2]].p;
+            patchElems[e].p[3] = verts[patchElems[e].pri.v[3]].p;
+            patchElems[e].p[4] = verts[patchElems[e].pri.v[4]].p;
+            patchElems[e].p[5] = verts[patchElems[e].pri.v[5]].p;
 
-            case PRI_ELEMENT_TYPE :
-                patchElems[e].pri = pris[elem.id];
-                patchElems[e].p[0] = verts[patchElems[e].pri.v[0]].p;
-                patchElems[e].p[1] = verts[patchElems[e].pri.v[1]].p;
-                patchElems[e].p[2] = verts[patchElems[e].pri.v[2]].p;
-                patchElems[e].p[3] = verts[patchElems[e].pri.v[3]].p;
-                patchElems[e].p[4] = verts[patchElems[e].pri.v[4]].p;
-                patchElems[e].p[5] = verts[patchElems[e].pri.v[5]].p;
+            if(patchElems[e].pri.v[1] == vId) patchElems[e].n = 1;
+            else if(patchElems[e].pri.v[2] == vId) patchElems[e].n = 2;
+            else if(patchElems[e].pri.v[3] == vId) patchElems[e].n = 3;
+            else if(patchElems[e].pri.v[4] == vId) patchElems[e].n = 4;
+            else if(patchElems[e].pri.v[5] == vId) patchElems[e].n = 5;
+            break;
 
-                if(patchElems[e].pri.v[1] == vId) patchElems[e].n = 1;
-                else if(patchElems[e].pri.v[2] == vId) patchElems[e].n = 2;
-                else if(patchElems[e].pri.v[3] == vId) patchElems[e].n = 3;
-                else if(patchElems[e].pri.v[4] == vId) patchElems[e].n = 4;
-                else if(patchElems[e].pri.v[5] == vId) patchElems[e].n = 5;
-                break;
+        case HEX_ELEMENT_TYPE :
+            patchElems[e].hex = hexs[elem.id];
+            patchElems[e].p[0] = verts[patchElems[e].hex.v[0]].p;
+            patchElems[e].p[1] = verts[patchElems[e].hex.v[1]].p;
+            patchElems[e].p[2] = verts[patchElems[e].hex.v[2]].p;
+            patchElems[e].p[3] = verts[patchElems[e].hex.v[3]].p;
+            patchElems[e].p[4] = verts[patchElems[e].hex.v[4]].p;
+            patchElems[e].p[5] = verts[patchElems[e].hex.v[5]].p;
+            patchElems[e].p[6] = verts[patchElems[e].hex.v[6]].p;
+            patchElems[e].p[7] = verts[patchElems[e].hex.v[7]].p;
 
-            case HEX_ELEMENT_TYPE :
-                patchElems[e].hex = hexs[elem.id];
-                patchElems[e].p[0] = verts[patchElems[e].hex.v[0]].p;
-                patchElems[e].p[1] = verts[patchElems[e].hex.v[1]].p;
-                patchElems[e].p[2] = verts[patchElems[e].hex.v[2]].p;
-                patchElems[e].p[3] = verts[patchElems[e].hex.v[3]].p;
-                patchElems[e].p[4] = verts[patchElems[e].hex.v[4]].p;
-                patchElems[e].p[5] = verts[patchElems[e].hex.v[5]].p;
-                patchElems[e].p[6] = verts[patchElems[e].hex.v[6]].p;
-                patchElems[e].p[7] = verts[patchElems[e].hex.v[7]].p;
-
-                if(patchElems[e].hex.v[1] == vId) patchElems[e].n = 1;
-                else if(patchElems[e].hex.v[2] == vId) patchElems[e].n = 2;
-                else if(patchElems[e].hex.v[3] == vId) patchElems[e].n = 3;
-                else if(patchElems[e].hex.v[4] == vId) patchElems[e].n = 4;
-                else if(patchElems[e].hex.v[5] == vId) patchElems[e].n = 5;
-                else if(patchElems[e].hex.v[6] == vId) patchElems[e].n = 6;
-                else if(patchElems[e].hex.v[7] == vId) patchElems[e].n = 7;
-                break;
-            }
+            if(patchElems[e].hex.v[1] == vId) patchElems[e].n = 1;
+            else if(patchElems[e].hex.v[2] == vId) patchElems[e].n = 2;
+            else if(patchElems[e].hex.v[3] == vId) patchElems[e].n = 3;
+            else if(patchElems[e].hex.v[4] == vId) patchElems[e].n = 4;
+            else if(patchElems[e].hex.v[5] == vId) patchElems[e].n = 5;
+            else if(patchElems[e].hex.v[6] == vId) patchElems[e].n = 6;
+            else if(patchElems[e].hex.v[7] == vId) patchElems[e].n = 7;
+            break;
         }
     }
 
-    if(eId == 0)
-    {
-        patchMin[pId] = MIN_MAX;
-        patchMean[pId] = 0.0;
-    }
-
-    if(pId == 0 && eId == 0)
+    if(pId == 0)
     {
         // Compute local element size
         float localSize = computeLocalElementSize(vId);
@@ -138,9 +124,12 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
     {
         vec3 pos = verts[vId].p;
 
+        double patchMin = 1.0;
+        double patchMean = 0.0;
+
         if(pId < GRAD_SAMP_COUNT)
         {
-            for(uint e = eBeg; e < eEnd; ++e)
+            for(uint e = 0; e < neigElemCount; ++e)
             {
                 vec3 vertPos[HEX_VERTEX_COUNT] = {
                     patchElems[e].p[0],
@@ -169,50 +158,38 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
                     break;
                 }
 
-                atomicMin(&patchMin[pId], qual * MIN_MAX);
-                atomicAdd(&patchMean[pId], 1.0 / qual);
+                patchMin = min(patchMin, qual);
+                patchMean += 1.0 / qual;
             }
-        }
 
-        __syncthreads();
-
-        if(eId == 0 && pId < GRAD_SAMP_COUNT)
-        {
-            if(patchMin[pId] <= 0.0)
-                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
+            if(patchMin <= 0.0)
+                patchQual[pId] = patchMin;
             else
-                patchQual[pId] = neigElemCount / patchMean[pId];
-
-            patchMin[pId] = MIN_MAX;
-            patchMean[pId] = 0.0;
+                patchQual[pId] = neigElemCount / patchMean;
         }
 
         __syncthreads();
 
-        if(eId == 0 && pId == 0)
+
+        vec3 gradQ = vec3(
+            patchQual[1] - patchQual[0],
+            patchQual[3] - patchQual[2],
+            patchQual[5] - patchQual[4]);
+        float gradQNorm = length(gradQ);
+
+        if(gradQNorm != 0)
         {
-            vec3 gradQ = vec3(
-                patchQual[1] - patchQual[0],
-                patchQual[3] - patchQual[2],
-                patchQual[5] - patchQual[4]);
-            float gradQNorm = length(gradQ);
-
-            if(gradQNorm != 0)
-            {
-                lineShift = toFloat3(gradQ * (nodeShift / gradQNorm));
-            }
-            else
-            {
-                lineShift = make_float3(0, 0, 0);
-            }
+            lineShift = toFloat3(gradQ * (nodeShift / gradQNorm));
         }
-
-        __syncthreads();
-
-        if(lineShift.x == 0 && lineShift.y == 0 && lineShift.z == 0)
+        else
+        {
             break;
+        }
 
-        for(uint e = eBeg; e < eEnd; ++e)
+        patchMin = 1.0;
+        patchMean = 0.0;
+
+        for(uint e = 0; e < neigElemCount; ++e)
         {
             vec3 vertPos[HEX_VERTEX_COUNT] = {
                 patchElems[e].p[0],
@@ -241,26 +218,19 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
                 break;
             }
 
-            atomicMin(&patchMin[pId], qual * MIN_MAX);
-            atomicAdd(&patchMean[pId], 1.0 / qual);
+            patchMin = min(patchMin, qual);
+            patchMean += 1.0 / qual;
         }
+
+        if(patchMin <= 0.0)
+            patchQual[pId] = patchMin;
+        else
+            patchQual[pId] = neigElemCount / patchMean;
 
         __syncthreads();
 
-        if(eId == 0)
-        {
-            if(patchMin[pId] <= 0.0)
-                patchQual[pId] = patchMin[pId] / float(MIN_MAX);
-            else
-                patchQual[pId] = neigElemCount / patchMean[pId];
 
-            patchMin[pId] = 1.0;
-            patchMean[pId] = 0.0;
-        }
-
-        __syncthreads();
-
-        if(eId == 0 && pId == 0)
+        if(pId == 0)
         {
             uint bestProposition = 0;
             float bestQualityMean = patchQual[0];
