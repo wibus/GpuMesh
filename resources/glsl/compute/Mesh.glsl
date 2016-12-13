@@ -31,6 +31,10 @@ const uint HEX_VERTEX_COUNT = 8;
 
 
 // Vertex count in parameters
+// We need a common array length to pass vertex positions to mesurement and
+// evaluation functions in GLSL as the language does not allow us to pass
+// arrays of undefined size or pointers as function paramters. So we chose the
+// largest array size (hexaedron's) as th template container for vertices.
 const int PARAM_VERTEX_COUNT = 8;
 
 

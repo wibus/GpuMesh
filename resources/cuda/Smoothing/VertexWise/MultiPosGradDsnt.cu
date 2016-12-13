@@ -5,7 +5,6 @@
 #include <DataStructures/NodeGroups.h>
 
 #define POSITION_THREAD_COUNT uint(8)
-#define PATCH_THREAD_COUNT uint(1)
 #define ELEMENT_SLOT_COUNT uint(96)
 
 #define GRAD_SAMP_COUNT uint(6)
@@ -119,16 +118,19 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
 
     __syncthreads();
 
+
     float originalNodeShift = nodeShift;
     for(int c=0; c < SECURITY_CYCLE_COUNT; ++c)
     {
         vec3 pos = verts[vId].p;
 
-        double patchMin = 1.0;
+        float patchMin = 1.0;
         double patchMean = 0.0;
 
         if(pId < GRAD_SAMP_COUNT)
         {
+            vec3 newPos = pos + GRAD_SAMPS[pId] * nodeShift;
+
             for(uint e = 0; e < neigElemCount; ++e)
             {
                 vec3 vertPos[HEX_VERTEX_COUNT] = {
@@ -142,7 +144,7 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
                     patchElems[e].p[7]
                 };
 
-                vertPos[patchElems[e].n] = pos + GRAD_SAMPS[pId] * nodeShift;
+                vertPos[patchElems[e].n] = newPos;
 
                 float qual = 0.0;
                 switch(patchElems[e].type)
@@ -185,6 +187,7 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
         {
             break;
         }
+
 
         patchMin = 1.0;
         patchMean = 0.0;
@@ -297,12 +300,11 @@ void smoothCudaMultiPosGradDsntVertices(
 {
     setupCudaIndependentDispatch(dispatch);
 
-    dim3 blockDim(POSITION_THREAD_COUNT, PATCH_THREAD_COUNT);
     size_t sharedDim = sizeof(PatchElem) * ELEMENT_SLOT_COUNT;
     //std::cout << "Requested shared memory size: " << sharedDim/1000.0 << "kB" << std::endl;
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothMultiPosGradDsntVerticesCudaMain<<<dispatch.gpuBufferSize, blockDim, sharedDim>>>();
+    smoothMultiPosGradDsntVerticesCudaMain<<<dispatch.gpuBufferSize, POSITION_THREAD_COUNT, sharedDim>>>();
     cudaDeviceSynchronize();
     cudaCheckErrors("CUDA error during vertices smoothing");
 }
