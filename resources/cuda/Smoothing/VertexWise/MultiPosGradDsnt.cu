@@ -17,7 +17,6 @@ namespace mpgd
     __constant__ float LOCAL_SIZE_TO_NODE_SHIFT;
 
     __shared__ float nodeShift;
-    __shared__ float3 lineShift;
     __shared__ extern PatchElem patchElems[];
     __shared__ float patchQual[POSITION_THREAD_COUNT];
 }
@@ -179,18 +178,17 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
             patchQual[5] - patchQual[4]);
         float gradQNorm = length(gradQ);
 
+        vec3 lineShift;
         if(gradQNorm != 0)
-        {
-            lineShift = toFloat3(gradQ * (nodeShift / gradQNorm));
-        }
+            lineShift = gradQ * (nodeShift / gradQNorm);
         else
-        {
             break;
-        }
 
 
         patchMin = 1.0;
         patchMean = 0.0;
+
+        vec3 lineSamp = pos + lineShift * LINE_SAMPS[pId];
 
         for(uint e = 0; e < neigElemCount; ++e)
         {
@@ -205,7 +203,7 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
                 patchElems[e].p[7]
             };
 
-            vertPos[patchElems[e].n] = pos + toVec3(lineShift) * LINE_SAMPS[pId];
+            vertPos[patchElems[e].n] = lineSamp;
 
             float qual = 0.0;
             switch(patchElems[e].type)
@@ -247,13 +245,14 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
             }
 
             // Update vertex's position
-            verts[vId].p = pos + toVec3(lineShift) * LINE_SAMPS[bestProposition];
+            verts[vId].p = pos + lineShift * LINE_SAMPS[bestProposition];
 
             // Scale node shift and stop if it is too small
             nodeShift *= abs(LINE_SAMPS[bestProposition]);
         }
 
         __syncthreads();
+
 
         if(nodeShift < originalNodeShift / 10.0)
             break;

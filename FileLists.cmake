@@ -78,6 +78,7 @@ SET(GpuMesh_VERTEXWISE_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpringLaplaceSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/QualityLaplaceSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/GradientDescentSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiElemGradDsntSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiPosGradDsntSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/PatchGradDsntSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/NelderMeadSmoother.h
@@ -204,6 +205,7 @@ SET(GpuMesh_VERTEXWISE_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpringLaplaceSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/QualityLaplaceSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/GradientDescentSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiElemGradDsntSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiPosGradDsntSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/PatchGradDsntSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/NelderMeadSmoother.cpp
@@ -338,6 +340,7 @@ SET(GpuMesh_VERTEXWISE_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/SpringLaplace.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/QualityLaplace.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/GradientDescent.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/MultiElemGradDsnt.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/MultiPosGradDsnt.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/PatchGradDsnt.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/NelderMead.glsl
@@ -404,6 +407,7 @@ SET(GpuMesh_VERTEXWISE_CUDA
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/SpringLaplace.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/QualityLaplace.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/GradientDescent.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/MultiElemGradDsnt.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/MultiPosGradDsnt.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/PatchGradDsnt.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/NelderMead.cu

@@ -20,7 +20,6 @@ namespace pgd
     __constant__ float LOCAL_SIZE_TO_NODE_SHIFT;
 
     __shared__ float nodeShift;
-    __shared__ float3 lineShift;
     __shared__ extern PatchElem patchElems[];
     __shared__ int patchMin[POSITION_THREAD_COUNT];
     __shared__ float patchMean[POSITION_THREAD_COUNT];
@@ -133,6 +132,7 @@ __device__ void patchGradDsntSmoothVert(uint vId)
 
     __syncthreads();
 
+
     float originalNodeShift = nodeShift;
     for(int c=0; c < SECURITY_CYCLE_COUNT; ++c)
     {
@@ -140,6 +140,8 @@ __device__ void patchGradDsntSmoothVert(uint vId)
 
         if(pId < GRAD_SAMP_COUNT)
         {
+            vec3 gradSamp = GRAD_SAMPS[pId] * nodeShift;
+
             for(uint e = eBeg; e < eEnd; ++e)
             {
                 vec3 vertPos[HEX_VERTEX_COUNT] = {
@@ -153,7 +155,7 @@ __device__ void patchGradDsntSmoothVert(uint vId)
                     patchElems[e].p[7]
                 };
 
-                vertPos[patchElems[e].n] = pos + GRAD_SAMPS[pId] * nodeShift;
+                vertPos[patchElems[e].n] = pos + gradSamp;
 
                 float qual = 0.0;
                 switch(patchElems[e].type)
@@ -176,6 +178,7 @@ __device__ void patchGradDsntSmoothVert(uint vId)
 
         __syncthreads();
 
+
         if(eId == 0)
         {
             if(patchMin[pId] <= 0.0)
@@ -189,28 +192,21 @@ __device__ void patchGradDsntSmoothVert(uint vId)
 
         __syncthreads();
 
-        if(eId == 0 && pId == 0)
-        {
-            vec3 gradQ = vec3(
-                patchQual[1] - patchQual[0],
-                patchQual[3] - patchQual[2],
-                patchQual[5] - patchQual[4]);
-            float gradQNorm = length(gradQ);
 
-            if(gradQNorm != 0)
-            {
-                lineShift = toFloat3(gradQ * (nodeShift / gradQNorm));
-            }
-            else
-            {
-                lineShift = make_float3(0, 0, 0);
-            }
-        }
+        vec3 gradQ = vec3(
+            patchQual[1] - patchQual[0],
+            patchQual[3] - patchQual[2],
+            patchQual[5] - patchQual[4]);
+        float gradQNorm = length(gradQ);
 
-        __syncthreads();
-
-        if(lineShift.x == 0 && lineShift.y == 0 && lineShift.z == 0)
+        vec3 lineShift;
+        if(gradQNorm != 0)
+            lineShift = gradQ * (nodeShift / gradQNorm);
+        else
             break;
+
+
+        vec3 lineSamp = lineShift * LINE_SAMPS[pId];
 
         for(uint e = eBeg; e < eEnd; ++e)
         {
@@ -225,7 +221,7 @@ __device__ void patchGradDsntSmoothVert(uint vId)
                 patchElems[e].p[7]
             };
 
-            vertPos[patchElems[e].n] = pos + toVec3(lineShift) * LINE_SAMPS[pId];
+            vertPos[patchElems[e].n] = pos + lineSamp;
 
             float qual = 0.0;
             switch(patchElems[e].type)
@@ -247,6 +243,7 @@ __device__ void patchGradDsntSmoothVert(uint vId)
 
         __syncthreads();
 
+
         if(eId == 0)
         {
             if(patchMin[pId] <= 0.0)
@@ -254,11 +251,12 @@ __device__ void patchGradDsntSmoothVert(uint vId)
             else
                 patchQual[pId] = neigElemCount / patchMean[pId];
 
-            patchMin[pId] = 1.0;
+            patchMin[pId] = MIN_MAX;
             patchMean[pId] = 0.0;
         }
 
         __syncthreads();
+
 
         if(eId == 0 && pId == 0)
         {
@@ -274,13 +272,14 @@ __device__ void patchGradDsntSmoothVert(uint vId)
             }
 
             // Update vertex's position
-            verts[vId].p = pos + toVec3(lineShift) * LINE_SAMPS[bestProposition];
+            verts[vId].p = pos + lineShift * LINE_SAMPS[bestProposition];
 
             // Scale node shift and stop if it is too small
             nodeShift *= abs(LINE_SAMPS[bestProposition]);
         }
 
         __syncthreads();
+
 
         if(nodeShift < originalNodeShift / 10.0)
             break;

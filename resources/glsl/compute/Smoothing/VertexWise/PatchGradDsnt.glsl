@@ -18,7 +18,6 @@ uniform int SecurityCycleCount;
 uniform float LocalSizeToNodeShift;
 
 shared float nodeShift;
-shared vec3 lineShift;
 shared PatchElem patchElems[ELEMENT_SLOT_COUNT];
 shared int patchMin[POSITION_THREAD_COUNT];
 shared float patchMean[POSITION_THREAD_COUNT];
@@ -138,6 +137,7 @@ void smoothVert(uint vId)
 
     barrier();
 
+
     float originalNodeShift = nodeShift;
     for(int c=0; c < SecurityCycleCount; ++c)
     {
@@ -145,9 +145,10 @@ void smoothVert(uint vId)
 
         if(pId < GRAD_SAMP_COUNT)
         {
+            vec3 gradSamp = GRAD_SAMPS[pId] * nodeShift;
+
             for(uint e = eBeg; e < eEnd; ++e)
             {
-                vec3 newPos = pos + GRAD_SAMPS[pId] * nodeShift;
                 vec3 vertPos[HEX_VERTEX_COUNT] = vec3[](
                     patchElems[e].p[0],
                     patchElems[e].p[1],
@@ -159,7 +160,7 @@ void smoothVert(uint vId)
                     patchElems[e].p[7]
                 );
 
-                vertPos[patchElems[e].n] = newPos;
+                vertPos[patchElems[e].n] = pos + gradSamp;
 
                 float qual = 0.0;
                 switch(patchElems[e].type)
@@ -182,6 +183,7 @@ void smoothVert(uint vId)
 
         barrier();
 
+
         if(eId == 0)
         {
             if(patchMin[pId] <= 0.0)
@@ -195,28 +197,24 @@ void smoothVert(uint vId)
 
         barrier();
 
-        if(eId == 0 && pId == 0)
-        {
-            vec3 gradQ = vec3(
-                patchQual[1] - patchQual[0],
-                patchQual[3] - patchQual[2],
-                patchQual[5] - patchQual[4]);
-            float gradQNorm = length(gradQ);
 
-            if(gradQNorm != 0)
-                lineShift = gradQ * (nodeShift / gradQNorm);
-            else
-                lineShift = vec3(0.0);
-        }
+        vec3 gradQ = vec3(
+            patchQual[1] - patchQual[0],
+            patchQual[3] - patchQual[2],
+            patchQual[5] - patchQual[4]);
+        float gradQNorm = length(gradQ);
 
-        barrier();
-
-        if(lineShift == vec3(0.0))
+        vec3 lineShift;
+        if(gradQNorm != 0)
+            lineShift = gradQ * (nodeShift / gradQNorm);
+        else
             break;
+
+
+        vec3 lineSamp = lineShift * LINE_SAMPS[pId];
 
         for(uint e = eBeg; e < eEnd; ++e)
         {
-            vec3 newPos = pos + lineShift * LINE_SAMPS[pId];
             vec3 vertPos[HEX_VERTEX_COUNT] = vec3[](
                 patchElems[e].p[0],
                 patchElems[e].p[1],
@@ -228,7 +226,7 @@ void smoothVert(uint vId)
                 patchElems[e].p[7]
             );
 
-            vertPos[patchElems[e].n] = newPos;
+            vertPos[patchElems[e].n] = pos + lineSamp;
 
             float qual = 0.0;
             switch(patchElems[e].type)
@@ -250,6 +248,7 @@ void smoothVert(uint vId)
 
         barrier();
 
+
         if(eId == 0)
         {
             if(patchMin[pId] <= 0.0)
@@ -262,6 +261,7 @@ void smoothVert(uint vId)
         }
 
         barrier();
+
 
         if(eId == 0 && pId == 0)
         {
@@ -284,6 +284,7 @@ void smoothVert(uint vId)
         }
 
         barrier();
+
 
         if(nodeShift < originalNodeShift / 10.0)
             break;

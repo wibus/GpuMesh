@@ -1,13 +1,13 @@
-#ifndef GPUMESH_MULTIPOSGRADDSNTSMOOTHER
-#define GPUMESH_MULTIPOSGRADDSNTSMOOTHER
+#ifndef GPUMESH_MULTIELEMGRADDSNTSMOOTHER
+#define GPUMESH_MULTIELEMGRADDSNTSMOOTHER
 
 #include "GradientDescentSmoother.h"
 
-class MultiPosGradDsntSmoother : public GradientDescentSmoother
+class MultiElemGradDsntSmoother : public GradientDescentSmoother
 {
 public:
-    MultiPosGradDsntSmoother();
-    virtual ~MultiPosGradDsntSmoother();
+    MultiElemGradDsntSmoother();
+    virtual ~MultiElemGradDsntSmoother();
 
     virtual void smoothMeshGlsl(
             Mesh& mesh,
@@ -29,8 +29,10 @@ protected:
     virtual size_t nodesPerBlock() const override;
 
 protected:
-    static const int POSITION_THREAD_COUNT;
-    static const int ELEMENT_SLOT_COUNT;
+    static const int NODE_THREAD_COUNT;
+    static const int ELEMENT_THREAD_COUNT;
+    static const int ELEMENT_PER_THREAD_COUNT;
+    static const int POSITION_SLOT_COUNT;
 };
 
-#endif // GPUMESH_MULTIPOSGRADDSNTSMOOTHER
+#endif // GPUMESH_MULTIELEMGRADDSNTSMOOTHER

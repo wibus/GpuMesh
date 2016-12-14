@@ -14,7 +14,6 @@ uniform int SecurityCycleCount;
 uniform float LocalSizeToNodeShift;
 
 shared float nodeShift;
-shared vec3 lineShift;
 shared PatchElem patchElems[ELEMENT_SLOT_COUNT];
 shared float patchQual[POSITION_THREAD_COUNT];
 
@@ -176,20 +175,17 @@ void smoothVert(uint vId)
             patchQual[5] - patchQual[4]);
         float gradQNorm = length(gradQ);
 
+        vec3 lineShift;
         if(gradQNorm != 0)
-        {
             lineShift = gradQ * (nodeShift / gradQNorm);
-        }
         else
-        {
             break;
-        }
 
 
         patchMin = 1.0;
         patchMean = 0.0;
 
-        vec3 newPos = pos + lineShift * LINE_SAMPS[pId];
+        vec3 lineSamp = pos + lineShift * LINE_SAMPS[pId];
 
         for(uint e = 0; e < neigElemCount; ++e)
         {
@@ -204,7 +200,7 @@ void smoothVert(uint vId)
                 patchElems[e].p[7]
             );
 
-            vertPos[patchElems[e].n] = newPos;
+            vertPos[patchElems[e].n] = lineSamp;
 
             float qual = 0.0;
             switch(patchElems[e].type)
@@ -253,6 +249,7 @@ void smoothVert(uint vId)
         }
 
         barrier();
+
 
         if(nodeShift < originalNodeShift / 10.0)
             break;

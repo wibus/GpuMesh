@@ -52,5 +52,6 @@
         <file>glsl/compute/Sampling/Uniform.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/PatchGradDsnt.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/MultiPosGradDsnt.glsl</file>
+        <file>glsl/compute/Smoothing/VertexWise/MultiElemGradDsnt.glsl</file>
     </qresource>
 </RCC>

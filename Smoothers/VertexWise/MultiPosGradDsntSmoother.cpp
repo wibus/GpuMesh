@@ -4,8 +4,8 @@ using namespace cellar;
 
 
 // Parameters
-const int PGDSecurityCycleCount = 5;
-const double PGDLocalSizeToNodeShift = 1.0 / 25.0;
+const int MPGDSecurityCycleCount = 5;
+const double MPGDLocalSizeToNodeShift = 1.0 / 25.0;
 
 
 // CUDA Drivers
@@ -15,15 +15,14 @@ void installCudaMultiPosGradDsntSmoother(
 void installCudaMultiPosGradDsntSmoother()
 {
     installCudaMultiPosGradDsntSmoother(
-                PGDSecurityCycleCount,
-                PGDLocalSizeToNodeShift);
+                MPGDSecurityCycleCount,
+                MPGDLocalSizeToNodeShift);
 }
 void smoothCudaMultiPosGradDsntVertices(
         const NodeGroups::GpuDispatch& dispatch);
 
 
 const int MultiPosGradDsntSmoother::POSITION_THREAD_COUNT = 8;
-const int MultiPosGradDsntSmoother::ELEMENT_THREAD_COUNT = 32;
 const int MultiPosGradDsntSmoother::ELEMENT_SLOT_COUNT = 96;
 
 MultiPosGradDsntSmoother::MultiPosGradDsntSmoother() :
