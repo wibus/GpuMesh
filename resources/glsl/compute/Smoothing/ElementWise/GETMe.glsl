@@ -49,8 +49,8 @@ void smoothTet(uint eId)
 
     float volume = tetVolume(vp, tet);
     float volumePrime = tetVolume(vpp, tet);
-    float absVolumeRation = abs(volume / volumePrime);
-    float volumeVar = pow(absVolumeRation, 1.0/3.0);
+    float absVolumeRatio = abs(volume / volumePrime);
+    float volumeVar = pow(absVolumeRatio, 1.0/3.0);
 
     vec3 center = (1.0/4.0) * (
         vp[0] + vp[1] + vp[2] + vp[3]);
@@ -134,8 +134,8 @@ void smoothPri(uint eId)
 
     float volume = priVolume(vp, pri);
     float volumePrime = priVolume(vpp, pri);
-    float absVolumeRation = abs(volume / volumePrime);
-    float volumeVar = pow(absVolumeRation, 1.0/3.0);
+    float absVolumeRatio = abs(volume / volumePrime);
+    float volumeVar = pow(absVolumeRatio, 1.0/3.0);
 
     vec3 center = (1.0/6.0) * (
         vp[0] + vp[1] + vp[2] + vp[3] + vp[4] + vp[5]);
@@ -233,8 +233,8 @@ void smoothHex(uint eId)
 
     float volume = hexVolume(vp, hex);
     float volumePrime = hexVolume(vpp, hex);
-    float absVolumeRation = abs(volume / volumePrime);
-    float volumeVar = pow(absVolumeRation, 1.0/3.0);
+    float absVolumeRatio = abs(volume / volumePrime);
+    float volumeVar = pow(absVolumeRatio, 1.0/3.0);
 
     vec3 center = (1.0/8.0) * (
         vp[0] + vp[1] + vp[2] + vp[3] + vp[4] + vp[5] + vp[6] + vp[7]);
