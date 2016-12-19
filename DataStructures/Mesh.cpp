@@ -343,7 +343,7 @@ void Mesh::compileNeighborhoods()
         for(int v=0; v < MeshTet::VERTEX_COUNT; ++v)
         {
             topos[tets[i].v[v]].neighborElems.push_back(
-                MeshNeigElem(MeshTet::ELEMENT_TYPE, i));
+                MeshNeigElem(i, MeshTet::ELEMENT_TYPE, v));
         }
 
         for(int e=0; e < MeshTet::EDGE_COUNT; ++e)
@@ -359,7 +359,7 @@ void Mesh::compileNeighborhoods()
         for(int v=0; v < MeshPri::VERTEX_COUNT; ++v)
         {
             topos[pris[i].v[v]].neighborElems.push_back(
-                MeshNeigElem(MeshPri::ELEMENT_TYPE, i));
+                MeshNeigElem(i, MeshPri::ELEMENT_TYPE, v));
         }
 
         for(int e=0; e < MeshPri::EDGE_COUNT; ++e)
@@ -375,7 +375,7 @@ void Mesh::compileNeighborhoods()
         for(int v=0; v < MeshHex::VERTEX_COUNT; ++v)
         {
             topos[hexs[i].v[v]].neighborElems.push_back(
-                MeshNeigElem(MeshHex::ELEMENT_TYPE, i));
+                MeshNeigElem(i, MeshHex::ELEMENT_TYPE, v));
         }
 
         for(int e=0; e < MeshHex::EDGE_COUNT; ++e)

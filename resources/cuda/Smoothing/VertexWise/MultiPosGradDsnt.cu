@@ -5,7 +5,7 @@
 #include <DataStructures/NodeGroups.h>
 
 #define POSITION_THREAD_COUNT uint(8)
-#define ELEMENT_SLOT_COUNT uint(96)
+#define NODE_THREAD_COUNT uint(32)
 
 #define GRAD_SAMP_COUNT uint(6)
 #define LINE_SAMP_COUNT uint(8)
@@ -16,9 +16,8 @@ namespace mpgd
     __constant__ int SECURITY_CYCLE_COUNT;
     __constant__ float LOCAL_SIZE_TO_NODE_SHIFT;
 
-    __shared__ float nodeShift;
-    __shared__ extern PatchElem patchElems[];
-    __shared__ float patchQual[POSITION_THREAD_COUNT];
+    __shared__ float nodeShift[NODE_THREAD_COUNT];
+    __shared__ float patchQual[NODE_THREAD_COUNT][POSITION_THREAD_COUNT];
 }
 
 using namespace mpgd;
@@ -42,69 +41,12 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
     };
 
     uint pId = threadIdx.x;
+    uint nId = threadIdx.y;
 
     Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
-    uint eBeg = (pId * neigElemCount) / POSITION_THREAD_COUNT;
-    uint eEnd = ((pId+1) * neigElemCount) / POSITION_THREAD_COUNT;
-
-    for(uint e = eBeg; e < eEnd; ++e)
-    {
-        NeigElem elem = neigElems[topo.neigElemBase + e];
-        patchElems[e].type = elem.type;
-        patchElems[e].n = 0;
-
-        switch(patchElems[e].type)
-        {
-        case TET_ELEMENT_TYPE :
-            patchElems[e].tet = tets[elem.id];
-            patchElems[e].p[0] = verts[patchElems[e].tet.v[0]].p;
-            patchElems[e].p[1] = verts[patchElems[e].tet.v[1]].p;
-            patchElems[e].p[2] = verts[patchElems[e].tet.v[2]].p;
-            patchElems[e].p[3] = verts[patchElems[e].tet.v[3]].p;
-
-            if(patchElems[e].tet.v[1] == vId) patchElems[e].n = 1;
-            else if(patchElems[e].tet.v[2] == vId) patchElems[e].n = 2;
-            else if(patchElems[e].tet.v[3] == vId) patchElems[e].n = 3;
-            break;
-
-        case PRI_ELEMENT_TYPE :
-            patchElems[e].pri = pris[elem.id];
-            patchElems[e].p[0] = verts[patchElems[e].pri.v[0]].p;
-            patchElems[e].p[1] = verts[patchElems[e].pri.v[1]].p;
-            patchElems[e].p[2] = verts[patchElems[e].pri.v[2]].p;
-            patchElems[e].p[3] = verts[patchElems[e].pri.v[3]].p;
-            patchElems[e].p[4] = verts[patchElems[e].pri.v[4]].p;
-            patchElems[e].p[5] = verts[patchElems[e].pri.v[5]].p;
-
-            if(patchElems[e].pri.v[1] == vId) patchElems[e].n = 1;
-            else if(patchElems[e].pri.v[2] == vId) patchElems[e].n = 2;
-            else if(patchElems[e].pri.v[3] == vId) patchElems[e].n = 3;
-            else if(patchElems[e].pri.v[4] == vId) patchElems[e].n = 4;
-            else if(patchElems[e].pri.v[5] == vId) patchElems[e].n = 5;
-            break;
-
-        case HEX_ELEMENT_TYPE :
-            patchElems[e].hex = hexs[elem.id];
-            patchElems[e].p[0] = verts[patchElems[e].hex.v[0]].p;
-            patchElems[e].p[1] = verts[patchElems[e].hex.v[1]].p;
-            patchElems[e].p[2] = verts[patchElems[e].hex.v[2]].p;
-            patchElems[e].p[3] = verts[patchElems[e].hex.v[3]].p;
-            patchElems[e].p[4] = verts[patchElems[e].hex.v[4]].p;
-            patchElems[e].p[5] = verts[patchElems[e].hex.v[5]].p;
-            patchElems[e].p[6] = verts[patchElems[e].hex.v[6]].p;
-            patchElems[e].p[7] = verts[patchElems[e].hex.v[7]].p;
-
-            if(patchElems[e].hex.v[1] == vId) patchElems[e].n = 1;
-            else if(patchElems[e].hex.v[2] == vId) patchElems[e].n = 2;
-            else if(patchElems[e].hex.v[3] == vId) patchElems[e].n = 3;
-            else if(patchElems[e].hex.v[4] == vId) patchElems[e].n = 4;
-            else if(patchElems[e].hex.v[5] == vId) patchElems[e].n = 5;
-            else if(patchElems[e].hex.v[6] == vId) patchElems[e].n = 6;
-            else if(patchElems[e].hex.v[7] == vId) patchElems[e].n = 7;
-            break;
-        }
-    }
+    uint eBeg = topo.neigElemBase;
+    uint eEnd = topo.neigElemBase + neigElemCount;
 
     if(pId == 0)
     {
@@ -112,13 +54,13 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
         float localSize = computeLocalElementSize(vId);
 
         // Initialize node shift distance
-        nodeShift = localSize * LOCAL_SIZE_TO_NODE_SHIFT;
+        nodeShift[nId] = localSize * LOCAL_SIZE_TO_NODE_SHIFT;
     }
 
     __syncthreads();
 
 
-    float originalNodeShift = nodeShift;
+    float originalNodeShift = nodeShift[nId];
     for(int c=0; c < SECURITY_CYCLE_COUNT; ++c)
     {
         vec3 pos = verts[vId].p;
@@ -128,34 +70,47 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
 
         if(pId < GRAD_SAMP_COUNT)
         {
-            vec3 newPos = pos + GRAD_SAMPS[pId] * nodeShift;
+            vec3 newPos = pos + GRAD_SAMPS[pId] * nodeShift[nId];
 
-            for(uint e = 0; e < neigElemCount; ++e)
+            for(uint e = eBeg; e < eEnd; ++e)
             {
-                vec3 vertPos[HEX_VERTEX_COUNT] = {
-                    patchElems[e].p[0],
-                    patchElems[e].p[1],
-                    patchElems[e].p[2],
-                    patchElems[e].p[3],
-                    patchElems[e].p[4],
-                    patchElems[e].p[5],
-                    patchElems[e].p[6],
-                    patchElems[e].p[7]
-                };
-
-                vertPos[patchElems[e].n] = newPos;
+                NeigElem& elem = neigElems[e];
+                vec3 vertPos[HEX_VERTEX_COUNT];
 
                 float qual = 0.0;
-                switch(patchElems[e].type)
+                switch(elem.type)
                 {
                 case TET_ELEMENT_TYPE :
-                    qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                    vertPos[0] = verts[tets[elem.id].v[0]].p;
+                    vertPos[1] = verts[tets[elem.id].v[1]].p;
+                    vertPos[2] = verts[tets[elem.id].v[2]].p;
+                    vertPos[3] = verts[tets[elem.id].v[3]].p;
+                    vertPos[elem.vId] = newPos;
+                    qual = (*tetQualityImpl)(vertPos, tets[elem.id]);
                     break;
+
                 case PRI_ELEMENT_TYPE :
-                    qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                    vertPos[0] = verts[pris[elem.id].v[0]].p;
+                    vertPos[1] = verts[pris[elem.id].v[1]].p;
+                    vertPos[2] = verts[pris[elem.id].v[2]].p;
+                    vertPos[3] = verts[pris[elem.id].v[3]].p;
+                    vertPos[4] = verts[pris[elem.id].v[4]].p;
+                    vertPos[5] = verts[pris[elem.id].v[5]].p;
+                    vertPos[elem.vId] = newPos;
+                    qual = (*priQualityImpl)(vertPos, pris[elem.id]);
                     break;
+
                 case HEX_ELEMENT_TYPE :
-                    qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                    vertPos[0] = verts[hexs[elem.id].v[0]].p;
+                    vertPos[1] = verts[hexs[elem.id].v[1]].p;
+                    vertPos[2] = verts[hexs[elem.id].v[2]].p;
+                    vertPos[3] = verts[hexs[elem.id].v[3]].p;
+                    vertPos[4] = verts[hexs[elem.id].v[4]].p;
+                    vertPos[5] = verts[hexs[elem.id].v[5]].p;
+                    vertPos[6] = verts[hexs[elem.id].v[6]].p;
+                    vertPos[7] = verts[hexs[elem.id].v[7]].p;
+                    vertPos[elem.vId] = newPos;
+                    qual = (*hexQualityImpl)(vertPos, hexs[elem.id]);
                     break;
                 }
 
@@ -164,23 +119,23 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
             }
 
             if(patchMin <= 0.0)
-                patchQual[pId] = patchMin;
+                patchQual[nId][pId] = patchMin;
             else
-                patchQual[pId] = neigElemCount / patchMean;
+                patchQual[nId][pId] = neigElemCount / patchMean;
         }
 
         __syncthreads();
 
 
         vec3 gradQ = vec3(
-            patchQual[1] - patchQual[0],
-            patchQual[3] - patchQual[2],
-            patchQual[5] - patchQual[4]);
+            patchQual[nId][1] - patchQual[nId][0],
+            patchQual[nId][3] - patchQual[nId][2],
+            patchQual[nId][5] - patchQual[nId][4]);
         float gradQNorm = length(gradQ);
 
         vec3 lineShift;
         if(gradQNorm != 0)
-            lineShift = gradQ * (nodeShift / gradQNorm);
+            lineShift = gradQ * (nodeShift[nId] / gradQNorm);
         else
             break;
 
@@ -190,32 +145,45 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
 
         vec3 lineSamp = pos + lineShift * LINE_SAMPS[pId];
 
-        for(uint e = 0; e < neigElemCount; ++e)
+        for(uint e = eBeg; e < eEnd; ++e)
         {
-            vec3 vertPos[HEX_VERTEX_COUNT] = {
-                patchElems[e].p[0],
-                patchElems[e].p[1],
-                patchElems[e].p[2],
-                patchElems[e].p[3],
-                patchElems[e].p[4],
-                patchElems[e].p[5],
-                patchElems[e].p[6],
-                patchElems[e].p[7]
-            };
-
-            vertPos[patchElems[e].n] = lineSamp;
+            NeigElem& elem = neigElems[e];
+            vec3 vertPos[HEX_VERTEX_COUNT];
 
             float qual = 0.0;
-            switch(patchElems[e].type)
+            switch(elem.type)
             {
             case TET_ELEMENT_TYPE :
-                qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                vertPos[0] = verts[tets[elem.id].v[0]].p;
+                vertPos[1] = verts[tets[elem.id].v[1]].p;
+                vertPos[2] = verts[tets[elem.id].v[2]].p;
+                vertPos[3] = verts[tets[elem.id].v[3]].p;
+                vertPos[elem.vId] = lineSamp;
+                qual = (*tetQualityImpl)(vertPos, tets[elem.id]);
                 break;
+
             case PRI_ELEMENT_TYPE :
-                qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                vertPos[0] = verts[pris[elem.id].v[0]].p;
+                vertPos[1] = verts[pris[elem.id].v[1]].p;
+                vertPos[2] = verts[pris[elem.id].v[2]].p;
+                vertPos[3] = verts[pris[elem.id].v[3]].p;
+                vertPos[4] = verts[pris[elem.id].v[4]].p;
+                vertPos[5] = verts[pris[elem.id].v[5]].p;
+                vertPos[elem.vId] = lineSamp;
+                qual = (*priQualityImpl)(vertPos, pris[elem.id]);
                 break;
+
             case HEX_ELEMENT_TYPE :
-                qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                vertPos[0] = verts[hexs[elem.id].v[0]].p;
+                vertPos[1] = verts[hexs[elem.id].v[1]].p;
+                vertPos[2] = verts[hexs[elem.id].v[2]].p;
+                vertPos[3] = verts[hexs[elem.id].v[3]].p;
+                vertPos[4] = verts[hexs[elem.id].v[4]].p;
+                vertPos[5] = verts[hexs[elem.id].v[5]].p;
+                vertPos[6] = verts[hexs[elem.id].v[6]].p;
+                vertPos[7] = verts[hexs[elem.id].v[7]].p;
+                vertPos[elem.vId] = lineSamp;
+                qual = (*hexQualityImpl)(vertPos, hexs[elem.id]);
                 break;
             }
 
@@ -224,9 +192,9 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
         }
 
         if(patchMin <= 0.0)
-            patchQual[pId] = patchMin;
+            patchQual[nId][pId] = patchMin;
         else
-            patchQual[pId] = neigElemCount / patchMean;
+            patchQual[nId][pId] = neigElemCount / patchMean;
 
         __syncthreads();
 
@@ -234,12 +202,12 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
         if(pId == 0)
         {
             uint bestProposition = 0;
-            float bestQualityMean = patchQual[0];
+            float bestQualityMean = patchQual[nId][0];
             for(uint p=1; p < LINE_SAMP_COUNT; ++p)
             {
-                if(patchQual[p] > bestQualityMean)
+                if(patchQual[nId][p] > bestQualityMean)
                 {
-                    bestQualityMean = patchQual[p];
+                    bestQualityMean = patchQual[nId][p];
                     bestProposition = p;
                 }
             }
@@ -248,22 +216,24 @@ __device__ void multiPosGradDsntSmoothVert(uint vId)
             verts[vId].p = pos + lineShift * LINE_SAMPS[bestProposition];
 
             // Scale node shift and stop if it is too small
-            nodeShift *= abs(LINE_SAMPS[bestProposition]);
+            nodeShift[nId] *= abs(LINE_SAMPS[bestProposition]);
         }
 
         __syncthreads();
 
 
-        if(nodeShift < originalNodeShift / 10.0)
+        if(nodeShift[nId] < originalNodeShift / 10.0)
             break;
     }
 }
 
 __global__ void smoothMultiPosGradDsntVerticesCudaMain()
 {
-    if(blockIdx.x < GroupSize)
+    uint localId = blockIdx.x * blockDim.y + threadIdx.y;
+
+    if(localId < GroupSize)
     {
-        uint idx = GroupBase + blockIdx.x;
+        uint idx = GroupBase + localId;
         uint vId = groupMembers[idx];
         multiPosGradDsntSmoothVert(vId);
     }
@@ -299,11 +269,10 @@ void smoothCudaMultiPosGradDsntVertices(
 {
     setupCudaIndependentDispatch(dispatch);
 
-    size_t sharedDim = sizeof(PatchElem) * ELEMENT_SLOT_COUNT;
-    //std::cout << "Requested shared memory size: " << sharedDim/1000.0 << "kB" << std::endl;
+    dim3 blockDim(POSITION_THREAD_COUNT, NODE_THREAD_COUNT);
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothMultiPosGradDsntVerticesCudaMain<<<dispatch.gpuBufferSize, POSITION_THREAD_COUNT, sharedDim>>>();
+    smoothMultiPosGradDsntVerticesCudaMain<<<dispatch.gpuBufferSize, blockDim>>>();
     cudaDeviceSynchronize();
     cudaCheckErrors("CUDA error during vertices smoothing");
 }

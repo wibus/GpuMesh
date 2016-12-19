@@ -76,16 +76,17 @@ struct NeigVert
 
 struct NeigElem
 {
-    int type;
     uint id;
+    int type;
+    int vId;
 };
 
 struct PatchElem
 {
     __device__ PatchElem() {}
 
-    uint type;
-    uint n;
+    int type;
+    int n;
 
     Tet tet;
     Pri pri;

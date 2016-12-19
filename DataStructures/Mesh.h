@@ -209,11 +209,12 @@ struct MeshNeigVert
 
 struct MeshNeigElem
 {
-    int type;
     uint id;
+    int type;
+    int vId;
 
-    inline MeshNeigElem() : type(-1), id(0) {}
-    inline MeshNeigElem(int type, uint id) : type(type), id(id) {}
+    inline MeshNeigElem() : id(0), type(-1), vId(-1) {}
+    inline MeshNeigElem(uint id, short type, short vId) : id(id), type(type), vId(vId) {}
     inline operator uint() const {return id;}
 };
 

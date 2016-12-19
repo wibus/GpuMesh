@@ -84,8 +84,9 @@ struct NeigVert
 
 struct NeigElem
 {
-    int type;
     uint id;
+    int type;
+    int vId;
 };
 
 struct PatchElem

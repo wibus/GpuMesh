@@ -60,13 +60,15 @@ void smoothVert(uint vId)
     uint neigElemCount = topo.neigElemCount;
     uint eBeg = (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
     uint eEnd = ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint nBeg = topo.neigElemBase + eBeg;
+    uint nEnd = topo.neigElemBase + eEnd;
 
     PatchElem elems[ELEMENT_PER_THREAD_COUNT];
-    for(uint e=0, id = eBeg; id < eEnd; ++e, ++id)
+    for(uint e=0, ne = nBeg; ne < nEnd; ++e, ++ne)
     {
-        NeigElem elem = neigElems[topo.neigElemBase + id];
+        NeigElem elem = neigElems[ne];
         elems[e].type = elem.type;
-        elems[e].n = 0;
+        elems[e].n = elem.vId;
 
         switch(elems[e].type)
         {
@@ -76,10 +78,6 @@ void smoothVert(uint vId)
             elems[e].p[1] = verts[elems[e].tet.v[1]].p;
             elems[e].p[2] = verts[elems[e].tet.v[2]].p;
             elems[e].p[3] = verts[elems[e].tet.v[3]].p;
-
-            if(elems[e].tet.v[1] == vId) elems[e].n = 1;
-            else if(elems[e].tet.v[2] == vId) elems[e].n = 2;
-            else if(elems[e].tet.v[3] == vId) elems[e].n = 3;
             break;
 
         case PRI_ELEMENT_TYPE :
@@ -90,12 +88,6 @@ void smoothVert(uint vId)
             elems[e].p[3] = verts[elems[e].pri.v[3]].p;
             elems[e].p[4] = verts[elems[e].pri.v[4]].p;
             elems[e].p[5] = verts[elems[e].pri.v[5]].p;
-
-            if(elems[e].pri.v[1] == vId) elems[e].n = 1;
-            else if(elems[e].pri.v[2] == vId) elems[e].n = 2;
-            else if(elems[e].pri.v[3] == vId) elems[e].n = 3;
-            else if(elems[e].pri.v[4] == vId) elems[e].n = 4;
-            else if(elems[e].pri.v[5] == vId) elems[e].n = 5;
             break;
 
         case HEX_ELEMENT_TYPE :
@@ -108,14 +100,6 @@ void smoothVert(uint vId)
             elems[e].p[5] = verts[elems[e].hex.v[5]].p;
             elems[e].p[6] = verts[elems[e].hex.v[6]].p;
             elems[e].p[7] = verts[elems[e].hex.v[7]].p;
-
-            if(elems[e].hex.v[1] == vId) elems[e].n = 1;
-            else if(elems[e].hex.v[2] == vId) elems[e].n = 2;
-            else if(elems[e].hex.v[3] == vId) elems[e].n = 3;
-            else if(elems[e].hex.v[4] == vId) elems[e].n = 4;
-            else if(elems[e].hex.v[5] == vId) elems[e].n = 5;
-            else if(elems[e].hex.v[6] == vId) elems[e].n = 6;
-            else if(elems[e].hex.v[7] == vId) elems[e].n = 7;
             break;
         }
     }

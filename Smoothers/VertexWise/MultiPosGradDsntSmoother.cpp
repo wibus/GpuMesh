@@ -23,7 +23,7 @@ void smoothCudaMultiPosGradDsntVertices(
 
 
 const int MultiPosGradDsntSmoother::POSITION_THREAD_COUNT = 8;
-const int MultiPosGradDsntSmoother::ELEMENT_SLOT_COUNT = 96;
+const int MultiPosGradDsntSmoother::NODE_THREAD_COUNT = 32;
 
 MultiPosGradDsntSmoother::MultiPosGradDsntSmoother() :
     GradientDescentSmoother(
@@ -71,18 +71,18 @@ void MultiPosGradDsntSmoother::smoothMeshCuda(
 bool MultiPosGradDsntSmoother::verifyMeshForGpuLimitations(
             const Mesh& mesh) const
 {
-    for(const MeshTopo& topo : mesh.topos)
-    {
-        if(topo.neighborElems.size() > ELEMENT_SLOT_COUNT)
-        {
-            getLog().postMessage(new Message('E', false,
-                "Some nodes have too many neighbor elements. "\
-                "Maximum " + std::to_string(ELEMENT_SLOT_COUNT) +
-                ". A node with " + std::to_string(topo.neighborElems.size()) + " found.",
-                "MultiPosGradDsntSmoother"));
-            return false;
-        }
-    }
+//    for(const MeshTopo& topo : mesh.topos)
+//    {
+//        if(topo.neighborElems.size() > ELEMENT_SLOT_COUNT)
+//        {
+//            getLog().postMessage(new Message('E', false,
+//                "Some nodes have too many neighbor elements. "\
+//                "Maximum " + std::to_string(ELEMENT_SLOT_COUNT) +
+//                ". A node with " + std::to_string(topo.neighborElems.size()) + " found.",
+//                "MultiPosGradDsntSmoother"));
+//            return false;
+//        }
+//    }
 
     return true;
 }
@@ -100,5 +100,5 @@ std::string MultiPosGradDsntSmoother::glslLauncher() const
 
 size_t MultiPosGradDsntSmoother::nodesPerBlock() const
 {
-    return 1;
+    return NODE_THREAD_COUNT;
 }

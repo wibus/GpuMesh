@@ -21,7 +21,7 @@ const bool ENABLE_VERIFICATION_FRENZY = false;
 
 inline MeshNeigElem toTet(uint eId)
 {
-    return MeshNeigElem(MeshTet::ELEMENT_TYPE, eId);
+    return MeshNeigElem(eId, MeshTet::ELEMENT_TYPE, -1);
 }
 
 inline void appendElems(std::vector<MeshNeigElem>& elems, const std::vector<uint>& eIds)
@@ -767,12 +767,12 @@ size_t BatrTopologist::faceSwapping(
                         uint lt = tets.size();
                         tets.push_back(newTet2);
 
-                        topos[tOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, nt));
-                        topos[tOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, lt));
+                        topos[tOp].neighborElems.push_back(toTet(nt));
+                        topos[tOp].neighborElems.push_back(toTet(lt));
                         topos[tOp].neighborVerts.push_back(MeshNeigVert(nOp));
 
-                        topos[nOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, t));
-                        topos[nOp].neighborElems.push_back(MeshNeigElem(MeshTet::ELEMENT_TYPE, lt));
+                        topos[nOp].neighborElems.push_back(toTet(t));
+                        topos[nOp].neighborElems.push_back(toTet(lt));
                         topos[nOp].neighborVerts.push_back(MeshNeigVert(tOp));
 
                         for(MeshNeigElem& v : neigTets0)
@@ -1189,7 +1189,7 @@ size_t BatrTopologist::edgeSwapping(
                         aliveTets[tetId] = true;
                     }
 
-                    MeshNeigElem elem(MeshTet::ELEMENT_TYPE, tetId);
+                    MeshNeigElem elem = toTet(tetId);
                     topos[tet.v[0]].neighborElems.push_back(elem);
                     topos[tet.v[1]].neighborElems.push_back(elem);
                     topos[tet.v[2]].neighborElems.push_back(elem);

@@ -96,12 +96,16 @@ struct GpuNeigVert
 
 struct GpuNeigElem
 {
-    int type;
     GLuint id;
+    GLint type;
+
+    // This is the owner vertex's ID
+    // in element's vertices array
+    GLint vId;
 
     inline GpuNeigElem() {}
-    inline GpuNeigElem(const MeshNeigElem& n) : type(n.type), id(n.id) {}
-    inline operator MeshNeigElem() const {return MeshNeigElem(type, id); }
+    inline GpuNeigElem(const MeshNeigElem& n) : id(n.id), type(n.type), vId(n.vId) {}
+    inline operator MeshNeigElem() const {return MeshNeigElem(id, type, vId); }
 };
 
 struct GpuTopo
