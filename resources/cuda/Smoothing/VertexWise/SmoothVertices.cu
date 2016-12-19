@@ -31,6 +31,8 @@ void smoothCudaVertices(
 {
     setupCudaIndependentDispatch(dispatch);
 
+    cudaFuncSetCacheConfig(smoothVerticesCudaMain, cudaFuncCachePreferL1);
+
     cudaCheckErrors("CUDA error before vertices smoothing");
     smoothVerticesCudaMain<<<dispatch.workgroupCount, workgroupSize>>>();
     cudaCheckErrors("CUDA error during vertices smoothing");

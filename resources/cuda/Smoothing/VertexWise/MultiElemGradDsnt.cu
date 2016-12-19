@@ -281,6 +281,7 @@ void installCudaMultiElemGradDsntSmoother(
     cudaMemcpyToSymbol(SECURITY_CYCLE_COUNT, &h_securityCycleCount, sizeof(int));
     cudaMemcpyToSymbol(LOCAL_SIZE_TO_NODE_SHIFT, &h_localSizeToNodeShift, sizeof(float));
 
+    cudaFuncSetCacheConfig(smoothMultiElemGradDsntVerticesCudaMain, cudaFuncCachePreferL1);
 
     if(verboseCuda)
         printf("I -> CUDA \tPatch Gradient Decsent smoother installed\n");
