@@ -1,7 +1,8 @@
-const uint NODE_THREAD_COUNT = 8;
-const uint ELEMENT_THREAD_COUNT = 32;
-const uint ELEMENT_PER_THREAD_COUNT = 3;
+const uint NODE_THREAD_COUNT = 32;
+const uint ELEMENT_THREAD_COUNT = 8;
 const uint POSITION_SLOT_COUNT = 8;
+
+const uint ELEMENT_PER_THREAD_COUNT = (96 / ELEMENT_THREAD_COUNT);
 
 const uint GRAD_SAMP_COUNT = 6;
 const uint LINE_SAMP_COUNT = 8;

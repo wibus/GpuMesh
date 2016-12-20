@@ -105,7 +105,12 @@ std::string PatchGradDsntSmoother::glslLauncher() const
     return "";
 }
 
-size_t PatchGradDsntSmoother::nodesPerBlock() const
+size_t PatchGradDsntSmoother::glslNodesPerBlock() const
+{
+    return 1;
+}
+
+size_t PatchGradDsntSmoother::cudaNodesPerBlock() const
 {
     return 1;
 }

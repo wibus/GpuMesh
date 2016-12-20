@@ -98,7 +98,12 @@ std::string MultiPosGradDsntSmoother::glslLauncher() const
     return "";
 }
 
-size_t MultiPosGradDsntSmoother::nodesPerBlock() const
+size_t MultiPosGradDsntSmoother::glslNodesPerBlock() const
 {
-    return NODE_THREAD_COUNT;
+    return 32;
+}
+
+size_t MultiPosGradDsntSmoother::cudaNodesPerBlock() const
+{
+    return 4;
 }

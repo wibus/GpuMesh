@@ -26,12 +26,13 @@ protected:
 
     virtual std::string glslLauncher() const override;
 
-    virtual size_t nodesPerBlock() const override;
+    virtual size_t glslNodesPerBlock() const override;
+
+    virtual size_t cudaNodesPerBlock() const override;
 
 protected:
     static const int POSITION_THREAD_COUNT;
     static const int ELEMENT_THREAD_COUNT;
-    static const int NODE_THREAD_COUNT;
 
     static const int ELEMENT_PER_THREAD_COUNT;
 };

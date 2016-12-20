@@ -235,7 +235,12 @@ std::string SpawnSearchSmoother::glslLauncher() const
     return "";
 }
 
-size_t SpawnSearchSmoother::nodesPerBlock() const
+size_t SpawnSearchSmoother::glslNodesPerBlock() const
+{
+    return 1;
+}
+
+size_t SpawnSearchSmoother::cudaNodesPerBlock() const
 {
     return 1;
 }

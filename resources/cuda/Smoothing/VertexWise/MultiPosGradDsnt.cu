@@ -5,7 +5,7 @@
 #include <DataStructures/NodeGroups.h>
 
 #define POSITION_THREAD_COUNT uint(8)
-#define NODE_THREAD_COUNT uint(32)
+#define NODE_THREAD_COUNT uint(4)
 
 #define GRAD_SAMP_COUNT uint(6)
 #define LINE_SAMP_COUNT uint(8)
@@ -273,7 +273,7 @@ void smoothCudaMultiPosGradDsntVertices(
     dim3 blockDim(POSITION_THREAD_COUNT, NODE_THREAD_COUNT);
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothMultiPosGradDsntVerticesCudaMain<<<dispatch.gpuBufferSize, blockDim>>>();
+    smoothMultiPosGradDsntVerticesCudaMain<<<dispatch.workgroupCount, blockDim>>>();
     cudaDeviceSynchronize();
     cudaCheckErrors("CUDA error during vertices smoothing");
 }

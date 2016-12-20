@@ -4,10 +4,11 @@
 
 #include <DataStructures/NodeGroups.h>
 
-#define NODE_THREAD_COUNT uint(8)
-#define ELEMENT_THREAD_COUNT uint(32)
-#define ELEMENT_PER_THREAD_COUNT uint(3)
+#define NODE_THREAD_COUNT uint(4)
+#define ELEMENT_THREAD_COUNT uint(8)
 #define POSITION_SLOT_COUNT uint(8)
+
+#define ELEMENT_PER_THREAD_COUNT uint(96 / ELEMENT_THREAD_COUNT)
 
 #define GRAD_SAMP_COUNT uint(6)
 #define LINE_SAMP_COUNT uint(8)
@@ -297,7 +298,7 @@ void smoothCudaMultiElemGradDsntVertices(
     dim3 blockDim(NODE_THREAD_COUNT, ELEMENT_THREAD_COUNT);
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothMultiElemGradDsntVerticesCudaMain<<<dispatch.gpuBufferSize, blockDim>>>();
+    smoothMultiElemGradDsntVerticesCudaMain<<<dispatch.workgroupCount, blockDim>>>();
     cudaDeviceSynchronize();
     cudaCheckErrors("CUDA error during vertices smoothing");
 }

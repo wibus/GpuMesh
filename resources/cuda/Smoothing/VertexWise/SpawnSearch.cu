@@ -230,7 +230,7 @@ void smoothCudaSpawnVertices(
     size_t sharedDim = sizeof(PatchElem) * ELEMENT_SLOT_COUNT;
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothSpawnVerticesCudaMain<<<dispatch.gpuBufferSize, SPAWN_COUNT, sharedDim>>>();
+    smoothSpawnVerticesCudaMain<<<dispatch.workgroupCount, SPAWN_COUNT, sharedDim>>>();
     cudaCheckErrors("CUDA error during vertices smoothing");
 
     cudaDeviceSynchronize();

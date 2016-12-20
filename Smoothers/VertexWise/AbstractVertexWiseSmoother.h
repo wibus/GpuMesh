@@ -60,7 +60,9 @@ protected:
     virtual glm::ivec3 layoutWorkgroups(
             const NodeGroups::GpuDispatch& dispatch) const;
 
-    virtual size_t nodesPerBlock() const;
+    virtual size_t glslNodesPerBlock() const;
+
+    virtual size_t cudaNodesPerBlock() const;
 
 
 private:

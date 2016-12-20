@@ -26,7 +26,9 @@ protected:
 
     virtual std::string glslLauncher() const override;
 
-    virtual size_t nodesPerBlock() const override;
+    virtual size_t glslNodesPerBlock() const override;
+
+    virtual size_t cudaNodesPerBlock() const override;
 
 protected:
     static const int NODE_THREAD_COUNT;

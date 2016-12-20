@@ -42,7 +42,9 @@ protected:
 
     virtual std::string glslLauncher() const override;
 
-    virtual size_t nodesPerBlock() const override;
+    virtual size_t glslNodesPerBlock() const override;
+
+    virtual size_t cudaNodesPerBlock() const override;
 
 private:
     static const int SPAWN_COUNT;

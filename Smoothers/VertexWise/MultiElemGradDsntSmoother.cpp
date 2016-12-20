@@ -22,10 +22,12 @@ void smoothCudaMultiElemGradDsntVertices(
         const NodeGroups::GpuDispatch& dispatch);
 
 
-const int MultiElemGradDsntSmoother::NODE_THREAD_COUNT = 8;
-const int MultiElemGradDsntSmoother::ELEMENT_THREAD_COUNT = 32;
-const int MultiElemGradDsntSmoother::ELEMENT_PER_THREAD_COUNT = 3;
+const int MultiElemGradDsntSmoother::NODE_THREAD_COUNT = 4;
+const int MultiElemGradDsntSmoother::ELEMENT_THREAD_COUNT = 8;
 const int MultiElemGradDsntSmoother::POSITION_SLOT_COUNT = 8;
+
+const int MultiElemGradDsntSmoother::ELEMENT_PER_THREAD_COUNT =
+        96 / MultiElemGradDsntSmoother::ELEMENT_THREAD_COUNT;
 
 MultiElemGradDsntSmoother::MultiElemGradDsntSmoother() :
     GradientDescentSmoother(
@@ -75,11 +77,15 @@ bool MultiElemGradDsntSmoother::verifyMeshForGpuLimitations(
 {
     for(const MeshTopo& topo : mesh.topos)
     {
-        if(topo.neighborElems.size() > ELEMENT_PER_THREAD_COUNT * ELEMENT_THREAD_COUNT)
+        const uint ELEMENT_SLOT_COUNT =
+                ELEMENT_PER_THREAD_COUNT *
+                ELEMENT_THREAD_COUNT;
+
+        if(topo.neighborElems.size() > ELEMENT_SLOT_COUNT)
         {
             getLog().postMessage(new Message('E', false,
                 "Some nodes have too many neighbor elements. "\
-                "Maximum " + std::to_string(ELEMENT_PER_THREAD_COUNT) +
+                "Maximum " + std::to_string(ELEMENT_SLOT_COUNT) +
                 ". A node with " + std::to_string(topo.neighborElems.size()) + " found.",
                 "MultiElemGradDsntSmoother"));
             return false;
@@ -100,7 +106,12 @@ std::string MultiElemGradDsntSmoother::glslLauncher() const
     return "";
 }
 
-size_t MultiElemGradDsntSmoother::nodesPerBlock() const
+size_t MultiElemGradDsntSmoother::glslNodesPerBlock() const
 {
-    return NODE_THREAD_COUNT;
+    return 32;
+}
+
+size_t MultiElemGradDsntSmoother::cudaNodesPerBlock() const
+{
+    return 4;
 }
