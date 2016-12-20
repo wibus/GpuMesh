@@ -5,8 +5,9 @@
 #include <DataStructures/NodeGroups.h>
 
 #define POSITION_THREAD_COUNT uint(8)
-#define ELEMENT_THREAD_COUNT uint(32)
-#define ELEMENT_SLOT_COUNT uint(96)
+#define ELEMENT_THREAD_COUNT uint(8)
+
+#define ELEMENT_PER_THREAD_COUNT uint(96 / ELEMENT_THREAD_COUNT)
 
 #define GRAD_SAMP_COUNT uint(6)
 #define LINE_SAMP_COUNT uint(8)
@@ -20,7 +21,6 @@ namespace pgd
     __constant__ float LOCAL_SIZE_TO_NODE_SHIFT;
 
     __shared__ float nodeShift;
-    __shared__ extern PatchElem patchElems[];
     __shared__ int patchMin[POSITION_THREAD_COUNT];
     __shared__ float patchMean[POSITION_THREAD_COUNT];
     __shared__ float patchQual[POSITION_THREAD_COUNT];
@@ -50,51 +50,51 @@ __device__ void patchGradDsntSmoothVert(uint vId)
     uint eId = threadIdx.y;
 
     Topo topo = topos[vId];
+    uint neigBase = topo.neigElemBase;
     uint neigElemCount = topo.neigElemCount;
     uint eBeg = (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
     uint eEnd = ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
-    uint nBeg = topo.neigElemBase + eBeg;
+    uint nBeg = neigBase + eBeg;
+    uint nEnd = neigBase + eEnd;
 
-    if(pId == 0)
+    PatchElem elems[ELEMENT_PER_THREAD_COUNT];
+    for(uint e=0, ne = nBeg; ne < nEnd; ++e, ++ne)
     {
-        for(uint e = eBeg, ne = nBeg; e < eEnd; ++e, ++ne)
+        NeigElem elem = neigElems[ne];
+        elems[e].type = elem.type;
+        elems[e].n = elem.vId;
+
+        switch(elems[e].type)
         {
-            NeigElem elem = neigElems[ne];
-            patchElems[e].type = elem.type;
-            patchElems[e].n = elem.vId;
+        case TET_ELEMENT_TYPE :
+            elems[e].tet = tets[elem.id];
+            elems[e].p[0] = verts[elems[e].tet.v[0]].p;
+            elems[e].p[1] = verts[elems[e].tet.v[1]].p;
+            elems[e].p[2] = verts[elems[e].tet.v[2]].p;
+            elems[e].p[3] = verts[elems[e].tet.v[3]].p;
+            break;
 
-            switch(patchElems[e].type)
-            {
-            case TET_ELEMENT_TYPE :
-                patchElems[e].tet = tets[elem.id];
-                patchElems[e].p[0] = verts[patchElems[e].tet.v[0]].p;
-                patchElems[e].p[1] = verts[patchElems[e].tet.v[1]].p;
-                patchElems[e].p[2] = verts[patchElems[e].tet.v[2]].p;
-                patchElems[e].p[3] = verts[patchElems[e].tet.v[3]].p;
-                break;
+        case PRI_ELEMENT_TYPE :
+            elems[e].pri = pris[elem.id];
+            elems[e].p[0] = verts[elems[e].pri.v[0]].p;
+            elems[e].p[1] = verts[elems[e].pri.v[1]].p;
+            elems[e].p[2] = verts[elems[e].pri.v[2]].p;
+            elems[e].p[3] = verts[elems[e].pri.v[3]].p;
+            elems[e].p[4] = verts[elems[e].pri.v[4]].p;
+            elems[e].p[5] = verts[elems[e].pri.v[5]].p;
+            break;
 
-            case PRI_ELEMENT_TYPE :
-                patchElems[e].pri = pris[elem.id];
-                patchElems[e].p[0] = verts[patchElems[e].pri.v[0]].p;
-                patchElems[e].p[1] = verts[patchElems[e].pri.v[1]].p;
-                patchElems[e].p[2] = verts[patchElems[e].pri.v[2]].p;
-                patchElems[e].p[3] = verts[patchElems[e].pri.v[3]].p;
-                patchElems[e].p[4] = verts[patchElems[e].pri.v[4]].p;
-                patchElems[e].p[5] = verts[patchElems[e].pri.v[5]].p;
-                break;
-
-            case HEX_ELEMENT_TYPE :
-                patchElems[e].hex = hexs[elem.id];
-                patchElems[e].p[0] = verts[patchElems[e].hex.v[0]].p;
-                patchElems[e].p[1] = verts[patchElems[e].hex.v[1]].p;
-                patchElems[e].p[2] = verts[patchElems[e].hex.v[2]].p;
-                patchElems[e].p[3] = verts[patchElems[e].hex.v[3]].p;
-                patchElems[e].p[4] = verts[patchElems[e].hex.v[4]].p;
-                patchElems[e].p[5] = verts[patchElems[e].hex.v[5]].p;
-                patchElems[e].p[6] = verts[patchElems[e].hex.v[6]].p;
-                patchElems[e].p[7] = verts[patchElems[e].hex.v[7]].p;
-                break;
-            }
+        case HEX_ELEMENT_TYPE :
+            elems[e].hex = hexs[elem.id];
+            elems[e].p[0] = verts[elems[e].hex.v[0]].p;
+            elems[e].p[1] = verts[elems[e].hex.v[1]].p;
+            elems[e].p[2] = verts[elems[e].hex.v[2]].p;
+            elems[e].p[3] = verts[elems[e].hex.v[3]].p;
+            elems[e].p[4] = verts[elems[e].hex.v[4]].p;
+            elems[e].p[5] = verts[elems[e].hex.v[5]].p;
+            elems[e].p[6] = verts[elems[e].hex.v[6]].p;
+            elems[e].p[7] = verts[elems[e].hex.v[7]].p;
+            break;
         }
     }
 
@@ -123,34 +123,23 @@ __device__ void patchGradDsntSmoothVert(uint vId)
 
         if(pId < GRAD_SAMP_COUNT)
         {
-            vec3 gradSamp = GRAD_SAMPS[pId] * nodeShift;
+            vec3 gradSamp = pos + GRAD_SAMPS[pId] * nodeShift;
 
-            for(uint e = eBeg; e < eEnd; ++e)
+            for(uint e=0, id = eBeg; id < eEnd; ++e, ++id)
             {
-                vec3 vertPos[HEX_VERTEX_COUNT] = {
-                    patchElems[e].p[0],
-                    patchElems[e].p[1],
-                    patchElems[e].p[2],
-                    patchElems[e].p[3],
-                    patchElems[e].p[4],
-                    patchElems[e].p[5],
-                    patchElems[e].p[6],
-                    patchElems[e].p[7]
-                };
-
-                vertPos[patchElems[e].n] = pos + gradSamp;
+                elems[e].p[elems[e].n] = gradSamp;
 
                 float qual = 0.0;
-                switch(patchElems[e].type)
+                switch(elems[e].type)
                 {
                 case TET_ELEMENT_TYPE :
-                    qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                    qual = (*tetQualityImpl)(elems[e].p, elems[e].tet);
                     break;
                 case PRI_ELEMENT_TYPE :
-                    qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                    qual = (*priQualityImpl)(elems[e].p, elems[e].pri);
                     break;
                 case HEX_ELEMENT_TYPE :
-                    qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                    qual = (*hexQualityImpl)(elems[e].p, elems[e].hex);
                     break;
                 }
 
@@ -189,34 +178,23 @@ __device__ void patchGradDsntSmoothVert(uint vId)
             break;
 
 
-        vec3 lineSamp = lineShift * LINE_SAMPS[pId];
+        vec3 lineSamp = pos + lineShift * LINE_SAMPS[pId];
 
-        for(uint e = eBeg; e < eEnd; ++e)
+        for(uint e=0, id = eBeg; id < eEnd; ++e, ++id)
         {
-            vec3 vertPos[HEX_VERTEX_COUNT] = {
-                patchElems[e].p[0],
-                patchElems[e].p[1],
-                patchElems[e].p[2],
-                patchElems[e].p[3],
-                patchElems[e].p[4],
-                patchElems[e].p[5],
-                patchElems[e].p[6],
-                patchElems[e].p[7]
-            };
-
-            vertPos[patchElems[e].n] = pos + lineSamp;
+            elems[e].p[elems[e].n] = lineSamp;
 
             float qual = 0.0;
-            switch(patchElems[e].type)
+            switch(elems[e].type)
             {
             case TET_ELEMENT_TYPE :
-                qual = (*tetQualityImpl)(vertPos, patchElems[e].tet);
+                qual = (*tetQualityImpl)(elems[e].p, elems[e].tet);
                 break;
             case PRI_ELEMENT_TYPE :
-                qual = (*priQualityImpl)(vertPos, patchElems[e].pri);
+                qual = (*priQualityImpl)(elems[e].p, elems[e].pri);
                 break;
             case HEX_ELEMENT_TYPE :
-                qual = (*hexQualityImpl)(vertPos, patchElems[e].hex);
+                qual = (*hexQualityImpl)(elems[e].p, elems[e].hex);
                 break;
             }
 
@@ -269,6 +247,7 @@ __device__ void patchGradDsntSmoothVert(uint vId)
     }
 }
 
+
 __global__ void smoothPatchGradDsntVerticesCudaMain()
 {
     if(blockIdx.x < GroupSize)
@@ -299,6 +278,7 @@ void installCudaPatchGradDsntSmoother(
     cudaMemcpyToSymbol(SECURITY_CYCLE_COUNT, &h_securityCycleCount, sizeof(int));
     cudaMemcpyToSymbol(LOCAL_SIZE_TO_NODE_SHIFT, &h_localSizeToNodeShift, sizeof(float));
 
+    cudaFuncSetCacheConfig(smoothPatchGradDsntVerticesCudaMain, cudaFuncCachePreferL1);
 
     if(verboseCuda)
         printf("I -> CUDA \tPatch Gradient Decsent smoother installed\n");
@@ -310,11 +290,9 @@ void smoothCudaPatchGradDsntVertices(
     setupCudaIndependentDispatch(dispatch);
 
     dim3 blockDim(POSITION_THREAD_COUNT, ELEMENT_THREAD_COUNT);
-    size_t sharedDim = sizeof(PatchElem) * ELEMENT_SLOT_COUNT;
-    //std::cout << "Requested shared memory size: " << sharedDim/1000.0 << "kB" << std::endl;
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothPatchGradDsntVerticesCudaMain<<<dispatch.gpuBufferSize, blockDim, sharedDim>>>();
+    smoothPatchGradDsntVerticesCudaMain<<<dispatch.workgroupCount, blockDim>>>();
     cudaDeviceSynchronize();
     cudaCheckErrors("CUDA error during vertices smoothing");
 }

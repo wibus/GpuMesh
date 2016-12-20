@@ -67,7 +67,7 @@ void smoothVert(uint vId)
 
         if(pId < GRAD_SAMP_COUNT)
         {
-            vec3 newPos = pos + GRAD_SAMPS[pId] * nodeShift[nId];
+            vec3 gradSamp = pos + GRAD_SAMPS[pId] * nodeShift[nId];
 
             for(uint e = eBeg; e < eEnd; ++e)
             {
@@ -82,7 +82,7 @@ void smoothVert(uint vId)
                     vertPos[1] = verts[tets[elem.id].v[1]].p;
                     vertPos[2] = verts[tets[elem.id].v[2]].p;
                     vertPos[3] = verts[tets[elem.id].v[3]].p;
-                    vertPos[elem.vId] = newPos;
+                    vertPos[elem.vId] = gradSamp;
                     qual = tetQuality(vertPos, tets[elem.id]);
                     break;
 
@@ -93,7 +93,7 @@ void smoothVert(uint vId)
                     vertPos[3] = verts[pris[elem.id].v[3]].p;
                     vertPos[4] = verts[pris[elem.id].v[4]].p;
                     vertPos[5] = verts[pris[elem.id].v[5]].p;
-                    vertPos[elem.vId] = newPos;
+                    vertPos[elem.vId] = gradSamp;
                     qual = priQuality(vertPos, pris[elem.id]);
                     break;
 
@@ -106,7 +106,7 @@ void smoothVert(uint vId)
                     vertPos[5] = verts[hexs[elem.id].v[5]].p;
                     vertPos[6] = verts[hexs[elem.id].v[6]].p;
                     vertPos[7] = verts[hexs[elem.id].v[7]].p;
-                    vertPos[elem.vId] = newPos;
+                    vertPos[elem.vId] = gradSamp;
                     qual = hexQuality(vertPos, hexs[elem.id]);
                     break;
                 }

@@ -23,8 +23,10 @@ void smoothCudaPatchGradDsntVertices(
 
 
 const int PatchGradDsntSmoother::POSITION_THREAD_COUNT = 8;
-const int PatchGradDsntSmoother::ELEMENT_THREAD_COUNT = 32;
-const int PatchGradDsntSmoother::ELEMENT_SLOT_COUNT = 96;
+const int PatchGradDsntSmoother::ELEMENT_THREAD_COUNT = 8;
+
+const int PatchGradDsntSmoother::ELEMENT_PER_THREAD_COUNT =
+        96 / PatchGradDsntSmoother::ELEMENT_THREAD_COUNT;
 
 PatchGradDsntSmoother::PatchGradDsntSmoother() :
     GradientDescentSmoother(
@@ -74,6 +76,10 @@ bool PatchGradDsntSmoother::verifyMeshForGpuLimitations(
 {
     for(const MeshTopo& topo : mesh.topos)
     {
+        const uint ELEMENT_SLOT_COUNT =
+                ELEMENT_PER_THREAD_COUNT *
+                ELEMENT_THREAD_COUNT;
+
         if(topo.neighborElems.size() > ELEMENT_SLOT_COUNT)
         {
             getLog().postMessage(new Message('E', false,

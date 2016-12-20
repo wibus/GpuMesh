@@ -31,7 +31,9 @@ protected:
 protected:
     static const int POSITION_THREAD_COUNT;
     static const int ELEMENT_THREAD_COUNT;
-    static const int ELEMENT_SLOT_COUNT;
+    static const int NODE_THREAD_COUNT;
+
+    static const int ELEMENT_PER_THREAD_COUNT;
 };
 
 #endif // GPUMESH_PATCHGRADDSNTSMOOTHER
