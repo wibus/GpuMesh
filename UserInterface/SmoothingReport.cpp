@@ -591,7 +591,9 @@ void SmoothingReport::printHistogramPlot(QPixmap& pixmap) const
         QBrush(Qt::cyan),
         QBrush(Qt::magenta),
         QBrush(Qt::yellow),
-        QBrush(Qt::gray)
+        QBrush(Qt::gray),
+        QBrush(QColor("olive")),
+        QBrush(QColor("darksalmon"))
     };
 
     double maxElemRatio = 0.0;

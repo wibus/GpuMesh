@@ -1602,6 +1602,8 @@ bool BatrTopologist::cureBoundaries(
     }
 
 
+    // Snap inner vert on boundary if it
+    // advantages the other neighbor elements
     for(size_t tArId=0; tArId < tetsToVerify.size(); ++tArId)
     {
         uint tId = tetsToVerify[tArId];
