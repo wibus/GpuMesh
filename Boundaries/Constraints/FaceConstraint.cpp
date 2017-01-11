@@ -123,7 +123,7 @@ const AbstractConstraint* FaceConstraint::merge(const AbstractConstraint* c) con
             if(edge->isBoundedBy(s))
                 return edge;
 
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
     else if(c->dimension() == 1)
     {
@@ -137,7 +137,7 @@ const AbstractConstraint* FaceConstraint::merge(const AbstractConstraint* c) con
             if(vertex->isBoundedBy(e))
                 return vertex;
 
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
     else if(c->dimension() == 0)
     {
@@ -147,10 +147,10 @@ const AbstractConstraint* FaceConstraint::merge(const AbstractConstraint* c) con
         if(isBoundedBy(v))
             return v;
 
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
 
-    return MERGE_PREVENT;
+    return PREVENT_MERGE;
 }
 
 

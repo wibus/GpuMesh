@@ -31,7 +31,7 @@ public:
     virtual glm::dvec3 operator()(const glm::dvec3& pos) const = 0;
 
     static const AbstractConstraint* SPLIT_VOLUME;
-    static const AbstractConstraint* MERGE_PREVENT;
+    static const AbstractConstraint* PREVENT_MERGE;
 
 protected:
     friend class AbstractBoundary;

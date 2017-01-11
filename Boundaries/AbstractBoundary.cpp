@@ -35,8 +35,6 @@ const AbstractConstraint* AbstractBoundary::split(
 
     const AbstractConstraint* constraint = c1->split(c2);
 
-    // nullptr constraint means that the
-    // split vertex floats in the volume
     if(constraint != AbstractConstraint::SPLIT_VOLUME)
         return constraint;
     else
@@ -52,8 +50,7 @@ const AbstractConstraint* AbstractBoundary::merge(
 
     const AbstractConstraint* constraint = c1->merge(c2);
 
-    // Nullptr constraint means it can't be merged
-    if(constraint == AbstractConstraint::MERGE_PREVENT)
+    if(constraint == AbstractConstraint::PREVENT_MERGE)
         return INVALID_OPERATION;
     else
         return constraint;
