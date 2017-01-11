@@ -126,7 +126,7 @@ const AbstractConstraint* EdgeConstraint::merge(const AbstractConstraint* c) con
         else if(_vertices[1]->isBoundedBy(s))
             return _vertices[1];
 
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
     else if(c->dimension() == 1)
     {
@@ -138,7 +138,7 @@ const AbstractConstraint* EdgeConstraint::merge(const AbstractConstraint* c) con
         else if(e->isBoundedBy(_vertices[1]))
                 return _vertices[1];
 
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
     else if(c->dimension() == 0)
     {
@@ -149,7 +149,7 @@ const AbstractConstraint* EdgeConstraint::merge(const AbstractConstraint* c) con
             return v;
     }
 
-    return MERGE_PREVENT;
+    return PREVENT_MERGE;
 }
 
 

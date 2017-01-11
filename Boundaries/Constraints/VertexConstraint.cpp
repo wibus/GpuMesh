@@ -117,7 +117,7 @@ const AbstractConstraint* VertexConstraint::merge(const AbstractConstraint* c) c
         if(isBoundedBy(s))
             return this;
 
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
     else if(c->dimension() == 1)
     {
@@ -127,12 +127,12 @@ const AbstractConstraint* VertexConstraint::merge(const AbstractConstraint* c) c
         if(isBoundedBy(e))
             return this;
 
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
     else if(c->dimension() == 0)
     {
-        return MERGE_PREVENT;
+        return PREVENT_MERGE;
     }
 
-    return MERGE_PREVENT;
+    return PREVENT_MERGE;
 }
