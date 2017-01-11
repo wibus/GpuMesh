@@ -1,15 +1,13 @@
-const uint NODE_THREAD_COUNT = 32;
 const uint ELEMENT_THREAD_COUNT = 8;
+const uint NODE_THREAD_COUNT = 32;
 const uint POSITION_SLOT_COUNT = 8;
-
-const uint ELEMENT_PER_THREAD_COUNT = (96 / ELEMENT_THREAD_COUNT);
 
 const uint GRAD_SAMP_COUNT = 6;
 const uint LINE_SAMP_COUNT = 8;
 
 const int MIN_MAX = 2147483647;
 
-layout (local_size_x = NODE_THREAD_COUNT, local_size_y = ELEMENT_THREAD_COUNT, local_size_z = 1) in;
+layout (local_size_x = ELEMENT_THREAD_COUNT, local_size_y = NODE_THREAD_COUNT, local_size_z = 1) in;
 
 
 // Independent group range
@@ -54,56 +52,15 @@ void smoothVert(uint vId)
          0.75, 1.00, 1.25, 1.50
     );
 
-    uint nId = gl_LocalInvocationID.x;
-    uint eId = gl_LocalInvocationID.y;
+    uint eId = gl_LocalInvocationID.x;
+    uint nId = gl_LocalInvocationID.y;
 
     Topo topo = topos[vId];
+    uint neigBase = topo.neigElemBase;
     uint neigElemCount = topo.neigElemCount;
-    uint eBeg = (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
-    uint eEnd = ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
-    uint nBeg = topo.neigElemBase + eBeg;
-    uint nEnd = topo.neigElemBase + eEnd;
+    uint eBeg = neigBase + (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint eEnd = neigBase + ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
 
-    PatchElem elems[ELEMENT_PER_THREAD_COUNT];
-    for(uint e=0, ne = nBeg; ne < nEnd; ++e, ++ne)
-    {
-        NeigElem elem = neigElems[ne];
-        elems[e].type = elem.type;
-        elems[e].n = elem.vId;
-
-        switch(elems[e].type)
-        {
-        case TET_ELEMENT_TYPE :
-            elems[e].tet = tets[elem.id];
-            elems[e].p[0] = verts[elems[e].tet.v[0]].p;
-            elems[e].p[1] = verts[elems[e].tet.v[1]].p;
-            elems[e].p[2] = verts[elems[e].tet.v[2]].p;
-            elems[e].p[3] = verts[elems[e].tet.v[3]].p;
-            break;
-
-        case PRI_ELEMENT_TYPE :
-            elems[e].pri = pris[elem.id];
-            elems[e].p[0] = verts[elems[e].pri.v[0]].p;
-            elems[e].p[1] = verts[elems[e].pri.v[1]].p;
-            elems[e].p[2] = verts[elems[e].pri.v[2]].p;
-            elems[e].p[3] = verts[elems[e].pri.v[3]].p;
-            elems[e].p[4] = verts[elems[e].pri.v[4]].p;
-            elems[e].p[5] = verts[elems[e].pri.v[5]].p;
-            break;
-
-        case HEX_ELEMENT_TYPE :
-            elems[e].hex = hexs[elem.id];
-            elems[e].p[0] = verts[elems[e].hex.v[0]].p;
-            elems[e].p[1] = verts[elems[e].hex.v[1]].p;
-            elems[e].p[2] = verts[elems[e].hex.v[2]].p;
-            elems[e].p[3] = verts[elems[e].hex.v[3]].p;
-            elems[e].p[4] = verts[elems[e].hex.v[4]].p;
-            elems[e].p[5] = verts[elems[e].hex.v[5]].p;
-            elems[e].p[6] = verts[elems[e].hex.v[6]].p;
-            elems[e].p[7] = verts[elems[e].hex.v[7]].p;
-            break;
-        }
-    }
 
     if(eId < POSITION_SLOT_COUNT)
     {
@@ -128,25 +85,62 @@ void smoothVert(uint vId)
     {
         vec3 pos = verts[vId].p;
 
-        for(uint p=0; p < GRAD_SAMP_COUNT; ++p)
+        for(uint e = eBeg; e < eEnd; ++e)
         {
-            vec3 gradSamp = pos + GRAD_SAMPS[p] * nodeShift[nId];
+            NeigElem elem = neigElems[e];
+            vec3 vertPos[HEX_VERTEX_COUNT];
 
-            for(uint e=0, id = eBeg; id < eEnd; ++e, ++id)
+            float qual = 0.0;
+            switch(elem.type)
             {
-                elems[e].p[elems[e].n] = gradSamp;
+            case TET_ELEMENT_TYPE :
+                vertPos[0] = verts[tets[elem.id].v[0]].p;
+                vertPos[1] = verts[tets[elem.id].v[1]].p;
+                vertPos[2] = verts[tets[elem.id].v[2]].p;
+                vertPos[3] = verts[tets[elem.id].v[3]].p;
+                break;
+
+            case PRI_ELEMENT_TYPE :
+                vertPos[0] = verts[pris[elem.id].v[0]].p;
+                vertPos[1] = verts[pris[elem.id].v[1]].p;
+                vertPos[2] = verts[pris[elem.id].v[2]].p;
+                vertPos[3] = verts[pris[elem.id].v[3]].p;
+                vertPos[4] = verts[pris[elem.id].v[4]].p;
+                vertPos[5] = verts[pris[elem.id].v[5]].p;
+                break;
+
+            case HEX_ELEMENT_TYPE :
+                vertPos[0] = verts[hexs[elem.id].v[0]].p;
+                vertPos[1] = verts[hexs[elem.id].v[1]].p;
+                vertPos[2] = verts[hexs[elem.id].v[2]].p;
+                vertPos[3] = verts[hexs[elem.id].v[3]].p;
+                vertPos[4] = verts[hexs[elem.id].v[4]].p;
+                vertPos[5] = verts[hexs[elem.id].v[5]].p;
+                vertPos[6] = verts[hexs[elem.id].v[6]].p;
+                vertPos[7] = verts[hexs[elem.id].v[7]].p;
+                break;
+            }
+
+            for(uint p=0; p < GRAD_SAMP_COUNT; ++p)
+            {
+                vec3 gradSamp = pos + GRAD_SAMPS[p] * nodeShift[nId];
 
                 float qual = 0.0;
-                switch(elems[e].type)
+                switch(elem.type)
                 {
                 case TET_ELEMENT_TYPE :
-                    qual = tetQuality(elems[e].p, elems[e].tet);
+                    vertPos[elem.vId] = gradSamp;
+                    qual = tetQuality(vertPos, tets[elem.id]);
                     break;
+
                 case PRI_ELEMENT_TYPE :
-                    qual = priQuality(elems[e].p, elems[e].pri);
+                    vertPos[elem.vId] = gradSamp;
+                    qual = priQuality(vertPos, pris[elem.id]);
                     break;
+
                 case HEX_ELEMENT_TYPE :
-                    qual = hexQuality(elems[e].p, elems[e].hex);
+                    vertPos[elem.vId] = gradSamp;
+                    qual = hexQuality(vertPos, hexs[elem.id]);
                     break;
                 }
 
@@ -185,25 +179,61 @@ void smoothVert(uint vId)
             break;
 
 
-        for(uint p=0; p < LINE_SAMP_COUNT; ++p)
+        for(uint e = eBeg; e < eEnd; ++e)
         {
-            vec3 lineSamp = pos + lineShift * LINE_SAMPS[p];
+            NeigElem elem = neigElems[e];
+            vec3 vertPos[HEX_VERTEX_COUNT];
 
-            for(uint e=0, id = eBeg; id < eEnd; ++e, ++id)
+            switch(elem.type)
             {
-                elems[e].p[elems[e].n] = lineSamp;
+            case TET_ELEMENT_TYPE :
+                vertPos[0] = verts[tets[elem.id].v[0]].p;
+                vertPos[1] = verts[tets[elem.id].v[1]].p;
+                vertPos[2] = verts[tets[elem.id].v[2]].p;
+                vertPos[3] = verts[tets[elem.id].v[3]].p;
+                break;
+
+            case PRI_ELEMENT_TYPE :
+                vertPos[0] = verts[pris[elem.id].v[0]].p;
+                vertPos[1] = verts[pris[elem.id].v[1]].p;
+                vertPos[2] = verts[pris[elem.id].v[2]].p;
+                vertPos[3] = verts[pris[elem.id].v[3]].p;
+                vertPos[4] = verts[pris[elem.id].v[4]].p;
+                vertPos[5] = verts[pris[elem.id].v[5]].p;
+                break;
+
+            case HEX_ELEMENT_TYPE :
+                vertPos[0] = verts[hexs[elem.id].v[0]].p;
+                vertPos[1] = verts[hexs[elem.id].v[1]].p;
+                vertPos[2] = verts[hexs[elem.id].v[2]].p;
+                vertPos[3] = verts[hexs[elem.id].v[3]].p;
+                vertPos[4] = verts[hexs[elem.id].v[4]].p;
+                vertPos[5] = verts[hexs[elem.id].v[5]].p;
+                vertPos[6] = verts[hexs[elem.id].v[6]].p;
+                vertPos[7] = verts[hexs[elem.id].v[7]].p;
+                break;
+            }
+
+            for(uint p=0; p < LINE_SAMP_COUNT; ++p)
+            {
+                vec3 lineSamp = pos + lineShift * LINE_SAMPS[p];
 
                 float qual = 0.0;
-                switch(elems[e].type)
+                switch(elem.type)
                 {
                 case TET_ELEMENT_TYPE :
-                    qual = tetQuality(elems[e].p, elems[e].tet);
+                    vertPos[elem.vId] = lineSamp;
+                    qual = tetQuality(vertPos, tets[elem.id]);
                     break;
+
                 case PRI_ELEMENT_TYPE :
-                    qual = priQuality(elems[e].p, elems[e].pri);
+                    vertPos[elem.vId] = lineSamp;
+                    qual = priQuality(vertPos, pris[elem.id]);
                     break;
+
                 case HEX_ELEMENT_TYPE :
-                    qual = hexQuality(elems[e].p, elems[e].hex);
+                    vertPos[elem.vId] = lineSamp;
+                    qual = hexQuality(vertPos, hexs[elem.id]);
                     break;
                 }
 
@@ -260,10 +290,12 @@ void smoothVert(uint vId)
 
 void main()
 {
-    uint vId = getInvocationVertexId();
+    uint localId = gl_WorkGroupID.x * gl_WorkGroupSize.y + gl_LocalInvocationID.y;
 
-    if(isSmoothableVertex(vId))
+    if(localId < GroupSize)
     {
+        uint idx = GroupBase + localId;
+        uint vId = groupMembers[idx];
         smoothVert(vId);
     }
 }
