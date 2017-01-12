@@ -65,8 +65,8 @@ void NodeGroups::clear()
     _subsurfaceNodes = Range();
     _interiorNodes = Range();
 
-    _serialGroup.clear();
-    _serialGroup.shrink_to_fit();
+    _nodeVector.clear();
+    _nodeVector.shrink_to_fit();
 
     _gpuGroupsBuffer.clear();
     _gpuGroupsBuffer.shrink_to_fit();
@@ -77,7 +77,7 @@ void NodeGroups::clear()
 
 void NodeGroups::shrink_to_fit()
 {
-    _serialGroup.shrink_to_fit();
+    _nodeVector.shrink_to_fit();
 
     _gpuGroupsBuffer.shrink_to_fit();
 
@@ -482,7 +482,7 @@ void NodeGroups::clusterNodes(Mesh& mesh,
 
         if(type > FIXED_TYPE)
         {
-            _serialGroup.push_back(vId);
+            _nodeVector.push_back(vId);
 
 
             int gId = groups[vId];

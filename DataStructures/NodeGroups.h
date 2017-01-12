@@ -21,16 +21,16 @@ class MeshTopo;
 ///
 /// [ Fixed0 Fixed1 Fixed2 ...
 ///   ... Ind0_Bound0 Ind0_Bound1 Ind0_Bound2 ...
-///   ... Ind1_Bound1 Ind1_Bound1 Ind1_Bound2 ...
-///   ... Ind2_Bound1 Ind2_Bound1 Ind2_Bound2 ...
+///   ... Ind1_Bound0 Ind1_Bound1 Ind1_Bound2 ...
+///   ... Ind2_Bound0 Ind2_Bound1 Ind2_Bound2 ...
 ///   ... ...
 ///   ... Ind0_Sub0 Ind0_Sub1 Ind0_Sub2 ...
-///   ... Ind1_Sub1 Ind1_Sub1 Ind1_Sub2 ...
-///   ... Ind2_Sub1 Ind2_Sub1 Ind2_Sub2 ...
+///   ... Ind1_Sub0 Ind1_Sub1 Ind1_Sub2 ...
+///   ... Ind2_Sub0 Ind2_Sub1 Ind2_Sub2 ...
 ///   ... ...
 ///   ... Ind0_Inter0 Ind0_Inter1 Ind0_Inter2 ...
-///   ... Ind1_Inter1 Ind1_Inter1 Ind1_Inter2 ...
-///   ... Ind2_Inter1 Ind2_Inter1 Ind2_Inter2 ... ]
+///   ... Ind1_Inter0 Ind1_Inter1 Ind1_Inter2 ...
+///   ... Ind2_Inter0 Ind2_Inter1 Ind2_Inter2 ... ]
 
 class NodeGroups
 {
@@ -51,7 +51,7 @@ public:
     {
         GpuDispatch();
 
-        // Sequence in gpuGroupsBuffer
+        // Sequence in NodeGroups::_nodeVector
         // allocated for this group.
         size_t gpuBufferBase;
         size_t gpuBufferSize;
@@ -63,14 +63,25 @@ public:
 
     struct ParallelGroup
     {
+        // Sequence in NodeGroups::_nodeVector
+        // allocated for nodes of this parallel
+        // group of the specified types
         Range boundaryRange;
         Range subsurfaceRange;
         Range interiorRange;
 
         GpuDispatch gpuDispatch;
 
+        // All nodes that can be processed simultaneously
+        // Nodes' patches of this vector never overlapse
         std::vector<uint> undispatchedNodes;
+
+        // Parallel group's nodes are dispatched according
+        // to the number of requested threads
         std::vector<std::vector<uint>> allDispatchedNodes;
+
+        // Parallel group's boundary nodes are dispatched
+        // according to the number of requested threads
         std::vector<std::vector<uint>> cpuOnlyDispatchedNodes;
     };
 
@@ -143,7 +154,7 @@ private:
     size_t _gpuWorkgroupSize;
 
     // Fixed nodes are uploaded once and
-    // never move across smoothing passes
+    // never moved across smoothing passes
     Range _fixedNodes;
 
     // Boundary nodes can only be moved on the CPU side
@@ -161,9 +172,10 @@ private:
     Range _interiorNodes;
 
 
+    // Sorted node vector
     // Contains all the movable nodes
     // MUST be processed in a serial fashion
-    std::vector<uint> _serialGroup;
+    std::vector<uint> _nodeVector;
 
     // Contains all the nodes processed on the GPU
     // GpuDispatch referes to sections of this buffer
@@ -214,7 +226,7 @@ inline const NodeGroups::Range& NodeGroups::interiorNodes() const
 
 inline const std::vector<uint>& NodeGroups::serialGroup() const
 {
-    return _serialGroup;
+    return _nodeVector;
 }
 
 inline const std::vector<uint>& NodeGroups::gpuGroupsBuffer() const
