@@ -4,9 +4,41 @@
 
 #include "cgnslib.h"
 
+#include "Boundaries/AbstractBoundary.h"
+#include "Boundaries/Constraints/VertexConstraint.h"
+
 
 using namespace std;
 using namespace cellar;
+
+class CgnsBoundary : public AbstractBoundary
+{
+public:
+    CgnsBoundary() :
+        AbstractBoundary("CGNS Boundary"),
+        vertex(-1, glm::dvec3(0, 0, 0))
+    {
+
+    }
+
+    virtual ~CgnsBoundary()
+    {
+
+    }
+
+    virtual bool unitTest() const override
+    {
+        return true;
+    }
+
+    const AbstractConstraint* fixedConstrait() const
+    {
+        return &vertex;
+    }
+
+private:
+    VertexConstraint vertex;
+};
 
 
 CgnsDeserializer::CgnsDeserializer()
@@ -24,6 +56,10 @@ bool CgnsDeserializer::deserialize(
         Mesh& mesh) const
 {
     string indent = "";
+
+    shared_ptr<CgnsBoundary> cgnsBoundary(
+        make_shared<CgnsBoundary>());
+    mesh.setBoundary(cgnsBoundary);
 
     int fn = -1;
     if(cg_open(fileName.c_str(), CG_MODE_READ, &fn))
@@ -148,6 +184,7 @@ bool CgnsDeserializer::deserialize(
             size_t baseVertIdx = mesh.verts.size();
             size_t newVertSize = baseVertIdx + nVert;
             mesh.verts.resize(newVertSize);
+            mesh.topos.resize(newVertSize);
 
 
             // Read coordinates
@@ -267,18 +304,27 @@ bool CgnsDeserializer::deserialize(
                     return false;
                 }
 
-                cgsize_t* elems = new cgsize_t[eSize];
                 cgsize_t* parentData = nullptr;
-
-                if(sectionElemType == TETRA_4)
+                cgsize_t* elems = new cgsize_t[eSize];
+                if(cg_elements_partial_read(fn, b, z, s, sStart, sEnd, elems, parentData))
                 {
-                    if(cg_elements_partial_read(fn, b, z, s, sStart, sEnd, elems, parentData))
+                    getLog().postMessage(new Message('E', false,
+                        indent + "Could not read CGNS section's elements", "CgnsDeserializer"));
+                    cg_close(fn);
+                    return false;
+                }
+
+                if(sectionElemType == TRI_3 ||
+                   sectionElemType == QUAD_4)
+                {
+                    for(size_t bi = 0; bi < eSize; ++bi)
                     {
-                        getLog().postMessage(new Message('E', false,
-                            indent + "Could not read CGNS section's tetrahedra", "CgnsDeserializer"));
-                        cg_close(fn);
-                        return false;
+                        mesh.topos[elems[bi]] = MeshTopo(
+                            cgnsBoundary->fixedConstrait());
                     }
+                }
+                else if(sectionElemType == TETRA_4)
+                {
 
                     size_t baseElemIdx = mesh.tets.size();
                     size_t newElemSize = baseElemIdx + nelems;
@@ -300,14 +346,6 @@ bool CgnsDeserializer::deserialize(
                 }
                 else if(sectionElemType == PENTA_6)
                 {
-                    if(cg_elements_partial_read(fn, b, z, s, sStart, sEnd, elems, parentData))
-                    {
-                        getLog().postMessage(new Message('E', false,
-                            indent + "Could not read CGNS section's prisms", "CgnsDeserializer"));
-                        cg_close(fn);
-                        return false;
-                    }
-
                     size_t baseElemIdx = mesh.pris.size();
                     size_t newElemSize = baseElemIdx + nelems;
                     mesh.pris.resize(newElemSize);
@@ -322,14 +360,6 @@ bool CgnsDeserializer::deserialize(
                 }
                 else if(sectionElemType == HEXA_8)
                 {
-                    if(cg_elements_partial_read(fn, b, z, s, sStart, sEnd, elems, parentData))
-                    {
-                        getLog().postMessage(new Message('E', false,
-                            indent + "Could not read CGNS section's hexahedra", "CgnsDeserializer"));
-                        cg_close(fn);
-                        return false;
-                    }
-
                     size_t baseElemIdx = mesh.hexs.size();
                     size_t newElemSize = baseElemIdx + nelems;
                     mesh.hexs.resize(newElemSize);
@@ -344,24 +374,36 @@ bool CgnsDeserializer::deserialize(
                 }
                 else if(sectionElemType == MIXED)
                 {
-                    if(cg_elements_partial_read(fn, b, z, s, sStart, sEnd, elems, parentData))
-                    {
-                        getLog().postMessage(new Message('E', false,
-                            indent + "Could not read CGNS section's hexahedra", "CgnsDeserializer"));
-                        cg_close(fn);
-                        return false;
-                    }
-
                     size_t eb = 0;
                     bool pyrFound = false;
                     bool otherFound = false;
-                    for(cgsize_t ei=0; ei <= nelems; ++ei)
+                    for(cgsize_t ei=0; ei < nelems; ++ei)
                     {
                         ElementType_t et = ElementType_t(elems[eb]);
                         ++eb;
 
                         switch(et)
                         {
+                        case TRI_3 :
+                            mesh.topos[elems[eb + 0]] = MeshTopo(
+                                cgnsBoundary->fixedConstrait());
+                            mesh.topos[elems[eb + 1]] = MeshTopo(
+                                cgnsBoundary->fixedConstrait());
+                            mesh.topos[elems[eb + 2]] = MeshTopo(
+                                cgnsBoundary->fixedConstrait());
+                            break;
+
+                        case QUAD_4 :
+                            mesh.topos[elems[eb + 0]] = MeshTopo(
+                                cgnsBoundary->fixedConstrait());
+                            mesh.topos[elems[eb + 1]] = MeshTopo(
+                                cgnsBoundary->fixedConstrait());
+                            mesh.topos[elems[eb + 2]] = MeshTopo(
+                                cgnsBoundary->fixedConstrait());
+                            mesh.topos[elems[eb + 3]] = MeshTopo(
+                                cgnsBoundary->fixedConstrait());
+                            break;
+
                         case TETRA_4 :
                             mesh.tets.push_back(MeshTet(
                                 elems[eb + 0]-1, elems[eb + 1]-1,
@@ -411,6 +453,42 @@ bool CgnsDeserializer::deserialize(
                         indent + "CGNS section's element type is not supported. This section will be ignored", "CgnsDeserializer"));
                     continue;
                 }
+
+
+                /*
+                // Read boundaries
+                int nbocos = -1;
+                if(cg_nbocos(fn, b, z, &nbocos))
+                {
+                    getLog().postMessage(new Message('E', false,
+                        indent + "Could not read CGNS section's number of boundary conditions", "CgnsDeserializer"));
+                    cg_close(fn);
+                    return false;
+                }
+
+                for(int bc=1; bc <= nbocos; ++bc)
+                {
+                    GridLocation_t gridLoc;
+                    if(cg_boco_gridlocation_read(fn, b, z, bc, &gridLoc))
+                    {
+                        getLog().postMessage(new Message('E', false,
+                            indent + "Could not read CGNS boundary condition's location", "CgnsDeserializer"));
+                        cg_close(fn);
+                        return false;
+                    }
+
+                    getLog().postMessage(new Message('D', false,
+                        indent + "Reading CGNS boundary condition (" +
+                        "loc=" + GridLocationName[gridLoc] + ")", "CgnsDeserializer"));
+
+                    if(gridLoc != Vertex)
+                    {
+                        getLog().postMessage(new Message('E', false,
+                            indent + "Unsupported boundary condition location: " + GridLocationName[gridLoc], "CgnsDeserializer"));
+                        continue;
+                    }
+                }
+                */
             }
         }
     }
