@@ -36,6 +36,7 @@
 #include "Renderers/ScaffoldRenderer.h"
 #include "Renderers/SurfacicRenderer.h"
 #include "Renderers/QualityGradientPainter.h"
+#include "Serialization/CgnsDeserializer.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonDeserializer.h"
 #include "Serialization/StlSerializer.h"
@@ -155,6 +156,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableDeserializers.setDefault("json");
     _availableDeserializers.setContent({
+        {string("cgns"), shared_ptr<AbstractDeserializer>(new CgnsDeserializer())},
         {string("json"), shared_ptr<AbstractDeserializer>(new JsonDeserializer())},
     });
 }

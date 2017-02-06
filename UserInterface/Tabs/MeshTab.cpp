@@ -62,7 +62,7 @@ void MeshTab::clearMesh()
 void MeshTab::saveMesh()
 {
     QString fileName = QFileDialog::getSaveFileName(
-            nullptr, "Save Mesh", "Meshes/");
+            nullptr, "Save Mesh", "resources/data/");
     if(!fileName.isNull())
     {
         if(QFileInfo(fileName).suffix().isEmpty())
@@ -75,7 +75,7 @@ void MeshTab::saveMesh()
 void MeshTab::loadMesh()
 {
     QString fileName = QFileDialog::getOpenFileName(
-        nullptr, "Load Mesh", "Meshes/");
+        nullptr, "Load Mesh", "resources/data/");
     if(!fileName.isNull())
     {
         _character->loadMesh(fileName.toStdString());
