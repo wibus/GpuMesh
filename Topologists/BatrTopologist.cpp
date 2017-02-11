@@ -756,7 +756,7 @@ size_t BatrTopologist::faceSwapping(
                             crew.sampler(), crew.measurer(), newTet2);
 
                         double newHQual = 3.0 / (1/qual0 + 1/qual1 + 1/qual2);
-                        if(newHQual < hQual)
+                        if(newHQual <= hQual)
                         {
                             continue;
                         }
