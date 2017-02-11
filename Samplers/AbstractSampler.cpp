@@ -113,6 +113,8 @@ Metric AbstractSampler::vertMetric(const Mesh& mesh, unsigned int vId) const
     return vertMetric(mesh.verts[vId].p);
 }
 
+
+//* Sinus waves
 Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
     glm::dvec3 vp = position * glm::dvec3(7);
@@ -134,10 +136,56 @@ Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
     double rz = elemSizeInv2;
 
     return Metric(
-        glm::dvec3(rx, 0,  0),
-        glm::dvec3(0,  ry, 0),
-        glm::dvec3(0,  0,  rz));
+            glm::dvec3(rx, 0,  0),
+            glm::dvec3(0,  ry, 0),
+            glm::dvec3(0,  0,  rz));
 }
+/*/
+
+Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
+{
+    double scale = scaling();
+    double s2 = scale * scale;
+    glm::dvec3 vp = position * 4.0;
+    double x = vp.x, y = vp.y, z = vp.z;
+
+    double x2_p_1 = x*x + 1;
+    double y2_p_1 = y*y + 1;
+
+    double rxx = 2 * x * atan(y) / (x2_p_1*x2_p_1);
+    double rxy = 1 / (x2_p_1 * y2_p_1);
+    double ryy = 2 * y * atan(x) / (y2_p_1*y2_p_1);
+
+    double rxz = 0.0;
+    double ryz = 0.0;
+    double rzz = s2;
+
+    double T = rxx + ryy;
+    double D = rxx*ryy - ryz*ryz;
+    double discr = sqrt(T*T/4 - D);
+    double l0 = T/2 + discr;
+    double l1 = T/2 - discr;
+
+    glm::dvec2 v0(1, 0);
+    glm::dvec2 v1(0, 1);
+    if(rxy != 0.0)
+    {
+        v0 = glm::normalize(glm::dvec2(l0-ryy, rxy));
+        v1 = glm::normalize(glm::dvec2(l1-ryy, rxy));
+    }
+    glm::dmat2 R(v0, v1);
+
+    l0 = glm::min(glm::max(l0*l0 * s2 * s2, s2), 1.0e9);
+    l1 = glm::min(glm::max(l1*l1 * s2 * s2, s2), 1.0e9);
+
+    glm::dmat2 M_abs = glm::transpose(R) * glm::dmat2(l0, 0, 0, l1) * R;
+
+    return Metric(
+        glm::dvec3(M_abs[0][0], M_abs[0][1], rxz),
+        glm::dvec3(M_abs[1][0], M_abs[1][1], ryz),
+        glm::dvec3(rxz,         ryz,         rzz));
+}
+// */
 
 void AbstractSampler::boundingBox(
         const Mesh& mesh,
