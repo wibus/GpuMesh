@@ -6,6 +6,8 @@
 #include "Evaluators/AbstractEvaluator.h"
 
 
+const double DIFF_THRESHOLD = 0.01;
+
 void installCudaMetricWiseMeasurer();
 
 
@@ -23,6 +25,7 @@ MetricWiseMeasurer::~MetricWiseMeasurer()
 
 }
 
+/* Global segment division
 double MetricWiseMeasurer::riemannianDistance(
         const AbstractSampler& sampler,
         const glm::dvec3& a,
@@ -57,6 +60,60 @@ double MetricWiseMeasurer::riemannianDistance(
 
     return dist;
 }
+
+/*/ // Localize segment division
+double MetricWiseMeasurer::riemannianDistance(
+        const AbstractSampler& sampler,
+        const glm::dvec3& a,
+        const glm::dvec3& b,
+        uint& cachedRefTet) const
+{
+    int curr = 0;
+    int base = 2;
+
+    double len = 0.0;
+
+    glm::dvec3 d = b-a;
+    glm::dvec3 bv = d / double(base);
+
+    while(curr < base)
+    {
+        double p0 = (curr + 0.5) / base;
+        double p1 = (curr + 1.5) / base;
+
+        Metric M0 = sampler.metricAt(a + p0*d, cachedRefTet);
+        Metric M1 = sampler.metricAt(a + p1*d, cachedRefTet);
+
+        double l0 = glm::sqrt(glm::dot(bv, M0 * bv));
+        double l1 = glm::sqrt(glm::dot(bv, M1 * bv));
+
+        double sum = (l0 + l1);
+        double diff = glm::abs(l0 - l1) / (sum/2.0);
+
+        if(diff < DIFF_THRESHOLD)
+        {
+            len += sum;
+            curr += 2;
+
+            while((curr & 0b10) == 0)
+            {
+                base >>= 1;
+                curr >>= 1;
+            }
+
+            bv = d / double(base);
+        }
+        else
+        {
+            base <<= 1;
+            curr <<= 1;
+            bv /= 2.0;
+        }
+    }
+
+    return len;
+}
+// */
 
 glm::dvec3 MetricWiseMeasurer::riemannianSegment(
         const AbstractSampler& sampler,
