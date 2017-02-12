@@ -10,19 +10,13 @@ mat3 interpolateMetrics(in mat3 m1, in mat3 m2, float a)
 
 mat3 vertMetric(in vec3 position)
 {
-    vec3 vp = position * vec3(7);
+    vec3 vp = position * float(3.1416 * 2.5);
 
-    float localElemSize = 0.0;
-    localElemSize = 1.0 / MetricScaling;
-
-    float elemSize = localElemSize;
+    float elemSize = 1.0 / 10.0;
     float elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
-    float scale = pow(3, sin(vp.x));
-    float targetElemSizeX = elemSize * scale;
-    float targetElemSizeXInv2 = 1.0 / (targetElemSizeX * targetElemSizeX);
-    float targetElemSizeZ = elemSize / scale;
-    float targetElemSizeZInv2 = 1.0 / (targetElemSizeZ * targetElemSizeZ);
+    float sizeX = pow(MetricScaling, cos(vp.x) - 1.0);
+    float targetElemSizeXInv2 = 1.0 / (sizeX * sizeX);
 
     float rx = targetElemSizeXInv2;
     float ry = elemSizeInv2;

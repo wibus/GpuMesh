@@ -114,7 +114,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Metric Conformity"), shared_ptr<AbstractEvaluator>(new MetricConformityEvaluator())},
     });
 
-    _availableSmoothers.setDefault("Spawn Search");
+    _availableSmoothers.setDefault("Nelder-Mead");
     _availableSmoothers.setContent({
         {string("Spring Laplace"),   shared_ptr<AbstractSmoother>(new SpringLaplaceSmoother())},
         {string("Quality Laplace"),  shared_ptr<AbstractSmoother>(new QualityLaplaceSmoother())},

@@ -115,19 +115,24 @@ Metric AbstractSampler::vertMetric(const Mesh& mesh, unsigned int vId) const
 
 inline Metric sinWaveX(double scaling, const glm::dvec3& position)
 {
-    glm::dvec3 vp = position * glm::dvec3(7);
+    /*
+    const glm::dmat3 ROTATION(
+        0.91068, -0.24402, 0.33333,
+        0.33333, 0.91068, -0.24402,
+        -0.24402, 0.33333, 0.91068);
+    const glm::dmat3 ROTATION_T(
+        0.91068, 0.33333, -0.24402,
+        -0.24402, 0.91068, 0.33333,
+        0.33333, -0.24402, 0.91068);
+    */
 
-    double localElemSize = 0.0;
-    localElemSize = 1.0 / scaling;
+    glm::dvec3 vp = position * (3.1416*2.5);
 
-    double elemSize = localElemSize;
+    double elemSize = 1.0 / 10.0;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
-    double scale = glm::pow(3, glm::sin(vp.x));
-    double targetElemSizeX = elemSize * scale;
-    double targetElemSizeXInv2 = 1.0 / (targetElemSizeX * targetElemSizeX);
-    //double targetElemSizeZ = elemSize / scale;
-    //double targetElemSizeZInv2 = 1.0 / (targetElemSizeZ * targetElemSizeZ);
+    double sizeX = glm::pow(scaling, glm::cos(vp.x) - 1.0);
+    double targetElemSizeXInv2 = 1.0 / (sizeX * sizeX);
 
     double rx = targetElemSizeXInv2;
     double ry = elemSizeInv2;
@@ -185,7 +190,7 @@ inline Metric atanXY(double scaling, const glm::dvec3& position)
 
 Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
-    return atanXY(scaling(), position);
+    return sinWaveX(scaling(), position);
 }
 
 void AbstractSampler::boundingBox(
