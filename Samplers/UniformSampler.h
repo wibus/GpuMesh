@@ -17,7 +17,7 @@ public:
     virtual void setReferenceMesh(
             const Mesh& mesh) override;
 
-    virtual Metric metricAt(
+    virtual MeshMetric metricAt(
             const glm::dvec3& position,
             uint& cachedRefTet) const override;
 

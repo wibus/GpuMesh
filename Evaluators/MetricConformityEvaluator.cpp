@@ -22,7 +22,7 @@ MetricConformityEvaluator::~MetricConformityEvaluator()
 
 }
 
-Metric MetricConformityEvaluator::specifiedMetric(
+MeshMetric MetricConformityEvaluator::specifiedMetric(
         const AbstractSampler& sampler,
         const dvec3& v0,
         const dvec3& v1,
@@ -46,7 +46,7 @@ Metric MetricConformityEvaluator::specifiedMetric(
 
 double MetricConformityEvaluator::metricConformity(
         const dmat3& Fk,
-        const Metric& Ms) const
+        const MeshMetric& Ms) const
 {
     dmat3 Fk_inv = inverse(transpose(Fk));
     dmat3 Mk = Fk_inv * transpose(Fk_inv);
@@ -83,7 +83,7 @@ double MetricConformityEvaluator::tetQuality(
 
     glm::dmat3 Fk = dmat3(e03, e13, e23) * Fr_TET_INV;
 
-    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[3], tet.c[0]);
+    MeshMetric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[3], tet.c[0]);
 
     double qual0 = metricConformity(Fk, Ms0);
 
@@ -115,12 +115,12 @@ double MetricConformityEvaluator::priQuality(
     dmat3 Fk4 = dmat3(-e45, e34, e14) * Fr_PRI_INV;
     dmat3 Fk5 = dmat3(-e53, e45, e25) * Fr_PRI_INV;
 
-    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[3], pri.c[0]);
-    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[4], pri.c[1]);
-    Metric Ms2 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[5], pri.c[2]);
-    Metric Ms3 = specifiedMetric(sampler, vp[0], vp[3], vp[4], vp[5], pri.c[3]);
-    Metric Ms4 = specifiedMetric(sampler, vp[1], vp[3], vp[4], vp[5], pri.c[4]);
-    Metric Ms5 = specifiedMetric(sampler, vp[2], vp[3], vp[4], vp[5], pri.c[5]);
+    MeshMetric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[3], pri.c[0]);
+    MeshMetric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[4], pri.c[1]);
+    MeshMetric Ms2 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[5], pri.c[2]);
+    MeshMetric Ms3 = specifiedMetric(sampler, vp[0], vp[3], vp[4], vp[5], pri.c[3]);
+    MeshMetric Ms4 = specifiedMetric(sampler, vp[1], vp[3], vp[4], vp[5], pri.c[4]);
+    MeshMetric Ms5 = specifiedMetric(sampler, vp[2], vp[3], vp[4], vp[5], pri.c[5]);
 
     double qual0 = metricConformity(Fk0, Ms0);
     double qual1 = metricConformity(Fk1, Ms1);
@@ -181,14 +181,14 @@ double MetricConformityEvaluator::hexQuality(
     dmat3 Fk6 = dmat3(e26,  e56,  e67);
     dmat3 Fk7 = dmat3(e37,  e67, -e47);
 
-    Metric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[3], vp[4], hex.c[0]);
-    Metric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[5], hex.c[1]);
-    Metric Ms2 = specifiedMetric(sampler, vp[1], vp[2], vp[3], vp[6], hex.c[2]);
-    Metric Ms3 = specifiedMetric(sampler, vp[0], vp[2], vp[3], vp[7], hex.c[3]);
-    Metric Ms4 = specifiedMetric(sampler, vp[0], vp[4], vp[5], vp[7], hex.c[4]);
-    Metric Ms5 = specifiedMetric(sampler, vp[1], vp[4], vp[5], vp[6], hex.c[5]);
-    Metric Ms6 = specifiedMetric(sampler, vp[2], vp[5], vp[6], vp[7], hex.c[6]);
-    Metric Ms7 = specifiedMetric(sampler, vp[3], vp[4], vp[6], vp[7], hex.c[7]);
+    MeshMetric Ms0 = specifiedMetric(sampler, vp[0], vp[1], vp[3], vp[4], hex.c[0]);
+    MeshMetric Ms1 = specifiedMetric(sampler, vp[0], vp[1], vp[2], vp[5], hex.c[1]);
+    MeshMetric Ms2 = specifiedMetric(sampler, vp[1], vp[2], vp[3], vp[6], hex.c[2]);
+    MeshMetric Ms3 = specifiedMetric(sampler, vp[0], vp[2], vp[3], vp[7], hex.c[3]);
+    MeshMetric Ms4 = specifiedMetric(sampler, vp[0], vp[4], vp[5], vp[7], hex.c[4]);
+    MeshMetric Ms5 = specifiedMetric(sampler, vp[1], vp[4], vp[5], vp[6], hex.c[5]);
+    MeshMetric Ms6 = specifiedMetric(sampler, vp[2], vp[5], vp[6], vp[7], hex.c[6]);
+    MeshMetric Ms7 = specifiedMetric(sampler, vp[3], vp[4], vp[6], vp[7], hex.c[7]);
 
     double qual0 = metricConformity(Fk0, Ms0);
     double qual1 = metricConformity(Fk1, Ms1);

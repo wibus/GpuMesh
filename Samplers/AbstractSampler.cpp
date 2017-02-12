@@ -100,20 +100,20 @@ void AbstractSampler::clearCudaMemory(const Mesh& mesh) const
 
 }
 
-Metric AbstractSampler::interpolateMetrics(
-        const Metric& m1,
-        const Metric& m2,
+MeshMetric AbstractSampler::interpolateMetrics(
+        const MeshMetric& m1,
+        const MeshMetric& m2,
         double a) const
 {
     return glm::mix(m1, m2, a);
 }
 
-Metric AbstractSampler::vertMetric(const Mesh& mesh, unsigned int vId) const
+MeshMetric AbstractSampler::vertMetric(const Mesh& mesh, unsigned int vId) const
 {
     return vertMetric(mesh.verts[vId].p);
 }
 
-inline Metric sinWaveX(double scaling, const glm::dvec3& position)
+inline MeshMetric sinWaveX(double scaling, const glm::dvec3& position)
 {
     /*
     const glm::dmat3 ROTATION(
@@ -138,13 +138,13 @@ inline Metric sinWaveX(double scaling, const glm::dvec3& position)
     double ry = elemSizeInv2;
     double rz = elemSizeInv2;
 
-    return Metric(
+    return MeshMetric(
             glm::dvec3(rx, 0,  0),
             glm::dvec3(0,  ry, 0),
             glm::dvec3(0,  0,  rz));
 }
 
-inline Metric atanXY(double scaling, const glm::dvec3& position)
+inline MeshMetric atanXY(double scaling, const glm::dvec3& position)
 {
     double s2 = scaling * scaling;
     glm::dvec3 vp = position * 4.0;
@@ -181,14 +181,14 @@ inline Metric atanXY(double scaling, const glm::dvec3& position)
 
     glm::dmat2 M_abs = glm::transpose(R) * glm::dmat2(l0, 0, 0, l1) * R;
 
-    return Metric(
+    return MeshMetric(
         glm::dvec3(M_abs[0][0], M_abs[0][1], rxz),
         glm::dvec3(M_abs[1][0], M_abs[1][1], ryz),
         glm::dvec3(rxz,         ryz,         rzz));
 }
 
 
-Metric AbstractSampler::vertMetric(const glm::dvec3& position) const
+MeshMetric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
     return sinWaveX(scaling(), position);
 }

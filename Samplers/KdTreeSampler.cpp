@@ -28,46 +28,30 @@ struct KdNode
     KdNode* left;
     KdNode* right;
 
-    std::vector<MeshTet> tets;
-
     glm::dvec4 separator;
     glm::dvec3 minBox;
     glm::dvec3 maxBox;
+
+    MeshMetric metric;
 };
 
 
 // CUDA Drivers Interface
 void installCudaKdTreeSampler();
-void updateCudaKdTets(
-        const std::vector<GpuTet>& kdTetsBuff);
 void updateCudaKdNodes(
         const std::vector<GpuKdNode>& kdNodesBuff);
-void updateCudaRefVerts(
-        const std::vector<GpuVert>& refVertsBuff);
-void updateCudaRefMetrics(
-        const std::vector<glm::mat4>& refMetricsBuff);
-
 
 KdTreeSampler::KdTreeSampler() :
     AbstractSampler("Kd-Tree", ":/glsl/compute/Sampling/KdTree.glsl", installCudaKdTreeSampler),
     _debugMesh(new Mesh()),
-    _kdTetsSsbo(0),
-    _kdNodesSsbo(0),
-    _refVertsSsbo(0),
-    _refMetricsSsbo(0)
+    _kdNodesSsbo(0)
 {
 }
 
 KdTreeSampler::~KdTreeSampler()
 {
-    glDeleteBuffers(1, &_kdTetsSsbo);
-    _kdTetsSsbo = 0;
     glDeleteBuffers(1, &_kdNodesSsbo);
     _kdNodesSsbo = 0;
-    glDeleteBuffers(1, &_refVertsSsbo);
-    _refVertsSsbo = 0;
-    glDeleteBuffers(1, &_refMetricsSsbo);
-    _refMetricsSsbo = 0;
 }
 
 bool KdTreeSampler::isMetricWise() const
@@ -77,70 +61,22 @@ bool KdTreeSampler::isMetricWise() const
 
 void KdTreeSampler::updateGlslData(const Mesh& mesh) const
 {
-    if(_kdTetsSsbo == 0)
-        glGenBuffers(1, &_kdTetsSsbo);
-
     if(_kdNodesSsbo == 0)
         glGenBuffers(1, &_kdNodesSsbo);
 
-    if(_refVertsSsbo == 0)
-        glGenBuffers(1, &_refVertsSsbo);
-
-    if(_refMetricsSsbo == 0)
-        glGenBuffers(1, &_refMetricsSsbo);
-
-    GLuint kdTets     = mesh.glBufferBinding(EBufferBinding::KD_TETS_BUFFER_BINDING);
     GLuint kdNodes    = mesh.glBufferBinding(EBufferBinding::KD_NODES_BUFFER_BINDING);
-    GLuint refVerts   = mesh.glBufferBinding(EBufferBinding::REF_VERTS_BUFFER_BINDING);
-    GLuint refMetrics = mesh.glBufferBinding(EBufferBinding::REF_METRICS_BUFFER_BINDING);
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdTets,     _kdTetsSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, kdNodes,    _kdNodesSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refVerts,   _refVertsSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, refMetrics, _refMetricsSsbo);
 
 
     // Build GPU Buffers
     {
-        std::vector<GpuTet> gpuKdTets;
         std::vector<GpuKdNode> gpuKdNodes;
-        buildGpuBuffers(_rootNode.get(), gpuKdNodes, gpuKdTets);
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdTetsSsbo);
-        size_t kdTetsSize = sizeof(decltype(gpuKdTets.front())) * gpuKdTets.size();
-        glBufferData(GL_SHADER_STORAGE_BUFFER, kdTetsSize, gpuKdTets.data(), GL_STREAM_COPY);
+        buildGpuBuffers(_rootNode.get(), gpuKdNodes);
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
         size_t kdNodesSize = sizeof(decltype(gpuKdNodes.front())) * gpuKdNodes.size();
         glBufferData(GL_SHADER_STORAGE_BUFFER, kdNodesSize, gpuKdNodes.data(), GL_STREAM_COPY);
-    }
-
-
-    // Reference Mesh Vertices
-    {
-        std::vector<GpuVert> gpuRefVerts;
-        gpuRefVerts.reserve(_refVerts.size());
-        for(const auto& v : _refVerts)
-            gpuRefVerts.push_back(GpuVert(v));
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
-        size_t refVertsSize = sizeof(decltype(gpuRefVerts.front())) * gpuRefVerts.size();
-        glBufferData(GL_SHADER_STORAGE_BUFFER, refVertsSize, gpuRefVerts.data(), GL_STREAM_COPY);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    }
-
-
-    // Reference Mesh Metrics
-    {
-        std::vector<glm::mat4> gpuRefMetrics;
-        gpuRefMetrics.reserve(_refMetrics.size());
-        for(const auto& metric : _refMetrics)
-            gpuRefMetrics.push_back(glm::mat4(metric));
-
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
-        size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
-        glBufferData(GL_SHADER_STORAGE_BUFFER, refMetricsSize, gpuRefMetrics.data(), GL_DYNAMIC_COPY);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
 }
 
@@ -148,70 +84,25 @@ void KdTreeSampler::updateCudaData(const Mesh& mesh) const
 {
     // Build GPU Buffers
     {
-        std::vector<GpuTet> gpuKdTets;
         std::vector<GpuKdNode> gpuKdNodes;
-        buildGpuBuffers(_rootNode.get(), gpuKdNodes, gpuKdTets);
+        buildGpuBuffers(_rootNode.get(), gpuKdNodes);
 
-        updateCudaKdTets(gpuKdTets);
         updateCudaKdNodes(gpuKdNodes);
-    }
-
-
-    // Reference Mesh Vertices
-    {
-        std::vector<GpuVert> gpuRefVerts;
-        gpuRefVerts.reserve(_refVerts.size());
-        for(const auto& v : _refVerts)
-            gpuRefVerts.push_back(GpuVert(v));
-
-        updateCudaRefVerts(gpuRefVerts);
-    }
-
-
-    // Reference Mesh Metrics
-    {
-        std::vector<glm::mat4> gpuRefMetrics;
-        gpuRefMetrics.reserve(_refMetrics.size());
-        for(const auto& metric : _refMetrics)
-            gpuRefMetrics.push_back(glm::mat4(metric));
-
-        updateCudaRefMetrics(gpuRefMetrics);
     }
 }
 
 void KdTreeSampler::clearGlslMemory(const Mesh& mesh) const
 {
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdTetsSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _kdNodesSsbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_COPY);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refVertsSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_STREAM_COPY);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0, nullptr, GL_DYNAMIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void KdTreeSampler::clearCudaMemory(const Mesh& mesh) const
 {
     {
-        std::vector<GpuTet> gpuKdTets;
-        updateCudaKdTets(gpuKdTets);
-    }
-
-    {
         std::vector<GpuKdNode> gpuKdNodes;
         updateCudaKdNodes(gpuKdNodes);
-    }
-
-    {
-        std::vector<GpuVert> gpuRefVerts;
-        updateCudaRefVerts(gpuRefVerts);
-    }
-
-    {
-        std::vector<glm::mat4> gpuRefMetrics;
-        updateCudaRefMetrics(gpuRefMetrics);
     }
 }
 
@@ -222,26 +113,14 @@ void KdTreeSampler::setReferenceMesh(
 
     // Clear resources
     _debugMesh.reset();
-
     _rootNode.reset();
-    _refVerts = mesh.verts;
-    _refVerts.shrink_to_fit();
-    _refMetrics.resize(mesh.verts.size());
-    for(size_t vId=0; vId < vertCount; ++vId)
-        _refMetrics[vId] = vertMetric(mesh, vId);
-    _refMetrics.shrink_to_fit();
-
-
-    // Break prisms and hex into tetrahedra
-    std::vector<MeshTet> tets;
-    tetrahedrize(tets, mesh);
 
     // Compute Kd Tree depth
-    int height = (int)std::log2(vertCount/2);
+    int height = (int)std::log2(std::ceil(vertCount/3.0));
 
     getLog().postMessage(new Message('I', false,
         "Sampling mesh metric in a Kd-Tree",
-         "KdTreeSampler"));
+        "KdTreeSampler"));
     getLog().postMessage(new Message('I', false,
         "Maximum Kd-Tree's depth: " + std::to_string(height),
         "KdTreeSampler"));
@@ -266,15 +145,14 @@ void KdTreeSampler::setReferenceMesh(
     _rootNode.reset(new KdNode());
     build(_rootNode.get(), height, mesh,
           minBounds, maxBounds,
-          xSort, ySort, zSort,
-          tets);
+          xSort, ySort, zSort);
 }
 
-Metric KdTreeSampler::metricAt(
+MeshMetric KdTreeSampler::metricAt(
         const glm::dvec3& position,
         uint& cachedRefTet) const
 {
-    const Metric METRIC_ERROR(0.0);
+    const MeshMetric METRIC_ERROR(0.0);
 
     KdNode* node = nullptr;
     KdNode* child = _rootNode.get();
@@ -293,71 +171,12 @@ Metric KdTreeSampler::metricAt(
 
     if(node != nullptr)
     {
-        size_t nodeSmallestIdx = 0;
-        double nodeSmallestVal = -1/0.0;
-        double nodeSmallestCoor[4];
-
-        double coor[4];
-        size_t tetCount = node->tets.size();
-        for(size_t t=0; t < tetCount; ++t)
-        {
-            const MeshTet& tet = node->tets[t];
-            if(tetParams(_refVerts, tet, position, coor))
-            {
-                return coor[0] * _refMetrics[tet.v[0]] +
-                       coor[1] * _refMetrics[tet.v[1]] +
-                       coor[2] * _refMetrics[tet.v[2]] +
-                       coor[3] * _refMetrics[tet.v[3]];
-            }
-            else
-            {
-                double tetSmallest = 0.0;
-                if(coor[0] < tetSmallest) tetSmallest = coor[0];
-                if(coor[1] < tetSmallest) tetSmallest = coor[1];
-                if(coor[2] < tetSmallest) tetSmallest = coor[2];
-                if(coor[3] < tetSmallest) tetSmallest = coor[3];
-
-                if(tetSmallest > nodeSmallestVal)
-                {
-                    nodeSmallestIdx = t;
-                    nodeSmallestVal = tetSmallest;
-                    nodeSmallestCoor[0] = coor[0];
-                    nodeSmallestCoor[1] = coor[1];
-                    nodeSmallestCoor[2] = coor[2];
-                    nodeSmallestCoor[3] = coor[3];
-                }
-            }
-        }
-
-
-        // Clamp coordinates for project
-        double coorSum = 0.0;
-        if(nodeSmallestCoor[0] < 0.0)
-            nodeSmallestCoor[0] = 0.0;
-        coorSum += nodeSmallestCoor[0];
-        if(nodeSmallestCoor[1] < 0.0)
-            nodeSmallestCoor[1] = 0.0;
-        coorSum += nodeSmallestCoor[1];
-        if(nodeSmallestCoor[2] < 0.0)
-            nodeSmallestCoor[2] = 0.0;
-        coorSum += nodeSmallestCoor[2];
-        if(nodeSmallestCoor[3] < 0.0)
-            nodeSmallestCoor[3] = 0.0;
-        coorSum += nodeSmallestCoor[3];
-
-        nodeSmallestCoor[0] /= coorSum;
-        nodeSmallestCoor[1] /= coorSum;
-        nodeSmallestCoor[2] /= coorSum;
-        nodeSmallestCoor[3] /= coorSum;
-
-        // Return projected metric
-        const MeshTet& tet = node->tets[nodeSmallestIdx];
-        return nodeSmallestCoor[0] * _refMetrics[tet.v[0]] +
-               nodeSmallestCoor[1] * _refMetrics[tet.v[1]] +
-               nodeSmallestCoor[2] * _refMetrics[tet.v[2]] +
-               nodeSmallestCoor[3] * _refMetrics[tet.v[3]];
+        return node->metric;
     }
-    else return METRIC_ERROR;
+    else
+    {
+        return METRIC_ERROR;
+    }
 }
 
 void KdTreeSampler::releaseDebugMesh()
@@ -391,14 +210,13 @@ void KdTreeSampler::build(
         const glm::dvec3& maxBox,
         std::vector<uint>& xSort,
         std::vector<uint>& ySort,
-        std::vector<uint>& zSort,
-        std::vector<MeshTet>& tets)
+        std::vector<uint>& zSort)
 {
     node->minBox = minBox;
     node->maxBox = maxBox;
 
     size_t vertCount = xSort.size();
-    if(height > 0 && vertCount >= 2)
+    if(height > 0 && vertCount > 3)
     {
         glm::dvec3 extents(
             mesh.verts[xSort.back()].p.x - mesh.verts[xSort.front()].p.x,
@@ -430,8 +248,8 @@ void KdTreeSampler::build(
             sepPos = (mesh.verts[sepL].p + mesh.verts[sepR].p) / 2.0;
         else
             sepPos = mesh.verts[sepR].p;
-        double sepVal = glm::dot(axis, sepPos);
 
+        double sepVal = glm::dot(axis, sepPos);
         node->separator = glm::dvec4(axis, sepVal);
 
 
@@ -463,46 +281,6 @@ void KdTreeSampler::build(
                 zSortR.push_back(zSort[v]);
         }
 
-        std::vector<MeshTet> tetsL;
-        std::vector<MeshTet> tetsR;
-        size_t tetCount = tets.size();
-        for(size_t t=0; t < tetCount; ++t)
-        {
-            const MeshTet& tet = tets[t];
-
-            bool inL = false;
-            bool inR = false;
-
-            for(int i=0; i < 4; ++i)
-            {
-                double vDist = glm::dot(mesh.verts[tet.v[i]].p, axis) - sepVal;
-
-                if(vDist < 0.0)
-                {
-                    if(!inL)
-                    {
-                        inL = true;
-                        tetsL.push_back(tet);
-                        if(inR) break;
-                    }
-                }
-                else if(vDist > 0.0)
-                {
-                    if(!inR)
-                    {
-                        inR = true;
-                        tetsR.push_back(tet);
-                        if(inL) break;
-                    }
-                }
-                else
-                {
-                    tetsL.push_back(tet);
-                    tetsR.push_back(tet);
-                    break;
-                }
-            }
-        }
 
         // Deallocate sorted vertices vectors
         xSort.clear();
@@ -511,8 +289,6 @@ void KdTreeSampler::build(
         ySort.shrink_to_fit();
         zSort.clear();
         zSort.shrink_to_fit();
-        tets.clear();
-        tets.shrink_to_fit();
 
 
         // Child bounding boxes
@@ -524,37 +300,35 @@ void KdTreeSampler::build(
 
         // Build children nodes
         node->left = new KdNode();
-        build(node->left,  height-1, mesh, minBoxL, maxBoxL, xSortL, ySortL, zSortL, tetsL);
+        build(node->left,  height-1, mesh, minBoxL, maxBoxL, xSortL, ySortL, zSortL);
 
         node->right = new KdNode();
-        build(node->right, height-1, mesh, minBoxR, maxBoxR, xSortR, ySortR, zSortR, tetsR);
+        build(node->right, height-1, mesh, minBoxR, maxBoxR, xSortR, ySortR, zSortR);
     }
     else
     {
         assert(vertCount > 0);
-        node->tets = tets;
-
         node->separator.w = 0.0;
+
+        node->metric = MeshMetric(0.0);
+        for(uint v : xSort)
+        {
+            node->metric += vertMetric(mesh.verts[v].p);
+        }
+
+        node->metric /= vertCount;
     }
 }
 
-void KdTreeSampler::buildGpuBuffers(
-        KdNode* node,
-        std::vector<GpuKdNode>& kdNodes,
-        std::vector<GpuTet>& kdTets) const
+void KdTreeSampler::buildGpuBuffers(KdNode* node,
+        std::vector<GpuKdNode>& kdNodes) const
 {
     GpuKdNode kdNode;
 
     kdNode.left = -1;
     kdNode.right = -1;
     kdNode.separator = node->separator;
-
-    kdNode.tetBeg = kdTets.size();
-    size_t tetCount = node->tets.size();
-    for(size_t t=0; t < tetCount; ++t)
-        kdTets.push_back(node->tets[t]);
-    kdNode.tetEnd = kdTets.size();
-
+    kdNode.metric = GpuMetric(node->metric);
 
     size_t kdNodeId = kdNodes.size();
     kdNodes.push_back(kdNode);
@@ -562,20 +336,18 @@ void KdTreeSampler::buildGpuBuffers(
     if(node->left != nullptr)
     {
         kdNodes[kdNodeId].left = kdNodes.size();
-        buildGpuBuffers(node->left, kdNodes, kdTets);
+        buildGpuBuffers(node->left, kdNodes);
     }
 
     if(node->right != nullptr)
     {
         kdNodes[kdNodeId].right = kdNodes.size();
-        buildGpuBuffers(node->right, kdNodes, kdTets);
+        buildGpuBuffers(node->right, kdNodes);
     }
 }
 
 void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
 {
-    uint dummyCache = 0;
-
     if(node->left == nullptr ||
        node->right == nullptr)
     {
@@ -592,7 +364,7 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
 
             MeshHex hex(baseVert + 0, baseVert + 1, baseVert + 2, baseVert + 3,
                         baseVert + 4, baseVert + 5, baseVert + 6, baseVert + 7);
-            hex.value = metricAt((node->minBox + node->maxBox) / 2.0, dummyCache)[0][0];
+            hex.value = node->metric[0][0];
             mesh.hexs.push_back(hex);
         }
     }

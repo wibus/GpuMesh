@@ -81,8 +81,8 @@ double MetricWiseMeasurer::riemannianDistance(
         double p0 = (curr + 0.5) / base;
         double p1 = (curr + 1.5) / base;
 
-        Metric M0 = sampler.metricAt(a + p0*d, cachedRefTet);
-        Metric M1 = sampler.metricAt(a + p1*d, cachedRefTet);
+        MeshMetric M0 = sampler.metricAt(a + p0*d, cachedRefTet);
+        MeshMetric M1 = sampler.metricAt(a + p1*d, cachedRefTet);
 
         double l0 = glm::sqrt(glm::dot(bv, M0 * bv));
         double l1 = glm::sqrt(glm::dot(bv, M1 * bv));

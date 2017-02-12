@@ -1,3 +1,5 @@
+#pragma diag_suppress integer_sign_change
+
 #include <cstdio>
 
 #include <cuda.h>

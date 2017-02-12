@@ -30,12 +30,12 @@ void UniformSampler::setReferenceMesh(
 
 }
 
-Metric UniformSampler::metricAt(
+MeshMetric UniformSampler::metricAt(
         const glm::dvec3& position,
         uint& cachedRefTet) const
 {
     // Constant isotropic metric
-    return Metric(scaling() * scaling());
+    return MeshMetric(scaling() * scaling());
 }
 
 void UniformSampler::releaseDebugMesh()

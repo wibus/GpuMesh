@@ -31,7 +31,7 @@ public:
             const MeshHex& hex) const override;
 
 protected:
-    Metric specifiedMetric(const AbstractSampler& sampler,
+    MeshMetric specifiedMetric(const AbstractSampler& sampler,
             const glm::dvec3& v0,
             const glm::dvec3& v1,
             const glm::dvec3& v2,
@@ -39,7 +39,7 @@ protected:
             uint& cachedRefTet) const;
     double metricConformity(
             const glm::dmat3& Fk,
-            const Metric& Ms) const;
+            const MeshMetric& Ms) const;
 };
 
 #endif // GPUMESH_METRICCONFORMITYEVALUATOR

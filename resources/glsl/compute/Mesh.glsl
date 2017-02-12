@@ -126,7 +126,6 @@ const uint EVALUATE_HIST_BUFFER_BINDING     = 9;
 const uint VERTEX_ACCUMS_BUFFER_BINDING     = 10;
 const uint REF_VERTS_BUFFER_BINDING         = 11;
 const uint REF_METRICS_BUFFER_BINDING       = 12;
-const uint KD_TETS_BUFFER_BINDING           = 13;
 const uint KD_NODES_BUFFER_BINDING          = 14;
 const uint LOCAL_TETS_BUFFER_BINDING        = 15;
 const uint SPAWN_OFFSETS_BUFFER_BINDING     = 16;

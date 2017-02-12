@@ -27,7 +27,7 @@ struct ElemValue
     uint cacheTetId;
 };
 
-const Metric ISOTROPIC_METRIC(1.0);
+const MeshMetric ISOTROPIC_METRIC(1.0);
 
 
 class TextureGrid
@@ -45,7 +45,7 @@ public:
     {
     }
 
-    inline Metric& at(const glm::ivec3& pos)
+    inline MeshMetric& at(const glm::ivec3& pos)
     {
         return _impl[pos];
     }
@@ -58,7 +58,7 @@ public:
     const glm::ivec3 maxCellId;
 
 private:
-    Grid3D<Metric> _impl;
+    Grid3D<MeshMetric> _impl;
 };
 
 
@@ -140,7 +140,7 @@ void TextureSampler::updateGlslData(const Mesh& mesh) const
             for(int i = 0; i < size.x; ++i)
             {
                 glm::ivec3 cellId(i, j, k);
-                const Metric& metric = _grid->at(cellId);
+                const MeshMetric& metric = _grid->at(cellId);
 
                 glm::vec3 topline = metric[0];
                 topLineBuff.push_back(topline);
@@ -194,7 +194,7 @@ void TextureSampler::updateCudaData(const Mesh& mesh) const
             for(int i = 0; i < size.x; ++i)
             {
                 glm::ivec3 cellId(i, j, k);
-                const Metric& metric = _grid->at(cellId);
+                const MeshMetric& metric = _grid->at(cellId);
 
                 glm::vec3 topline = metric[0];
                 topLineBuff.push_back(glm::vec4(topline, 0));
@@ -326,7 +326,7 @@ void TextureSampler::setReferenceMesh(
     }
 }
 
-Metric TextureSampler::metricAt(
+MeshMetric TextureSampler::metricAt(
         const glm::dvec3& position,
         uint& cachedRefTet) const
 {
@@ -345,28 +345,28 @@ Metric TextureSampler::metricAt(
     glm::ivec3 id011 = id000 + glm::ivec3(0, 1, 1);
     glm::ivec3 id111 = id000 + glm::ivec3(1, 1, 1);
 
-    Metric m000 = _grid->at(id000);
-    Metric m100 = _grid->at(id100);
-    Metric m010 = _grid->at(id010);
-    Metric m110 = _grid->at(id110);
-    Metric m001 = _grid->at(id001);
-    Metric m101 = _grid->at(id101);
-    Metric m011 = _grid->at(id011);
-    Metric m111 = _grid->at(id111);
+    MeshMetric m000 = _grid->at(id000);
+    MeshMetric m100 = _grid->at(id100);
+    MeshMetric m010 = _grid->at(id010);
+    MeshMetric m110 = _grid->at(id110);
+    MeshMetric m001 = _grid->at(id001);
+    MeshMetric m101 = _grid->at(id101);
+    MeshMetric m011 = _grid->at(id011);
+    MeshMetric m111 = _grid->at(id111);
 
     glm::dvec3 c000Center = cs * (glm::dvec3(id000) + glm::dvec3(0.5));
     glm::dvec3 a = (position - (_grid->minBounds + c000Center)) / cs;
     a = glm::clamp(a, glm::dvec3(0), glm::dvec3(1));
 
-    Metric mx00 = interpolateMetrics(m000, m100, a.x);
-    Metric mx10 = interpolateMetrics(m010, m110, a.x);
-    Metric mx01 = interpolateMetrics(m001, m101, a.x);
-    Metric mx11 = interpolateMetrics(m011, m111, a.x);
+    MeshMetric mx00 = interpolateMetrics(m000, m100, a.x);
+    MeshMetric mx10 = interpolateMetrics(m010, m110, a.x);
+    MeshMetric mx01 = interpolateMetrics(m001, m101, a.x);
+    MeshMetric mx11 = interpolateMetrics(m011, m111, a.x);
 
-    Metric mxy0 = interpolateMetrics(mx00, mx10, a.y);
-    Metric mxy1 = interpolateMetrics(mx01, mx11, a.y);
+    MeshMetric mxy0 = interpolateMetrics(mx00, mx10, a.y);
+    MeshMetric mxy1 = interpolateMetrics(mx01, mx11, a.y);
 
-    Metric mxyz = interpolateMetrics(mxy0, mxy1, a.z);
+    MeshMetric mxyz = interpolateMetrics(mxy0, mxy1, a.z);
 
     return mxyz;
 }

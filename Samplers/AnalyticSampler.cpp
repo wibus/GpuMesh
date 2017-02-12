@@ -30,7 +30,7 @@ void AnalyticSampler::setReferenceMesh(
 
 }
 
-Metric AnalyticSampler::metricAt(
+MeshMetric AnalyticSampler::metricAt(
         const glm::dvec3& position,
         uint& cachedRefTet) const
 {

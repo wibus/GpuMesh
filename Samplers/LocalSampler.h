@@ -31,7 +31,7 @@ public:
     virtual void setReferenceMesh(
             const Mesh& mesh) override;
 
-    virtual Metric metricAt(
+    virtual MeshMetric metricAt(
             const glm::dvec3& position,
             uint& cachedRefTet) const override;
 
@@ -46,7 +46,7 @@ private:
     std::shared_ptr<Mesh> _debugMesh;
 
     std::vector<MeshVert> _refVerts;
-    std::vector<Metric>   _refMetrics;
+    std::vector<MeshMetric>   _refMetrics;
     std::vector<MeshLocalTet> _localTets;
 
     mutable GLuint _localTetsSsbo;

@@ -16,8 +16,7 @@ struct MeshTet;
 struct MeshPri;
 struct MeshHex;
 struct MeshVert;
-
-typedef glm::dmat3 Metric;
+typedef glm::dmat3 MeshMetric;
 
 
 class AbstractSampler
@@ -67,7 +66,7 @@ public:
     virtual void setReferenceMesh(
             const Mesh& mesh) = 0;
 
-    virtual Metric metricAt(
+    virtual MeshMetric metricAt(
             const glm::dvec3& position,
             uint& cachedRefTet) const = 0;
 
@@ -79,11 +78,11 @@ public:
 
 protected:
     // Give mesh's provided metric
-    Metric vertMetric(const Mesh& mesh, unsigned int vId) const;
-    Metric vertMetric(const glm::dvec3& position) const;
+    MeshMetric vertMetric(const Mesh& mesh, unsigned int vId) const;
+    MeshMetric vertMetric(const glm::dvec3& position) const;
 
     // Interpolate the metric given two samples and a mix ratio
-    Metric interpolateMetrics(const Metric& m1, const Metric& m2, double a) const;
+    MeshMetric interpolateMetrics(const MeshMetric& m1, const MeshMetric& m2, double a) const;
 
     // Classic bounding box computation
     void boundingBox(const Mesh& mesh,

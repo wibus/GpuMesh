@@ -36,7 +36,7 @@ public:
     virtual void setReferenceMesh(
             const Mesh& mesh) override;
 
-    virtual Metric metricAt(
+    virtual MeshMetric metricAt(
             const glm::dvec3& position,
             uint& cachedRefTet) const override;
 
@@ -54,25 +54,17 @@ private:
             const glm::dvec3& maxBox,
             std::vector<unsigned int>& xSort,
             std::vector<unsigned int>& ySort,
-            std::vector<unsigned int>& zSort,
-            std::vector<MeshTet>& tets);
+            std::vector<unsigned int>& zSort);
 
-    void buildGpuBuffers(
-            KdNode* node,
-            std::vector<GpuKdNode>& kdNodes,
-            std::vector<GpuTet>& kdTets) const;
+    void buildGpuBuffers(KdNode* node,
+            std::vector<GpuKdNode>& kdNodes) const;
 
     void meshTree(KdNode* node, Mesh& mesh);
 
     std::unique_ptr<KdNode> _rootNode;
     std::shared_ptr<Mesh> _debugMesh;
-    std::vector<MeshVert> _refVerts;
-    std::vector<Metric> _refMetrics;
 
-    mutable GLuint _kdTetsSsbo;
     mutable GLuint _kdNodesSsbo;
-    mutable GLuint _refVertsSsbo;
-    mutable GLuint _refMetricsSsbo;
 };
 
 #endif // GPUMESH_KDTREESAMPLER

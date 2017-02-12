@@ -232,6 +232,9 @@ struct MeshTopo
 };
 
 
+typedef glm::dmat3 MeshMetric;
+
+
 enum class EMeshBuffer
 {
     VERT,
@@ -254,7 +257,6 @@ enum class EBufferBinding
     VERTEX_ACCUMS_BUFFER_BINDING,
     REF_VERTS_BUFFER_BINDING,
     REF_METRICS_BUFFER_BINDING,
-    KD_TETS_BUFFER_BINDING,
     KD_NODES_BUFFER_BINDING,
     LOCAL_TETS_BUFFER_BINDING,
     SPAWN_OFFSETS_BUFFER_BINDING

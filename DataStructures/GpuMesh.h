@@ -140,6 +140,9 @@ struct GpuTopo
         neigElemBase(neigElemBase), neigElemCount(neigElemCount) {}
 };
 
+
+typedef glm::mat4 GpuMetric;
+
 struct GpuKdNode
 {
     GpuKdNode() :
@@ -156,6 +159,8 @@ struct GpuKdNode
     GLuint tetEnd;
 
     glm::vec4 separator;
+
+    GpuMetric metric;
 };
 
 struct GpuLocalTet

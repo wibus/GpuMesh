@@ -21,7 +21,7 @@ void updateCudaLocalCache(
 void updateCudaRefVerts(
         const std::vector<GpuVert>& refVertsBuff);
 void updateCudaRefMetrics(
-        const std::vector<glm::mat4>& refMetricsBuff);
+        const std::vector<GpuMetric>& refMetricsBuff);
 
 
 LocalSampler::LocalSampler() :
@@ -97,10 +97,10 @@ void LocalSampler::updateGlslData(const Mesh& mesh) const
 
     // Reference Mesh Metrics
     {
-        std::vector<glm::mat4> gpuRefMetrics;
+        std::vector<GpuMetric> gpuRefMetrics;
         gpuRefMetrics.reserve(_refMetrics.size());
         for(const auto& metric : _refMetrics)
-            gpuRefMetrics.push_back(glm::mat4(metric));
+            gpuRefMetrics.push_back(GpuMetric(metric));
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _refMetricsSsbo);
         size_t refMetricsSize = sizeof(decltype(gpuRefMetrics.front())) * gpuRefMetrics.size();
@@ -135,10 +135,10 @@ void LocalSampler::updateCudaData(const Mesh& mesh) const
 
     // Reference Mesh Metrics
     {
-        std::vector<glm::mat4> gpuRefMetrics;
+        std::vector<GpuMetric> gpuRefMetrics;
         gpuRefMetrics.reserve(_refMetrics.size());
         for(const auto& metric : _refMetrics)
-            gpuRefMetrics.push_back(glm::mat4(metric));
+            gpuRefMetrics.push_back(GpuMetric(metric));
 
         updateCudaRefMetrics(gpuRefMetrics);
     }
@@ -171,7 +171,7 @@ void LocalSampler::clearCudaMemory(const Mesh& mesh) const
 
     // Reference Mesh Metrics
     {
-        std::vector<glm::mat4> gpuRefMetrics;
+        std::vector<GpuMetric> gpuRefMetrics;
         updateCudaRefMetrics(gpuRefMetrics);
     }
 }
@@ -269,7 +269,7 @@ bool isTaboo(uint tId, uint taboo[], size_t count)
     return false;
 }
 
-Metric LocalSampler::metricAt(
+MeshMetric LocalSampler::metricAt(
         const glm::dvec3& position,
         uint& cachedRefTet) const
 {
