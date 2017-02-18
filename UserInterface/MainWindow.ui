@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="meshTab">
        <attribute name="title">
@@ -289,7 +289,7 @@
               <double>100.000000000000000</double>
              </property>
              <property name="value">
-              <double>1.000000000000000</double>
+              <double>5.000000000000000</double>
              </property>
             </widget>
            </item>

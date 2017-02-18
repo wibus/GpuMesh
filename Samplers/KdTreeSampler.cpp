@@ -364,7 +364,7 @@ void KdTreeSampler::meshTree(KdNode* node, Mesh& mesh)
 
             MeshHex hex(baseVert + 0, baseVert + 1, baseVert + 2, baseVert + 3,
                         baseVert + 4, baseVert + 5, baseVert + 6, baseVert + 7);
-            hex.value = node->metric[0][0];
+            hex.value = glm::sqrt(25.0 / node->metric[0][0]);
             mesh.hexs.push_back(hex);
         }
     }

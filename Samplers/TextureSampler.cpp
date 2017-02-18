@@ -267,8 +267,11 @@ void TextureSampler::setReferenceMesh(
                          std::to_string(size.z) + ")",
         "TextureSampler"));
 
+
     LocalSampler localSampler;
     localSampler.setScaling(scaling());
+    localSampler.setAspectRatio(aspectRatio());
+
     localSampler.setReferenceMesh(mesh);
     const auto& localTets = localSampler.localTets();
 
@@ -446,8 +449,7 @@ void TextureSampler::meshGrid(TextureGrid& grid, Mesh& mesh)
                         xt + yt + zt,
                         xb + yt + zt);
 
-                    hex.value = _grid->at(cellId)[0][0] /
-                            (scaling() * scaling() * 10.0);
+                    hex.value = glm::sqrt(25.0 / _grid->at(cellId)[0][0]);
                     mesh.hexs.push_back(hex);
                 }
             }
