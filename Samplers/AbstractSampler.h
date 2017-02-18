@@ -39,6 +39,9 @@ public:
     double scalingCube() const;
     virtual void setScaling(double scaling);
 
+    double aspectRatio() const;
+    virtual void setAspectRatio(double ratio);
+
 
     // GPU Plug-in interface
     virtual std::string samplingShader() const;
@@ -93,6 +96,7 @@ private:
     double _scaling;
     double _scaling2;
     double _scaling3;
+    double _aspectRatio;
     std::string _samplingName;
     std::string _samplingShader;
     std::string _baseShader;
@@ -115,6 +119,11 @@ inline double AbstractSampler::scalingSqr() const
 inline double AbstractSampler::scalingCube() const
 {
     return _scaling3;
+}
+
+inline double AbstractSampler::aspectRatio() const
+{
+    return _aspectRatio;
 }
 
 #endif // GPUMESH_ABSTRACTSAMPLER

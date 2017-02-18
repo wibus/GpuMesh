@@ -83,6 +83,8 @@ public:
 
     virtual void setMetricScaling(double scaling);
 
+    virtual void setMetricAspectRatio(double ratio);
+
     // Smooth
     virtual void smoothMesh(
             const std::string& smootherName,
@@ -147,6 +149,7 @@ protected:
     bool _displaySamplingMesh;
 
     double _metricScaling;
+    double _metricAspectRatio;
 
 private:
     std::unique_ptr<Mesh> _mesh;

@@ -80,6 +80,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _qualityCullingMax(INFINITY),
     _displaySamplingMesh(false),
     _metricScaling(1.0),
+    _metricAspectRatio(1.0),
     _mesh(new GpuMesh()),
     _meshCrew(new MeshCrew()),
     _availableMeshers("Available Meshers"),
@@ -567,6 +568,14 @@ void GpuMeshCharacter::setMetricScaling(double scaling)
     updateMeshMeasures();
 }
 
+void GpuMeshCharacter::setMetricAspectRatio(double ratio)
+{
+    _metricAspectRatio = ratio;
+
+    updateSampling();
+    updateMeshMeasures();
+}
+
 void GpuMeshCharacter::smoothMesh(
         const std::string& smootherName,
         const std::string& implementationName,
@@ -831,6 +840,7 @@ void GpuMeshCharacter::updateSampling()
     if(_meshCrew->initialized())
     {
         _meshCrew->sampler().setScaling(_metricScaling);
+        _meshCrew->sampler().setAspectRatio(_metricAspectRatio);
 
         _meshCrew->sampler().setReferenceMesh(*_mesh);
 

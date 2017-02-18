@@ -9,6 +9,7 @@ __device__ metricAtFct metricAt = nullptr;
 __constant__ float MetricScaling = 1.0;
 __constant__ float MetricScalingSqr = 1.0;
 __constant__ float MetricScalingCube = 1.0;
+__constant__ float MetricAspectRatio = 1.0;
 
 
 
@@ -27,10 +28,10 @@ __device__ mat3 vertMetric(const vec3& position)
 {
     vec3 vp = position * float(3.1416 * 2.5);
 
-    float elemSize = 1.0 / 10.0;
+    float elemSize = 1.0 / MetricScaling;
     float elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
-    float sizeX = pow(MetricScaling, cos(vp.x) - 1.0);
+    float sizeX = pow(MetricAspectRatio, (cos(vp.x) - 1.0) / 2.0) / MetricScaling;
     float targetElemSizeXInv2 = 1.0 / (sizeX * sizeX);
 
     float rx = targetElemSizeXInv2;
@@ -104,4 +105,10 @@ void setCudaMetricScalingCube(double scalingCube)
     cudaMemcpyToSymbol(MetricScalingCube, &h_scalingCube, sizeof(h_scalingCube));
 
     cudaCheckErrors("CUDA error after sampler scaling");
+}
+
+void setCudaMetricAspectRatio(double aspectRatio)
+{
+    float h_aspectRatio = aspectRatio;
+    cudaMemcpyToSymbol(MetricAspectRatio, &h_aspectRatio, sizeof(h_aspectRatio));
 }

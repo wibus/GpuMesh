@@ -33,6 +33,10 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             this, &EvaluateTab::scalingChanged);
     scalingChanged(_ui->scalingSpin->value());
 
+    connect(_ui->metricAspectRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+            this, &EvaluateTab::aspectRatioChanged);
+    aspectRatioChanged(_ui->metricAspectRatioSpin->value());
+
     connect(_ui->enableAnisotropyCheck, &QCheckBox::toggled,
             this, &EvaluateTab::enableAnisotropy);
 
@@ -98,6 +102,11 @@ void EvaluateTab::enableAnisotropy(bool enabled)
 void EvaluateTab::scalingChanged(double scaling)
 {
     _character->setMetricScaling(scaling);
+}
+
+void EvaluateTab::aspectRatioChanged(double ratio)
+{
+    _character->setMetricAspectRatio(ratio);
 }
 
 void EvaluateTab::samplingTypeChanged(const QString& type)

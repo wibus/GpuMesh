@@ -10,6 +10,7 @@
 void setCudaMetricScaling(double scaling);
 void setCudaMetricScalingSqr(double scalingSqr);
 void setCudaMetricScalingCube(double scalingCube);
+void setCudaMetricAspectRatio(double aspectRatio);
 
 AbstractSampler::AbstractSampler(
         const std::string& name,
@@ -18,6 +19,7 @@ AbstractSampler::AbstractSampler(
     _scaling(1.0),
     _scaling2(1.0),
     _scaling3(1.0),
+    _aspectRatio(1.0),
     _samplingName(name),
     _samplingShader(shader),
     _baseShader(":/glsl/compute/Sampling/Base.glsl"),
@@ -36,6 +38,11 @@ void AbstractSampler::setScaling(double scaling)
     _scaling = scaling;
     _scaling2 = _scaling * scaling;
     _scaling3 = _scaling2 * scaling;
+}
+
+void AbstractSampler::setAspectRatio(double ratio)
+{
+    _aspectRatio = ratio;
 }
 
 std::string AbstractSampler::samplingShader() const
@@ -70,6 +77,7 @@ void AbstractSampler::setPluginGlslUniforms(
     program.setFloat("MetricScaling", scaling());
     program.setFloat("MetricScalingSqr", scalingSqr());
     program.setFloat("MetricScalingCube", scalingCube());
+    program.setFloat("MetricAspectRatio", aspectRatio());
 }
 
 void AbstractSampler::setPluginCudaUniforms(
@@ -78,6 +86,7 @@ void AbstractSampler::setPluginCudaUniforms(
     setCudaMetricScaling(scaling());
     setCudaMetricScalingSqr(scalingSqr());
     setCudaMetricScalingCube(scalingCube());
+    setCudaMetricAspectRatio(aspectRatio());
 }
 
 void AbstractSampler::updateGlslData(const Mesh& mesh) const
@@ -113,7 +122,7 @@ MeshMetric AbstractSampler::vertMetric(const Mesh& mesh, unsigned int vId) const
     return vertMetric(mesh.verts[vId].p);
 }
 
-inline MeshMetric sinWaveX(double scaling, const glm::dvec3& position)
+inline MeshMetric sinWaveX(double scaling, double ratio, const glm::dvec3& position)
 {
     /*
     const glm::dmat3 ROTATION(
@@ -128,10 +137,10 @@ inline MeshMetric sinWaveX(double scaling, const glm::dvec3& position)
 
     glm::dvec3 vp = position * (3.1416*2.5);
 
-    double elemSize = 1.0 / 10.0;
+    double elemSize = 1.0 / scaling;
     double elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
-    double sizeX = glm::pow(scaling, glm::cos(vp.x) - 1.0);
+    double sizeX = glm::pow(ratio, (glm::cos(vp.x) - 1.0) / 2.0) / scaling;
     double targetElemSizeXInv2 = 1.0 / (sizeX * sizeX);
 
     double rx = targetElemSizeXInv2;
@@ -144,7 +153,7 @@ inline MeshMetric sinWaveX(double scaling, const glm::dvec3& position)
             glm::dvec3(0,  0,  rz));
 }
 
-inline MeshMetric atanXY(double scaling, const glm::dvec3& position)
+inline MeshMetric atanXY(double scaling, double ratio, const glm::dvec3& position)
 {
     double s2 = scaling * scaling;
     glm::dvec3 vp = position * 4.0;
@@ -190,7 +199,7 @@ inline MeshMetric atanXY(double scaling, const glm::dvec3& position)
 
 MeshMetric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
-    return sinWaveX(scaling(), position);
+    return sinWaveX(scaling(), aspectRatio(), position);
 }
 
 void AbstractSampler::boundingBox(

@@ -1,4 +1,5 @@
 uniform float MetricScaling = 1.0;
+uniform float MetricAspectRatio = 1.0;
 
 mat3 interpolateMetrics(in mat3 m1, in mat3 m2, float a)
 {
@@ -12,10 +13,10 @@ mat3 vertMetric(in vec3 position)
 {
     vec3 vp = position * float(3.1416 * 2.5);
 
-    float elemSize = 1.0 / 10.0;
+    float elemSize = 1.0 / MetricScaling;
     float elemSizeInv2 = 1.0 / (elemSize * elemSize);
 
-    float sizeX = pow(MetricScaling, cos(vp.x) - 1.0);
+    float sizeX = pow(MetricAspectRatio, (cos(vp.x) - 1.0) / 2.0) / MetricScaling;
     float targetElemSizeXInv2 = 1.0 / (sizeX * sizeX);
 
     float rx = targetElemSizeXInv2;

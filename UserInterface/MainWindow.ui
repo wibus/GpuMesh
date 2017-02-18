@@ -27,7 +27,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="meshTab">
        <attribute name="title">
@@ -237,7 +237,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0" colspan="2">
+           <item row="2" column="0" colspan="2">
             <widget class="QCheckBox" name="enableAnisotropyCheck">
              <property name="text">
               <string>Enable Anisotropy</string>
@@ -247,23 +247,23 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0" colspan="2">
+           <item row="4" column="0" colspan="2">
             <widget class="QGroupBox" name="samplingGroup">
              <property name="title">
               <string>Sampling</string>
              </property>
              <layout class="QFormLayout" name="formLayout_5">
-              <item row="0" column="0">
+              <item row="2" column="0">
                <widget class="QLabel" name="discretizationTypeLabel">
                 <property name="text">
                  <string>Type</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
+              <item row="2" column="1">
                <widget class="QComboBox" name="discretizationTypeMenu"/>
               </item>
-              <item row="1" column="0" colspan="2">
+              <item row="3" column="0" colspan="2">
                <widget class="QCheckBox" name="discretizationDisplayCheck">
                 <property name="text">
                  <string>Display Discretization</string>
@@ -271,6 +271,26 @@
                </widget>
               </item>
              </layout>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="metricAspectRatioLabel">
+             <property name="text">
+              <string>Aspect ratio</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="metricAspectRatioSpin">
+             <property name="minimum">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>100.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
             </widget>
            </item>
           </layout>
