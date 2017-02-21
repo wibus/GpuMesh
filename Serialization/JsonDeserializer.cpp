@@ -5,12 +5,12 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
+#include "Boundaries/AbstractBoundary.h"
 #include "JsonMeshTags.h"
 
 
 JsonDeserializer::JsonDeserializer()
 {
-
 }
 
 JsonDeserializer::~JsonDeserializer()
@@ -34,9 +34,17 @@ bool JsonDeserializer::deserialize(
     QJsonObject meshObj = doc.object();
     mesh.modelName = meshObj[MESH_MODEL_TAG].toString().toStdString();
 
+    std::shared_ptr<AbstractBoundary> bound = boundary(
+        meshObj[MESH_BOUND_TAG].toString().toStdString());
+    mesh.setBoundary(bound);
+
     // Vertices
     for(QJsonValue val : meshObj[MESH_VERTS_TAG].toArray())
         mesh.verts.push_back(toVert(val));
+
+    // Topos
+    for(QJsonValue val : meshObj[MESH_TOPOS_TAG].toArray())
+        mesh.topos.push_back(MeshTopo(bound->constraint(val.toInt())));
 
     // Tetrahedra
     for(QJsonValue val : meshObj[MESH_TETS_TAG].toArray())

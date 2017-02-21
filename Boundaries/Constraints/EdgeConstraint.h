@@ -10,6 +10,8 @@ protected:
     EdgeConstraint(int id);
 
 public:
+    virtual const AbstractConstraint* subconstraint(int id) const override;
+
     void addVertex(VertexConstraint* vertex);
     bool isBoundedBy(const VertexConstraint* vertex) const;
 

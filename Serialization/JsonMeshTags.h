@@ -5,8 +5,10 @@
 
 
 extern const QString MESH_MODEL_TAG;
+extern const QString MESH_BOUND_TAG;
 
 extern const QString MESH_VERTS_TAG;
+extern const QString MESH_TOPOS_TAG;
 
 extern const QString MESH_TETS_TAG;
 extern const QString MESH_PRIS_TAG;

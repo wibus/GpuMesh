@@ -12,6 +12,22 @@ FaceConstraint::FaceConstraint(int id) :
     assert(id > 0);
 }
 
+const AbstractConstraint* FaceConstraint::subconstraint(int id) const
+{
+    if(id == this->id())
+        return this;
+
+    const AbstractConstraint* constraint = nullptr;
+    for(const EdgeConstraint* e : _edges)
+    {
+        constraint = e->subconstraint(id);
+        if(constraint != nullptr)
+            return constraint;
+    }
+
+    return nullptr;
+}
+
 void FaceConstraint::addVertex(VertexConstraint* vertex)
 {
     if(!isBoundedBy(vertex))

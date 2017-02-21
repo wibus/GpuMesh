@@ -11,6 +11,14 @@ VertexConstraint::VertexConstraint(int id, const glm::dvec3 position) :
     assert(id < 0);
 }
 
+const AbstractConstraint* VertexConstraint::subconstraint(int id) const
+{
+    if(id == this->id())
+        return this;
+
+    return nullptr;
+}
+
 void VertexConstraint::addEdge(EdgeConstraint* edge)
 {
     if(!isBoundedBy(edge))

@@ -27,6 +27,9 @@ public:
 
     const VolumeConstraint* volume() const;
 
+    const AbstractConstraint* constraint(int id) const;
+
+
     int supportDimension(
         const AbstractConstraint* c1,
         const AbstractConstraint* c2) const;

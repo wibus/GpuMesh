@@ -12,6 +12,21 @@ EdgeConstraint::EdgeConstraint(int id) :
     assert(id > 0);
 }
 
+const AbstractConstraint* EdgeConstraint::subconstraint(int id) const
+{
+    if(id == this->id())
+        return this;
+
+    const AbstractConstraint* constraint = nullptr;
+    constraint = _vertices[0]->subconstraint(id);
+    if(constraint != nullptr) return constraint;
+
+    constraint = _vertices[1]->subconstraint(id);
+    if(constraint != nullptr) return constraint;
+
+    return nullptr;
+}
+
 void EdgeConstraint::addVertex(VertexConstraint *vertex)
 {
     if(!isBoundedBy(vertex))

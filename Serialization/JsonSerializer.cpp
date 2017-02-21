@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 
 #include "DataStructures/Mesh.h"
+#include "Boundaries/AbstractBoundary.h"
 #include "JsonMeshTags.h"
 
 
@@ -26,12 +27,18 @@ bool JsonSerializer::serialize(
 {
     QJsonObject meshObj;
     meshObj.insert(MESH_MODEL_TAG, mesh.modelName.c_str());
+    meshObj.insert(MESH_BOUND_TAG, mesh.boundary().name().c_str());
 
     // Vertices
     QJsonArray vertArray;
     for(const MeshVert& vert : mesh.verts)
         vertArray.append(toJson(vert.p));
     meshObj.insert(MESH_VERTS_TAG, vertArray);
+
+    QJsonArray topoArray;
+    for(const MeshTopo& topo : mesh.topos)
+        topoArray.append(topo.snapToBoundary->id());
+    meshObj.insert(MESH_TOPOS_TAG, topoArray);
 
 
     // Tetrahedra
@@ -60,7 +67,7 @@ bool JsonSerializer::serialize(
     if(!jsonFile.open(QFile::WriteOnly))
         return false;
 
-    jsonFile.write(doc.toJson(QJsonDocument::Compact));
+    jsonFile.write(doc.toJson(QJsonDocument::Indented));
     return true;
 }
 

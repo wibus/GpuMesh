@@ -19,6 +19,16 @@ AbstractBoundary::~AbstractBoundary()
 
 }
 
+const AbstractConstraint* AbstractBoundary::constraint(int id) const
+{
+    const AbstractConstraint* c = nullptr;
+    c = volume()->subconstraint(id);
+    if(c != nullptr)
+        return c;
+
+    return volume();
+}
+
 int AbstractBoundary::supportDimension(
     const AbstractConstraint* c1,
     const AbstractConstraint* c2) const

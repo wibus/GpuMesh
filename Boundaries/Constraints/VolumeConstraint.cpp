@@ -9,6 +9,22 @@ VolumeConstraint::VolumeConstraint() :
 
 }
 
+const AbstractConstraint* VolumeConstraint::subconstraint(int id) const
+{
+    if(id == this->id())
+        return this;
+
+    const AbstractConstraint* constraint = nullptr;
+    for(const FaceConstraint* f : _faces)
+    {
+        constraint = f->subconstraint(id);
+        if(constraint != nullptr)
+            return constraint;
+    }
+
+    return nullptr;
+}
+
 void VolumeConstraint::addFace(FaceConstraint* face)
 {
     if(!isBoundedBy(face))

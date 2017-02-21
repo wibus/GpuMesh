@@ -11,6 +11,8 @@ class VolumeConstraint : public AbstractConstraint
 public:
     VolumeConstraint();
 
+    virtual const AbstractConstraint* subconstraint(int id) const override;
+
     void addFace(FaceConstraint* face);
     bool isBoundedBy(const FaceConstraint* face) const;
 

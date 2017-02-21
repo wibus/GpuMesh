@@ -11,6 +11,8 @@ class VertexConstraint : public AbstractConstraint
 public:
     VertexConstraint(int id, const glm::dvec3 position);
 
+    virtual const AbstractConstraint* subconstraint(int id) const override;
+
     void addEdge(EdgeConstraint* edge);
     bool isBoundedBy(const EdgeConstraint* edge) const;
 

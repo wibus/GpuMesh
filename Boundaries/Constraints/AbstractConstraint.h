@@ -25,6 +25,8 @@ public:
     int dimension() const;
     bool operator == (const AbstractConstraint& c) const;
 
+    virtual const AbstractConstraint* subconstraint(int id) const = 0;
+
     bool isFixed() const;
     bool isConstrained() const;
 
