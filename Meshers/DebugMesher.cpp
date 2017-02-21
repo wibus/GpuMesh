@@ -112,8 +112,8 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
 
 void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
 {
-    double squishRadius = 0.5;
-    double squishHeight = 1.0;
+    double squishRadius = 1.0;
+    double squishHeight = 2.0;
 
     const int pow1_3 =  glm::pow((double)vertexCount, 1.0/3.0);
     const int pow1_3_pair = ((pow1_3 + 1) / 2) * 2;
@@ -162,8 +162,8 @@ void DebugMesher::genSquish(Mesh& mesh, size_t vertexCount)
 
 void DebugMesher::genHexGrid(Mesh& mesh, size_t vertexCount)
 {
-    glm::dvec3 gridMin(-0.5);
-    glm::dvec3 gridMax( 0.5);
+    glm::dvec3 gridMin(-1.0);
+    glm::dvec3 gridMax( 1.0);
 
     const int SECTION_COUNT =  glm::pow((double)vertexCount, 1.0/3.0);
     for(int z=0; z <= SECTION_COUNT; ++z)
@@ -254,10 +254,16 @@ void DebugMesher::genTet(Mesh& mesh, size_t vertexCount)
 
     glm::dvec4 centerw;
     for(const MeshVert& v : mesh.verts)
+    {
         centerw += glm::dvec4(v.p, 1.0);
+    }
+
     glm::dvec3 center = glm::dvec3(centerw) / centerw.w;
     for(MeshVert& v : mesh.verts)
+    {
         v.p -= center;
+        v.p *= 2.0;
+    }
 
     mesh.setBoundary(_tetBoundary);
 }
