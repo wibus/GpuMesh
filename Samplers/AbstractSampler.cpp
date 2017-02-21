@@ -122,37 +122,6 @@ MeshMetric AbstractSampler::vertMetric(const Mesh& mesh, unsigned int vId) const
     return vertMetric(mesh.verts[vId].p);
 }
 
-inline MeshMetric sinWaveX(double scaling, double ratio, const glm::dvec3& position)
-{
-    /*
-    const glm::dmat3 ROTATION(
-        0.91068, -0.24402, 0.33333,
-        0.33333, 0.91068, -0.24402,
-        -0.24402, 0.33333, 0.91068);
-    const glm::dmat3 ROTATION_T(
-        0.91068, 0.33333, -0.24402,
-        -0.24402, 0.91068, 0.33333,
-        0.33333, -0.24402, 0.91068);
-    */
-
-    glm::dvec3 vp = position * (3.1416*2.5);
-
-    double elemSize = 1.0 / scaling;
-    double elemSizeInv2 = 1.0 / (elemSize * elemSize);
-
-    double sizeX = glm::pow(ratio, (glm::cos(vp.x) - 1.0) / 2.0) / scaling;
-    double targetElemSizeXInv2 = 1.0 / (sizeX * sizeX);
-
-    double rx = targetElemSizeXInv2;
-    double ry = elemSizeInv2;
-    double rz = elemSizeInv2;
-
-    return MeshMetric(
-            glm::dvec3(rx, 0,  0),
-            glm::dvec3(0,  ry, 0),
-            glm::dvec3(0,  0,  rz));
-}
-
 inline MeshMetric atanXY(double scaling, double ratio, const glm::dvec3& position)
 {
     double s2 = scaling * scaling;
@@ -199,7 +168,17 @@ inline MeshMetric atanXY(double scaling, double ratio, const glm::dvec3& positio
 
 MeshMetric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
-    return sinWaveX(scaling(), aspectRatio(), position);
+    double x = position.x * (2.5 * glm::pi<double>());
+    double sizeX = scaling() * glm::pow(aspectRatio(), (1.0 - glm::cos(x)) / 2.0);
+
+    double Mx = sizeX * sizeX;
+    double My = scalingSqr();
+    double Mz = My;
+
+    return MeshMetric(
+            glm::dvec3(Mx, 0,  0),
+            glm::dvec3(0,  My, 0),
+            glm::dvec3(0,  0,  Mz));
 }
 
 void AbstractSampler::boundingBox(

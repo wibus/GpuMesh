@@ -1,4 +1,5 @@
 uniform float MetricScaling = 1.0;
+uniform float MetricScalingSqr = 1.0;
 uniform float MetricAspectRatio = 1.0;
 
 mat3 interpolateMetrics(in mat3 m1, in mat3 m2, float a)
@@ -11,22 +12,18 @@ mat3 interpolateMetrics(in mat3 m1, in mat3 m2, float a)
 
 mat3 vertMetric(in vec3 position)
 {
-    vec3 vp = position * float(3.1416 * 2.5);
+    float x = position.x * (2.5 * M_PI);
 
-    float elemSize = 1.0 / MetricScaling;
-    float elemSizeInv2 = 1.0 / (elemSize * elemSize);
+    float sizeX = MetricScaling * pow(MetricAspectRatio, (1.0 - cos(x)) / 2.0);
 
-    float sizeX = pow(MetricAspectRatio, (cos(vp.x) - 1.0) / 2.0) / MetricScaling;
-    float targetElemSizeXInv2 = 1.0 / (sizeX * sizeX);
-
-    float rx = targetElemSizeXInv2;
-    float ry = elemSizeInv2;
-    float rz = elemSizeInv2;
+    float Mx = sizeX * sizeX;
+    float My = MetricScalingSqr;
+    float Mz = My;
 
     return mat3(
-        vec3(rx, 0,  0),
-        vec3(0,  ry, 0),
-        vec3(0,  0,  rz));
+            vec3(Mx, 0,  0),
+            vec3(0,  My, 0),
+            vec3(0,  0,  Mz));
 }
 
 void boundingBox(out vec3 minBounds, out vec3 maxBounds)
