@@ -65,7 +65,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     Character("GpuMeshChracter"),
     _camAzimuth(-glm::pi<float>() / 2.0),
     _camAltitude(-glm::pi<float>() / 2.0),
-    _camDistance(3.8),
+    _camDistance(4.0),
     _cameraMan(ECameraMan::Sphere),
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
     _lightAltitude(-glm::pi<float>() * 2.0 / 4.0),
@@ -169,22 +169,24 @@ void GpuMeshCharacter::enterStage()
     _fps->setHorizontalAnchor(EHorizontalAnchor::LEFT);
     _fps->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _fps->setHeight(16);
+    _fps->setIsVisible(false);
 
     _ups = play().propTeam2D()->createTextHud();
     _ups->setHandlePosition(glm::dvec2(5, 25));
     _ups->setHorizontalAnchor(EHorizontalAnchor::LEFT);
     _ups->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _ups->setHeight(16);
+    _ups->setIsVisible(false);
 
     _qualityTitle = play().propTeam2D()->createTextHud();
-    _qualityTitle->setHandlePosition(glm::dvec2(-160, 300));
+    _qualityTitle->setHandlePosition(glm::dvec2(-120, 294));
     _qualityTitle->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
     _qualityTitle->setVerticalAnchor(EVerticalAnchor::BOTTOM);
-    _qualityTitle->setHeight(20);
-    _qualityTitle->setText("Element Quality");
+    _qualityTitle->setHeight(26);
+    _qualityTitle->setText("Quality");
 
     _qualityMax = play().propTeam2D()->createTextHud();
-    _qualityMax->setHandlePosition(glm::dvec2(-130, 269));
+    _qualityMax->setHandlePosition(glm::dvec2(-130, 268));
     _qualityMax->setHorizontalAnchor(EHorizontalAnchor::RIGHT);
     _qualityMax->setVerticalAnchor(EVerticalAnchor::BOTTOM);
     _qualityMax->setHeight(16);

@@ -2,10 +2,14 @@
 
 #include <QFileDialog>
 
+#include <CellarWorkbench/Image/Image.h>
+#include <CellarWorkbench/GL/GlToolkit.h>
+
 #include "GpuMeshCharacter.h"
 #include "ui_MainWindow.h"
 
 using namespace std;
+using namespace cellar;
 
 
 MeshTab::MeshTab(Ui::MainWindow* ui,
@@ -34,6 +38,10 @@ MeshTab::MeshTab(Ui::MainWindow* ui,
     connect(_ui->loadMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &MeshTab::loadMesh);
+
+    connect(_ui->screenshotButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &MeshTab::screenshot);
 }
 
 MeshTab::~MeshTab()
@@ -79,6 +87,21 @@ void MeshTab::loadMesh()
     if(!fileName.isNull())
     {
         _character->loadMesh(fileName.toStdString());
+    }
+}
+
+void MeshTab::screenshot()
+{
+    Image screenshotImage;
+    GlToolkit::takeFramebufferShot(screenshotImage);
+
+    QString fileName = QFileDialog::getSaveFileName(
+            nullptr, "Screenshot", "resources/screenshots");
+    if(!fileName.isNull())
+    {
+        if(QFileInfo(fileName).suffix().isEmpty())
+            fileName = fileName.split(".").at(0) + ".png";
+        screenshotImage.save(fileName.toStdString());
     }
 }
 

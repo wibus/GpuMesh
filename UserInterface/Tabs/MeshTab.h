@@ -27,6 +27,7 @@ protected slots:
     virtual void clearMesh();
     virtual void saveMesh();
     virtual void loadMesh();
+    virtual void screenshot();
 
 protected:
     virtual void deployTechniques();

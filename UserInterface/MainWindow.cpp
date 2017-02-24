@@ -29,7 +29,7 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
     _optimizeTab.reset(new OptimizeTab(_ui, character));
     _renderTab.reset(new RenderTab(_ui, character));
 
-    resize(1920, 1080);
+    resize(1600, 1080);
     move(0, 0);
 }
 

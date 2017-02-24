@@ -85,7 +85,7 @@
               <number>1000</number>
              </property>
              <property name="value">
-              <number>1000</number>
+              <number>10000</number>
              </property>
             </widget>
            </item>
@@ -130,6 +130,13 @@
          <widget class="QPushButton" name="loadMeshButton">
           <property name="text">
            <string>Load Mesh</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="screenshotButton">
+          <property name="text">
+           <string>Screenshot</string>
           </property>
          </widget>
         </item>
@@ -825,7 +832,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>19</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
