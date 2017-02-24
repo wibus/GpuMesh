@@ -670,6 +670,10 @@ void AbstractEvaluator::benchmark(
                 mesh.updateGlslTopology();
                 mesh.updateGlslVertices();
                 sampler.updateGlslData(mesh);
+
+                // Launch once to warm up GPU
+                // Number are much more stable this way
+                implementationFunc(mesh, sampler, measurer, histogram);
             }
             else if(impl == CUDA_IMPL_NAME)
             {
@@ -677,6 +681,10 @@ void AbstractEvaluator::benchmark(
                 mesh.updateCudaTopology();
                 mesh.updateCudaVertices();
                 sampler.updateCudaData(mesh);
+
+                // Launch once to warm up GPU
+                // Number are much more stable this way
+                implementationFunc(mesh, sampler, measurer, histogram);
             }
 
             high_resolution_clock::duration totalTime(0);

@@ -92,6 +92,10 @@ OptimizeTab::OptimizeTab(Ui::MainWindow* ui,
     connect(_ui->smoothBenchmarkImplButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &OptimizeTab::benchmarkImplementations);
+
+    connect(_ui->runMastersTestsButton,
+            static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
+            this, &OptimizeTab::runMastersTests);
 }
 
 OptimizeTab::~OptimizeTab()
@@ -171,9 +175,9 @@ void OptimizeTab::benchmarkImplementations()
     comparator.show();
     if(comparator.exec() == QDialog::Accepted)
     {
-        const string REPORT_PATH = "Reports/Report.pdf";
-        const QString preShootPath = "Reports/PreSmoothingShot.png";
-        const QString postShootPath = "Reports/PostSmoothingShot.png";
+        const string REPORT_PATH = "resources/reports/Report.pdf";
+        const QString preShootPath = "resources/reports/PreSmoothingShot.png";
+        const QString postShootPath = "resources/reports/PostSmoothingShot.png";
 
         Image preSmoothingShot;
         GlToolkit::takeFramebufferShot(preSmoothingShot);
@@ -202,6 +206,12 @@ void OptimizeTab::benchmarkImplementations()
         report.display(*_reportWidget);
         _reportWidget->show();
     }
+}
+
+void OptimizeTab::runMastersTests()
+{
+    getLog().postMessage(new Message('E', false,
+        "Master's tests not yet defined", "OptimizeTab"));
 }
 
 void OptimizeTab::deployTechniques()

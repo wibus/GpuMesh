@@ -575,6 +575,13 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QPushButton" name="runMastersTestsButton">
+             <property name="text">
+              <string>Run Master's tests</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>

@@ -46,6 +46,7 @@ protected slots:
 
 
     virtual void benchmarkImplementations();
+    virtual void runMastersTests();
 
 protected:
     virtual void deployTechniques();
