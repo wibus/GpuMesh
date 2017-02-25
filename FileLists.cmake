@@ -127,7 +127,8 @@ SET(GpuMesh_HEADERS
     ${GpuMesh_SMOOTHERS_HEADERS}
     ${GpuMesh_TOPOLOGISTS_HEADERS}
     ${GpuMesh_USERINTERFACE_HEADERS}
-    ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h)
+    ${GpuMesh_SRC_DIR}/GpuMeshCharacter.h
+    ${GpuMesh_SRC_DIR}/MastersTestSuite.h)
 
 
 ## Sources ##
@@ -258,6 +259,7 @@ SET(GpuMesh_SOURCES
     ${GpuMesh_TOPOLOGISTS_SOURCES}
     ${GpuMesh_USERINTERFACE_SOURCES}
     ${GpuMesh_SRC_DIR}/GpuMeshCharacter.cpp
+    ${GpuMesh_SRC_DIR}/MastersTestSuite.cpp
     ${GpuMesh_SRC_DIR}/main.cpp)
 
 

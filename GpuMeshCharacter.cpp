@@ -50,6 +50,7 @@
 #include "Smoothers/VertexWise/SpawnSearchSmoother.h"
 #include "Smoothers/ElementWise/GetmeSmoother.h"
 #include "Topologists/AbstractTopologist.h"
+#include "MastersTestSuite.h"
 
 using namespace std;
 using namespace cellar;
@@ -83,6 +84,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _metricAspectRatio(1.0),
     _mesh(new GpuMesh()),
     _meshCrew(new MeshCrew()),
+    _mastersTestSuite(new MastersTestSuite(*this)),
     _availableMeshers("Available Meshers"),
     _availableSamplers("Available Samplers"),
     _availableEvaluators("Available Evaluators"),
@@ -91,8 +93,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableCameraMen("Available Camera Men"),
     _availableCutTypes("Available Cut Types"),
     _availableSerializers("Available Mesh Serializers"),
-    _availableDeserializers("Available Mesh Deserializers"),
-    _availableMastersTests("Master's tests")
+    _availableDeserializers("Available Mesh Deserializers")
 {
     _availableMeshers.setDefault("Delaunay");
     _availableMeshers.setContent({
@@ -160,16 +161,6 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableDeserializers.setContent({
         {string("cgns"), shared_ptr<AbstractDeserializer>(new CgnsDeserializer())},
         {string("json"), shared_ptr<AbstractDeserializer>(new JsonDeserializer())},
-    });
-
-    auto testMetricCostSphere = [this]() -> string {return string();};
-    auto testMetricCostCube = [this]() -> string {return string();};
-
-    int tId = 0;
-    _availableMastersTests.setDefault("N/A");
-    _availableMastersTests.setContent({
-        {to_string(++tId) + ". Metric Cost (Sphere)",   testMetricCostSphere},
-        {to_string(++tId) + ". Metric Cost (Cube)",     testMetricCostCube},
     });
 }
 
@@ -436,7 +427,7 @@ OptionMapDetails GpuMeshCharacter::availableShadings() const
 
 OptionMapDetails GpuMeshCharacter::availableMastersTests() const
 {
-    return _availableMastersTests.details();
+    return _mastersTestSuite->availableTests();
 }
 
 OptionMapDetails GpuMeshCharacter::availableCameraMen() const
@@ -561,6 +552,7 @@ void GpuMeshCharacter::evaluateMesh(
 }
 
 void GpuMeshCharacter::benchmarkEvaluator(
+        map<string, double>& averageTimes,
         const std::string& evaluatorName,
         const map<string, int>& cycleCounts)
 {
@@ -574,18 +566,15 @@ void GpuMeshCharacter::benchmarkEvaluator(
             *_mesh,
             _meshCrew->sampler(),
             _meshCrew->measurer(),
-            cycleCounts);
+            cycleCounts,
+            averageTimes);
     }
 }
 
-void GpuMeshCharacter::runMastersTests(
-        std::vector<string>& testResults,
-        const std::vector<string>& tests)
+string GpuMeshCharacter::runMastersTests(
+        const vector<string>& tests)
 {
-    for(const string& test : tests)
-    {
-        testResults.push_back("TODO");
-    }
+    return _mastersTestSuite->runTests(tests);
 }
 
 void GpuMeshCharacter::setMetricScaling(double scaling)

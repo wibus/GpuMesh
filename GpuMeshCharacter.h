@@ -1,9 +1,7 @@
 #ifndef GpuMesh_CHARACTER
 #define GpuMesh_CHARACTER
 
-#include <functional>
 #include <vector>
-#include <set>
 
 #include <CellarWorkbench/Camera/CameraManFree.h>
 
@@ -25,6 +23,7 @@ class AbstractSmoother;
 class AbstractRenderer;
 class AbstractSerializer;
 class AbstractDeserializer;
+class MastersTestSuite;
 enum class ECutType;
 
 enum class ECameraMan
@@ -81,11 +80,11 @@ public:
             const std::string& implementationName);
 
     virtual void benchmarkEvaluator(
+            std::map<std::string, double>& averageTimes,
             const std::string& evaluatorName,
             const std::map<std::string, int>& cycleCounts);
 
-    virtual void runMastersTests(
-            std::vector<std::string>& testResults,
+    virtual std::string runMastersTests(
             const std::vector<std::string>& tests);
 
     virtual void setMetricScaling(double scaling);
@@ -131,6 +130,7 @@ protected:
     virtual void moveLight(float azimuth, float altitude, float distance);
     virtual void moveCutPlane(double azimuth, double altitude, double distance);
 
+
 protected:
     float _camAzimuth;
     float _camAltitude;
@@ -163,6 +163,7 @@ private:
     std::unique_ptr<MeshCrew> _meshCrew;
     std::shared_ptr<AbstractRenderer> _renderer;
     std::shared_ptr<cellar::CameraManFree> _cameraManFree;
+    std::unique_ptr<MastersTestSuite> _mastersTestSuite;
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;
@@ -182,7 +183,7 @@ private:
     OptionMap<std::shared_ptr<AbstractRenderer>>        _availableRenderers;
     OptionMap<std::shared_ptr<AbstractSerializer>>      _availableSerializers;
     OptionMap<std::shared_ptr<AbstractDeserializer>>    _availableDeserializers;
-    OptionMap<std::function<std::string()>> _availableMastersTests;
+
     OptionMap<ECameraMan> _availableCameraMen;
     OptionMap<ECutType> _availableCutTypes;
 };

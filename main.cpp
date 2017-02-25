@@ -11,6 +11,7 @@ using namespace cellar;
 using namespace scaena;
 
 #include "GpuMeshCharacter.h"
+#include "MastersTestSuite.h"
 #include "Meshers/AbstractMesher.h"
 #include "Evaluators/AbstractEvaluator.h"
 #include "Renderers/AbstractRenderer.h"

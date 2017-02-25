@@ -623,7 +623,8 @@ void AbstractEvaluator::benchmark(
         const Mesh& mesh,
         const AbstractSampler& sampler,
         const AbstractMeasurer& measurer,
-        const map<string, int>& cycleCounts)
+        const map<string, int>& cycleCounts,
+        map<string, double>& averageTimes)
 {
     int markCount = 100 / cycleCounts.size();
     using std::chrono::high_resolution_clock;
@@ -645,7 +646,11 @@ void AbstractEvaluator::benchmark(
             cycleCount = cycleIt->second;
 
             if(cycleCount == 0)
+            {
+                averageTimes[impl] = INFINITY;
+
                 continue;
+            }
         }
         else
         {
@@ -734,6 +739,8 @@ void AbstractEvaluator::benchmark(
             stats.totalTime = totalTime.count();
             stats.averageTime = totalTime.count() / cycleCount;
             statsVec.push_back(stats);
+
+            averageTimes[impl] = stats.averageTime / 1.0e6;
         }
     }
 

@@ -126,7 +126,8 @@ public:
             const Mesh& mesh,
             const AbstractSampler& sampler,
             const AbstractMeasurer& measurer,
-            const std::map<std::string, int>& cycleCounts);
+            const std::map<std::string, int>& cycleCounts,
+            std::map<std::string, double> &averageTimes);
 
 
 protected:

@@ -78,7 +78,10 @@ void EvaluateTab::evaluateMesh()
 
 void EvaluateTab::benchmarkImplementations()
 {
+    map<string, double> times;
+
     _character->benchmarkEvaluator(
+        times,
         _ui->shapeMeasureTypeMenu->currentText().toStdString(),
         _cycleCounts);
 }

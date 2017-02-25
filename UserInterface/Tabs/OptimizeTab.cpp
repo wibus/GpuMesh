@@ -217,27 +217,15 @@ void OptimizeTab::runMastersTests()
     testDialog.show();
     if(testDialog.exec() == QDialog::Accepted)
     {
-        const string TEST_PATH = "resources/reports/";
-        vector<string> testNames = testDialog.tests();
-
-        vector<string> testResults;
-        _character->runMastersTests(
-            testResults, testNames);
+        string doc = _character->runMastersTests(
+            testDialog.tests());
 
         delete _mastersTestWidget;
         _mastersTestWidget = new QTextEdit();
         _mastersTestWidget->resize(1000, 800);
 
-        for(size_t i=0; i < testNames.size(); ++i)
-        {
-            QTextCursor cursor = _mastersTestWidget->textCursor();
-
-            cursor.insertText(testNames[i].c_str());
-            cursor.insertText("\n\n");
-
-            cursor.insertText(testResults[i].c_str());
-            cursor.insertText("\n\n\n");
-        }
+        QTextCursor cursor = _mastersTestWidget->textCursor();
+        cursor.insertText(doc.c_str());
 
         _mastersTestWidget->show();
     }
