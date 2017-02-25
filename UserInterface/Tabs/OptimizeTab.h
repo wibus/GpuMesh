@@ -60,6 +60,7 @@ private:
     std::string _lastImpl;
 
     QTextEdit* _reportWidget;
+    QTextEdit* _mastersTestWidget;
 };
 
 #endif // GPUMESH_OPTIMIZETAB

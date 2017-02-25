@@ -101,6 +101,7 @@ SET(GpuMesh_TOPOLOGISTS_HEADERS
 
 SET(GpuMesh_DIALOGS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.h
+    ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/MastersTestsDialog.h
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/ConfigComparator.h)
 
 SET(GpuMesh_UITABS_HEADERS
@@ -235,6 +236,7 @@ SET(GpuMesh_UITABS_SOURCES
 
 SET(GpuMesh_DIALOGS_HEADERS
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.cpp
+    ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/MastersTestsDialog.cpp
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/ConfigComparator.cpp)
 
 SET(GpuMesh_USERINTERFACE_SOURCES
@@ -264,6 +266,7 @@ SET(GpuMesh_SOURCES
 SET(GpuMesh_UI_FILES
     ${GpuMesh_SRC_DIR}/UserInterface/MainWindow.ui
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/StlSerializerDialog.ui
+    ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/MastersTestsDialog.ui
     ${GpuMesh_SRC_DIR}/UserInterface/Dialogs/ConfigComparator.ui)
 QT5_WRAP_UI(GpuMesh_UI_SRCS ${GpuMesh_UI_FILES})
 

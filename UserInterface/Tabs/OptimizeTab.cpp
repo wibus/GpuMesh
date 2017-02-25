@@ -11,6 +11,7 @@
 #include <CellarWorkbench/Image/Image.h>
 #include <CellarWorkbench/GL/GlToolkit.h>
 
+#include "../Dialogs/MastersTestsDialog.h"
 #include "../Dialogs/ConfigComparator.h"
 #include "../SmoothingReport.h"
 #include "GpuMeshCharacter.h"
@@ -24,7 +25,8 @@ OptimizeTab::OptimizeTab(Ui::MainWindow* ui,
         const std::shared_ptr<GpuMeshCharacter>& character) :
     _ui(ui),
     _character(character),
-    _reportWidget(nullptr)
+    _reportWidget(nullptr),
+    _mastersTestWidget(nullptr)
 {
     // Scehduling
     autoPilotToggled(_ui->scheduleAutoPilotRadio->isChecked());
@@ -210,8 +212,35 @@ void OptimizeTab::benchmarkImplementations()
 
 void OptimizeTab::runMastersTests()
 {
-    getLog().postMessage(new Message('E', false,
-        "Master's tests not yet defined", "OptimizeTab"));
+    MastersTestsDialog testDialog(_character);
+
+    testDialog.show();
+    if(testDialog.exec() == QDialog::Accepted)
+    {
+        const string TEST_PATH = "resources/reports/";
+        vector<string> testNames = testDialog.tests();
+
+        vector<string> testResults;
+        _character->runMastersTests(
+            testResults, testNames);
+
+        delete _mastersTestWidget;
+        _mastersTestWidget = new QTextEdit();
+        _mastersTestWidget->resize(1000, 800);
+
+        for(size_t i=0; i < testNames.size(); ++i)
+        {
+            QTextCursor cursor = _mastersTestWidget->textCursor();
+
+            cursor.insertText(testNames[i].c_str());
+            cursor.insertText("\n\n");
+
+            cursor.insertText(testResults[i].c_str());
+            cursor.insertText("\n\n\n");
+        }
+
+        _mastersTestWidget->show();
+    }
 }
 
 void OptimizeTab::deployTechniques()

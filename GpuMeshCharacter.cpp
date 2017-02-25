@@ -91,7 +91,8 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableCameraMen("Available Camera Men"),
     _availableCutTypes("Available Cut Types"),
     _availableSerializers("Available Mesh Serializers"),
-    _availableDeserializers("Available Mesh Deserializers")
+    _availableDeserializers("Available Mesh Deserializers"),
+    _availableMastersTests("Master's tests")
 {
     _availableMeshers.setDefault("Delaunay");
     _availableMeshers.setContent({
@@ -159,6 +160,16 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableDeserializers.setContent({
         {string("cgns"), shared_ptr<AbstractDeserializer>(new CgnsDeserializer())},
         {string("json"), shared_ptr<AbstractDeserializer>(new JsonDeserializer())},
+    });
+
+    auto testMetricCostSphere = [this]() -> string {return string();};
+    auto testMetricCostCube = [this]() -> string {return string();};
+
+    int tId = 0;
+    _availableMastersTests.setDefault("N/A");
+    _availableMastersTests.setContent({
+        {to_string(++tId) + ". Metric Cost (Sphere)",   testMetricCostSphere},
+        {to_string(++tId) + ". Metric Cost (Cube)",     testMetricCostCube},
     });
 }
 
@@ -423,6 +434,11 @@ OptionMapDetails GpuMeshCharacter::availableShadings() const
     return _renderer->availableShadings();
 }
 
+OptionMapDetails GpuMeshCharacter::availableMastersTests() const
+{
+    return _availableMastersTests.details();
+}
+
 OptionMapDetails GpuMeshCharacter::availableCameraMen() const
 {
     return _availableCameraMen.details();
@@ -559,6 +575,16 @@ void GpuMeshCharacter::benchmarkEvaluator(
             _meshCrew->sampler(),
             _meshCrew->measurer(),
             cycleCounts);
+    }
+}
+
+void GpuMeshCharacter::runMastersTests(
+        std::vector<string>& testResults,
+        const std::vector<string>& tests)
+{
+    for(const string& test : tests)
+    {
+        testResults.push_back("TODO");
     }
 }
 

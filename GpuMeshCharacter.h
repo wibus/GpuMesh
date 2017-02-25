@@ -1,7 +1,9 @@
 #ifndef GpuMesh_CHARACTER
 #define GpuMesh_CHARACTER
 
+#include <functional>
 #include <vector>
+#include <set>
 
 #include <CellarWorkbench/Camera/CameraManFree.h>
 
@@ -55,6 +57,7 @@ public:
     virtual OptionMapDetails availableSmootherImplementations(const std::string& smootherName) const;
     virtual OptionMapDetails availableRenderers() const;
     virtual OptionMapDetails availableShadings() const;
+    virtual OptionMapDetails availableMastersTests() const;
     virtual OptionMapDetails availableCameraMen() const;
     virtual OptionMapDetails availableCutTypes() const;
 
@@ -80,6 +83,10 @@ public:
     virtual void benchmarkEvaluator(
             const std::string& evaluatorName,
             const std::map<std::string, int>& cycleCounts);
+
+    virtual void runMastersTests(
+            std::vector<std::string>& testResults,
+            const std::vector<std::string>& tests);
 
     virtual void setMetricScaling(double scaling);
 
@@ -175,6 +182,7 @@ private:
     OptionMap<std::shared_ptr<AbstractRenderer>>        _availableRenderers;
     OptionMap<std::shared_ptr<AbstractSerializer>>      _availableSerializers;
     OptionMap<std::shared_ptr<AbstractDeserializer>>    _availableDeserializers;
+    OptionMap<std::function<std::string()>> _availableMastersTests;
     OptionMap<ECameraMan> _availableCameraMen;
     OptionMap<ECutType> _availableCutTypes;
 };
