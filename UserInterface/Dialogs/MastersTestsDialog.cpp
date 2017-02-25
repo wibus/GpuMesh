@@ -25,7 +25,7 @@ MastersTestsDialog::MastersTestsDialog(
         QCheckBox* check = new QCheckBox(t.c_str());
         _testChecks.push_back(check);
         layout->addWidget(check);
-        check->setChecked(true);
+        check->setChecked(false);
     }
 
     layout->addStretch();

@@ -4,7 +4,7 @@
 
 
 QualityHistogram::QualityHistogram() :
-    _buckets(40, 0),
+    _buckets(20, 0),
     _sampleCount(0),
     _minimumQuality(1.0),
     _invQualitySum(0.0)

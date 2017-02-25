@@ -29,13 +29,16 @@ MastersTestSuite::MastersTestSuite(
 
     _availableMastersTests.setContent({
         {to_string(++tId) + ". Metric Cost (Sphere)",
-         MastersTestFunc(bind(&MastersTestSuite::masterMetricCostSphere,    this))},
+         MastersTestFunc(bind(&MastersTestSuite::metricCostSphere,    this))},
 
         {to_string(++tId) + ". Metric Cost (HexGrid)",
-         MastersTestFunc(bind(&MastersTestSuite::masterMetricCostHexGrid,   this))},
+         MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,   this))},
 
         {to_string(++tId) + ". Metric Precision",
-         MastersTestFunc(bind(&MastersTestSuite::masterMetricPrecision,     this))},
+         MastersTestFunc(bind(&MastersTestSuite::metricPrecision,     this))},
+
+         {to_string(++tId) + ". Node Order",
+          MastersTestFunc(bind(&MastersTestSuite::nodeOrder,          this))},
     });
 
     _translateSampling = {
@@ -114,7 +117,7 @@ string MastersTestSuite::runTests(const vector<string>& tests)
     return doc;
 }
 
-string MastersTestSuite::masterMetricCost(
+string MastersTestSuite::metricCost(
         const string& mesher,
         const string& model)
 {
@@ -193,21 +196,21 @@ string MastersTestSuite::masterMetricCost(
     return table.toStdString();
 }
 
-string MastersTestSuite::masterMetricCostSphere()
+string MastersTestSuite::metricCostSphere()
 {
-    return masterMetricCost("Delaunay", "Sphere");
+    return metricCost("Delaunay", "Sphere");
 }
 
-string MastersTestSuite::masterMetricCostHexGrid()
+string MastersTestSuite::metricCostHexGrid()
 {
-    return masterMetricCost("Debug", "HexGrid");
+    return metricCost("Debug", "HexGrid");
 }
 
-string MastersTestSuite::masterMetricPrecision()
+string MastersTestSuite::metricPrecision()
 {
     size_t nodeCount = 1e4;
     size_t passCount = 10;
-    double metricK = 10.0;
+    double metricK = 2.0;
     string implement = "Thread";
     string smoother = "Gradient Descent";
 
@@ -232,11 +235,14 @@ string MastersTestSuite::masterMetricPrecision()
     QString meanInit = "\t[Initial]";
     vector<QString> minLines;
     vector<QString> meanLines;
+    QString histogram = "Initial";
     for(const string& s : sampling)
     {
-        minLines.push_back(_translateSampling[s]);
-        meanLines.push_back(_translateSampling[s]);
+        minLines.push_back("\t" + _translateSampling[s]);
+        meanLines.push_back("\t" + _translateSampling[s]);
+        histogram += "\t" + QString(s.c_str()) + "";
     }
+    histogram += "\n";
 
     _character.generateMesh("Delaunay", "Sphere", nodeCount);
 
@@ -269,9 +275,11 @@ string MastersTestSuite::masterMetricPrecision()
         _character.benchmarkSmoothers(
             plot, schedule, configs);
 
+        const QualityHistogram& initHist = plot.initialHistogram();
+
         header += QString("\t& A=%1").arg(ratios[i]);
-        minInit += QString("\t& %1").arg(plot.initialHistogram().minimumQuality());
-        meanInit += QString("\t& %1").arg(plot.initialHistogram().harmonicMean());
+        minInit += QString("\t& %1").arg(initHist.minimumQuality());
+        meanInit += QString("\t& %1").arg(initHist.harmonicMean());
         for(int s=0; s < sampling.size(); ++s)
         {
             const QualityHistogram& hist =
@@ -279,27 +287,56 @@ string MastersTestSuite::masterMetricPrecision()
             minLines[s] += QString("\t& %1").arg(hist.minimumQuality());
             meanLines[s] += QString("\t& %1").arg(hist.harmonicMean());
         }
+
+        if(i == ratios.size()-1)
+        {
+            for(size_t b=0; b < initHist.bucketCount(); ++b)
+            {
+                histogram += QString::number(initHist.buckets()[b]);
+
+                for(int s=0; s < sampling.size(); ++s)
+                {
+                    const QualityHistogram& hist =
+                        plot.implementations()[s].finalHistogram;
+                    histogram += "\t" + QString::number(hist.buckets()[b]);
+                }
+                histogram += "\n";
+            }
+        }
     }
 
     QString col = QString("c").repeated(ratios.size());
     header = QString("\\begin{tabular}{|l|%1|}\n").arg(col) +
-             QString("\t\\hline\n") +
-             header + "\\\\\n" +
-             QString("\t\\hline\n");
+                QString("\t\\hline\n") +
+                header + "\\\\\n" +
+                QString("\t\\hline\n");
 
     QString minTable = header;
     minTable += minInit + "\\\\\n";
     for(const QString& l : minLines)
-        minTable +=  "\t" + l + "\\\\\n";
+        minTable +=  l + "\\\\\n";
     minTable += "\t\\hline\n";
     minTable += "\\end{tabular}\n";
 
     QString meanTable = header;
     meanTable += meanInit + "\\\\\n";
     for(const QString& l : meanLines)
-        meanTable += "\t" + l + "\\\\\n";
+        meanTable += l + "\\\\\n";
     meanTable += "\t\\hline\n";
     meanTable += "\\end{tabular}\n";
 
-    return (minTable + "\n\n" + meanTable).toStdString();
+    ofstream histFile;
+    histFile.open(RESULTS_PATH + "Metric Precision.csv");
+    if(histFile.is_open())
+    {
+        histFile << histogram.toStdString();
+        histFile.close();
+    }
+
+    return (minTable + "\n\n" + meanTable + "\n\n" + histogram).toStdString();
+}
+
+string MastersTestSuite::nodeOrder()
+{
+    return "TODO";
 }

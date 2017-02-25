@@ -28,11 +28,13 @@ public:
 
 
 protected:
-    std::string masterMetricCost(const std::string& mesher, const std::string& model);
-    std::string masterMetricCostSphere();
-    std::string masterMetricCostHexGrid();
+    std::string metricCost(const std::string& mesher, const std::string& model);
+    std::string metricCostSphere();
+    std::string metricCostHexGrid();
 
-    std::string masterMetricPrecision();
+    std::string metricPrecision();
+
+    std::string nodeOrder();
 
 
 private:
