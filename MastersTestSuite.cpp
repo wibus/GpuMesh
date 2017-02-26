@@ -338,5 +338,65 @@ string MastersTestSuite::metricPrecision()
 
 string MastersTestSuite::nodeOrder()
 {
-    return "TODO";
+    const string mesher = "Delaunay";
+    const string model = "Sphere";
+    const int nodeCount = 1E4;
+
+    const string samp = "Analytic";
+    const double metricK = 10.0;
+    const double metricA = 4.0;
+
+    const string smoother = "Gradient Descent";
+    const vector<string> impl = {"Serial", "Thread"};
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.globalPassCount = 10;
+
+
+    _character.generateMesh(mesher, model, nodeCount);
+
+    _character.useSampler(samp);
+    _character.setMetricScaling(metricK);
+    _character.setMetricAspectRatio(metricA);
+
+    _character.saveMesh(MESHES_PATH + "Node Order.json");
+
+
+    QCoreApplication::processEvents();
+
+
+    OptimizationPlot plot;
+    vector<Configuration> configs;
+    for(const auto& i : impl)
+        configs.push_back(Configuration{
+            samp, smoother, i});
+
+    _character.benchmarkSmoothers(
+        plot, schedule, configs);
+
+
+    QString table;
+    table += "\\begin{tabular}{|l|cc|cc|}\n";
+    table += "\t\\hline\n";
+    table += "\tItérations \t& \\multicolumn{2}{c|}{Minimums} \t& \\multicolumn{2}{c|}{Moyennes} \\\\\n";
+    table += "\t\t\t\t& Séquentiel \t& Parallèle \t\t& Séquentiel \t& Parallèle \\\\\n";
+    table += "\t\\hline\n";
+    for(int p=0; p <= schedule.globalPassCount; ++p)
+    {
+        const QualityHistogram& histSerial = plot.implementations()[0].passes[p].histogram;
+        const QualityHistogram& histParallel = plot.implementations()[1].passes[p].histogram;
+
+        table += QString("\t%1 \t\t\t& %2 \t& %3 \t\t& %4 \t& %5\\\\\n").arg(
+                    QString::number(p),
+                    QString::number(histSerial.minimumQuality()),
+                    QString::number(histParallel.minimumQuality()),
+                    QString::number(histSerial.harmonicMean()),
+                    QString::number(histParallel.harmonicMean()));
+    }
+    table += "\t\\hline\n";
+    table += "\\end{tabular}\n";
+
+    return table.toStdString();
 }
