@@ -291,14 +291,20 @@ void installCudaMultiElemGradDsntSmoother(
 void smoothCudaMultiElemGradDsntVertices(
         const NodeGroups::GpuDispatch& dispatch)
 {
-    setupCudaIndependentDispatch(dispatch);
-
     assert(ELEMENT_THREAD_COUNT >= POSITION_SLOT_COUNT);
 
-    dim3 blockDim(NODE_THREAD_COUNT, ELEMENT_THREAD_COUNT);
+    setupCudaIndependentDispatch(dispatch);
+
+    dim3 blockDim(dispatch.workgroupSize.x,
+                  dispatch.workgroupSize.y,
+                  dispatch.workgroupSize.z);
+    dim3 blockCount(dispatch.workgroupCount.x,
+                    dispatch.workgroupCount.y,
+                    dispatch.workgroupCount.z);
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothMultiElemGradDsntVerticesCudaMain<<<dispatch.workgroupCount, blockDim>>>();
-    cudaDeviceSynchronize();
+    smoothMultiElemGradDsntVerticesCudaMain<<<blockCount, blockDim>>>();
     cudaCheckErrors("CUDA error during vertices smoothing");
+
+    cudaDeviceSynchronize();
 }

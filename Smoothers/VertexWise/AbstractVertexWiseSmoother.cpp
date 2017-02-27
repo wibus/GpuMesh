@@ -24,8 +24,7 @@ using namespace cellar;
 // CUDA Drivers
 extern bool verboseCuda;
 void smoothCudaVertices(
-        const NodeGroups::GpuDispatch& dispatch,
-        size_t workgroupSize);
+        const NodeGroups::GpuDispatch& dispatch);
 void fetchCudaSubsurfaceVertices(
         std::vector<MeshVert>& verts,
         const NodeGroups::ParallelGroup& group);
@@ -36,10 +35,12 @@ void sendCudaBoundaryVertices(
 
 AbstractVertexWiseSmoother::AbstractVertexWiseSmoother(
         const std::vector<std::string>& smoothShaders,
-        const installCudaFct installCuda) :
-    AbstractSmoother(installCuda),
+        const installCudaFct &installCuda,
+        const launchCudaKernelFct& launchCudaKernel) :
     _initialized(false),
-    _smoothShaders(smoothShaders)
+    _smoothShaders(smoothShaders),
+    _installCudaSmoother(installCuda),
+    _launchCudaKernel(launchCudaKernel)
 {
 
 }
@@ -91,7 +92,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
 
     // TODO : Use a thread pool
     uint threadCount = thread::hardware_concurrency();    
-    mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
+    mesh.nodeGroups().setCpuWorkerCount(threadCount);
 
     _relocPassId = INITIAL_PASS_ID;
     while(evaluateMeshQualityThread(mesh, crew))
@@ -177,8 +178,8 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
 
     size_t groupCount = mesh.nodeGroups().count();
     uint threadCount = thread::hardware_concurrency();
-    mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
-    mesh.nodeGroups().setGpuWorkgroupSize(glslNodesPerBlock());
+    mesh.nodeGroups().setCpuWorkerCount(threadCount);
+    mesh.nodeGroups().setGpuDispatcher(glslDispatcher());
 
     bool isTopoEnabled =
         _schedule.topoOperationEnabled &&
@@ -255,12 +256,21 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER,
                              mesh.glBuffer(EMeshBuffer::VERT));
 
-                if(dispatch.workgroupCount > 0)
+                if(dispatch.workgroupCount.x *
+                   dispatch.workgroupCount.y *
+                   dispatch.workgroupCount.z > 0)
                 {
                     _vertSmoothProgram.setInt("GroupBase", dispatch.gpuBufferBase);
                     _vertSmoothProgram.setInt("GroupSize", dispatch.gpuBufferSize);
-                    glm::ivec3 layout = layoutWorkgroups(dispatch);
-                    glDispatchCompute(layout.x, layout.y, layout.z);
+
+                    glDispatchComputeGroupSizeARB(
+                        dispatch.workgroupCount.x,
+                        dispatch.workgroupCount.y,
+                        dispatch.workgroupCount.z,
+                        dispatch.workgroupSize.x,
+                        dispatch.workgroupSize.y,
+                        dispatch.workgroupSize.z);
+
                     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 
@@ -377,8 +387,8 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
 
     size_t groupCount = mesh.nodeGroups().count();
     uint threadCount = thread::hardware_concurrency();
-    mesh.nodeGroups().setCpuWorkgroupSize(threadCount);
-    mesh.nodeGroups().setGpuWorkgroupSize(cudaNodesPerBlock());
+    mesh.nodeGroups().setCpuWorkerCount(threadCount);
+    mesh.nodeGroups().setGpuDispatcher(cudaDispatcher());
 
     bool isTopoEnabled =
         _schedule.topoOperationEnabled &&
@@ -450,9 +460,11 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
 
                 const NodeGroups::GpuDispatch& dispatch = group.gpuDispatch;
 
-                if(dispatch.workgroupCount > 0)
+                if(dispatch.workgroupCount.x *
+                   dispatch.workgroupCount.y *
+                   dispatch.workgroupCount.z > 0)
                 {
-                    launchCudaKernel(dispatch);
+                    _launchCudaKernel(dispatch);
 
                     // Fetch subsurface vertex positions from GPU
                     fetchCudaSubsurfaceVertices(mesh.verts, group);
@@ -504,12 +516,6 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     mesh.fetchCudaVertices();
     mesh.clearCudaMemory();
     crew.clearCudaMemory(mesh);
-}
-
-void AbstractVertexWiseSmoother::launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch)
-{
-    smoothCudaVertices(dispatch, cudaNodesPerBlock());
 }
 
 void AbstractVertexWiseSmoother::initializeProgram(
@@ -587,18 +593,22 @@ std::string AbstractVertexWiseSmoother::glslLauncher() const
     return ":/glsl/compute/Smoothing/VertexWise/SmoothVertices.glsl";
 }
 
-glm::ivec3 AbstractVertexWiseSmoother::layoutWorkgroups(
-        const NodeGroups::GpuDispatch& dispatch) const
+NodeGroups::GpuDispatcher AbstractVertexWiseSmoother::glslDispatcher() const
 {
-    return glm::ivec3(dispatch.workgroupCount, 1, 1);
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(256, 1, 1);
+        d.workgroupCount = glm::uvec3(
+            glm::ceil(double(d.gpuBufferSize)/256), 1, 1);
+    };
 }
 
-size_t AbstractVertexWiseSmoother::glslNodesPerBlock() const
+NodeGroups::GpuDispatcher AbstractVertexWiseSmoother::cudaDispatcher() const
 {
-    return 256;
-}
-
-size_t AbstractVertexWiseSmoother::cudaNodesPerBlock() const
-{
-    return 256;
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(256, 1, 1);
+        d.workgroupCount = glm::uvec3(
+            glm::ceil(double(d.gpuBufferSize)/256), 1, 1);
+    };
 }

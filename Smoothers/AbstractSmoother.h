@@ -17,8 +17,7 @@ class Schedule;
 class AbstractSmoother
 {
 protected:
-    typedef void (*installCudaFct)(void);
-    AbstractSmoother(const installCudaFct installCuda);
+    AbstractSmoother();
 
 public:
     virtual ~AbstractSmoother();
@@ -66,8 +65,6 @@ protected:
 
     std::string smoothingUtilsShader() const;
 
-
-    installCudaFct _installCudaSmoother;
 
     Schedule _schedule;
 

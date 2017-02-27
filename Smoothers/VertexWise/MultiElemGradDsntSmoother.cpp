@@ -22,9 +22,7 @@ void smoothCudaMultiElemGradDsntVertices(
         const NodeGroups::GpuDispatch& dispatch);
 
 
-const int MultiElemGradDsntSmoother::NODE_THREAD_COUNT = 4;
 const int MultiElemGradDsntSmoother::ELEMENT_THREAD_COUNT = 8;
-const int MultiElemGradDsntSmoother::POSITION_SLOT_COUNT = 8;
 
 const int MultiElemGradDsntSmoother::ELEMENT_PER_THREAD_COUNT =
         96 / MultiElemGradDsntSmoother::ELEMENT_THREAD_COUNT;
@@ -32,7 +30,8 @@ const int MultiElemGradDsntSmoother::ELEMENT_PER_THREAD_COUNT =
 MultiElemGradDsntSmoother::MultiElemGradDsntSmoother() :
     GradientDescentSmoother(
         {":/glsl/compute/Smoothing/VertexWise/MultiElemGradDsnt.glsl"},
-        installCudaMultiElemGradDsntSmoother)
+        installCudaMultiElemGradDsntSmoother,
+        smoothCudaMultiElemGradDsntVertices)
 {
 
 }
@@ -95,23 +94,31 @@ bool MultiElemGradDsntSmoother::verifyMeshForGpuLimitations(
     return true;
 }
 
-void MultiElemGradDsntSmoother::launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch)
-{
-    smoothCudaMultiElemGradDsntVertices(dispatch);
-}
-
 std::string MultiElemGradDsntSmoother::glslLauncher() const
 {
     return "";
 }
 
-size_t MultiElemGradDsntSmoother::glslNodesPerBlock() const
+NodeGroups::GpuDispatcher MultiElemGradDsntSmoother::glslDispatcher() const
 {
-    return 32;
+    const uint NODE_THREAD_COUNT = 32;
+
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(ELEMENT_THREAD_COUNT, NODE_THREAD_COUNT, 1);
+        d.workgroupCount = glm::uvec3(
+            glm::ceil(double(d.gpuBufferSize)/NODE_THREAD_COUNT), 1, 1);
+    };
 }
 
-size_t MultiElemGradDsntSmoother::cudaNodesPerBlock() const
+NodeGroups::GpuDispatcher MultiElemGradDsntSmoother::cudaDispatcher() const
 {
-    return 4;
+    const uint NODE_THREAD_COUNT = 4;
+
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(NODE_THREAD_COUNT, ELEMENT_THREAD_COUNT, 1);
+        d.workgroupCount = glm::uvec3(
+            glm::ceil(double(d.gpuBufferSize)/NODE_THREAD_COUNT), 1, 1);
+    };
 }

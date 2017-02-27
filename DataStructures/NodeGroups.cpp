@@ -32,29 +32,33 @@ NodeGroups::Range::Range() :
 NodeGroups::GpuDispatch::GpuDispatch() :
     gpuBufferBase(0),
     gpuBufferSize(0),
+    workgroupSize(1),
     workgroupCount(0)
 {
 
 }
 
 NodeGroups::NodeGroups() :
-    _cpuWorkgroupSize(1),
-    _gpuWorkgroupSize(1)
+    _cpuWorkerCount(1)
 {
-
+    _gpuDispatcher = [](GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(1);
+        d.workgroupCount = glm::uvec3(0);
+    };
 }
 
 
-void NodeGroups::setCpuWorkgroupSize(size_t size)
+void NodeGroups::setCpuWorkerCount(size_t workerCount)
 {
-    _cpuWorkgroupSize = size;
+    _cpuWorkerCount = workerCount;
     dispatchCpuWorkgroups();
     dispatchGpuWorkgroups();
 }
 
-void NodeGroups::setGpuWorkgroupSize(size_t size)
+void NodeGroups::setGpuDispatcher(const GpuDispatcher& dispatcher)
 {
-    _gpuWorkgroupSize = size;
+    _gpuDispatcher = dispatcher;
     dispatchGpuWorkgroups();
 }
 
@@ -571,16 +575,16 @@ void NodeGroups::dispatchCpuWorkgroups()
     for(ParallelGroup& group : _parallelGroups)
     {
         group.allDispatchedNodes.clear();
-        group.allDispatchedNodes.resize(_cpuWorkgroupSize);
+        group.allDispatchedNodes.resize(_cpuWorkerCount);
         size_t allGroupSize = group.undispatchedNodes.size();
-        size_t maxDispatchSize = glm::ceil(double(allGroupSize) / _cpuWorkgroupSize);
-        for(size_t w=0; w < _cpuWorkgroupSize; ++w)
+        size_t maxDispatchSize = glm::ceil(double(allGroupSize) / _cpuWorkerCount);
+        for(size_t w=0; w < _cpuWorkerCount; ++w)
         {
             // Nodes are sorted according to their number of neighbor elements
             // This distribution pattern makes sure CPU dispatches are well balanced
 
             group.allDispatchedNodes[w].reserve(maxDispatchSize);
-            for(size_t v = w; v < allGroupSize; v += _cpuWorkgroupSize)
+            for(size_t v = w; v < allGroupSize; v += _cpuWorkerCount)
             {
                 group.allDispatchedNodes[w].push_back(
                     group.undispatchedNodes[v]);
@@ -593,12 +597,10 @@ void NodeGroups::dispatchGpuWorkgroups()
 {
     for(ParallelGroup& group : _parallelGroups)
     {
-        double gpuGroupSize = group.gpuDispatch.gpuBufferSize;
-        group.gpuDispatch.workgroupCount =
-            glm::ceil(gpuGroupSize / _gpuWorkgroupSize);
+        _gpuDispatcher(group.gpuDispatch);
 
         group.cpuOnlyDispatchedNodes.clear();
-        group.cpuOnlyDispatchedNodes.resize(_cpuWorkgroupSize);
+        group.cpuOnlyDispatchedNodes.resize(_cpuWorkerCount);
 
         size_t cpuGroupSize = group.boundaryRange.end -
                 group.boundaryRange.begin;
@@ -608,14 +610,14 @@ void NodeGroups::dispatchGpuWorkgroups()
             cpuGroupSize = group.undispatchedNodes.size();
         }
 
-        size_t maxDispatchSize = glm::ceil(double(cpuGroupSize) / _cpuWorkgroupSize);
-        for(size_t w=0; w < _cpuWorkgroupSize; ++w)
+        size_t maxDispatchSize = glm::ceil(double(cpuGroupSize) / _cpuWorkerCount);
+        for(size_t w=0; w < _cpuWorkerCount; ++w)
         {
             // Nodes are sorted according to their number of neighbor elements
             // This distribution pattern makes sure CPU dispatches are well balanced
 
             group.cpuOnlyDispatchedNodes[w].reserve(maxDispatchSize);
-            for(size_t v = w; v < cpuGroupSize; v += _cpuWorkgroupSize)
+            for(size_t v = w; v < cpuGroupSize; v += _cpuWorkerCount)
             {
                 group.cpuOnlyDispatchedNodes[w].push_back(
                     group.undispatchedNodes[v]);

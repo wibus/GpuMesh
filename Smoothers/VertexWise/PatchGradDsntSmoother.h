@@ -21,14 +21,11 @@ protected:
     virtual bool verifyMeshForGpuLimitations(
             const Mesh& mesh) const;
 
-    virtual void launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch) override;
-
     virtual std::string glslLauncher() const override;
 
-    virtual size_t glslNodesPerBlock() const override;
+    virtual NodeGroups::GpuDispatcher glslDispatcher() const override;
 
-    virtual size_t cudaNodesPerBlock() const override;
+    virtual NodeGroups::GpuDispatcher cudaDispatcher() const override;
 
 protected:
     static const int POSITION_THREAD_COUNT;

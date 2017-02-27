@@ -42,12 +42,14 @@ void installCudaNelderMeadSmoother()
         NMGamma,
         NMDelta);
 }
+void smoothCudaVertices(const NodeGroups::GpuDispatch& dispatch);
 
 
 NelderMeadSmoother::NelderMeadSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/NelderMead.glsl"},
-        installCudaNelderMeadSmoother)
+        installCudaNelderMeadSmoother,
+        smoothCudaVertices)
 {
 
 }

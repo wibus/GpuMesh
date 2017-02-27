@@ -31,7 +31,8 @@ const int PatchGradDsntSmoother::ELEMENT_PER_THREAD_COUNT =
 PatchGradDsntSmoother::PatchGradDsntSmoother() :
     GradientDescentSmoother(
         {":/glsl/compute/Smoothing/VertexWise/PatchGradDsnt.glsl"},
-        installCudaPatchGradDsntSmoother)
+        installCudaPatchGradDsntSmoother,
+        smoothCudaPatchGradDsntVertices)
 {
 
 }
@@ -94,23 +95,31 @@ bool PatchGradDsntSmoother::verifyMeshForGpuLimitations(
     return true;
 }
 
-void PatchGradDsntSmoother::launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch)
-{
-    smoothCudaPatchGradDsntVertices(dispatch);
-}
-
 std::string PatchGradDsntSmoother::glslLauncher() const
 {
     return "";
 }
 
-size_t PatchGradDsntSmoother::glslNodesPerBlock() const
+NodeGroups::GpuDispatcher PatchGradDsntSmoother::glslDispatcher() const
 {
-    return 1;
+    const uint POSITION_THREAD_COUNT = 8;
+    const uint ELEMENT_THREAD_COUNT = 32;
+
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(POSITION_THREAD_COUNT, ELEMENT_THREAD_COUNT, 1);
+        d.workgroupCount = glm::uvec3(d.gpuBufferSize, 1, 1);
+    };
 }
 
-size_t PatchGradDsntSmoother::cudaNodesPerBlock() const
+NodeGroups::GpuDispatcher PatchGradDsntSmoother::cudaDispatcher() const
 {
-    return 1;
+    const uint POSITION_THREAD_COUNT = 8;
+    const uint ELEMENT_THREAD_COUNT = 8;
+
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(POSITION_THREAD_COUNT, ELEMENT_THREAD_COUNT, 1);
+        d.workgroupCount = glm::uvec3(d.gpuBufferSize, 1, 1);
+    };
 }

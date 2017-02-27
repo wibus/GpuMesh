@@ -1,7 +1,6 @@
 const uint SPAWN_COUNT = 64;
 const uint ELEM_SLOT_COUNT = 128;
 
-layout (local_size_x = SPAWN_COUNT, local_size_y = 1, local_size_z = 1) in;
 
 layout(shared, binding = SPAWN_OFFSETS_BUFFER_BINDING) buffer Offsets
 {
@@ -37,8 +36,8 @@ void smoothVert(uint vId)
 
     Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
-    uint firstLoad = (neigElemCount * lId) / gl_WorkGroupSize.x;
-    uint lastLoad = (neigElemCount * (lId+1)) / gl_WorkGroupSize.x;
+    uint firstLoad = (neigElemCount * lId) / SPAWN_COUNT;
+    uint lastLoad = (neigElemCount * (lId+1)) / SPAWN_COUNT;
 
     for(uint e = firstLoad; e < lastLoad; ++e)
     {

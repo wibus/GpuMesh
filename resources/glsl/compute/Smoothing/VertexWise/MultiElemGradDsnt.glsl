@@ -7,8 +7,6 @@ const uint LINE_SAMP_COUNT = 8;
 
 const int MIN_MAX = 2147483647;
 
-layout (local_size_x = ELEMENT_THREAD_COUNT, local_size_y = NODE_THREAD_COUNT, local_size_z = 1) in;
-
 
 // Independent group range
 uniform int GroupBase;
@@ -290,7 +288,7 @@ void smoothVert(uint vId)
 
 void main()
 {
-    uint localId = gl_WorkGroupID.x * gl_WorkGroupSize.y + gl_LocalInvocationID.y;
+    uint localId = gl_WorkGroupID.x * gl_LocalGroupSizeARB.y + gl_LocalInvocationID.y;
 
     if(localId < GroupSize)
     {

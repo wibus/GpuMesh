@@ -1,6 +1,3 @@
-layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
-
-
 // Vertex Accum
 bool assignAverage(in uint vId, inout vec3 pos);
 void reinitAccum(in uint vId);

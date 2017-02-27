@@ -9,6 +9,7 @@ class IVertexAccum;
 class AbstractElementWiseSmoother : public AbstractSmoother
 {
 protected:
+    typedef void (*installCudaFct)(void);
     AbstractElementWiseSmoother(
             const std::vector<std::string>& smoothShaders,
             const installCudaFct installCuda);

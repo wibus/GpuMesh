@@ -7,8 +7,6 @@ const uint LINE_SAMP_COUNT = 8;
 
 const int MIN_MAX = 2147483647;
 
-layout (local_size_x = POSITION_THREAD_COUNT, local_size_y = ELEMENT_THREAD_COUNT, local_size_z = 1) in;
-
 
 // Independent group range
 uniform int GroupBase;
@@ -108,6 +106,8 @@ void smoothVert(uint vId)
         patchMin[pId] = MIN_MAX;
         patchMean[pId] = 0.0;
     }
+
+    nodeShift = 0.0;
 
     if(pId == 0 && eId == 0)
     {

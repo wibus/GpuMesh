@@ -270,10 +270,16 @@ void smoothCudaMultiPosGradDsntVertices(
 {
     setupCudaIndependentDispatch(dispatch);
 
-    dim3 blockDim(POSITION_THREAD_COUNT, NODE_THREAD_COUNT);
+    dim3 blockDim(dispatch.workgroupSize.x,
+                  dispatch.workgroupSize.y,
+                  dispatch.workgroupSize.z);
+    dim3 blockCount(dispatch.workgroupCount.x,
+                    dispatch.workgroupCount.y,
+                    dispatch.workgroupCount.z);
 
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothMultiPosGradDsntVerticesCudaMain<<<dispatch.workgroupCount, blockDim>>>();
-    cudaDeviceSynchronize();
+    smoothMultiPosGradDsntVerticesCudaMain<<<blockCount, blockDim>>>();
     cudaCheckErrors("CUDA error during vertices smoothing");
+
+    cudaDeviceSynchronize();
 }

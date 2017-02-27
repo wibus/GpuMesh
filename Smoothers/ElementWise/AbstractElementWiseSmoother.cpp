@@ -36,7 +36,6 @@ const size_t AbstractElementWiseSmoother::WORKGROUP_SIZE = 256;
 AbstractElementWiseSmoother::AbstractElementWiseSmoother(
         const std::vector<std::string>& smoothShaders,
         const installCudaFct installCuda) :
-    AbstractSmoother(installCuda),
     _initialized(false),
     _smoothShaders(smoothShaders),
     _vertexAccums(nullptr),

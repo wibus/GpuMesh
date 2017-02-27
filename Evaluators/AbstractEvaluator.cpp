@@ -538,7 +538,9 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // Simulatenous and separate elem evaluation deliver the same performance
     // Separate program series gives a tiny, not stable speed boost.
     // (tested on a parametric pri/hex mesh)
-    glDispatchCompute(workgroupCount, 1, 1);
+    glDispatchComputeGroupSizeARB(
+        workgroupCount, 1, 1,
+        WORKGROUP_SIZE, 1, 1);
     _evaluationProgram.popProgram();
 
 

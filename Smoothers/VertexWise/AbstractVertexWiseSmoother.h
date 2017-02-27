@@ -9,9 +9,12 @@
 class AbstractVertexWiseSmoother : public AbstractSmoother
 {
 protected:
+    typedef void (*installCudaFct)(void);
+    typedef void (*launchCudaKernelFct)(const NodeGroups::GpuDispatch&);
     AbstractVertexWiseSmoother(
             const std::vector<std::string>& smoothShaders,
-            const installCudaFct installCuda);
+            const installCudaFct& installCuda,
+            const launchCudaKernelFct& launchCudaKernel);
 
 public:
     ~AbstractVertexWiseSmoother();
@@ -34,10 +37,7 @@ public:
             const MeshCrew& crew) override;
 
 
-protected:    
-    virtual void launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch);
-
+protected:
     virtual void initializeProgram(
             Mesh& mesh,
             const MeshCrew& crew) override;
@@ -57,12 +57,9 @@ protected:
 
     virtual std::string glslLauncher() const;
 
-    virtual glm::ivec3 layoutWorkgroups(
-            const NodeGroups::GpuDispatch& dispatch) const;
+    virtual NodeGroups::GpuDispatcher glslDispatcher() const;
 
-    virtual size_t glslNodesPerBlock() const;
-
-    virtual size_t cudaNodesPerBlock() const;
+    virtual NodeGroups::GpuDispatcher cudaDispatcher() const;
 
 
 private:
@@ -72,6 +69,9 @@ private:
     std::string _evaluationShader;
     std::vector<std::string> _smoothShaders;
     cellar::GlProgram _vertSmoothProgram;
+
+    installCudaFct _installCudaSmoother;
+    launchCudaKernelFct _launchCudaKernel;
 };
 
 #endif // GPUMESH_ABSTRACTVERTEXWISESMOOTHER

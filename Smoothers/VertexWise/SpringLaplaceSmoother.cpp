@@ -15,12 +15,14 @@ void installCudaSpringLaplaceSmoother()
 {
     installCudaSpringLaplaceSmoother(SLMoveCoeff);
 }
+void smoothCudaVertices(const NodeGroups::GpuDispatch& dispatch);
 
 
 SpringLaplaceSmoother::SpringLaplaceSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/SpringLaplace.glsl"},
-        installCudaSpringLaplaceSmoother)
+        installCudaSpringLaplaceSmoother,
+        smoothCudaVertices)
 {
 
 }

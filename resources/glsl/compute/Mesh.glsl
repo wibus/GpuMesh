@@ -1,12 +1,19 @@
 #version 450
 
 
+///////////////
+// Constants //
+///////////////
 #define M_PI 3.1415926535897932384626433832795
+
 
 ////////////////
 // Extensions //
 ////////////////
 #extension GL_NV_shader_atomic_float : enable
+#extension GL_ARB_compute_variable_group_size : enable
+
+layout(local_size_variable) in;
 
 
 //////////////////////////////////

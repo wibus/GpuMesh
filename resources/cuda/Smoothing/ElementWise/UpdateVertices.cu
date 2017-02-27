@@ -50,8 +50,12 @@ void updateCudaSmoothedElementsVertices(
 {
     setupCudaIndependentDispatch(dispatch);
 
+    dim3 blockCount(dispatch.workgroupCount.x,
+                    dispatch.workgroupCount.y,
+                    dispatch.workgroupCount.z);
+
     cudaCheckErrors("CUDA error before vertices update");
-    updateVerticesCudaMain<<<dispatch.workgroupCount, workgroupSize>>>();
+    updateVerticesCudaMain<<<blockCount, workgroupSize>>>();
     cudaCheckErrors("CUDA error during vertices update");
 
     cudaDeviceSynchronize();
