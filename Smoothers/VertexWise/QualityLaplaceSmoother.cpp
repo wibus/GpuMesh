@@ -18,12 +18,14 @@ void installCudaQualityLaplaceSmoother()
 {
     installCudaQualityLaplaceSmoother(QLMoveCoeff);
 }
+void smoothCudaVertices(const NodeGroups::GpuDispatch& dispatch);
 
 
 QualityLaplaceSmoother::QualityLaplaceSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/QualityLaplace.glsl"},
-        installCudaQualityLaplaceSmoother)
+        installCudaQualityLaplaceSmoother,
+        smoothCudaVertices)
 {
 
 }

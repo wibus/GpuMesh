@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 #include <vector>
+#include <functional>
+
+#include <GLM/glm.hpp>
 
 
 #ifndef uint
@@ -56,9 +59,13 @@ public:
         size_t gpuBufferBase;
         size_t gpuBufferSize;
 
+
+        // Number of threads per workgroup
+        glm::uvec3 workgroupSize;
+
         // Number of workgroup (or blocks) needed to
         // process all nodes in this independent group
-        size_t workgroupCount;
+        glm::uvec3 workgroupCount;
     };
 
     struct ParallelGroup
@@ -87,11 +94,11 @@ public:
 
     size_t count();
 
-    size_t cpuWorkgroupSize() const;
-    void setCpuWorkgroupSize(size_t size);
+    size_t cpuWorkerCount() const;
+    void setCpuWorkerCount(size_t workerCount);
 
-    size_t gpuWorkgroupSize() const;
-    void setGpuWorkgroupSize(size_t size);
+    typedef std::function<void(GpuDispatch&)> GpuDispatcher;
+    void setGpuDispatcher(const GpuDispatcher& dispatcher);
 
     const Range& fixedNodes() const;
     const Range& boundaryNodes() const;
@@ -150,8 +157,8 @@ private:
     static bool isMovableBound(const MeshTopo& topo);
 
 
-    size_t _cpuWorkgroupSize;
-    size_t _gpuWorkgroupSize;
+    size_t _cpuWorkerCount;
+    GpuDispatcher _gpuDispatcher;
 
     // Fixed nodes are uploaded once and
     // never moved across smoothing passes
@@ -189,14 +196,9 @@ private:
 
 
 // IMPLEMENTATION //
-inline size_t NodeGroups::cpuWorkgroupSize() const
+inline size_t NodeGroups::cpuWorkerCount() const
 {
-    return _cpuWorkgroupSize;
-}
-
-inline size_t NodeGroups::gpuWorkgroupSize() const
-{
-    return _gpuWorkgroupSize;
+    return _cpuWorkerCount;
 }
 
 inline size_t NodeGroups::count()

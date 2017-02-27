@@ -26,15 +26,21 @@ __global__ void smoothVerticesCudaMain()
 void setupCudaIndependentDispatch(const NodeGroups::GpuDispatch& dispatch);
 
 void smoothCudaVertices(
-        const NodeGroups::GpuDispatch& dispatch,
-        size_t workgroupSize)
+        const NodeGroups::GpuDispatch& dispatch)
 {
     setupCudaIndependentDispatch(dispatch);
 
     cudaFuncSetCacheConfig(smoothVerticesCudaMain, cudaFuncCachePreferL1);
 
+    dim3 blockDim(dispatch.workgroupSize.x,
+                  dispatch.workgroupSize.y,
+                  dispatch.workgroupSize.z);
+    dim3 blockCount(dispatch.workgroupCount.x,
+                    dispatch.workgroupCount.y,
+                    dispatch.workgroupCount.z);
+
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothVerticesCudaMain<<<dispatch.workgroupCount, workgroupSize>>>();
+    smoothVerticesCudaMain<<<blockCount, blockDim>>>();
     cudaCheckErrors("CUDA error during vertices smoothing");
 
     cudaDeviceSynchronize();

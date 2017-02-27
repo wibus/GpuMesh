@@ -33,7 +33,8 @@ const int SpawnSearchSmoother::SPAWN_COUNT = 64;
 SpawnSearchSmoother::SpawnSearchSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/SpawnSearch.glsl"},
-        installCudaSpawnSearchSmoother),
+        installCudaSpawnSearchSmoother,
+        smoothCudaSpawnVertices),
     _offsetsSsbo(0)
 {
     g_offsets.clear();
@@ -224,23 +225,25 @@ void SpawnSearchSmoother::smoothVertices(
     }
 }
 
-void SpawnSearchSmoother::launchCudaKernel(
-            const NodeGroups::GpuDispatch& dispatch)
-{
-    smoothCudaSpawnVertices(dispatch);
-}
-
 std::string SpawnSearchSmoother::glslLauncher() const
 {
     return "";
 }
 
-size_t SpawnSearchSmoother::glslNodesPerBlock() const
+NodeGroups::GpuDispatcher SpawnSearchSmoother::glslDispatcher() const
 {
-    return 1;
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(SPAWN_COUNT, 1, 1);
+        d.workgroupCount = glm::uvec3(d.gpuBufferSize, 1, 1);
+    };
 }
 
-size_t SpawnSearchSmoother::cudaNodesPerBlock() const
+NodeGroups::GpuDispatcher SpawnSearchSmoother::cudaDispatcher() const
 {
-    return 1;
+    return [](NodeGroups::GpuDispatch& d)
+    {
+        d.workgroupSize = glm::uvec3(SPAWN_COUNT, 1, 1);
+        d.workgroupCount = glm::uvec3(d.gpuBufferSize, 1, 1);
+    };
 }

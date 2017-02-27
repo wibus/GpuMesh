@@ -18,7 +18,9 @@ class AbstractSmoother
 {
 protected:
     typedef void (*installCudaFct)(void);
-    AbstractSmoother(const installCudaFct installCuda);
+    typedef void (*launchCudaKernelFct)(const NodeGroups::GpuDispatch&);
+    AbstractSmoother(const installCudaFct& installCuda,
+                     const launchCudaKernelFct& launchCudaKernel);
 
 public:
     virtual ~AbstractSmoother();
@@ -68,6 +70,7 @@ protected:
 
 
     installCudaFct _installCudaSmoother;
+    launchCudaKernelFct _launchCudaKernel;
 
     Schedule _schedule;
 

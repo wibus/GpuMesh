@@ -18,8 +18,11 @@ using namespace cellar;
 const int AbstractSmoother::INITIAL_PASS_ID = -1;
 const int AbstractSmoother::COMPARE_PASS_ID = -2;
 
-AbstractSmoother::AbstractSmoother(const installCudaFct installCuda) :
+AbstractSmoother::AbstractSmoother(
+        const installCudaFct& installCuda,
+        const launchCudaKernelFct& launchCudaKernel) :
     _installCudaSmoother(installCuda),
+    _launchCudaKernel(launchCudaKernel),
     _smoothingUtilsShader(":/glsl/compute/Smoothing/Utils.glsl"),
     _implementationFuncs("Smoothing Implementations")
 {

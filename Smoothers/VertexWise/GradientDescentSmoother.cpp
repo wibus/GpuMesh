@@ -25,12 +25,14 @@ void installCudaGradientDescentSmoother()
                 GDSecurityCycleCount,
                 GDLocalSizeToNodeShift);
 }
+void smoothCudaVertices(const NodeGroups::GpuDispatch& dispatch);
 
 
 GradientDescentSmoother::GradientDescentSmoother(
         const std::vector<std::string>& smoothShaders,
-        const installCudaFct installCuda) :
-    AbstractVertexWiseSmoother(smoothShaders, installCuda)
+        const installCudaFct& installCuda,
+        const launchCudaKernelFct& launchCudaKernel) :
+    AbstractVertexWiseSmoother(smoothShaders, installCuda, launchCudaKernel)
 {
 
 }
@@ -38,7 +40,8 @@ GradientDescentSmoother::GradientDescentSmoother(
 GradientDescentSmoother::GradientDescentSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/GradientDescent.glsl"},
-        installCudaGradientDescentSmoother)
+        installCudaGradientDescentSmoother,
+        smoothCudaVertices)
 {
 
 }

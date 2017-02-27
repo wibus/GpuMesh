@@ -225,12 +225,19 @@ void installCudaSpawnSearchSmoother(float moveCoeff,
 void smoothCudaSpawnVertices(
         const NodeGroups::GpuDispatch& dispatch)
 {
-    setupCudaIndependentDispatch(dispatch);
-
     size_t sharedDim = sizeof(PatchElem) * ELEMENT_SLOT_COUNT;
 
+    setupCudaIndependentDispatch(dispatch);
+
+    dim3 blockDim(dispatch.workgroupSize.x,
+                  dispatch.workgroupSize.y,
+                  dispatch.workgroupSize.z);
+    dim3 blockCount(dispatch.workgroupCount.x,
+                    dispatch.workgroupCount.y,
+                    dispatch.workgroupCount.z);
+
     cudaCheckErrors("CUDA error before vertices smoothing");
-    smoothSpawnVerticesCudaMain<<<dispatch.workgroupCount, SPAWN_COUNT, sharedDim>>>();
+    smoothSpawnVerticesCudaMain<<<blockCount, blockDim, sharedDim>>>();
     cudaCheckErrors("CUDA error during vertices smoothing");
 
     cudaDeviceSynchronize();
