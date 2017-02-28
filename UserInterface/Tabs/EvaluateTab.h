@@ -23,10 +23,11 @@ public:
 
 protected slots:
     virtual void shapeMeasureTypeChanged(const QString& type);
-    virtual void ImplementationChanged(const QString&);
+    virtual void implementationChanged(const QString&);
+    virtual void glslThreadCountChanged(int count);
+    virtual void cudaThreadCountChanged(int count);
 
     virtual void evaluateMesh();
-    virtual void benchmarkImplementations();
 
     virtual void enableAnisotropy(bool enabled);
 
@@ -34,6 +35,8 @@ protected slots:
     virtual void aspectRatioChanged(double ratio);
     virtual void samplingTypeChanged(const QString& type);
     virtual void displayDicretizationToggled(bool display);
+
+    virtual void benchmarkImplementations();
 
 protected:
     virtual void deployShapeMeasures();

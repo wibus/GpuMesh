@@ -19,7 +19,15 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
     deployImplementations();
     connect(_ui->shapeMeasureImplMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
-            this, &EvaluateTab::ImplementationChanged);
+            this, &EvaluateTab::implementationChanged);
+
+    connect(_ui->shapeMeasureGlslThreadSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &EvaluateTab::glslThreadCountChanged);
+    glslThreadCountChanged(_ui->scalingSpin->value());
+
+    connect(_ui->shapeMeasureCudaThreadSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &EvaluateTab::cudaThreadCountChanged);
+    cudaThreadCountChanged(_ui->scalingSpin->value());
 
     connect(_ui->evaluateMesh,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
@@ -64,9 +72,19 @@ void EvaluateTab::shapeMeasureTypeChanged(const QString& type)
     _character->useEvaluator(type.toStdString());
 }
 
-void EvaluateTab::ImplementationChanged(const QString& implName)
+void EvaluateTab::implementationChanged(const QString& implName)
 {
     _lastImpl = implName.toStdString();
+}
+
+void EvaluateTab::glslThreadCountChanged(int count)
+{
+    _character->setGlslEvaluatorThreadCount(count);
+}
+
+void EvaluateTab::cudaThreadCountChanged(int count)
+{
+    _character->setCudaEvaluatorThreadCount(count);
 }
 
 void EvaluateTab::evaluateMesh()

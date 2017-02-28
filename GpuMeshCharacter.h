@@ -60,6 +60,7 @@ public:
     virtual OptionMapDetails availableCameraMen() const;
     virtual OptionMapDetails availableCutTypes() const;
 
+
     // Mesh
     virtual void generateMesh(
             const std::string& mesherName,
@@ -74,6 +75,7 @@ public:
     virtual void loadMesh(
             const std::string& fileName);
 
+
     // Evaluate
     virtual void evaluateMesh(
             const std::string& evaluatorName,
@@ -84,14 +86,18 @@ public:
             const std::string& evaluatorName,
             const std::map<std::string, int>& cycleCounts);
 
-    virtual std::string runMastersTests(
-            const std::vector<std::string>& tests);
-
     virtual void setMetricScaling(double scaling);
 
     virtual void setMetricAspectRatio(double ratio);
 
-    // Smooth
+    virtual void setGlslEvaluatorThreadCount(uint threadCount);
+    virtual void setCudaEvaluatorThreadCount(uint threadCount);
+
+
+    // Smooth    
+    virtual void setGlslSmootherThreadCount(uint threadCount);
+    virtual void setCudaSmootherThreadCount(uint threadCount);
+
     virtual void smoothMesh(
             const std::string& smootherName,
             const std::string& implementationName,
@@ -102,8 +108,10 @@ public:
             const Schedule& schedule,
             const std::vector<Configuration>& configurations);
 
+
     // Topology
     virtual void restructureMesh(int passCount);
+
 
     // Render
     virtual void disableAnisotropy();
@@ -116,6 +124,12 @@ public:
     virtual void useCutType(const std::string& cutTypeName);
     virtual void setElementVisibility(bool tet, bool pri, bool hex);
     virtual void setQualityCullingBounds(double min, double max);
+
+
+    // Master's tests
+    virtual std::string runMastersTests(
+            const std::vector<std::string>& tests);
+
 
 protected:
     virtual void printStep(const std::string& stepDescription);
@@ -157,6 +171,10 @@ protected:
 
     double _metricScaling;
     double _metricAspectRatio;
+    double _glslEvaluatorThreadCount;
+    double _cudaEvaluatorThreadCount;
+    double _glslSmootherThreadCount;
+    double _cudaSmootherThreadCount;
 
 private:
     std::unique_ptr<Mesh> _mesh;

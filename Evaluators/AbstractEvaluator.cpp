@@ -22,19 +22,8 @@ const std::string AbstractEvaluator::THREAD_IMPL_NAME = "Thread";
 const std::string AbstractEvaluator::GLSL_IMPL_NAME = "GLSL";
 const std::string AbstractEvaluator::CUDA_IMPL_NAME = "CUDA";
 
-const size_t AbstractEvaluator::WORKGROUP_SIZE = 256;
-const size_t AbstractEvaluator::POLYHEDRON_TYPE_COUNT = 3;
-const size_t AbstractEvaluator::MAX_GROUP_PARTICIPANTS =
-        AbstractEvaluator::WORKGROUP_SIZE *
-        AbstractEvaluator::POLYHEDRON_TYPE_COUNT;
-
 const double AbstractEvaluator::VALIDITY_EPSILON = 1e-6;
 const double AbstractEvaluator::MAX_INTEGER_VALUE = 2147483647.0;
-const double AbstractEvaluator::MIN_QUALITY_PRECISION_DENOM = 4096.0;
-
-const double AbstractEvaluator::MAX_QUALITY_VALUE =
-        AbstractEvaluator::MAX_INTEGER_VALUE /
-        (double) AbstractEvaluator::MAX_GROUP_PARTICIPANTS;
 
 const glm::dmat3 AbstractEvaluator::Fr_TET_INV = glm::dmat3(
     glm::dvec3(1, 0, 0),
@@ -61,7 +50,9 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
     _histSsbo(0),
     _evaluationShader(shapeMeasuresShader),
     _installCuda(installCuda),
-    _implementationFuncs("Shape Measure Implementations")
+    _implementationFuncs("Shape Measure Implementations"),
+    _glslThreadCount(256),
+    _cudaThreadCount(256)
 {
 /*
     static_assert(AbstractEvaluator::MAX_QUALITY_VALUE >=
@@ -181,6 +172,16 @@ void AbstractEvaluator::setPluginCudaUniforms(
         const Mesh& mesh) const
 {
 
+}
+
+void AbstractEvaluator::setGlslThreadCount(uint count)
+{
+    _glslThreadCount = count;
+}
+
+void AbstractEvaluator::setCudaThreadCount(uint count)
+{
+    _cudaThreadCount = count;
 }
 
 double AbstractEvaluator::tetQuality(
@@ -475,7 +476,7 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     size_t hexCount = mesh.hexs.size();
     size_t elemCount = tetCount + priCount + hexCount;
     size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
-    size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
+    size_t workgroupCount = ceil(maxSize / (double)_glslThreadCount);
 
     if(elemCount == 0)
     {
@@ -540,7 +541,7 @@ void AbstractEvaluator::evaluateMeshQualityGlsl(
     // (tested on a parametric pri/hex mesh)
     glDispatchComputeGroupSizeARB(
         workgroupCount, 1, 1,
-        WORKGROUP_SIZE, 1, 1);
+        _glslThreadCount, 1, 1);
     _evaluationProgram.popProgram();
 
 
@@ -594,7 +595,7 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
     size_t hexCount = mesh.hexs.size();
     size_t elemCount = tetCount + priCount + hexCount;
     size_t maxSize = glm::max(glm::max(tetCount, priCount), hexCount);
-    size_t workgroupCount = ceil(maxSize / (double)WORKGROUP_SIZE);
+    size_t workgroupCount = ceil(maxSize / (double)_cudaThreadCount);
 
     if(elemCount == 0)
     {
@@ -606,7 +607,7 @@ void AbstractEvaluator::evaluateMeshQualityCuda(
     measurer.setPluginCudaUniforms(mesh);
 
     evaluateCudaMeshQuality(
-        WORKGROUP_SIZE,
+        _cudaThreadCount,
         workgroupCount,
         histogram);
 

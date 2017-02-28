@@ -45,6 +45,11 @@ public:
     virtual void setPluginCudaUniforms(
             const Mesh& mesh) const;
 
+    // Thread counts
+    virtual void setGlslThreadCount(uint count);
+
+    virtual void setCudaThreadCount(uint count);
+
 
 
     virtual double tetQuality(
@@ -145,14 +150,8 @@ protected:
     static const std::string GLSL_IMPL_NAME;
     static const std::string CUDA_IMPL_NAME;
 
-    static const size_t WORKGROUP_SIZE;
-    static const size_t POLYHEDRON_TYPE_COUNT;
-    static const size_t MAX_GROUP_PARTICIPANTS;
-
     static const double VALIDITY_EPSILON;
     static const double MAX_INTEGER_VALUE;
-    static const double MIN_QUALITY_PRECISION_DENOM;
-    static const double MAX_QUALITY_VALUE;
 
     static const glm::dmat3 Fr_TET_INV;
     static const glm::dmat3 Fr_PRI_INV;
@@ -165,6 +164,9 @@ protected:
     std::string _evaluationShader;
     cellar::GlProgram _evaluationProgram;
     installCudaFct _installCuda;
+
+    uint _glslThreadCount;
+    uint _cudaThreadCount;
 
     typedef std::function<void(const Mesh&,
                                const AbstractSampler&,

@@ -1,6 +1,3 @@
-const uint NODE_COUNT = 256;
-
-
 // Algorithm entry point
 void smoothVert(uint vId);
 

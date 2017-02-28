@@ -182,36 +182,50 @@
            <item row="1" column="1">
             <widget class="QComboBox" name="shapeMeasureImplMenu"/>
            </item>
-           <item row="2" column="0" colspan="2">
+           <item row="4" column="0" colspan="2">
             <widget class="QPushButton" name="evaluateMesh">
              <property name="text">
               <string>Evaluate Mesh</string>
              </property>
             </widget>
            </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="evaluateBenchmarkGroup">
-          <property name="title">
-           <string>Benchmarking</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_6">
-           <item>
-            <widget class="QLabel" name="evaluateImplCycleCountsLabel">
+           <item row="2" column="0">
+            <widget class="QLabel" name="shapeMeasureGlslThreadLabel">
              <property name="text">
-              <string>Implementation Cycle Counts:</string>
+              <string>GLSL thread count</string>
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QWidget" name="evaluateImplCycleCountsLayout" native="true"/>
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="shapeMeasureGlslThreadSpin">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>1024</number>
+             </property>
+             <property name="value">
+              <number>256</number>
+             </property>
+            </widget>
            </item>
-           <item>
-            <widget class="QPushButton" name="evaluateBenchmarkImplButton">
+           <item row="3" column="0">
+            <widget class="QLabel" name="shapeMeasureCudaThreadLabel">
              <property name="text">
-              <string>Benchmark Implementations</string>
+              <string>CUDA thread count</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="shapeMeasureCudaThreadSpin">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>1024</number>
+             </property>
+             <property name="value">
+              <number>256</number>
              </property>
             </widget>
            </item>
@@ -297,6 +311,32 @@
              </property>
              <property name="value">
               <double>5.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="evaluateBenchmarkGroup">
+          <property name="title">
+           <string>Benchmarking</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QLabel" name="evaluateImplCycleCountsLabel">
+             <property name="text">
+              <string>Implementation Cycle Counts:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="evaluateImplCycleCountsLayout" native="true"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="evaluateBenchmarkImplButton">
+             <property name="text">
+              <string>Benchmark Implementations</string>
              </property>
             </widget>
            </item>
@@ -839,7 +879,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>26</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>

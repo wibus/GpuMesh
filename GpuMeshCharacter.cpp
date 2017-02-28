@@ -536,6 +536,10 @@ void GpuMeshCharacter::evaluateMesh(
     if(_availableEvaluators.select(evaluatorName, evaluator))
     {
         QualityHistogram histogram;
+
+        evaluator->setGlslThreadCount(_glslEvaluatorThreadCount);
+        evaluator->setCudaThreadCount(_cudaEvaluatorThreadCount);
+
         evaluator->evaluateMesh(
             *_mesh,
             _meshCrew->sampler(),
@@ -562,6 +566,9 @@ void GpuMeshCharacter::benchmarkEvaluator(
     std::shared_ptr<AbstractEvaluator> evaluator;
     if(_availableEvaluators.select(evaluatorName, evaluator))
     {
+        evaluator->setGlslThreadCount(_glslEvaluatorThreadCount);
+        evaluator->setCudaThreadCount(_cudaEvaluatorThreadCount);
+
         evaluator->benchmark(
             *_mesh,
             _meshCrew->sampler(),
@@ -569,12 +576,6 @@ void GpuMeshCharacter::benchmarkEvaluator(
             cycleCounts,
             averageTimes);
     }
-}
-
-string GpuMeshCharacter::runMastersTests(
-        const vector<string>& tests)
-{
-    return _mastersTestSuite->runTests(tests);
 }
 
 void GpuMeshCharacter::setMetricScaling(double scaling)
@@ -593,6 +594,26 @@ void GpuMeshCharacter::setMetricAspectRatio(double ratio)
     updateMeshMeasures();
 }
 
+void GpuMeshCharacter::setGlslEvaluatorThreadCount(uint threadCount)
+{
+    _glslEvaluatorThreadCount = threadCount;
+}
+
+void GpuMeshCharacter::setCudaEvaluatorThreadCount(uint threadCount)
+{
+    _cudaEvaluatorThreadCount = threadCount;
+}
+
+void GpuMeshCharacter::setGlslSmootherThreadCount(uint threadCount)
+{
+    _glslSmootherThreadCount = threadCount;
+}
+
+void GpuMeshCharacter::setCudaSmootherThreadCount(uint threadCount)
+{
+    _cudaSmootherThreadCount = threadCount;
+}
+
 void GpuMeshCharacter::smoothMesh(
         const std::string& smootherName,
         const std::string& implementationName,
@@ -606,6 +627,9 @@ void GpuMeshCharacter::smoothMesh(
     if(_availableSmoothers.select(smootherName, smoother))
     {
         OptimizationImpl impl;
+
+        _meshCrew->evaluator().setGlslThreadCount(_glslEvaluatorThreadCount);
+        _meshCrew->evaluator().setCudaThreadCount(_cudaEvaluatorThreadCount);
 
         smoother->smoothMesh(
             *_mesh,
@@ -645,6 +669,11 @@ void GpuMeshCharacter::benchmarkSmoothers(
     plot.setMeshModelName(_mesh->modelName);
     plot.setInitialHistogram(initialHistogram);
     plot.setNodeGroups(_mesh->nodeGroups());
+
+
+    _meshCrew->evaluator().setGlslThreadCount(_glslEvaluatorThreadCount);
+    _meshCrew->evaluator().setCudaThreadCount(_cudaEvaluatorThreadCount);
+
 
     for(const Configuration& config : configurations)
     {
@@ -794,6 +823,12 @@ void GpuMeshCharacter::setQualityCullingBounds(double min, double max)
     {
         _renderer->setQualityCullingBounds(min, max);
     }
+}
+
+string GpuMeshCharacter::runMastersTests(
+        const vector<string>& tests)
+{
+    return _mastersTestSuite->runTests(tests);
 }
 
 void GpuMeshCharacter::printStep(const std::string& stepDescription)

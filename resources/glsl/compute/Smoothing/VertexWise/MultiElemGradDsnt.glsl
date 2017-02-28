@@ -1,5 +1,5 @@
-const uint ELEMENT_THREAD_COUNT = 8;
 const uint NODE_THREAD_COUNT = 32;
+const uint ELEMENT_THREAD_COUNT = 8;
 const uint POSITION_SLOT_COUNT = 8;
 
 const uint GRAD_SAMP_COUNT = 6;
