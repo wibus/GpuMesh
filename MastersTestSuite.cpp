@@ -2,11 +2,14 @@
 
 #include <fstream>
 #include <chrono>
+#include <sstream>
 
+#include <QDir>
 #include <QString>
 #include <QCoreApplication>
 
 #include <CellarWorkbench/DateAndTime/Calendar.h>
+#include <CellarWorkbench/DataStructure/Grid2D.h>
 
 #include "DataStructures/OptimizationPlot.h"
 #include "DataStructures/Schedule.h"
@@ -14,31 +17,43 @@
 #include "GpuMeshCharacter.h"
 
 using namespace std;
+using namespace cellar;
 
 
 const string RESULTS_PATH = "resources/reports/";
-const string MESHES_PATH = "resources/reports/";
+const string RESULT_LATEX_PATH = RESULTS_PATH + "latex/";
+const string RESULT_MESH_PATH = RESULTS_PATH + "mesh/";
+const string RESULT_CSV_PATH = RESULTS_PATH + "csv/";
+
 
 MastersTestSuite::MastersTestSuite(
         GpuMeshCharacter& character) :
     _character(character),
     _availableMastersTests("Master's tests")
 {
+    using namespace std::placeholders;
+
     int tId = 0;
     _availableMastersTests.setDefault("N/A");
 
-    _availableMastersTests.setContent({
+    _availableMastersTests.setContent({                                          
+        {to_string(++tId) + ". Evaluator Block Size",
+        MastersTestFunc(bind(&MastersTestSuite::evaluatorBlockSize, this, _1))},
+
         {to_string(++tId) + ". Metric Cost (Sphere)",
-         MastersTestFunc(bind(&MastersTestSuite::metricCostSphere,    this))},
+        MastersTestFunc(bind(&MastersTestSuite::metricCostSphere,   this, _1))},
 
         {to_string(++tId) + ". Metric Cost (HexGrid)",
-         MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,   this))},
+        MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,  this, _1))},
 
         {to_string(++tId) + ". Metric Precision",
-         MastersTestFunc(bind(&MastersTestSuite::metricPrecision,     this))},
+        MastersTestFunc(bind(&MastersTestSuite::metricPrecision,    this, _1))},
 
-         {to_string(++tId) + ". Node Order",
-          MastersTestFunc(bind(&MastersTestSuite::nodeOrder,          this))},
+        {to_string(++tId) + ". Node Order",
+        MastersTestFunc(bind(&MastersTestSuite::nodeOrder,          this, _1))},
+
+        {to_string(++tId) + ". Smoother Block Size",
+        MastersTestFunc(bind(&MastersTestSuite::smootherBlockSize,  this, _1))},
     });
 
     _translateSampling = {
@@ -54,6 +69,20 @@ MastersTestSuite::MastersTestSuite(
         {"GLSL",        "GLSL"},
         {"CUDA",        "CUDA"},
     };
+
+
+    // Build directory structure
+    if(!QDir(RESULTS_PATH.c_str()).exists())
+        QDir().mkdir(RESULTS_PATH.c_str());
+
+    if(!QDir(RESULT_LATEX_PATH.c_str()).exists())
+        QDir().mkdir(RESULT_LATEX_PATH.c_str());
+
+    if(!QDir(RESULT_MESH_PATH.c_str()).exists())
+        QDir().mkdir(RESULT_MESH_PATH.c_str());
+
+    if(!QDir(RESULT_CSV_PATH.c_str()).exists())
+        QDir().mkdir(RESULT_CSV_PATH.c_str());
 }
 
 MastersTestSuite::~MastersTestSuite()
@@ -68,7 +97,7 @@ OptionMapDetails MastersTestSuite::availableTests() const
 
 string MastersTestSuite::runTests(const vector<string>& tests)
 {
-    string doc;
+    _reportDoc.clear();
 
     cellar::Time duration;
     auto allStart = chrono::high_resolution_clock::now();
@@ -80,23 +109,11 @@ string MastersTestSuite::runTests(const vector<string>& tests)
         {
             auto testStart = chrono::high_resolution_clock::now();
 
-            string data = func();
+            func(test);
 
             auto testEnd = chrono::high_resolution_clock::now();
             duration.fromSeconds((testEnd - testStart).count() / (1.0E9));
-            QString lengthStr = QString("[duration: %1]\n").arg(duration.toString().c_str());
-
-            string table = lengthStr.toStdString() + test + "\n\n" + data;
-
-            doc += table;
-
-            ofstream dataFile;
-            dataFile.open(RESULTS_PATH + test + ".txt", ios_base::trunc);
-            if(dataFile.is_open())
-            {
-                dataFile << table;
-                dataFile.close();
-            }
+            _reportDoc += "[duration: " + duration.toString() + "]\n";
 
             _character.clearMesh();
             QCoreApplication::processEvents();
@@ -104,27 +121,405 @@ string MastersTestSuite::runTests(const vector<string>& tests)
         }
         else
         {
-            doc += "UNDEFINED TEST";
+            _reportDoc += "UNDEFINED TEST";
         }
 
-        doc += "\n\n\n";
+        _reportDoc += "\n\n\n";
     }
 
     auto allEnd = chrono::high_resolution_clock::now();
     duration.fromSeconds((allEnd - allStart).count() / (1.0E9));
-    doc += "[Total duration: " + duration.toString() + "]\n";
+    _reportDoc += "[Total duration: " + duration.toString() + "]\n";
 
-    return doc;
+    saveToFile(_reportDoc, RESULTS_PATH + "Master's Test Report.txt");
+
+    return _reportDoc;
 }
 
-string MastersTestSuite::metricCost(
+void MastersTestSuite::saveToFile(
+        const std::string& results,
+        const std::string& fileName) const
+{
+    ofstream file;
+    file.open(fileName, std::ios_base::trunc);
+
+    if(file.is_open())
+    {
+        file << results;
+        file.close();
+    }
+}
+
+void MastersTestSuite::output(
+        const std::string& title,
+        const std::vector<std::string>& header,
+        const std::vector<QualityHistogram>& histograms)
+{
+    saveCsvTable(title, header, histograms);
+    saveLatexTable(title, header, histograms);
+    saveReportTable(title, header, histograms);
+}
+
+void MastersTestSuite::saveCsvTable(
+        const std::string& title,
+        const std::vector<std::string>& header,
+        const std::vector<QualityHistogram>& histograms)
+{
+    stringstream ss;
+
+    for(int h=0; h < header.size(); ++h)
+    {
+        if(h != 0)
+        {
+            ss << ", ";
+        }
+
+        ss << header[h];
+    }
+    ss << "\n";
+
+    size_t bc = histograms.front().bucketCount();
+
+    for(int b=0; b < bc; ++b)
+    {
+        for(int h=0; h < histograms.size(); ++h)
+        {
+            const QualityHistogram& hist =
+                    histograms[h];
+
+            if(h != 0)
+            {
+                ss << ", ";
+            }
+
+            ss << hist.buckets()[b];
+        }
+
+        ss << "\n";
+    }
+    ss << "\n";
+
+    saveToFile(ss.str(), RESULT_CSV_PATH + title + ".csv");
+}
+
+void MastersTestSuite::saveLatexTable(
+        const std::string& title,
+        const std::vector<std::string>& header,
+        const std::vector<QualityHistogram>& histograms)
+{
+    stringstream ss;
+
+    ss << "\\hline\n";
+
+    for(int h=0; h < header.size(); ++h)
+    {
+        if(h != 0)
+        {
+            ss << " \t& ";
+        }
+
+        ss << header[h];
+    }
+    ss << "\\\\\n";
+
+    ss << "\\hline\n";
+
+    size_t bc = histograms.front().bucketCount();
+
+    for(int b=0; b < bc; ++b)
+    {
+        for(int h=0; h < histograms.size(); ++h)
+        {
+            const QualityHistogram& hist =
+                    histograms[h];
+
+            if(h != 0)
+            {
+                ss << " \t& ";
+            }
+
+            ss << hist.buckets()[b];
+        }
+
+        ss << "\\\\\n";
+    }
+    ss << "\\hline\n";
+    ss << "\n";
+
+    saveToFile(ss.str(), RESULT_LATEX_PATH + title + ".txt");
+}
+
+void MastersTestSuite::saveReportTable(
+        const std::string& title,
+        const std::vector<std::string>& header,
+        const std::vector<QualityHistogram>& histograms)
+{
+    //_reportDoc += saveLatexTable(title, header, histograms);
+}
+
+void MastersTestSuite::output(
+        const std::string& title,
+        const std::vector<std::pair<std::string, int>> header,
+        const std::vector<std::pair<std::string, int>> subHeader,
+        const std::vector<std::string> lineNames,
+        const cellar::Grid2D<double>& data)
+{
+    saveCsvTable(title, header, subHeader, lineNames, data);
+    saveLatexTable(title, header, subHeader, lineNames, data);
+    saveReportTable(title, header, subHeader, lineNames, data);
+}
+
+void MastersTestSuite::saveCsvTable(
+        const std::string& title,
+        const std::vector<std::pair<std::string, int>> header,
+        const std::vector<std::pair<std::string, int>> subHeader,
+        const std::vector<std::string> lineNames,
+        const cellar::Grid2D<double>& data)
+{
+    stringstream ss;
+
+    for(int h=0; h < header.size(); ++h)
+    {
+        int width = header[h].second;
+        const string& name = header[h].first;
+
+        if(h != 0)
+        {
+            ss << ", ";
+        }
+
+        ss << name;
+
+        for(int w=1; w < width; ++w)
+            ss << ", ";
+    }
+    ss << "\n";
+
+    if(!subHeader.empty())
+    {
+        for(int h=0; h < subHeader.size(); ++h)
+        {
+            int width = subHeader[h].second;
+            const string& name = subHeader[h].first;
+
+            if(h != 0)
+            {
+                ss << ", ";
+            }
+
+            ss << name;
+
+            for(int w=1; w < width; ++w)
+                ss << ", ";
+        }
+        ss << "\n";
+    }
+
+    for(int l=0; l < lineNames.size(); ++l)
+    {
+        ss << lineNames[l];
+
+        for(int c=0; c < data.getWidth(); ++c)
+        {
+            ss << ", " << data[l][c];
+        }
+
+        ss << "\n";
+    }
+    ss << "\n";
+
+    saveToFile(ss.str(), RESULT_CSV_PATH + title + ".csv");
+}
+
+void MastersTestSuite::saveLatexTable(
+        const std::string& title,
+        const std::vector<std::pair<std::string, int>> header,
+        const std::vector<std::pair<std::string, int>> subHeader,
+        const std::vector<std::string> lineNames,
+        const cellar::Grid2D<double>& data)
+{
+    stringstream ss;
+
+    ss << "\\hline\n";
+
+    for(int h=0; h < header.size(); ++h)
+    {
+        int width = header[h].second;
+        const string& name = header[h].first;
+
+        if(h != 0)
+        {
+            ss << " \t& ";
+        }
+
+        if(width > 1)
+        {
+            ss << "multicolumn{" << width << "}{c|}{" << name << "}";
+        }
+        else
+        {
+            ss << name;
+        }
+    }
+    ss << "\\\\\n";
+
+    if(!subHeader.empty())
+    {
+        for(int h=0; h < subHeader.size(); ++h)
+        {
+            int width = subHeader[h].second;
+            const string& name = subHeader[h].first;
+
+            if(h != 0)
+            {
+                ss << " \t& ";
+            }
+
+            if(width > 1)
+            {
+                ss << "multicolumn{" << width << "}{c|}{" << name << "}";
+            }
+            else
+            {
+                ss << name;
+            }
+        }
+        ss << "\\\\\n";
+    }
+    ss << "\\hline\n";
+
+    for(int l=0; l < lineNames.size(); ++l)
+    {
+        ss << lineNames[l];
+
+        for(int c=0; c < data.getWidth(); ++c)
+        {
+            ss << " \t& " << data[l][c];
+        }
+
+        ss << "\\\\\n";
+    }
+
+    ss << "\\hline\n";
+    ss << "\n";
+
+    saveToFile(ss.str(), RESULT_LATEX_PATH + title + ".txt");
+}
+
+void MastersTestSuite::saveReportTable(
+        const std::string& title,
+        const std::vector<std::pair<std::string, int>> header,
+        const std::vector<std::pair<std::string, int>> subHeader,
+        const std::vector<std::string> lineNames,
+        const cellar::Grid2D<double>& data)
+{
+    //_reportDoc += saveLatexTable(title, header, subHeader, lineNames, data);
+}
+
+void MastersTestSuite::evaluatorBlockSize(
+        const string& testName)
+{
+    const vector<string> mesher = {
+        "Delaunay",
+        "Debug",
+        //"file"
+    };
+
+    const vector<string> model = {
+        "Sphere",
+        "HexGrid",
+        "FINAL_MESH.cgns"
+    };
+
+    const int nodeCount = 5e3;
+
+    const double metricK = 10;
+    const double metricA = 5;
+    const string sampler = "Texture";
+
+    const string evaluator = "Metric Conformity";
+
+    vector<string> implement = {
+        "GLSL", "CUDA"
+    };
+
+    map<string, int> cycleCounts;
+    for(const string& impl : implement)
+        cycleCounts[impl] = 5;
+
+    vector<uint> threadCounts = {
+        8, 16, 32, 64, 128,
+        192, 256, 512, 1024
+    };
+
+    _character.useSampler(sampler);
+    _character.setMetricScaling(metricK);
+    _character.setMetricAspectRatio(metricA);
+
+    _character.useEvaluator(evaluator);
+
+
+    Grid2D<double> data(mesher.size() * 2, threadCounts.size());
+
+    for(int m=0; m < mesher.size(); ++m)
+    {
+        const string& me = mesher[m];
+        const string& mo = model[m];
+
+        if(me == "file")
+            _character.loadMesh("resources/data/" + mo);
+        else
+            _character.generateMesh(me, mo, nodeCount);
+
+
+        //QCoreApplication::processEvents();
+
+
+        for(int t=0; t < threadCounts.size(); ++t)
+        {
+            uint tc = threadCounts[t];
+            _character.setGlslEvaluatorThreadCount(tc);
+            _character.setCudaEvaluatorThreadCount(tc);
+
+            map<string, double> avrgTimes;
+            _character.benchmarkEvaluator(
+                avrgTimes, evaluator, cycleCounts);
+
+            data[t][m*2 + 0] = avrgTimes[implement[0]];
+            data[t][m*2 + 1] = avrgTimes[implement[1]];
+        }
+    }
+
+
+    vector<pair<string, int>> header = {{"Tailles", 1}};
+    vector<pair<string, int>> subheader = {{"", 1}};
+    for(const string& m : model)
+    {
+        header.push_back({m, 2});
+
+        for(const string& i : implement)
+            subheader.push_back({
+                _translateImplementations[i], 1});
+    }
+
+    vector<string> lineNames;
+    for(int tc : threadCounts)
+        lineNames.push_back(to_string(tc));
+
+    output(testName, header, subheader, lineNames, data);
+}
+
+void MastersTestSuite::metricCost(
+        const string& testName,
         const string& mesher,
         const string& model)
 {
-    size_t nodeCount = 1e6;
+    size_t nodeCount = 1e4;
     size_t cycleCount = 5;
     double metricK = 20.0;
     double metricA = 4.0;
+
+    string evaluator = "Metric Conformity";
 
     vector<string> sampling = {
         "Analytic",
@@ -147,7 +542,7 @@ string MastersTestSuite::metricCost(
 
     _character.generateMesh(mesher, model, nodeCount);
 
-    //_character.saveMesh(MESHES_PATH + "Metric Cost (" + model + ").json");
+    //_character.saveMesh(RESULT_MESH_PATH + testName + ".json");
 
     //QCoreApplication::processEvents();
 
@@ -155,64 +550,63 @@ string MastersTestSuite::metricCost(
     _character.setMetricAspectRatio(metricA);
 
 
-    QString table;
-    table += QString("\\begin{tabular}{|l|cccc|}\n");
-    table += QString("\t\\hline\n");
-    table += QString("\tMétriques\t& \\multicolumn{4}{c|}{Temps (ms)} \\\\\n");
-    table += QString("\t\t& %1 \t& %2\t\t& %3\t\t& %4\\\\\n")
-            .arg(_translateImplementations["Serial"],
-                 _translateImplementations["Thread"],
-                 _translateImplementations["GLSL"],
-                 _translateImplementations["CUDA"]);
+    Grid2D<double> data(implement.size(), sampling.size());
 
-    table += QString("\t\\hline\n");
-
-    for(const auto& s : sampling)
+    for(int s=0; s < sampling.size(); ++s)
     {
-        _character.useSampler(s);
+        const string& samp = sampling[s];
+        _character.useSampler(samp);
 
         // Process exceptions
         map<string, int> currCycle = implCycle;
-        if(model == "HexGrid" && s == "Local")
+        if(model == "HexGrid" && samp == "Local")
         {
             currCycle["GLSL"] = 0;
         }
 
         map<string, double> avgTimes;
-        _character.benchmarkEvaluator(avgTimes, "Metric Conformity", currCycle);
+        _character.benchmarkEvaluator(avgTimes, evaluator, currCycle);
 
-        table += QString("\t%1\t& %2\t\t& %3\t\t& %4\t\t& %5 \\\\ \n")
-                .arg(_translateSampling[s],
-                     QString::number(avgTimes[implement[0]]),
-                     QString::number(avgTimes[implement[1]]),
-                     QString::number(avgTimes[implement[2]]),
-                     QString::number(avgTimes[implement[3]]));
+        for(int i=0; i < implement.size(); ++i)
+            data[s][i] = avgTimes[implement[i]];
     }
 
-    table += "\t\\hline\n";
-    table += "\\end{tabular}\n";
+    vector<pair<string, int>> header = {
+        {"Métriques", 1}, {"Temps (ms)", implement.size()}};
 
+    vector<pair<string, int>> subheader = {{"", 1}};
+    for(const string& i : implement)
+        subheader.push_back({
+            _translateImplementations[i], 1});
 
-    return table.toStdString();
+    vector<string> lineNames;
+    for(const string& s : sampling)
+        lineNames.push_back(_translateSampling[s]);
+
+    output(testName, header, subheader, lineNames, data);
 }
 
-string MastersTestSuite::metricCostSphere()
+void MastersTestSuite::metricCostSphere(
+        const string& testName)
 {
-    return metricCost("Delaunay", "Sphere");
+    return metricCost(testName, "Delaunay", "Sphere");
 }
 
-string MastersTestSuite::metricCostHexGrid()
+void MastersTestSuite::metricCostHexGrid(
+        const string& testName)
 {
-    return metricCost("Debug", "HexGrid");
+    return metricCost(testName, "Debug", "HexGrid");
 }
 
-string MastersTestSuite::metricPrecision()
+void MastersTestSuite::metricPrecision(
+        const string& testName)
 {
     size_t nodeCount = 1e4;
     size_t passCount = 10;
     double metricK = 2.0;
     string implement = "Thread";
     string smoother = "Gradient Descent";
+    string evaluator = "Metric Conformity";
 
     vector<string> sampling = {
         "Analytic",
@@ -230,25 +624,16 @@ string MastersTestSuite::metricPrecision()
     schedule.topoOperationEnabled = false;
     schedule.globalPassCount = passCount;
 
-    QString header = "\tMétrique";
-    QString minInit = "\t[Initial]";
-    QString meanInit = "\t[Initial]";
-    vector<QString> minLines;
-    vector<QString> meanLines;
-    QString histogram = "Initial";
-    for(const string& s : sampling)
-    {
-        minLines.push_back("\t" + _translateSampling[s]);
-        meanLines.push_back("\t" + _translateSampling[s]);
-        histogram += "\t" + QString(s.c_str()) + "";
-    }
-    histogram += "\n";
+    vector<QualityHistogram> histograms;
+    Grid2D<double> minData(ratios.size(), sampling.size() + 1);
+    Grid2D<double> meanData(ratios.size(), sampling.size() + 1);
 
     _character.generateMesh("Delaunay", "Sphere", nodeCount);
 
-    QString meshName = (MESHES_PATH + "Metric Precision (A=%1).json").c_str();
+    QString meshName = (RESULT_MESH_PATH + testName + " (A=%1).json").c_str();
     _character.saveMesh(meshName.arg(0).toStdString());
 
+    _character.useEvaluator(evaluator);
     _character.setMetricScaling(metricK);
     for(int i=0; i < ratios.size(); ++i)
     {
@@ -277,74 +662,57 @@ string MastersTestSuite::metricPrecision()
 
         const QualityHistogram& initHist = plot.initialHistogram();
 
-        header += QString("\t& A=%1").arg(ratios[i]);
-        minInit += QString("\t& %1").arg(initHist.minimumQuality());
-        meanInit += QString("\t& %1").arg(initHist.harmonicMean());
+        minData[0][i] = initHist.minimumQuality();
+        meanData[0][i] = initHist.harmonicMean();
         for(int s=0; s < sampling.size(); ++s)
         {
             const QualityHistogram& hist =
                 plot.implementations()[s].finalHistogram;
-            minLines[s] += QString("\t& %1").arg(hist.minimumQuality());
-            meanLines[s] += QString("\t& %1").arg(hist.harmonicMean());
+            minData[s+1][i] = hist.minimumQuality();
+            meanData[s+1][i] = hist.harmonicMean();
         }
 
         if(i == ratios.size()-1)
         {
-            for(size_t b=0; b < initHist.bucketCount(); ++b)
-            {
-                histogram += QString::number(initHist.buckets()[b]);
+            histograms.push_back(initHist);
 
-                for(int s=0; s < sampling.size(); ++s)
-                {
-                    const QualityHistogram& hist =
-                        plot.implementations()[s].finalHistogram;
-                    histogram += "\t" + QString::number(hist.buckets()[b]);
-                }
-                histogram += "\n";
-            }
+            for(int s=0; s < sampling.size(); ++s)
+                histograms.push_back(
+                    plot.implementations()[s].finalHistogram);
         }
     }
 
-    QString col = QString("c").repeated(ratios.size());
-    header = QString("\\begin{tabular}{|l|%1|}\n").arg(col) +
-                QString("\t\\hline\n") +
-                header + "\\\\\n" +
-                QString("\t\\hline\n");
+    vector<pair<string, int>> header = {{"Métriques", 1}};
+    for(double r : ratios)
+        header.push_back({"A = " + to_string(r), 1});
 
-    QString minTable = header;
-    minTable += minInit + "\\\\\n";
-    for(const QString& l : minLines)
-        minTable +=  l + "\\\\\n";
-    minTable += "\t\\hline\n";
-    minTable += "\\end{tabular}\n";
+    vector<pair<string, int>> subheader = {};
 
-    QString meanTable = header;
-    meanTable += meanInit + "\\\\\n";
-    for(const QString& l : meanLines)
-        meanTable += l + "\\\\\n";
-    meanTable += "\t\\hline\n";
-    meanTable += "\\end{tabular}\n";
+    vector<string> lineNames;
+    for(const string& s : sampling)
+        lineNames.push_back(_translateSampling[s]);
 
-    ofstream histFile;
-    histFile.open(RESULTS_PATH + "Metric Precision.csv");
-    if(histFile.is_open())
-    {
-        histFile << histogram.toStdString();
-        histFile.close();
-    }
+    vector<string> histHeader;
+    for(const string& s : sampling)
+        histHeader.push_back(_translateSampling[s]);
 
-    return (minTable + "\n\n" + meanTable + "\n\n" + histogram).toStdString();
+    output(testName + "(Minimums)", header, subheader, lineNames, minData);
+    output(testName + "(Harmonic means)", header, subheader, lineNames, meanData);
+    output(testName, histHeader, histograms);
 }
 
-string MastersTestSuite::nodeOrder()
+void MastersTestSuite::nodeOrder(
+        const string& testName)
 {
     const string mesher = "Delaunay";
     const string model = "Sphere";
-    const int nodeCount = 1E4;
+    const int nodeCount = 1e3;
 
     const string samp = "Analytic";
     const double metricK = 10.0;
     const double metricA = 4.0;
+
+    const string evaluator = "Metric Conformity";
 
     const string smoother = "Gradient Descent";
     const vector<string> impl = {"Serial", "Thread"};
@@ -361,7 +729,9 @@ string MastersTestSuite::nodeOrder()
     _character.setMetricScaling(metricK);
     _character.setMetricAspectRatio(metricA);
 
-    _character.saveMesh(MESHES_PATH + "Node Order.json");
+    _character.useEvaluator(evaluator);
+
+    _character.saveMesh(RESULT_MESH_PATH + testName + ".json");
 
 
     QCoreApplication::processEvents();
@@ -376,27 +746,40 @@ string MastersTestSuite::nodeOrder()
     _character.benchmarkSmoothers(
         plot, schedule, configs);
 
+    Grid2D<double> data(impl.size()*2, schedule.globalPassCount+1);
 
-    QString table;
-    table += "\\begin{tabular}{|l|cc|cc|}\n";
-    table += "\t\\hline\n";
-    table += "\tItérations \t& \\multicolumn{2}{c|}{Minimums} \t& \\multicolumn{2}{c|}{Moyennes} \\\\\n";
-    table += "\t\t\t\t& Séquentiel \t& Parallèle \t\t& Séquentiel \t& Parallèle \\\\\n";
-    table += "\t\\hline\n";
     for(int p=0; p <= schedule.globalPassCount; ++p)
     {
-        const QualityHistogram& histSerial = plot.implementations()[0].passes[p].histogram;
-        const QualityHistogram& histParallel = plot.implementations()[1].passes[p].histogram;
+        for(int i=0; i < impl.size(); ++i)
+        {
+            const QualityHistogram& hist =
+                plot.implementations()[i].passes[p].histogram;
+            data[p][0 + i] = hist.minimumQuality();
+            data[p][2 + i] = hist.harmonicMean();
 
-        table += QString("\t%1 \t\t\t& %2 \t& %3 \t\t& %4 \t& %5\\\\\n").arg(
-                    QString::number(p),
-                    QString::number(histSerial.minimumQuality()),
-                    QString::number(histParallel.minimumQuality()),
-                    QString::number(histSerial.harmonicMean()),
-                    QString::number(histParallel.harmonicMean()));
+        }
     }
-    table += "\t\\hline\n";
-    table += "\\end{tabular}\n";
 
-    return table.toStdString();
+
+    vector<pair<string, int>> header = {
+        {"Itérations", 1}, {"Minimums", 2}, {"Moyennes", 2}};
+
+    vector<pair<string, int>> subheader = {{"", 1}};
+    for(int m=0; m < 2; ++m)
+    {
+        for(const string& i : impl)
+            subheader.push_back(
+                {_translateImplementations[i], 1});
+    }
+
+    vector<string> lineNames;
+    for(int p=0; p <= schedule.globalPassCount; ++p)
+        lineNames.push_back(to_string(p));
+
+    output(testName, header, subheader, lineNames, data);
+}
+
+void MastersTestSuite::smootherBlockSize(
+        const string& testName)
+{
 }

@@ -6,11 +6,16 @@
 #include <vector>
 #include <functional>
 
-#include <QString>
-
 #include "DataStructures/OptionMap.h"
 
+namespace cellar
+{
+    template<typename T>
+    class Grid2D;
+}
+
 class GpuMeshCharacter;
+class QualityHistogram;
 
 
 class MastersTestSuite
@@ -27,24 +32,101 @@ public:
     std::string runTests(const std::vector<std::string>& tests);
 
 
-protected:
-    std::string metricCost(const std::string& mesher, const std::string& model);
-    std::string metricCostSphere();
-    std::string metricCostHexGrid();
+protected:    
+    void saveToFile(
+            const std::string& results,
+            const std::string& fileName) const;
 
-    std::string metricPrecision();
 
-    std::string nodeOrder();
+    void output(
+            const std::string& title,
+            const std::vector<std::string>& header,
+            const std::vector<QualityHistogram>& histograms);
+
+    void saveCsvTable(
+            const std::string& title,
+            const std::vector<std::string>& header,
+            const std::vector<QualityHistogram>& histograms);
+
+    void saveLatexTable(
+            const std::string& title,
+            const std::vector<std::string>& header,
+            const std::vector<QualityHistogram>& histograms);
+
+    void saveReportTable(
+            const std::string& title,
+            const std::vector<std::string>& header,
+            const std::vector<QualityHistogram>& histograms);
+
+
+    void output(
+            const std::string& title,
+            const std::vector<std::pair<std::string, int>> header,
+            const std::vector<std::pair<std::string, int>> subHeader,
+            const std::vector<std::string> lineNames,
+            const cellar::Grid2D<double>& data);
+
+    void saveCsvTable(
+            const std::string& title,
+            const std::vector<std::pair<std::string, int>> header,
+            const std::vector<std::pair<std::string, int>> subHeader,
+            const std::vector<std::string> lineNames,
+            const cellar::Grid2D<double>& data);
+
+    void saveLatexTable(
+            const std::string& title,
+            const std::vector<std::pair<std::string, int>> header,
+            const std::vector<std::pair<std::string, int>> subHeader,
+            const std::vector<std::string> lineNames,
+            const cellar::Grid2D<double>& data);
+
+    void saveReportTable(
+            const std::string& title,
+            const std::vector<std::pair<std::string, int>> header,
+            const std::vector<std::pair<std::string, int>> subHeader,
+            const std::vector<std::string> lineNames,
+            const cellar::Grid2D<double>& data);
+
+
+
+    void evaluatorBlockSize(
+            const std::string& testName);
+
+
+    void metricCost(
+            const std::string& testName,
+            const std::string& mesher,
+            const std::string& model);
+
+    void metricCostSphere(
+            const std::string& testName);
+
+    void metricCostHexGrid(
+            const std::string& testName);
+
+
+    void metricPrecision(
+            const std::string& testName);
+
+
+    void nodeOrder(
+            const std::string& testName);
+
+
+    void smootherBlockSize(
+            const std::string& testName);
 
 
 private:
     GpuMeshCharacter& _character;
 
-    typedef std::function<std::string()> MastersTestFunc;
+    typedef std::function<void(const std::string&)> MastersTestFunc;
     OptionMap<MastersTestFunc> _availableMastersTests;
 
-    std::map<std::string, QString> _translateSampling;
-    std::map<std::string, QString> _translateImplementations;
+    std::map<std::string, std::string> _translateSampling;
+    std::map<std::string, std::string> _translateImplementations;
+
+    std::string _reportDoc;
 };
 
 #endif // GPUMESH_MASTERSTESTSUITE

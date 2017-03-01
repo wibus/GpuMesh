@@ -238,6 +238,16 @@ void TextureSampler::setReferenceMesh(
 {
     _debugMesh.reset();
 
+    if(mesh.verts.empty())
+    {
+        _grid.reset(
+            new TextureGrid(
+                glm::ivec3(1),
+                glm::dvec3(2),
+                glm::ivec3(-1)));
+        return;
+    }
+
 
     // Find grid bounds
     glm::dvec3 minBounds, maxBounds;
