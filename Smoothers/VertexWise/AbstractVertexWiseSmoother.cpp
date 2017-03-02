@@ -595,20 +595,20 @@ std::string AbstractVertexWiseSmoother::glslLauncher() const
 
 NodeGroups::GpuDispatcher AbstractVertexWiseSmoother::glslDispatcher() const
 {
-    return [](NodeGroups::GpuDispatch& d)
+    return [this](NodeGroups::GpuDispatch& d)
     {
-        d.workgroupSize = glm::uvec3(256, 1, 1);
+        d.workgroupSize = glm::uvec3(_glslThreadCount, 1, 1);
         d.workgroupCount = glm::uvec3(
-            glm::ceil(double(d.gpuBufferSize)/256), 1, 1);
+            glm::ceil(double(d.gpuBufferSize)/_glslThreadCount), 1, 1);
     };
 }
 
 NodeGroups::GpuDispatcher AbstractVertexWiseSmoother::cudaDispatcher() const
 {
-    return [](NodeGroups::GpuDispatch& d)
+    return [this](NodeGroups::GpuDispatch& d)
     {
-        d.workgroupSize = glm::uvec3(256, 1, 1);
+        d.workgroupSize = glm::uvec3(_cudaThreadCount, 1, 1);
         d.workgroupCount = glm::uvec3(
-            glm::ceil(double(d.gpuBufferSize)/256), 1, 1);
+            glm::ceil(double(d.gpuBufferSize)/_cudaThreadCount), 1, 1);
     };
 }

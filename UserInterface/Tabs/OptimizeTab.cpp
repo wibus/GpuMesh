@@ -53,11 +53,6 @@ OptimizeTab::OptimizeTab(Ui::MainWindow* ui,
             static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this, &OptimizeTab::globalPassCount);
 
-    nodeRelocationPassCount(_ui->scheduleRelocPassCountSpin->value());
-    connect(_ui->scheduleRelocPassCountSpin,
-            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            this, &OptimizeTab::nodeRelocationPassCount);
-
 
     // Topology Modifications
     enableTopology(_ui->topoEnabledCheck->isChecked());
@@ -84,6 +79,21 @@ OptimizeTab::OptimizeTab(Ui::MainWindow* ui,
     connect(_ui->smoothingImplementationMenu,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
             this, &OptimizeTab::implementationChanged);
+
+    glslThreadCount(_ui->relocGlslThreadCountSpin->value());
+    connect(_ui->relocGlslThreadCountSpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &OptimizeTab::glslThreadCount);
+
+    cudaThreadCount(_ui->relocCudaThreadCountSpin->value());
+    connect(_ui->relocCudaThreadCountSpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &OptimizeTab::cudaThreadCount);
+
+    nodeRelocationPassCount(_ui->scheduleRelocPassCountSpin->value());
+    connect(_ui->scheduleRelocPassCountSpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &OptimizeTab::nodeRelocationPassCount);
 
     connect(_ui->smoothMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
@@ -129,6 +139,16 @@ void OptimizeTab::fixedIterationsToggled(bool checked)
 void OptimizeTab::globalPassCount(int passCount)
 {
     _schedule.globalPassCount = passCount;
+}
+
+void OptimizeTab::glslThreadCount(int count)
+{
+    _character->setGlslSmootherThreadCount(count);
+}
+
+void OptimizeTab::cudaThreadCount(int count)
+{
+    _character->setCudaSmootherThreadCount(count);
 }
 
 void OptimizeTab::nodeRelocationPassCount(int passCount)
@@ -217,15 +237,14 @@ void OptimizeTab::runMastersTests()
     testDialog.show();
     if(testDialog.exec() == QDialog::Accepted)
     {
-        string doc = _character->runMastersTests(
-            testDialog.tests());
-
         delete _mastersTestWidget;
         _mastersTestWidget = new QTextEdit();
         _mastersTestWidget->resize(1000, 800);
 
-        QTextCursor cursor = _mastersTestWidget->textCursor();
-        cursor.insertText(doc.c_str());
+        _character->runMastersTests(
+            *_mastersTestWidget->document(),
+            testDialog.tests());
+
 
         _mastersTestWidget->show();
     }

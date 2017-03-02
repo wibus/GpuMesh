@@ -24,6 +24,13 @@ public:
 
     virtual OptionMapDetails availableImplementations() const;
 
+
+    // Thread counts
+    virtual void setGlslThreadCount(uint count);
+
+    virtual void setCudaThreadCount(uint count);
+
+
     virtual void smoothMesh(
             Mesh& mesh,
             const MeshCrew& crew,
@@ -67,6 +74,9 @@ protected:
 
 
     Schedule _schedule;
+
+    uint _glslThreadCount;
+    uint _cudaThreadCount;
 
     int _relocPassId;
     int _globalPassId;

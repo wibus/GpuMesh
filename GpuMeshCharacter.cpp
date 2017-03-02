@@ -244,6 +244,32 @@ void GpuMeshCharacter::enterStage()
 
     setupInstalledRenderer();
     _meshCrew->initialize(*_mesh);
+
+
+
+    GLint variableGroupSize[3] = {0, 0, 0};
+    glGetIntegeri_v(GL_MAX_COMPUTE_VARIABLE_GROUP_SIZE_ARB,
+                  0, &variableGroupSize[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_VARIABLE_GROUP_SIZE_ARB,
+                  1, &variableGroupSize[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_VARIABLE_GROUP_SIZE_ARB,
+                  2, &variableGroupSize[2]);
+
+    getLog().postMessage(new Message('I', false,
+        "Max variable group size: (" +
+                to_string(variableGroupSize[0]) + ", " +
+                to_string(variableGroupSize[1]) + ", " +
+                to_string(variableGroupSize[2]) + ")"
+                , "GpuMeshCharacter"));
+
+    GLint variableInvocCount = 0;
+    glGetIntegerv(GL_MAX_COMPUTE_VARIABLE_GROUP_INVOCATIONS_ARB,
+                  &variableInvocCount);
+
+    getLog().postMessage(new Message('I', false,
+        "Max variable invocation count: " +
+                to_string(variableInvocCount),
+        "GpuMeshCharacter"));
 }
 
 void GpuMeshCharacter::beginStep(const StageTime &time)
@@ -630,6 +656,8 @@ void GpuMeshCharacter::smoothMesh(
 
         _meshCrew->evaluator().setGlslThreadCount(_glslEvaluatorThreadCount);
         _meshCrew->evaluator().setCudaThreadCount(_cudaEvaluatorThreadCount);
+        smoother->setGlslThreadCount(_glslSmootherThreadCount);
+        smoother->setCudaThreadCount(_cudaSmootherThreadCount);
 
         smoother->smoothMesh(
             *_mesh,
@@ -694,6 +722,9 @@ void GpuMeshCharacter::benchmarkSmoothers(
                     "(samp=" + config.samplerName +
                     ", impl=" + config.implementationName + ")";
                 impl.isTopologicalOperationOn = schedule.topoOperationEnabled;
+
+                smoother->setGlslThreadCount(_glslSmootherThreadCount);
+                smoother->setCudaThreadCount(_cudaSmootherThreadCount);
 
                 printStep("Benchmarking smoothing configuration: "\
                           ": " + impl.name);
@@ -825,10 +856,11 @@ void GpuMeshCharacter::setQualityCullingBounds(double min, double max)
     }
 }
 
-string GpuMeshCharacter::runMastersTests(
+void GpuMeshCharacter::runMastersTests(
+        QTextDocument& reportDocument,
         const vector<string>& tests)
 {
-    return _mastersTestSuite->runTests(tests);
+    _mastersTestSuite->runTests(reportDocument, tests);
 }
 
 void GpuMeshCharacter::printStep(const std::string& stepDescription)

@@ -3,6 +3,8 @@
 
 #include <vector>
 
+class QTextDocument;
+
 #include <CellarWorkbench/Camera/CameraManFree.h>
 
 #include <PropRoom2D/Prop/Hud/TextHud.h>
@@ -127,7 +129,8 @@ public:
 
 
     // Master's tests
-    virtual std::string runMastersTests(
+    virtual void runMastersTests(
+            QTextDocument& reportDocument,
             const std::vector<std::string>& tests);
 
 

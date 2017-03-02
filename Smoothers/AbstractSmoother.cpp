@@ -19,6 +19,8 @@ const int AbstractSmoother::INITIAL_PASS_ID = -1;
 const int AbstractSmoother::COMPARE_PASS_ID = -2;
 
 AbstractSmoother::AbstractSmoother() :
+    _glslThreadCount(256),
+    _cudaThreadCount(256),
     _smoothingUtilsShader(":/glsl/compute/Smoothing/Utils.glsl"),
     _implementationFuncs("Smoothing Implementations")
 {
@@ -40,6 +42,16 @@ AbstractSmoother::~AbstractSmoother()
 OptionMapDetails AbstractSmoother::availableImplementations() const
 {
     return _implementationFuncs.details();
+}
+
+void AbstractSmoother::setGlslThreadCount(uint count)
+{
+    _glslThreadCount = count;
+}
+
+void AbstractSmoother::setCudaThreadCount(uint count)
+{
+    _cudaThreadCount = count;
 }
 
 void AbstractSmoother::smoothMesh(

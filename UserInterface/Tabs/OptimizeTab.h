@@ -34,7 +34,6 @@ protected slots:
     virtual void qualMeanThresholdChanged(double threshold);
     virtual void fixedIterationsToggled(bool checked);
     virtual void globalPassCount(int passCount);
-    virtual void nodeRelocationPassCount(int passCount);
 
     virtual void enableTopology(bool checked);
     virtual void topologyPassCount(int count);
@@ -42,6 +41,9 @@ protected slots:
 
     virtual void techniqueChanged(const QString&);
     virtual void implementationChanged(const QString&);
+    virtual void glslThreadCount(int count);
+    virtual void cudaThreadCount(int count);
+    virtual void nodeRelocationPassCount(int passCount);
     virtual void smoothMesh();
 
 

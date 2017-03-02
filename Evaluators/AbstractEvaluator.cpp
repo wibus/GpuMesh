@@ -54,13 +54,8 @@ AbstractEvaluator::AbstractEvaluator(const std::string& shapeMeasuresShader,
     _glslThreadCount(256),
     _cudaThreadCount(256)
 {
-/*
-    static_assert(AbstractEvaluator::MAX_QUALITY_VALUE >=
-                  AbstractEvaluator::MIN_QUALITY_PRECISION_DENOM,
-                  "Shape measure on GPU may not be suffciently precise \
-                   given this workgroup size.");
-*/
     using namespace std::placeholders;
+
     _implementationFuncs.setDefault(CUDA_IMPL_NAME);
     _implementationFuncs.setContent({
       {string(SERIAL_IMPL_NAME),  ImplementationFunc(bind(&AbstractEvaluator::evaluateMeshQualitySerial, this, _1, _2, _3, _4))},

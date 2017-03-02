@@ -6,6 +6,8 @@
 #include <vector>
 #include <functional>
 
+class QTextDocument;
+
 #include "DataStructures/OptionMap.h"
 
 namespace cellar
@@ -29,7 +31,9 @@ public:
 
     OptionMapDetails availableTests() const;
 
-    std::string runTests(const std::vector<std::string>& tests);
+    void runTests(
+            QTextDocument& reportDocument,
+            const std::vector<std::string>& tests);
 
 
 protected:    
@@ -124,9 +128,10 @@ private:
     OptionMap<MastersTestFunc> _availableMastersTests;
 
     std::map<std::string, std::string> _translateSampling;
-    std::map<std::string, std::string> _translateImplementations;
+    std::map<std::string, std::string> _translateImplementation;
+    std::map<std::string, std::string> _translateSmoothers;
 
-    std::string _reportDoc;
+    QTextDocument* _reportDocument;
 };
 
 #endif // GPUMESH_MASTERSTESTSUITE

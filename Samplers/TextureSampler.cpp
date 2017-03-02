@@ -50,6 +50,11 @@ public:
         return _impl[pos];
     }
 
+    inline MeshMetric& at(int i, int j, int k)
+    {
+        return _impl.get(i, j, k);
+    }
+
     const glm::ivec3 size;
     const glm::dvec3 extents;
     const glm::dvec3 minBounds;
@@ -346,29 +351,24 @@ MeshMetric TextureSampler::metricAt(
     glm::dvec3 cs = _grid->extents / glm::dvec3(_grid->size);
     glm::dvec3 minB = _grid->minBounds;
     glm::dvec3 maxB = _grid->minBounds + _grid->extents - (cs *1.5);
-    glm::dvec3 cp000 = glm::clamp(position + glm::dvec3(-cs.x, -cs.y, -cs.z)/2.0, minB, maxB);
+    glm::dvec3 cp0 = glm::clamp(position + glm::dvec3(-cs.x, -cs.y, -cs.z)/2.0, minB, maxB);
 
-    glm::ivec3 id000 = cellId(*_grid, cp000);
+    glm::ivec3 id0 = cellId(*_grid, cp0);
+    glm::ivec3 id1 = glm::min(
+        id0 + glm::ivec3(1, 1, 1),
+        _grid->size - glm::ivec3(1, 1, 1));
 
-    glm::ivec3 id100 = id000 + glm::ivec3(1, 0, 0);
-    glm::ivec3 id010 = id000 + glm::ivec3(0, 1, 0);
-    glm::ivec3 id110 = id000 + glm::ivec3(1, 1, 0);
-    glm::ivec3 id001 = id000 + glm::ivec3(0, 0, 1);
-    glm::ivec3 id101 = id000 + glm::ivec3(1, 0, 1);
-    glm::ivec3 id011 = id000 + glm::ivec3(0, 1, 1);
-    glm::ivec3 id111 = id000 + glm::ivec3(1, 1, 1);
+    MeshMetric m000 = _grid->at(id0.x, id0.y, id0.z);
+    MeshMetric m100 = _grid->at(id1.x, id0.y, id0.z);
+    MeshMetric m010 = _grid->at(id0.x, id1.y, id0.z);
+    MeshMetric m110 = _grid->at(id1.x, id1.y, id0.z);
+    MeshMetric m001 = _grid->at(id0.x, id0.y, id1.z);
+    MeshMetric m101 = _grid->at(id1.x, id0.y, id1.z);
+    MeshMetric m011 = _grid->at(id0.x, id1.y, id1.z);
+    MeshMetric m111 = _grid->at(id1.x, id1.y, id1.z);
 
-    MeshMetric m000 = _grid->at(id000);
-    MeshMetric m100 = _grid->at(id100);
-    MeshMetric m010 = _grid->at(id010);
-    MeshMetric m110 = _grid->at(id110);
-    MeshMetric m001 = _grid->at(id001);
-    MeshMetric m101 = _grid->at(id101);
-    MeshMetric m011 = _grid->at(id011);
-    MeshMetric m111 = _grid->at(id111);
-
-    glm::dvec3 c000Center = cs * (glm::dvec3(id000) + glm::dvec3(0.5));
-    glm::dvec3 a = (position - (_grid->minBounds + c000Center)) / cs;
+    glm::dvec3 c0Center = cs * (glm::dvec3(id0) + glm::dvec3(0.5));
+    glm::dvec3 a = (position - (_grid->minBounds + c0Center)) / cs;
     a = glm::clamp(a, glm::dvec3(0), glm::dvec3(1));
 
     MeshMetric mx00 = interpolateMetrics(m000, m100, a.x);

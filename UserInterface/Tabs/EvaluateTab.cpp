@@ -23,11 +23,11 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
 
     connect(_ui->shapeMeasureGlslThreadSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this, &EvaluateTab::glslThreadCountChanged);
-    glslThreadCountChanged(_ui->scalingSpin->value());
+    glslThreadCountChanged(_ui->shapeMeasureGlslThreadSpin->value());
 
     connect(_ui->shapeMeasureCudaThreadSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this, &EvaluateTab::cudaThreadCountChanged);
-    cudaThreadCountChanged(_ui->scalingSpin->value());
+    cudaThreadCountChanged(_ui->shapeMeasureCudaThreadSpin->value());
 
     connect(_ui->evaluateMesh,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
