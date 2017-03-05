@@ -28,7 +28,17 @@ const string RESULTS_PATH = "resources/reports/";
 const string RESULT_LATEX_PATH = RESULTS_PATH + "latex/";
 const string RESULT_MESH_PATH = RESULTS_PATH + "mesh/";
 const string RESULT_CSV_PATH = RESULTS_PATH + "csv/";
+const string DATA_MESH_PATH = "resources/data/";
 
+const string MESH_SPHERE_500K = RESULT_MESH_PATH + "Sphere (500K nodes).json";
+const string MESH_SPHERE_ADAPTED = RESULT_MESH_PATH + "Sphere (Adapted).json";
+const string MESH_HEXGRID_500K = RESULT_MESH_PATH + "HexGrid (500K nodes).json";
+const string MESH_CUBE_ADAPTED = RESULT_MESH_PATH + "Cube (Adapted).json";
+const string MESH_TURBINE_500K = DATA_MESH_PATH + "FINAL_MESH.cgns";
+
+const double ADAPTATION_METRIC_K = 26.0;
+const double ADAPTATION_METRIC_A = 8;
+const double ADAPTATION_TOPO_PASS = 5;
 
 MastersTestSuite::MastersTestSuite(
         GpuMeshCharacter& character) :
@@ -56,7 +66,10 @@ MastersTestSuite::MastersTestSuite(
         {to_string(++tId) + ". Node Order",
         MastersTestFunc(bind(&MastersTestSuite::nodeOrder,          this, _1))},
 
-        {to_string(++tId) + ". Smoother Block Size",
+        {to_string(++tId) + ". Smoothers Efficacity",
+        MastersTestFunc(bind(&MastersTestSuite::smootherEfficacity, this, _1))},
+
+        {to_string(++tId) + ". Smoothers Block Size",
         MastersTestFunc(bind(&MastersTestSuite::smootherBlockSize,  this, _1))},
     });
 
@@ -115,6 +128,75 @@ void MastersTestSuite::runTests(
         QTextDocument& reportDocument,
         const vector<string>& tests)
 {
+    // Prepare cases
+    if(!QFile(MESH_SPHERE_500K.c_str()).exists())
+    {
+        _character.generateMesh("Delaunay", "Sphere", 500e3);
+        _character.saveMesh(MESH_SPHERE_500K);
+        QCoreApplication::processEvents();
+    }
+
+    if(!QFile(MESH_SPHERE_ADAPTED.c_str()).exists())
+    {
+        _character.useSampler("Analytic");
+        _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
+        _character.useEvaluator("Metric Conformity");
+        _character.generateMesh("Delaunay", "Sphere", 1000);
+
+        for(double k=1.0; k < ADAPTATION_METRIC_K; k *= 2.0)
+        {
+            _character.setMetricScaling(k);
+            _character.restructureMesh(ADAPTATION_TOPO_PASS);
+            QCoreApplication::processEvents();
+        }
+        _character.setMetricScaling(ADAPTATION_METRIC_K);
+        _character.restructureMesh(ADAPTATION_TOPO_PASS);
+        QCoreApplication::processEvents();
+
+        _character.saveMesh(MESH_SPHERE_ADAPTED);
+    }
+
+    if(!QFile(MESH_HEXGRID_500K.c_str()).exists())
+    {
+        _character.generateMesh("Debug", "HexGrid", 500e3);
+        QCoreApplication::processEvents();
+
+        _character.saveMesh(MESH_HEXGRID_500K);
+    }
+
+    if(!QFile(MESH_CUBE_ADAPTED.c_str()).exists())
+    {
+        _character.useSampler("Analytic");
+        _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
+        _character.useEvaluator("Metric Conformity");
+        _character.generateMesh("Debug", "Cube", 1000);
+
+        for(double k=1.0; k < ADAPTATION_METRIC_K; k *= 2.0)
+        {
+            _character.setMetricScaling(k);
+            _character.restructureMesh(ADAPTATION_TOPO_PASS);
+            QCoreApplication::processEvents();
+        }
+        _character.setMetricScaling(ADAPTATION_METRIC_K);
+        _character.restructureMesh(ADAPTATION_TOPO_PASS);
+        QCoreApplication::processEvents();
+
+        _character.saveMesh(MESH_CUBE_ADAPTED);
+    }
+
+    if(!QFile(MESH_TURBINE_500K.c_str()).exists())
+    {
+        getLog().postMessage(new Message('E', true,
+            "Missing 500K nodes turbine mesh",
+            "MastersTestSuite"));
+        return;
+    }
+
+    _character.clearMesh();
+    QCoreApplication::processEvents();
+
+    return;
+
     reportDocument.clear();
     _reportDocument = &reportDocument;
     QTextCursor cursor(_reportDocument);
@@ -434,7 +516,7 @@ void MastersTestSuite::saveLatexTable(
 
         if(width > 1)
         {
-            ss << "multicolumn{" << width << "}{c|}{" << name << "}";
+            ss << "\\multicolumn{" << width << "}{c|}{" << name << "}";
         }
         else
         {
@@ -457,7 +539,7 @@ void MastersTestSuite::saveLatexTable(
 
             if(width > 1)
             {
-                ss << "multicolumn{" << width << "}{c|}{" << name << "}";
+                ss << "\\multicolumn{" << width << "}{c|}{" << name << "}";
             }
             else
             {
@@ -591,9 +673,9 @@ void MastersTestSuite::evaluatorBlockSize(
         //"FINAL_MESH.cgns"
     };
 
-    const int nodeCount = 5e3;
+    const int nodeCount = 5e5;
 
-    const double metricK = 10;
+    const double metricK = 16;
     const double metricA = 5;
     const string sampler = "Texture";
 
@@ -608,8 +690,8 @@ void MastersTestSuite::evaluatorBlockSize(
         cycleCounts[impl] = 5;
 
     vector<uint> threadCounts = {
-        8, 16, 32, 64, 128,
-        192, 256, //512, 1024
+        1, 2, 4, 8, 16, 32,
+        64, 128, 192, 256, //512, 1024
     };
 
     _character.useSampler(sampler);
@@ -873,11 +955,11 @@ void MastersTestSuite::nodeOrder(
 {
     const string mesher = "Delaunay";
     const string model = "Sphere";
-    const int nodeCount = 5e3;
+    const int nodeCount = 5e5;
 
     const string samp = "Analytic";
-    const double metricK = 10.0;
-    const double metricA = 4.0;
+    const double metricK = 16.0;
+    const double metricA = 5.0;
 
     const string evaluator = "Metric Conformity";
 
@@ -946,6 +1028,95 @@ void MastersTestSuite::nodeOrder(
     output(testName, header, subheader, lineNames, data);
 }
 
+void MastersTestSuite::smootherEfficacity(
+        const string& testName)
+{
+    string mesh = RESULT_MESH_PATH + testName + ".json";
+    string mesher = "Debug";
+    string model = "Cube";
+    int nodeCount = 5e3;
+
+    string sampler = "Analytic";
+    double metricK = 16;
+    double metricA = 5;
+
+    string evaluator = "Metric Conformity";
+
+    vector<string> smoothers = {
+        "Spring Laplace",
+        "Quality Laplace",
+        "Spawn Search",
+        "Nelder-Mead",
+        "Gradient Descent"
+    };
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.globalPassCount = 10;
+    int topoPassCount = 10;
+
+    string implementation = "Thread";
+
+    vector<Configuration> configs;
+    for(const auto& s : smoothers)
+            configs.push_back(Configuration{
+                sampler, s, implementation});
+
+
+    _character.useEvaluator(evaluator);
+    _character.generateMesh(mesher, model, nodeCount);
+
+    _character.useSampler("Analytic");
+    _character.setMetricAspectRatio(metricA);
+    for(double k=1.0; k < metricK; k *= 2)
+    {
+        _character.setMetricScaling(k);
+        _character.restructureMesh(topoPassCount);
+
+        QCoreApplication::processEvents();
+    }
+
+    _character.setMetricScaling(metricK);
+    _character.restructureMesh(topoPassCount);
+
+    QCoreApplication::processEvents();
+
+    _character.saveMesh(mesh);
+    _character.useSampler(sampler);
+
+
+    Grid2D<double> data(2, smoothers.size()+1);
+
+    OptimizationPlot plot;
+    _character.benchmarkSmoothers(
+        plot, schedule, configs);
+
+    const QualityHistogram& initHist = plot.initialHistogram();
+    data[0][0] = initHist.minimumQuality();
+    data[0][1] = initHist.harmonicMean();
+
+    for(int s=0; s < smoothers.size(); ++s)
+    {
+        const QualityHistogram& hist =
+            plot.implementations()[s].finalHistogram;
+
+        data[s+1][0] = hist.minimumQuality();
+        data[s+1][1] = hist.harmonicMean();
+    }
+
+
+    vector<pair<string, int>> header = {
+        {"Métriques", 1}, {"Minimums", 1}, {"Moyennes", 1}};
+    vector<pair<string, int>> subheader = {};
+
+    vector<string> lineNames = {"Initial"};
+    for(const string& s : smoothers)
+        lineNames.push_back(_translateSmoothers[s]);
+
+    output(testName, header, subheader, lineNames, data);
+}
+
 void MastersTestSuite::smootherBlockSize(
         const string& testName)
 {
@@ -955,7 +1126,7 @@ void MastersTestSuite::smootherBlockSize(
     int nodeCount = 5e3;
 
     string sampler = "Texture";
-    double metricK = 4;
+    double metricK = 16;
     double metricA = 5;
 
     string evaluator = "Metric Conformity";

@@ -116,9 +116,13 @@ protected:
     void nodeOrder(
             const std::string& testName);
 
+    void smootherEfficacity(
+            const std::string& testName);
 
     void smootherBlockSize(
             const std::string& testName);
+
+
 
 
 private:

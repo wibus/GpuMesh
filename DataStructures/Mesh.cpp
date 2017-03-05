@@ -207,15 +207,15 @@ void Mesh::compileTopology(bool verbose)
     auto compileEnd = chrono::high_resolution_clock::now();
 
 
+    getLog().postMessage(new Message('I', false,
+        "Vertice count: " + to_string(vertCount), "Mesh"));
+
+    size_t elemCount = tets.size() + pris.size() + hexs.size();
+    getLog().postMessage(new Message('I', false,
+        "Element count: " + to_string(elemCount), "Mesh"));
+
     if(verbose)
     {
-        getLog().postMessage(new Message('I', false,
-            "Vertice count: " + to_string(vertCount), "Mesh"));
-
-        size_t elemCount = tets.size() + pris.size() + hexs.size();
-        getLog().postMessage(new Message('I', false,
-            "Element count: " + to_string(elemCount), "Mesh"));
-
         double elemVertRatio = elemCount  / (double) vertCount;
         getLog().postMessage(new Message('I', false,
             "Element count / Vertice count: " + to_string(elemVertRatio), "Mesh"));
