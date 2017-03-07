@@ -14,7 +14,7 @@ public:
     int topoOperationPassCount;
 
     int globalPassCount;
-    int nodeRelocationsPassCount;
+    int relocationPassCount;
 };
 
 #endif // GPUMESH_SCHEDULE

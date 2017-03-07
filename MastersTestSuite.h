@@ -37,6 +37,10 @@ public:
 
 
 protected:    
+    void setupAdaptedCube(
+            double metricK,
+            double metricA);
+
     void saveToFile(
             const std::string& results,
             const std::string& fileName) const;
@@ -99,10 +103,9 @@ protected:
 
     void metricCost(
             const std::string& testName,
-            const std::string& mesher,
-            const std::string& model);
+            const std::string& mesh);
 
-    void metricCostSphere(
+    void metricCostTetCube(
             const std::string& testName);
 
     void metricCostHexGrid(
@@ -131,9 +134,11 @@ private:
     typedef std::function<void(const std::string&)> MastersTestFunc;
     OptionMap<MastersTestFunc> _availableMastersTests;
 
-    std::map<std::string, std::string> _translateSampling;
-    std::map<std::string, std::string> _translateImplementation;
+    std::map<std::string, std::string> _translateSamplingTechniques;
+    std::map<std::string, std::string> _translateImplementations;
     std::map<std::string, std::string> _translateSmoothers;
+
+    std::map<std::string, std::string> _meshNames;
 
     QTextDocument* _reportDocument;
 };

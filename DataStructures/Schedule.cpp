@@ -8,7 +8,7 @@ Schedule::Schedule() :
     topoOperationEnabled(true),
     topoOperationPassCount(5),
     globalPassCount(5),
-    nodeRelocationsPassCount(10)
+    relocationPassCount(10)
 {
 
 }

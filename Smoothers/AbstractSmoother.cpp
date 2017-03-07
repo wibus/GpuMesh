@@ -193,7 +193,7 @@ bool AbstractSmoother::evaluateMeshQuality(Mesh& mesh,  const MeshCrew& crew, in
         }
         else
         {
-            continueSmoothing = _relocPassId < _schedule.nodeRelocationsPassCount;
+            continueSmoothing = _relocPassId < _schedule.relocationPassCount;
         }
 
         OptimizationPass stats;

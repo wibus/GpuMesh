@@ -153,7 +153,7 @@ void OptimizeTab::cudaThreadCount(int count)
 
 void OptimizeTab::nodeRelocationPassCount(int passCount)
 {
-    _schedule.nodeRelocationsPassCount = passCount;
+    _schedule.relocationPassCount = passCount;
 }
 
 void OptimizeTab::enableTopology(bool checked)

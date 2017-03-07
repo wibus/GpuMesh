@@ -30,15 +30,16 @@ const string RESULT_MESH_PATH = RESULTS_PATH + "mesh/";
 const string RESULT_CSV_PATH = RESULTS_PATH + "csv/";
 const string DATA_MESH_PATH = "resources/data/";
 
-const string MESH_SPHERE_500K = RESULT_MESH_PATH + "Sphere (500K nodes).json";
-const string MESH_SPHERE_ADAPTED = RESULT_MESH_PATH + "Sphere (Adapted).json";
-const string MESH_HEXGRID_500K = RESULT_MESH_PATH + "HexGrid (500K nodes).json";
-const string MESH_CUBE_ADAPTED = RESULT_MESH_PATH + "Cube (Adapted).json";
+const string MESH_TETCUBE_K12 = RESULT_MESH_PATH + "TetCube (K=12).json";
+const string MESH_TETCUBE_K24 = RESULT_MESH_PATH + "TetCube (K=24).json";
+const string MESH_HEXGRID_500K = RESULT_MESH_PATH + "HexGrid (500K).json";
 const string MESH_TURBINE_500K = DATA_MESH_PATH + "FINAL_MESH.cgns";
 
-const double ADAPTATION_METRIC_K = 26.0;
+const double ADAPTATION_METRIC_K12 = 12;
+const double ADAPTATION_METRIC_K24 = 24;
 const double ADAPTATION_METRIC_A = 8;
 const double ADAPTATION_TOPO_PASS = 5;
+const double ADAPTATION_RELOC_PASS = 10;
 
 MastersTestSuite::MastersTestSuite(
         GpuMeshCharacter& character) :
@@ -54,8 +55,8 @@ MastersTestSuite::MastersTestSuite(
         {to_string(++tId) + ". Evaluator Block Size",
         MastersTestFunc(bind(&MastersTestSuite::evaluatorBlockSize, this, _1))},
 
-        {to_string(++tId) + ". Metric Cost (Sphere)",
-        MastersTestFunc(bind(&MastersTestSuite::metricCostSphere,   this, _1))},
+        {to_string(++tId) + ". Metric Cost (TetCube)",
+        MastersTestFunc(bind(&MastersTestSuite::metricCostTetCube,  this, _1))},
 
         {to_string(++tId) + ". Metric Cost (HexGrid)",
         MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,  this, _1))},
@@ -73,14 +74,14 @@ MastersTestSuite::MastersTestSuite(
         MastersTestFunc(bind(&MastersTestSuite::smootherBlockSize,  this, _1))},
     });
 
-    _translateSampling = {
+    _translateSamplingTechniques = {
         {"Analytic",    "Analytique"},
         {"Local",       "Maillage"},
         {"Texture",     "Texture"},
         {"Kd-Tree",     "kD-Tree"},
     };
 
-    _translateImplementation = {
+    _translateImplementations = {
         {"Serial",      "Séquentiel"},
         {"Thread",      "Parallèle"},
         {"GLSL",        "GLSL"},
@@ -97,6 +98,13 @@ MastersTestSuite::MastersTestSuite(
         {"Multi Pos GD",        "DG multi-positions"},
         {"Patch GD",            "DG mlti-axes"},
         {"GETMe",               "GETMe"}
+    };
+
+    _meshNames = {
+        {MESH_TETCUBE_K12, "TetCube (K=12)"},
+        {MESH_TETCUBE_K24, "TetCube (K=24)"},
+        {MESH_HEXGRID_500K, "HexGrid (500K)"},
+        {MESH_TURBINE_500K, "Turbine (500K)"}
     };
 
 
@@ -129,79 +137,65 @@ void MastersTestSuite::runTests(
         const vector<string>& tests)
 {
     // Prepare cases
-    if(!QFile(MESH_SPHERE_500K.c_str()).exists())
+    if(!QFile(MESH_TETCUBE_K12.c_str()).exists())
     {
-        _character.generateMesh("Delaunay", "Sphere", 500e3);
-        _character.saveMesh(MESH_SPHERE_500K);
-        QCoreApplication::processEvents();
+        setupAdaptedCube(
+            12,
+            ADAPTATION_METRIC_A);
+
+        _character.saveMesh(MESH_TETCUBE_K12);
     }
 
-    if(!QFile(MESH_SPHERE_ADAPTED.c_str()).exists())
+    if(!QFile(MESH_TETCUBE_K24.c_str()).exists())
     {
-        _character.useSampler("Analytic");
-        _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
-        _character.useEvaluator("Metric Conformity");
-        _character.generateMesh("Delaunay", "Sphere", 1000);
+        setupAdaptedCube(
+            24,
+            ADAPTATION_METRIC_A);
 
-        for(double k=1.0; k < ADAPTATION_METRIC_K; k *= 2.0)
-        {
-            _character.setMetricScaling(k);
-            _character.restructureMesh(ADAPTATION_TOPO_PASS);
-            QCoreApplication::processEvents();
-        }
-        _character.setMetricScaling(ADAPTATION_METRIC_K);
-        _character.restructureMesh(ADAPTATION_TOPO_PASS);
-        QCoreApplication::processEvents();
-
-        _character.saveMesh(MESH_SPHERE_ADAPTED);
+        _character.saveMesh(MESH_TETCUBE_K24);
     }
 
     if(!QFile(MESH_HEXGRID_500K.c_str()).exists())
     {
+        _character.useSampler("Analytic");
+
         _character.generateMesh("Debug", "HexGrid", 500e3);
         QCoreApplication::processEvents();
 
         _character.saveMesh(MESH_HEXGRID_500K);
     }
 
-    if(!QFile(MESH_CUBE_ADAPTED.c_str()).exists())
-    {
-        _character.useSampler("Analytic");
-        _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
-        _character.useEvaluator("Metric Conformity");
-        _character.generateMesh("Debug", "Cube", 1000);
-
-        for(double k=1.0; k < ADAPTATION_METRIC_K; k *= 2.0)
-        {
-            _character.setMetricScaling(k);
-            _character.restructureMesh(ADAPTATION_TOPO_PASS);
-            QCoreApplication::processEvents();
-        }
-        _character.setMetricScaling(ADAPTATION_METRIC_K);
-        _character.restructureMesh(ADAPTATION_TOPO_PASS);
-        QCoreApplication::processEvents();
-
-        _character.saveMesh(MESH_CUBE_ADAPTED);
-    }
-
     if(!QFile(MESH_TURBINE_500K.c_str()).exists())
     {
-        getLog().postMessage(new Message('E', true,
-            "Missing 500K nodes turbine mesh",
-            "MastersTestSuite"));
-        return;
+        string original = DATA_MESH_PATH + "FINAL_MESH.cgns";
+
+        if(QFile(original.c_str()).exists())
+        {
+            if(!QFile(original.c_str()).copy(
+                        MESH_TURBINE_500K.c_str()))
+            {
+                getLog().postMessage(new Message('E', true,
+                    "Could not copy 500K nodes turbine mesh",
+                    "MastersTestSuite"));
+                return;
+            }
+        }
+        else
+        {
+            getLog().postMessage(new Message('E', true,
+                "Missing 500K nodes turbine mesh",
+                "MastersTestSuite"));
+            return;
+        }
     }
 
     _character.clearMesh();
     QCoreApplication::processEvents();
 
-    return;
 
     reportDocument.clear();
     _reportDocument = &reportDocument;
     QTextCursor cursor(_reportDocument);
-
-    QTextBlockFormat titleFormat;
 
 
     cellar::Time duration;
@@ -209,6 +203,10 @@ void MastersTestSuite::runTests(
 
     for(const string& test : tests)
     {
+        getLog().postMessage(new Message('I', false,
+            "Running master's test: " + test,
+            "MastersTestSuite"));
+
         MastersTestFunc func;
         if(_availableMastersTests.select(test, func))
         {
@@ -247,6 +245,33 @@ void MastersTestSuite::runTests(
     cursor.insertBlock();
     cursor.insertHtml(("[Total duration: " +
             duration.toString() + "]").c_str());
+}
+
+void MastersTestSuite::setupAdaptedCube(
+        double metricK,
+        double metricA)
+{
+    _character.useSampler("Analytic");
+    _character.setMetricAspectRatio(metricA);
+    _character.useEvaluator("Metric Conformity");
+    _character.generateMesh("Debug", "Cube", 10);
+
+    QCoreApplication::processEvents();
+
+
+    for(double k=1.0; k < metricK; k *= 2.0)
+    {
+        _character.setMetricScaling(k);
+        _character.restructureMesh(ADAPTATION_TOPO_PASS);
+
+        QCoreApplication::processEvents();
+    }
+
+
+    _character.setMetricScaling(metricK);
+    _character.restructureMesh(ADAPTATION_TOPO_PASS);
+
+    QCoreApplication::processEvents();
 }
 
 void MastersTestSuite::saveToFile(
@@ -661,32 +686,23 @@ void MastersTestSuite::saveReportTable(
 void MastersTestSuite::evaluatorBlockSize(
         const string& testName)
 {
-    const vector<string> mesher = {
-        "Delaunay",
-        "Debug",
-        //"file"
+    // Test case description
+    const vector<string> meshes = {
+        MESH_TETCUBE_K24,
+        MESH_HEXGRID_500K,
+        MESH_TURBINE_500K
     };
 
-    const vector<string> model = {
-        "Sphere",
-        "HexGrid",
-        //"FINAL_MESH.cgns"
-    };
-
-    const int nodeCount = 5e5;
-
-    const double metricK = 16;
-    const double metricA = 5;
     const string sampler = "Texture";
 
     const string evaluator = "Metric Conformity";
 
-    vector<string> implement = {
+    vector<string> implementations = {
         "GLSL", "CUDA"
     };
 
     map<string, int> cycleCounts;
-    for(const string& impl : implement)
+    for(const string& impl : implementations)
         cycleCounts[impl] = 5;
 
     vector<uint> threadCounts = {
@@ -694,25 +710,21 @@ void MastersTestSuite::evaluatorBlockSize(
         64, 128, 192, 256, //512, 1024
     };
 
+
+    // Setup test
     _character.useSampler(sampler);
-    _character.setMetricScaling(metricK);
-    _character.setMetricAspectRatio(metricA);
+    _character.setMetricScaling(ADAPTATION_METRIC_K24);
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
 
 
-    Grid2D<double> data(mesher.size() * 2, threadCounts.size());
+    // Run test
+    Grid2D<double> data(meshes.size() * 2, threadCounts.size());
 
-    for(int m=0; m < mesher.size(); ++m)
+    for(int m=0; m < meshes.size(); ++m)
     {
-        const string& me = mesher[m];
-        const string& mo = model[m];
-
-        if(me == "file")
-            _character.loadMesh("resources/data/" + mo);
-        else
-            _character.generateMesh(me, mo, nodeCount);
-
+        _character.loadMesh(meshes[m]);
 
         //QCoreApplication::processEvents();
 
@@ -727,21 +739,22 @@ void MastersTestSuite::evaluatorBlockSize(
             _character.benchmarkEvaluator(
                 avrgTimes, evaluator, cycleCounts);
 
-            data[t][m*2 + 0] = avrgTimes[implement[0]];
-            data[t][m*2 + 1] = avrgTimes[implement[1]];
+            data[t][m*2 + 0] = avrgTimes[implementations[0]];
+            data[t][m*2 + 1] = avrgTimes[implementations[1]];
         }
     }
 
 
+    // Print results
     vector<pair<string, int>> header = {{"Tailles", 1}};
     vector<pair<string, int>> subheader = {{"", 1}};
-    for(const string& m : model)
+    for(const string& m : meshes)
     {
-        header.push_back({m, 2});
+        header.push_back({_meshNames[m], 2});
 
-        for(const string& i : implement)
+        for(const string& i : implementations)
             subheader.push_back({
-                _translateImplementation[i], 1});
+                _translateImplementations[i], 1});
     }
 
     vector<string> lineNames;
@@ -753,25 +766,22 @@ void MastersTestSuite::evaluatorBlockSize(
 
 void MastersTestSuite::metricCost(
         const string& testName,
-        const string& mesher,
-        const string& model)
+        const string& mesh)
 {
-    size_t nodeCount = 5e3;
-    size_t cycleCount = 5;
-    double metricK = 20.0;
-    double metricA = 4.0;
+    // Test case description
+    size_t evalCycleCount = 5;
     int evaluateGlslThreadCount = 64;
     int evaluateCudaThreadCount = 32;
     string evaluator = "Metric Conformity";
 
-    vector<string> sampling = {
+    vector<string> samplings = {
         "Analytic",
         "Local",
         "Texture",
         "Kd-Tree"
     };
 
-    vector<string> implement = {
+    vector<string> implementations = {
         "Serial",
         "Thread",
         "GLSL",
@@ -779,31 +789,32 @@ void MastersTestSuite::metricCost(
     };
 
     map<string, int> implCycle;
-    for(const auto& i : implement)
-        implCycle[i] = cycleCount;
+    for(const auto& impl : implementations)
+        implCycle[impl] = evalCycleCount;
 
 
-    _character.generateMesh(mesher, model, nodeCount);
-
-    //_character.saveMesh(RESULT_MESH_PATH + testName + ".json");
+    // Setup test
+    _character.loadMesh(mesh);
 
     //QCoreApplication::processEvents();
 
-    _character.setMetricScaling(metricK);
-    _character.setMetricAspectRatio(metricA);
+    _character.setMetricScaling(ADAPTATION_METRIC_K24);
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
     _character.setGlslEvaluatorThreadCount(evaluateGlslThreadCount);
     _character.setCudaEvaluatorThreadCount(evaluateCudaThreadCount);
 
-    Grid2D<double> data(implement.size(), sampling.size());
 
-    for(int s=0; s < sampling.size(); ++s)
+    // Run test
+    Grid2D<double> data(implementations.size(), samplings.size());
+
+    for(int s=0; s < samplings.size(); ++s)
     {
-        const string& samp = sampling[s];
+        const string& samp = samplings[s];
         _character.useSampler(samp);
 
         // Process exceptions
         map<string, int> currCycle = implCycle;
-        if(model == "HexGrid" && samp == "Local")
+        if(mesh == MESH_HEXGRID_500K && samp == "Local")
         {
             currCycle["GLSL"] = 0;
         }
@@ -811,136 +822,142 @@ void MastersTestSuite::metricCost(
         map<string, double> avgTimes;
         _character.benchmarkEvaluator(avgTimes, evaluator, currCycle);
 
-        for(int i=0; i < implement.size(); ++i)
-            data[s][i] = avgTimes[implement[i]];
+        for(int i=0; i < implementations.size(); ++i)
+            data[s][i] = avgTimes[implementations[i]];
     }
 
+
+    // Print results
     vector<pair<string, int>> header = {
-        {"Métriques", 1}, {"Temps (ms)", implement.size()}};
+        {"Métriques", 1}, {"Temps (ms)", implementations.size()}};
 
     vector<pair<string, int>> subheader = {{"", 1}};
-    for(const string& i : implement)
+    for(const string& i : implementations)
         subheader.push_back({
-            _translateImplementation[i], 1});
+            _translateImplementations[i], 1});
 
     vector<string> lineNames;
-    for(const string& s : sampling)
-        lineNames.push_back(_translateSampling[s]);
+    for(const string& s : samplings)
+        lineNames.push_back(_translateSamplingTechniques[s]);
 
     output(testName, header, subheader, lineNames, data);
 }
 
-void MastersTestSuite::metricCostSphere(
+void MastersTestSuite::metricCostTetCube(
         const string& testName)
 {
-    return metricCost(testName, "Delaunay", "Sphere");
+    return metricCost(testName, MESH_TETCUBE_K24);
 }
 
 void MastersTestSuite::metricCostHexGrid(
         const string& testName)
 {
-    return metricCost(testName, "Debug", "HexGrid");
+    return metricCost(testName, MESH_HEXGRID_500K);
 }
 
 void MastersTestSuite::metricPrecision(
         const string& testName)
 {
-    size_t nodeCount = 5e3;
-    size_t passCount = 10;
-    double metricK = 2.0;
-    string implement = "Thread";
+    // Test case description
+    string implementation = "Thread";
     string smoother = "Gradient Descent";
     string evaluator = "Metric Conformity";
-    string mesher = "Delaunay";
-    string model = "Sphere";
 
-    vector<string> sampling = {
+    vector<string> samplings = {
         "Analytic",
         "Local",
         "Texture",
         "Kd-Tree"
     };
 
-    vector<double> ratios = {
+    vector<double> metricAs = {
         1, 2, 4, 8, 16
     };
 
     Schedule schedule;
     schedule.autoPilotEnabled = false;
     schedule.topoOperationEnabled = false;
-    schedule.globalPassCount = passCount;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
 
-    vector<QualityHistogram> histograms;
-    Grid2D<double> minData(ratios.size(), sampling.size() + 1);
-    Grid2D<double> meanData(ratios.size(), sampling.size() + 1);
 
-    _character.generateMesh(mesher, model, nodeCount);
+    // Setup test
+    setupAdaptedCube(ADAPTATION_METRIC_K12, 1.0);
 
     QString meshName = (RESULT_MESH_PATH + testName + " (A=%1).json").c_str();
     _character.saveMesh(meshName.arg(0).toStdString());
 
+    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+
     _character.useEvaluator(evaluator);
-    _character.setMetricScaling(metricK);
-    for(int i=0; i < ratios.size(); ++i)
+
+
+    // Run test
+    vector<QualityHistogram> histograms;
+    Grid2D<double> minData(metricAs.size(), samplings.size() + 1);
+    Grid2D<double> meanData(metricAs.size(), samplings.size() + 1);
+
+    for(int a=0; a < metricAs.size(); ++a)
     {
-        if(i != 0)
+        if(a != 0)
         {
-            _character.loadMesh(meshName.arg(ratios[i-1]).toStdString());
+            _character.loadMesh(meshName.arg(metricAs[a-1]).toStdString());
         }
 
         _character.useSampler("Analytic");
-        _character.setMetricAspectRatio(ratios[i]);
-        _character.restructureMesh(10);
+        _character.setMetricAspectRatio(metricAs[a]);
+        _character.restructureMesh(ADAPTATION_TOPO_PASS);
 
-        _character.saveMesh(meshName.arg(ratios[i]).toStdString());
+        _character.saveMesh(meshName.arg(metricAs[a]).toStdString());
 
 
         QCoreApplication::processEvents();
 
         OptimizationPlot plot;
         vector<Configuration> configs;
-        for(const string& samp : sampling)
+        for(const string& samp : samplings)
             configs.push_back(Configuration{
-                samp, smoother, implement});
+                samp, smoother, implementation});
 
         _character.benchmarkSmoothers(
             plot, schedule, configs);
 
         const QualityHistogram& initHist = plot.initialHistogram();
 
-        minData[0][i] = initHist.minimumQuality();
-        meanData[0][i] = initHist.harmonicMean();
-        for(int s=0; s < sampling.size(); ++s)
+        minData[0][a] = initHist.minimumQuality();
+        meanData[0][a] = initHist.harmonicMean();
+        for(int s=0; s < samplings.size(); ++s)
         {
             const QualityHistogram& hist =
                 plot.implementations()[s].finalHistogram;
-            minData[s+1][i] = hist.minimumQuality();
-            meanData[s+1][i] = hist.harmonicMean();
+            minData[s+1][a] = hist.minimumQuality();
+            meanData[s+1][a] = hist.harmonicMean();
         }
 
-        if(i == ratios.size()-1)
+        if(a == metricAs.size()-1)
         {
             histograms.push_back(initHist);
 
-            for(int s=0; s < sampling.size(); ++s)
+            for(int s=0; s < samplings.size(); ++s)
                 histograms.push_back(
                     plot.implementations()[s].finalHistogram);
         }
     }
 
+
+    // Print results
     vector<pair<string, int>> header = {{"Métriques", 1}};
-    for(double r : ratios)
+    for(double r : metricAs)
         header.push_back({"A = " + to_string(r), 1});
 
     vector<pair<string, int>> subheader = {};
 
     vector<string> lineNames = {"Initial"};
-    for(const string& s : sampling)
-        lineNames.push_back(_translateSampling[s]);
+    for(const string& s : samplings)
+        lineNames.push_back(_translateSamplingTechniques[s]);
 
     vector<string> histHeader = {"Initial"};
-    for(const string& s : sampling)
-        histHeader.push_back(_translateSampling[s]);
+    for(const string& s : samplings)
+        histHeader.push_back(_translateSamplingTechniques[s]);
 
     output(testName + "(Minimums)",
            header, subheader, lineNames, minData);
@@ -953,76 +970,75 @@ void MastersTestSuite::metricPrecision(
 void MastersTestSuite::nodeOrder(
         const string& testName)
 {
-    const string mesher = "Delaunay";
-    const string model = "Sphere";
-    const int nodeCount = 5e5;
+    // Test case description
+    string mesh = MESH_TETCUBE_K12;
 
-    const string samp = "Analytic";
-    const double metricK = 16.0;
-    const double metricA = 5.0;
+    const string sampler = "Analytic";
 
     const string evaluator = "Metric Conformity";
 
     const string smoother = "Gradient Descent";
-    const vector<string> impl = {"Serial", "Thread"};
+
+    const vector<string> implementations = {
+        "Serial",
+        "Thread"
+    };
+
+    OptimizationPlot plot;
+    vector<Configuration> configs;
+    for(const auto& impl : implementations)
+        configs.push_back(Configuration{
+            sampler, smoother, impl});
 
     Schedule schedule;
     schedule.autoPilotEnabled = false;
     schedule.topoOperationEnabled = false;
-    schedule.globalPassCount = 10;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
 
 
-    _character.generateMesh(mesher, model, nodeCount);
+    // Setup test
+    _character.loadMesh(mesh);
 
-    _character.useSampler(samp);
-    _character.setMetricScaling(metricK);
-    _character.setMetricAspectRatio(metricA);
+    _character.useSampler(sampler);
+    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
 
-    _character.saveMesh(RESULT_MESH_PATH + testName + ".json");
 
-
-    QCoreApplication::processEvents();
-
-
-    OptimizationPlot plot;
-    vector<Configuration> configs;
-    for(const auto& i : impl)
-        configs.push_back(Configuration{
-            samp, smoother, i});
-
+    // Run test
     _character.benchmarkSmoothers(
         plot, schedule, configs);
 
-    Grid2D<double> data(impl.size()*2, schedule.globalPassCount+1);
+    Grid2D<double> data(implementations.size()*2, schedule.relocationPassCount+1);
 
-    for(int p=0; p <= schedule.globalPassCount; ++p)
+    for(int r=0; r <= schedule.relocationPassCount; ++r)
     {
-        for(int i=0; i < impl.size(); ++i)
+        for(int i=0; i < implementations.size(); ++i)
         {
             const QualityHistogram& hist =
-                plot.implementations()[i].passes[p].histogram;
-            data[p][0 + i] = hist.minimumQuality();
-            data[p][2 + i] = hist.harmonicMean();
+                plot.implementations()[i].passes[r].histogram;
+            data[r][0 + i] = hist.minimumQuality();
+            data[r][2 + i] = hist.harmonicMean();
 
         }
     }
 
 
+    // Print results
     vector<pair<string, int>> header = {
         {"Itérations", 1}, {"Minimums", 2}, {"Moyennes", 2}};
 
     vector<pair<string, int>> subheader = {{"", 1}};
     for(int m=0; m < 2; ++m)
     {
-        for(const string& i : impl)
+        for(const string& i : implementations)
             subheader.push_back(
-                {_translateImplementation[i], 1});
+                {_translateImplementations[i], 1});
     }
 
     vector<string> lineNames;
-    for(int p=0; p <= schedule.globalPassCount; ++p)
+    for(int p=0; p <= schedule.relocationPassCount; ++p)
         lineNames.push_back(to_string(p));
 
     output(testName, header, subheader, lineNames, data);
@@ -1031,14 +1047,10 @@ void MastersTestSuite::nodeOrder(
 void MastersTestSuite::smootherEfficacity(
         const string& testName)
 {
-    string mesh = RESULT_MESH_PATH + testName + ".json";
-    string mesher = "Debug";
-    string model = "Cube";
-    int nodeCount = 5e3;
+    // Test case description
+    string mesh = MESH_TETCUBE_K12;
 
     string sampler = "Analytic";
-    double metricK = 16;
-    double metricA = 5;
 
     string evaluator = "Metric Conformity";
 
@@ -1050,12 +1062,6 @@ void MastersTestSuite::smootherEfficacity(
         "Gradient Descent"
     };
 
-    Schedule schedule;
-    schedule.autoPilotEnabled = false;
-    schedule.topoOperationEnabled = false;
-    schedule.globalPassCount = 10;
-    int topoPassCount = 10;
-
     string implementation = "Thread";
 
     vector<Configuration> configs;
@@ -1064,28 +1070,23 @@ void MastersTestSuite::smootherEfficacity(
                 sampler, s, implementation});
 
 
-    _character.useEvaluator(evaluator);
-    _character.generateMesh(mesher, model, nodeCount);
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
 
-    _character.useSampler("Analytic");
-    _character.setMetricAspectRatio(metricA);
-    for(double k=1.0; k < metricK; k *= 2)
-    {
-        _character.setMetricScaling(k);
-        _character.restructureMesh(topoPassCount);
 
-        QCoreApplication::processEvents();
-    }
+    // Setup test
+    _character.loadMesh(mesh);
 
-    _character.setMetricScaling(metricK);
-    _character.restructureMesh(topoPassCount);
-
-    QCoreApplication::processEvents();
-
-    _character.saveMesh(mesh);
     _character.useSampler(sampler);
+    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
+
+    _character.useEvaluator(evaluator);
 
 
+    // Run test
     Grid2D<double> data(2, smoothers.size()+1);
 
     OptimizationPlot plot;
@@ -1106,6 +1107,7 @@ void MastersTestSuite::smootherEfficacity(
     }
 
 
+    // Print results
     vector<pair<string, int>> header = {
         {"Métriques", 1}, {"Minimums", 1}, {"Moyennes", 1}};
     vector<pair<string, int>> subheader = {};
@@ -1120,31 +1122,21 @@ void MastersTestSuite::smootherEfficacity(
 void MastersTestSuite::smootherBlockSize(
         const string& testName)
 {
-    string mesh = RESULT_MESH_PATH + testName + ".json";
-    string mesher = "Debug";
-    string model = "Cube";
-    int nodeCount = 5e3;
+    // Test case description
+    string mesh = MESH_TETCUBE_K12;
 
     string sampler = "Texture";
-    double metricK = 16;
-    double metricA = 5;
 
     string evaluator = "Metric Conformity";
     int evaluateGlslThreadCount = 64;
     int evaluateCudaThreadCount = 32;
 
-    vector<string> smoother = {
+    vector<string> smoothers = {
         "Gradient Descent",
         "Nelder-Mead"
     };
 
-    Schedule schedule;
-    schedule.autoPilotEnabled = false;
-    schedule.topoOperationEnabled = false;
-    schedule.globalPassCount = 10;
-    int topoPassCount = 10;
-
-    vector<string> implement = {
+    vector<string> implementations = {
         "GLSL", "CUDA"
     };
 
@@ -1154,45 +1146,33 @@ void MastersTestSuite::smootherBlockSize(
     };
 
     vector<Configuration> configs;
-    for(const auto& s : smoother)
-        for(const auto& i : implement)
+    for(const auto& smooth : smoothers)
+        for(const auto& impl : implementations)
             configs.push_back(Configuration{
-                sampler, s, i});
+                sampler, smooth, impl});
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
+
+
+    // Setup test
+    _character.useSampler(sampler);
+    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
     _character.setGlslEvaluatorThreadCount(evaluateGlslThreadCount);
     _character.setCudaEvaluatorThreadCount(evaluateCudaThreadCount);
 
-    _character.generateMesh(mesher, model, nodeCount);
 
-    _character.useSampler("Analytic");
-    _character.setMetricAspectRatio(metricA);
-    for(double k=1.0; k < metricK; k *= 2)
-    {
-        _character.setMetricScaling(k);
-        _character.restructureMesh(topoPassCount);
-
-        QCoreApplication::processEvents();
-    }
-
-    _character.setMetricScaling(metricK);
-    _character.restructureMesh(topoPassCount);
-
-    QCoreApplication::processEvents();
-
-    _character.saveMesh(mesh);
-    _character.useSampler(sampler);
-
-
-    Grid2D<double> data(smoother.size()*implement.size(), threadCounts.size());
-
+    // Run test
+    Grid2D<double> data(smoothers.size()*implementations.size(), threadCounts.size());
 
     for(int t=0; t < threadCounts.size(); ++t)
     {
-        if(t != 0)
-        {
-            _character.loadMesh(mesh);
-        }
+        _character.loadMesh(mesh);
 
         uint tc = threadCounts[t];
 
@@ -1203,11 +1183,11 @@ void MastersTestSuite::smootherBlockSize(
         _character.benchmarkSmoothers(
             plot, schedule, configs);
 
-        for(int s=0; s < smoother.size(); ++s)
+        for(int s=0; s < smoothers.size(); ++s)
         {
-            for(int i=0; i < implement.size(); ++i)
+            for(int i=0; i < implementations.size(); ++i)
             {
-                int id = s*implement.size() + i;
+                int id = s*implementations.size() + i;
                 data[t][id] = plot.implementations()[id]
                         .passes.back().timeStamp;
             }
@@ -1215,14 +1195,15 @@ void MastersTestSuite::smootherBlockSize(
     }
 
 
+    // Print results
     vector<pair<string, int>> header = {{"Tailles", 1}};
     vector<pair<string, int>> subheader = {{"", 1}};
-    for(const string& s : smoother)
+    for(const string& s : smoothers)
     {
-        header.push_back({_translateSmoothers[s], implement.size()});
-        for(const string& i : implement)
+        header.push_back({_translateSmoothers[s], implementations.size()});
+        for(const string& i : implementations)
         {
-            subheader.push_back({_translateImplementation[i], 1});
+            subheader.push_back({_translateImplementations[i], 1});
         }
     }
 

@@ -606,6 +606,10 @@ void GpuMeshCharacter::benchmarkEvaluator(
 
 void GpuMeshCharacter::setMetricScaling(double scaling)
 {
+    getLog().postMessage(new Message('I', false,
+        "Setting metric scaling factor (K) to " + to_string(scaling),
+        "GpuMeshCharacter"));
+
     _metricScaling = scaling;
 
     updateSampling();
@@ -614,6 +618,10 @@ void GpuMeshCharacter::setMetricScaling(double scaling)
 
 void GpuMeshCharacter::setMetricAspectRatio(double ratio)
 {
+    getLog().postMessage(new Message('I', false,
+        "Setting metric aspection ratio factor (A) to " + to_string(ratio),
+        "GpuMeshCharacter"));
+
     _metricAspectRatio = ratio;
 
     updateSampling();
@@ -622,21 +630,37 @@ void GpuMeshCharacter::setMetricAspectRatio(double ratio)
 
 void GpuMeshCharacter::setGlslEvaluatorThreadCount(uint threadCount)
 {
+    getLog().postMessage(new Message('I', false,
+        "Setting GLSL evaluator thread count to " + to_string(threadCount),
+        "GpuMeshCharacter"));
+
     _glslEvaluatorThreadCount = threadCount;
 }
 
 void GpuMeshCharacter::setCudaEvaluatorThreadCount(uint threadCount)
 {
+    getLog().postMessage(new Message('I', false,
+        "Setting CUDA evaluator thread count to " + to_string(threadCount),
+        "GpuMeshCharacter"));
+
     _cudaEvaluatorThreadCount = threadCount;
 }
 
 void GpuMeshCharacter::setGlslSmootherThreadCount(uint threadCount)
 {
+    getLog().postMessage(new Message('I', false,
+        "Setting GLSL smoother thread count to " + to_string(threadCount),
+        "GpuMeshCharacter"));
+
     _glslSmootherThreadCount = threadCount;
 }
 
 void GpuMeshCharacter::setCudaSmootherThreadCount(uint threadCount)
 {
+    getLog().postMessage(new Message('I', false,
+        "Setting CUDA smoother thread count to " + to_string(threadCount),
+        "GpuMeshCharacter"));
+
     _cudaSmootherThreadCount = threadCount;
 }
 
