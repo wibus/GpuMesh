@@ -95,7 +95,7 @@ double MetricWiseMeasurer::riemannianDistance(
             len += sum;
             curr += 2;
 
-            while((curr & 0b10) == 0)
+            if((curr & 0b10) == 0)
             {
                 base >>= 1;
                 curr >>= 1;
