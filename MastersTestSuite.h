@@ -126,6 +126,13 @@ protected:
             const std::string& testName);
 
 
+    void smootherSpeedAnalytic(
+            const std::string& testName);
+
+    void smootherSpeedMeshTex(
+            const std::string& testName);
+
+
 
 
 private:

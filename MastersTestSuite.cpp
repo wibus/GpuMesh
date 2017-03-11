@@ -1,5 +1,6 @@
 #include "MastersTestSuite.h"
 
+#include <set>
 #include <fstream>
 #include <chrono>
 #include <sstream>
@@ -30,16 +31,25 @@ const string RESULT_MESH_PATH = RESULTS_PATH + "mesh/";
 const string RESULT_CSV_PATH = RESULTS_PATH + "csv/";
 const string DATA_MESH_PATH = "resources/data/";
 
+const string MESH_SPHERE_100K = RESULT_MESH_PATH + "Sphere (N=100K).json";
 const string MESH_TETCUBE_K12 = RESULT_MESH_PATH + "TetCube (K=12).json";
+const string MESH_TETCUBE_K16 = RESULT_MESH_PATH + "TetCube (K=16).json";
 const string MESH_TETCUBE_K24 = RESULT_MESH_PATH + "TetCube (K=24).json";
-const string MESH_HEXGRID_500K = RESULT_MESH_PATH + "HexGrid (500K).json";
+const string MESH_HEXGRID_500K = RESULT_MESH_PATH + "HexGrid (N=500K).json";
 const string MESH_TURBINE_500K = DATA_MESH_PATH + "FINAL_MESH.cgns";
 
 const double ADAPTATION_METRIC_K12 = 12;
+const double ADAPTATION_METRIC_K16 = 16;
 const double ADAPTATION_METRIC_K24 = 24;
 const double ADAPTATION_METRIC_A = 8;
 const double ADAPTATION_TOPO_PASS = 5;
 const double ADAPTATION_RELOC_PASS = 10;
+
+const int EVALUATION_THREAD_COUNT_GLSL = 32;
+const int EVALUATION_THREAD_COUNT_CUDA = 32;
+
+const int SMOOTHING_THREAD_COUNT_GLSL = 64;
+const int SMOOTHING_THREAD_COUNT_CUDA = 64;
 
 MastersTestSuite::MastersTestSuite(
         GpuMeshCharacter& character) :
@@ -53,25 +63,31 @@ MastersTestSuite::MastersTestSuite(
 
     _availableMastersTests.setContent({                                          
         {to_string(++tId) + ". Evaluator Block Size",
-        MastersTestFunc(bind(&MastersTestSuite::evaluatorBlockSize, this, _1))},
+        MastersTestFunc(bind(&MastersTestSuite::evaluatorBlockSize,     this, _1))},
 
         {to_string(++tId) + ". Metric Cost (TetCube)",
-        MastersTestFunc(bind(&MastersTestSuite::metricCostTetCube,  this, _1))},
+        MastersTestFunc(bind(&MastersTestSuite::metricCostTetCube,      this, _1))},
 
         {to_string(++tId) + ". Metric Cost (HexGrid)",
-        MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,  this, _1))},
+        MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,      this, _1))},
 
         {to_string(++tId) + ". Metric Precision",
-        MastersTestFunc(bind(&MastersTestSuite::metricPrecision,    this, _1))},
+        MastersTestFunc(bind(&MastersTestSuite::metricPrecision,        this, _1))},
 
         {to_string(++tId) + ". Node Order",
-        MastersTestFunc(bind(&MastersTestSuite::nodeOrder,          this, _1))},
+        MastersTestFunc(bind(&MastersTestSuite::nodeOrder,              this, _1))},
 
         {to_string(++tId) + ". Smoothers Efficacity",
-        MastersTestFunc(bind(&MastersTestSuite::smootherEfficacity, this, _1))},
+        MastersTestFunc(bind(&MastersTestSuite::smootherEfficacity,     this, _1))},
 
         {to_string(++tId) + ". Smoothers Block Size",
-        MastersTestFunc(bind(&MastersTestSuite::smootherBlockSize,  this, _1))},
+        MastersTestFunc(bind(&MastersTestSuite::smootherBlockSize,      this, _1))},
+
+        {to_string(++tId) + ". Smoothers Speed (Analytic)",
+        MastersTestFunc(bind(&MastersTestSuite::smootherSpeedAnalytic,  this, _1))},
+
+        {to_string(++tId) + ". Smoothers Speed (MeshTex)",
+        MastersTestFunc(bind(&MastersTestSuite::smootherSpeedMeshTex,   this, _1))},
     });
 
     _translateSamplingTechniques = {
@@ -101,10 +117,12 @@ MastersTestSuite::MastersTestSuite(
     };
 
     _meshNames = {
+        {MESH_SPHERE_100K, "Sphere (N=100K)"},
         {MESH_TETCUBE_K12, "TetCube (K=12)"},
+        {MESH_TETCUBE_K16, "TetCube (K=16)"},
         {MESH_TETCUBE_K24, "TetCube (K=24)"},
-        {MESH_HEXGRID_500K, "HexGrid (500K)"},
-        {MESH_TURBINE_500K, "Turbine (500K)"}
+        {MESH_HEXGRID_500K, "HexGrid (N=500K)"},
+        {MESH_TURBINE_500K, "Turbine (N=500K)"}
     };
 
 
@@ -137,19 +155,35 @@ void MastersTestSuite::runTests(
         const vector<string>& tests)
 {
     // Prepare cases
+    if(!QFile(MESH_SPHERE_100K.c_str()).exists())
+    {
+        _character.generateMesh("Delaunay", "Sphere", 10e3);
+
+        _character.saveMesh(MESH_SPHERE_100K);
+    }
+
     if(!QFile(MESH_TETCUBE_K12.c_str()).exists())
     {
         setupAdaptedCube(
-            12,
+            ADAPTATION_METRIC_K12,
             ADAPTATION_METRIC_A);
 
         _character.saveMesh(MESH_TETCUBE_K12);
     }
 
+    if(!QFile(MESH_TETCUBE_K16.c_str()).exists())
+    {
+        setupAdaptedCube(
+            ADAPTATION_METRIC_K16,
+            ADAPTATION_METRIC_A);
+
+        _character.saveMesh(MESH_TETCUBE_K16);
+    }
+
     if(!QFile(MESH_TETCUBE_K24.c_str()).exists())
     {
         setupAdaptedCube(
-            24,
+            ADAPTATION_METRIC_K24,
             ADAPTATION_METRIC_A);
 
         _character.saveMesh(MESH_TETCUBE_K24);
@@ -245,6 +279,8 @@ void MastersTestSuite::runTests(
     cursor.insertBlock();
     cursor.insertHtml(("[Total duration: " +
             duration.toString() + "]").c_str());
+
+    //QCoreApplication::quit();
 }
 
 void MastersTestSuite::setupAdaptedCube(
@@ -770,8 +806,6 @@ void MastersTestSuite::metricCost(
 {
     // Test case description
     size_t evalCycleCount = 5;
-    int evaluateGlslThreadCount = 64;
-    int evaluateCudaThreadCount = 32;
     string evaluator = "Metric Conformity";
 
     vector<string> samplings = {
@@ -800,8 +834,8 @@ void MastersTestSuite::metricCost(
 
     _character.setMetricScaling(ADAPTATION_METRIC_K24);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
-    _character.setGlslEvaluatorThreadCount(evaluateGlslThreadCount);
-    _character.setCudaEvaluatorThreadCount(evaluateCudaThreadCount);
+    _character.setGlslEvaluatorThreadCount(EVALUATION_THREAD_COUNT_GLSL);
+    _character.setCudaEvaluatorThreadCount(EVALUATION_THREAD_COUNT_CUDA);
 
 
     // Run test
@@ -971,7 +1005,7 @@ void MastersTestSuite::nodeOrder(
         const string& testName)
 {
     // Test case description
-    string mesh = MESH_TETCUBE_K12;
+    string mesh = MESH_SPHERE_100K;
 
     const string sampler = "Analytic";
 
@@ -1048,7 +1082,7 @@ void MastersTestSuite::smootherEfficacity(
         const string& testName)
 {
     // Test case description
-    string mesh = MESH_TETCUBE_K12;
+    string mesh = MESH_TETCUBE_K16;
 
     string sampler = "Analytic";
 
@@ -1080,7 +1114,7 @@ void MastersTestSuite::smootherEfficacity(
     _character.loadMesh(mesh);
 
     _character.useSampler(sampler);
-    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+    _character.setMetricScaling(ADAPTATION_METRIC_K16);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
@@ -1123,13 +1157,11 @@ void MastersTestSuite::smootherBlockSize(
         const string& testName)
 {
     // Test case description
-    string mesh = MESH_TETCUBE_K12;
+    string mesh = MESH_TETCUBE_K16;
 
     string sampler = "Texture";
 
     string evaluator = "Metric Conformity";
-    int evaluateGlslThreadCount = 64;
-    int evaluateCudaThreadCount = 32;
 
     vector<string> smoothers = {
         "Gradient Descent",
@@ -1159,12 +1191,12 @@ void MastersTestSuite::smootherBlockSize(
 
     // Setup test
     _character.useSampler(sampler);
-    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+    _character.setMetricScaling(ADAPTATION_METRIC_K16);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
-    _character.setGlslEvaluatorThreadCount(evaluateGlslThreadCount);
-    _character.setCudaEvaluatorThreadCount(evaluateCudaThreadCount);
+    _character.setGlslEvaluatorThreadCount(EVALUATION_THREAD_COUNT_GLSL);
+    _character.setCudaEvaluatorThreadCount(EVALUATION_THREAD_COUNT_CUDA);
 
 
     // Run test
@@ -1198,18 +1230,286 @@ void MastersTestSuite::smootherBlockSize(
     // Print results
     vector<pair<string, int>> header = {{"Tailles", 1}};
     vector<pair<string, int>> subheader = {{"", 1}};
-    for(const string& s : smoothers)
+    for(const string& smooth : smoothers)
     {
-        header.push_back({_translateSmoothers[s], implementations.size()});
-        for(const string& i : implementations)
+        header.push_back({_translateSmoothers[smooth], implementations.size()});
+        for(const string& impl : implementations)
         {
-            subheader.push_back({_translateImplementations[i], 1});
+            subheader.push_back({_translateImplementations[impl], 1});
         }
     }
 
     vector<string> lineNames;
     for(int tc : threadCounts)
         lineNames.push_back(to_string(tc));
+
+    output(testName, header, subheader, lineNames, data);
+}
+
+void MastersTestSuite::smootherSpeedAnalytic(
+        const string& testName)
+{
+    // Test case description
+    string mesh = MESH_TETCUBE_K16;
+
+    string sampler = "Analytic";
+
+    string evaluator = "Metric Conformity";
+
+    vector<string> smoothers = {
+        //"Spring Laplace",
+        //"Quality Laplace",
+        "Spawn Search",
+        "Nelder-Mead",
+        "Gradient Descent",
+        "Multi Elem GD",
+        "Multi Pos GD",
+        "Patch GD",
+    };
+
+    set<string> gpuSmoothers = {
+        "Multi Elem GD",
+        "Multi Pos GD",
+        "Patch GD",
+    };
+
+    vector<string> implementations = {
+        "Serial",
+        "Thread",
+        "GLSL",
+        "CUDA"
+    };
+
+    vector<string> gpuImplementations = {
+        "GLSL",
+        "CUDA"
+    };
+
+    vector<Configuration> configs;
+    for(const auto& smooth : smoothers)
+    {
+        if(gpuSmoothers.count(smooth))
+        {
+            for(const auto& impl : gpuImplementations)
+            {
+                configs.push_back(Configuration{
+                    sampler, smooth, impl});
+            }
+        }
+        else
+        {
+            for(const auto& impl : implementations)
+            {
+                configs.push_back(Configuration{
+                    sampler, smooth, impl});
+            }
+        }
+    }
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
+
+
+    // Setup test
+    _character.loadMesh(mesh);
+
+    _character.useSampler(sampler);
+    _character.setMetricScaling(ADAPTATION_METRIC_K16);
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
+
+    _character.useEvaluator(evaluator);
+    _character.setGlslEvaluatorThreadCount(EVALUATION_THREAD_COUNT_GLSL);
+    _character.setCudaEvaluatorThreadCount(EVALUATION_THREAD_COUNT_CUDA);
+
+    _character.setGlslSmootherThreadCount(SMOOTHING_THREAD_COUNT_GLSL);
+    _character.setCudaSmootherThreadCount(SMOOTHING_THREAD_COUNT_CUDA);
+
+
+    // Run test
+    Grid2D<double> data(implementations.size(), smoothers.size());
+
+    OptimizationPlot plot;
+    _character.benchmarkSmoothers(
+        plot, schedule, configs);
+
+    int idx = 0;
+    for(int s=0; s < smoothers.size(); ++s)
+    {
+        const string& smooth = smoothers[s];
+
+        if(gpuSmoothers.count(smooth))
+        {
+            data[s][0] = 0.0;
+            data[s][1] = 0.0;
+
+            for(int i=0; i < gpuImplementations.size(); ++i)
+            {
+                data[s][2+i] = plot.implementations()[idx]
+                        .passes.back().timeStamp;
+                ++idx;
+            }
+        }
+        else
+        {
+            for(int i=0; i < implementations.size(); ++i)
+            {
+                data[s][i] = plot.implementations()[idx]
+                        .passes.back().timeStamp;
+                ++idx;
+            }
+        }
+    }
+
+
+    // Print results
+    vector<pair<string, int>> header = {{"Algorithmes", 1}};
+    vector<pair<string, int>> subheader = {};
+    for(const string& impl : implementations)
+    {
+        header.push_back({_translateImplementations[impl], 1});
+    }
+
+    vector<string> lineNames;
+    for(const string& smooth : smoothers)
+        lineNames.push_back(_translateSmoothers[smooth]);
+
+    output(testName, header, subheader, lineNames, data);
+}
+
+void MastersTestSuite::smootherSpeedMeshTex(
+        const string& testName)
+{
+    // Test case description
+    string mesh = MESH_TETCUBE_K16;
+
+    string evaluator = "Metric Conformity";
+
+    vector<string> smoothers = {
+        //"Spring Laplace",
+        //"Quality Laplace",
+        "Spawn Search",
+        "Nelder-Mead",
+        "Gradient Descent",
+        "Multi Elem GD",
+        "Multi Pos GD",
+        "Patch GD",
+    };
+
+    set<string> gpuSmoothers = {
+        "Multi Elem GD",
+        "Multi Pos GD",
+        "Patch GD",
+    };
+
+    vector<string> implementations = {
+        "Serial",
+        "Thread",
+        "GLSL",
+        "CUDA"
+    };
+
+    vector<string> gpuImplementations = {
+        "GLSL",
+        "CUDA"
+    };
+
+    map<string, string> samplers = {
+        {"Serial", "Local"},
+        {"Thread", "Local"},
+        {"GLSL", "Texture"},
+        {"CUDA", "Texture"}
+    };
+
+    vector<Configuration> configs;
+    for(const auto& smooth : smoothers)
+    {
+        if(gpuSmoothers.count(smooth))
+        {
+            configs.push_back(Configuration{
+                samplers["GLSL"], smooth, "GLSL"});
+            configs.push_back(Configuration{
+                samplers["CUDA"], smooth, "CUDA"});
+        }
+        else
+        {
+            for(const auto& impl : implementations)
+            {
+                configs.push_back(Configuration{
+                    samplers[impl], smooth, impl});
+            }
+        }
+    }
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
+
+
+    // Setup test
+    _character.loadMesh(mesh);
+
+    _character.useSampler("Analytic");
+    _character.setMetricScaling(ADAPTATION_METRIC_K16);
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
+
+    _character.useEvaluator(evaluator);
+    _character.setGlslEvaluatorThreadCount(EVALUATION_THREAD_COUNT_GLSL);
+    _character.setCudaEvaluatorThreadCount(EVALUATION_THREAD_COUNT_CUDA);
+
+    _character.setGlslSmootherThreadCount(SMOOTHING_THREAD_COUNT_GLSL);
+    _character.setCudaSmootherThreadCount(SMOOTHING_THREAD_COUNT_CUDA);
+
+
+    // Run test
+    Grid2D<double> data(implementations.size(), smoothers.size());
+
+    OptimizationPlot plot;
+    _character.benchmarkSmoothers(
+        plot, schedule, configs);
+
+    int idx = 0;
+    for(int s=0; s < smoothers.size(); ++s)
+    {
+        const string& smooth = smoothers[s];
+
+        if(gpuSmoothers.count(smooth))
+        {
+            data[s][0] = 0.0;
+            data[s][1] = 0.0;
+
+            for(int i=0; i < gpuImplementations.size(); ++i)
+            {
+                data[s][2+i] = plot.implementations()[idx]
+                        .passes.back().timeStamp;
+                ++idx;
+            }
+        }
+        else
+        {
+            for(int i=0; i < implementations.size(); ++i)
+            {
+                data[s][i] = plot.implementations()[idx]
+                        .passes.back().timeStamp;
+                ++idx;
+            }
+        }
+    }
+
+
+    // Print results
+    vector<pair<string, int>> header = {{"Algorithmes", 1}};
+    vector<pair<string, int>> subheader = {};
+    for(const string& impl : implementations)
+    {
+        header.push_back({_translateImplementations[impl], 1});
+    }
+
+    vector<string> lineNames;
+    for(const string& smooth : smoothers)
+        lineNames.push_back(_translateSmoothers[smooth]);
 
     output(testName, header, subheader, lineNames, data);
 }
