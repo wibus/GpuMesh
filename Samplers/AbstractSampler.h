@@ -42,6 +42,9 @@ public:
     double aspectRatio() const;
     virtual void setAspectRatio(double ratio);
 
+    int discretizationDepth() const;
+    void setDiscretizationDepth(int depth);
+
 
     // GPU Plug-in interface
     virtual std::string samplingShader() const;
@@ -97,6 +100,7 @@ private:
     double _scaling2;
     double _scaling3;
     double _aspectRatio;
+    int _discretizationDepth;
     std::string _samplingName;
     std::string _samplingShader;
     std::string _baseShader;
@@ -124,6 +128,11 @@ inline double AbstractSampler::scalingCube() const
 inline double AbstractSampler::aspectRatio() const
 {
     return _aspectRatio;
+}
+
+inline int AbstractSampler::discretizationDepth() const
+{
+    return _discretizationDepth;
 }
 
 #endif // GPUMESH_ABSTRACTSAMPLER

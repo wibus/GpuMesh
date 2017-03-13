@@ -262,7 +262,12 @@ void TextureSampler::setReferenceMesh(
     // Compute grid size
     size_t vertCount = mesh.verts.size();
     double alpha = glm::pow(vertCount / (2 * extents.x*extents.y*extents.z), 1/3.0);
-    glm::ivec3 size(alpha * extents);
+    glm::ivec3 size(glm::round(alpha * extents));
+
+    if(discretizationDepth() > 0)
+    {
+        size = glm::min(size, glm::ivec3(discretizationDepth()));
+    }
 
     _transform = glm::scale(glm::mat4(),
         glm::vec3(1 / extents.x, 1 / extents.y, 1 / extents.z));

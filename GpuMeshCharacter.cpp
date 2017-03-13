@@ -80,6 +80,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _qualityCullingMin(-INFINITY),
     _qualityCullingMax(INFINITY),
     _displaySamplingMesh(false),
+    _metricDiscretizationDepth(-1),
     _metricScaling(1.0),
     _metricAspectRatio(1.0),
     _mesh(new GpuMesh()),
@@ -628,6 +629,18 @@ void GpuMeshCharacter::setMetricAspectRatio(double ratio)
     updateMeshMeasures();
 }
 
+void GpuMeshCharacter::setMetricDiscretizationDepth(int depth)
+{
+    getLog().postMessage(new Message('I', false,
+        "Setting metric discretization depth " + to_string(depth),
+        "GpuMeshCharacter"));
+
+    _metricDiscretizationDepth = depth;
+
+    updateSampling();
+    updateMeshMeasures();
+}
+
 void GpuMeshCharacter::setGlslEvaluatorThreadCount(uint threadCount)
 {
     getLog().postMessage(new Message('I', false,
@@ -949,6 +962,7 @@ void GpuMeshCharacter::updateSampling()
     {
         _meshCrew->sampler().setScaling(_metricScaling);
         _meshCrew->sampler().setAspectRatio(_metricAspectRatio);
+        _meshCrew->sampler().setDiscretizationDepth(_metricDiscretizationDepth);
 
         _meshCrew->sampler().setReferenceMesh(*_mesh);
 

@@ -34,6 +34,7 @@ protected slots:
     virtual void scalingChanged(double scaling);
     virtual void aspectRatioChanged(double ratio);
     virtual void samplingTypeChanged(const QString& type);
+    virtual void discretizationDepthChanged(int depth);
     virtual void displayDicretizationToggled(bool display);
 
     virtual void benchmarkImplementations();

@@ -20,6 +20,7 @@ AbstractSampler::AbstractSampler(
     _scaling2(1.0),
     _scaling3(1.0),
     _aspectRatio(1.0),
+    _discretizationDepth(-1),
     _samplingName(name),
     _samplingShader(shader),
     _baseShader(":/glsl/compute/Sampling/Base.glsl"),
@@ -43,6 +44,11 @@ void AbstractSampler::setScaling(double scaling)
 void AbstractSampler::setAspectRatio(double ratio)
 {
     _aspectRatio = ratio;
+}
+
+void AbstractSampler::setDiscretizationDepth(int depth)
+{
+    _discretizationDepth = depth;
 }
 
 std::string AbstractSampler::samplingShader() const

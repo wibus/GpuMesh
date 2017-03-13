@@ -116,7 +116,11 @@ void KdTreeSampler::setReferenceMesh(
     _rootNode.reset();
 
     // Compute Kd Tree depth
-    int height = (int)std::log2(std::ceil(vertCount/3.0));
+    int height = discretizationDepth();
+    if(height < 0)
+    {
+        height = (int)std::log2(std::ceil(vertCount/3.0));
+    }
 
     getLog().postMessage(new Message('I', false,
         "Sampling mesh metric in a Kd-Tree",

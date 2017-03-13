@@ -92,6 +92,8 @@ public:
 
     virtual void setMetricAspectRatio(double ratio);
 
+    virtual void setMetricDiscretizationDepth(int depth);
+
     virtual void setGlslEvaluatorThreadCount(uint threadCount);
     virtual void setCudaEvaluatorThreadCount(uint threadCount);
 
@@ -174,6 +176,7 @@ protected:
 
     double _metricScaling;
     double _metricAspectRatio;
+    int _metricDiscretizationDepth;
     double _glslEvaluatorThreadCount;
     double _cudaEvaluatorThreadCount;
     double _glslSmootherThreadCount;

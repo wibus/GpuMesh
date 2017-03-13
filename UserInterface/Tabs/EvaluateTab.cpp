@@ -29,6 +29,10 @@ EvaluateTab::EvaluateTab(Ui::MainWindow* ui,
             this, &EvaluateTab::cudaThreadCountChanged);
     cudaThreadCountChanged(_ui->shapeMeasureCudaThreadSpin->value());
 
+    connect(_ui->discretizationDepthSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &EvaluateTab::discretizationDepthChanged);
+    discretizationDepthChanged(_ui->discretizationDepthSpin->value());
+
     connect(_ui->evaluateMesh,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &EvaluateTab::evaluateMesh);
@@ -133,6 +137,11 @@ void EvaluateTab::aspectRatioChanged(double ratio)
 void EvaluateTab::samplingTypeChanged(const QString& type)
 {
     _character->useSampler(type.toStdString());
+}
+
+void EvaluateTab::discretizationDepthChanged(int depth)
+{
+    _character->setMetricDiscretizationDepth(depth);
 }
 
 void EvaluateTab::displayDicretizationToggled(bool display)

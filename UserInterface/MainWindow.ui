@@ -284,10 +284,30 @@
               <item row="2" column="1">
                <widget class="QComboBox" name="discretizationTypeMenu"/>
               </item>
-              <item row="3" column="0" colspan="2">
+              <item row="4" column="0" colspan="2">
                <widget class="QCheckBox" name="discretizationDisplayCheck">
                 <property name="text">
                  <string>Display Discretization</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="discretizationDepthLabel">
+                <property name="text">
+                 <string>Depth</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QSpinBox" name="discretizationDepthSpin">
+                <property name="minimum">
+                 <number>-1</number>
+                </property>
+                <property name="maximum">
+                 <number>100</number>
+                </property>
+                <property name="value">
+                 <number>-1</number>
                 </property>
                </widget>
               </item>
