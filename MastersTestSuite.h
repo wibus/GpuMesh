@@ -115,6 +115,9 @@ protected:
     void metricPrecision(
             const std::string& testName);
 
+    void texturePrecision(
+            const std::string& testName);
+
 
     void nodeOrder(
             const std::string& testName);

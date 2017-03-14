@@ -51,6 +51,11 @@ const int EVALUATION_THREAD_COUNT_CUDA = 32;
 const int SMOOTHING_THREAD_COUNT_GLSL = 64;
 const int SMOOTHING_THREAD_COUNT_CUDA = 64;
 
+string testNumber(int n)
+{
+    return QString("%1").arg(n, 2, 10, QChar('0')).toStdString();
+}
+
 MastersTestSuite::MastersTestSuite(
         GpuMeshCharacter& character) :
     _character(character),
@@ -62,31 +67,34 @@ MastersTestSuite::MastersTestSuite(
     _availableMastersTests.setDefault("N/A");
 
     _availableMastersTests.setContent({                                          
-        {to_string(++tId) + ". Evaluator Block Size",
+        {testNumber(++tId) + ". Evaluator Block Size",
         MastersTestFunc(bind(&MastersTestSuite::evaluatorBlockSize,     this, _1))},
 
-        {to_string(++tId) + ". Metric Cost (TetCube)",
+        {testNumber(++tId) + ". Metric Cost (TetCube)",
         MastersTestFunc(bind(&MastersTestSuite::metricCostTetCube,      this, _1))},
 
-        {to_string(++tId) + ". Metric Cost (HexGrid)",
+        {testNumber(++tId) + ". Metric Cost (HexGrid)",
         MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,      this, _1))},
 
-        {to_string(++tId) + ". Metric Precision",
+        {testNumber(++tId) + ". Metric Precision",
         MastersTestFunc(bind(&MastersTestSuite::metricPrecision,        this, _1))},
 
-        {to_string(++tId) + ". Node Order",
+        {testNumber(++tId) + ". Texture Precision",
+        MastersTestFunc(bind(&MastersTestSuite::texturePrecision,       this, _1))},
+
+        {testNumber(++tId) + ". Node Order",
         MastersTestFunc(bind(&MastersTestSuite::nodeOrder,              this, _1))},
 
-        {to_string(++tId) + ". Smoothers Efficacity",
+        {testNumber(++tId) + ". Smoothers Efficacity",
         MastersTestFunc(bind(&MastersTestSuite::smootherEfficacity,     this, _1))},
 
-        {to_string(++tId) + ". Smoothers Block Size",
+        {testNumber(++tId) + ". Smoothers Block Size",
         MastersTestFunc(bind(&MastersTestSuite::smootherBlockSize,      this, _1))},
 
-        {to_string(++tId) + ". Smoothers Speed (Analytic)",
+        {testNumber(++tId) + ". Smoothers Speed (Analytic)",
         MastersTestFunc(bind(&MastersTestSuite::smootherSpeedAnalytic,  this, _1))},
 
-        {to_string(++tId) + ". Smoothers Speed (MeshTex)",
+        {testNumber(++tId) + ". Smoothers Speed (MeshTex)",
         MastersTestFunc(bind(&MastersTestSuite::smootherSpeedMeshTex,   this, _1))},
     });
 
@@ -999,6 +1007,84 @@ void MastersTestSuite::metricPrecision(
            header, subheader, lineNames, meanData);
     output(testName + "(Histograms)",
            histHeader, histograms);
+}
+
+void MastersTestSuite::texturePrecision(
+        const string& testName)
+{
+    // Test case description
+    string mesh = MESH_TETCUBE_K12;
+    double metricK = ADAPTATION_METRIC_K12;
+    double metricA = ADAPTATION_METRIC_A;
+
+    string implementation = "Thread";
+    string smoother = "Gradient Descent";
+    string evaluator = "Metric Conformity";
+    string sampling = "Texture";
+
+    vector<double> depths = {
+        1, 2, 4, 8, 16, 32, 64
+    };
+
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
+
+
+    // Setup test
+    _character.useEvaluator(evaluator);
+
+    _character.setMetricScaling(metricK);
+    _character.setMetricAspectRatio(metricA);
+
+
+    // Run test
+    Grid2D<double> data(2, depths.size() + 1);
+
+    for(int d=0; d < depths.size(); ++d)
+    {
+        _character.loadMesh(mesh);
+        _character.setMetricDiscretizationDepth(depths[d]);
+
+        OptimizationPlot plot;
+        vector<Configuration> configs;
+        configs.push_back(Configuration{
+            sampling, smoother, implementation});
+
+        _character.benchmarkSmoothers(
+            plot, schedule, configs);
+
+
+        if(d == 0)
+        {
+            const QualityHistogram& initHist =
+                    plot.initialHistogram();
+
+            data[0][0] = initHist.minimumQuality();
+            data[0][1] = initHist.harmonicMean();
+        }
+
+
+        const QualityHistogram& hist =
+            plot.implementations()[0].finalHistogram;
+
+        data[d+1][0] = hist.minimumQuality();
+        data[d+1][1] = hist.harmonicMean();
+    }
+
+
+    // Print results
+    vector<pair<string, int>> header = {
+        {"Résolutions", 1}, {"Minimums", 1}, {"Moyennes", 1}};
+    vector<pair<string, int>> subheader = {};
+
+    vector<string> lineNames = {"Initial"};
+    for(int d : depths)
+        lineNames.push_back(to_string(d));
+
+    output(testName, header, subheader, lineNames, data);
 }
 
 void MastersTestSuite::nodeOrder(

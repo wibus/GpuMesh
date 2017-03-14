@@ -260,14 +260,13 @@ void TextureSampler::setReferenceMesh(
     glm::dvec3 extents = maxBounds - minBounds;
 
     // Compute grid size
-    size_t vertCount = mesh.verts.size();
-    double alpha = glm::pow(vertCount / (2 * extents.x*extents.y*extents.z), 1/3.0);
-    glm::ivec3 size(glm::round(alpha * extents));
+    int depth = discretizationDepth();
+    size_t cellCount = mesh.verts.size();
+    if(depth > 0)
+        cellCount = depth * depth * depth;
 
-    if(discretizationDepth() > 0)
-    {
-        size = glm::min(size, glm::ivec3(discretizationDepth()));
-    }
+    double alpha = glm::pow(cellCount / (extents.x*extents.y*extents.z), 1/3.0);
+    glm::ivec3 size = glm::round(glm::max(glm::dvec3(1), alpha * extents));
 
     _transform = glm::scale(glm::mat4(),
         glm::vec3(1 / extents.x, 1 / extents.y, 1 / extents.z));
