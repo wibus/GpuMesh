@@ -256,129 +256,85 @@ void LocalSampler::setReferenceMesh(
     _maxSearchDepth = 0;
 }
 
-const size_t MAX_TABOO = 128;
-bool isTaboo(uint tId, uint taboo[], size_t count)
-{
-    if(tId != -1)
-    {
-        for(size_t i=0; i < count; ++i)
-            if(tId == taboo[i])
-                return true;
-    }
-
-    return false;
-}
-
 MeshMetric LocalSampler::metricAt(
         const glm::dvec3& position,
         uint& cachedRefTet) const
 {
-    // Taboo search structures
-    size_t tabooCount = 0;
-    uint taboo[MAX_TABOO];
-
     const MeshLocalTet* tet = &_localTets[cachedRefTet];
 
+    glm::dvec3 orig = 0.25 * (
+        _refVerts[tet->v[0]].p +
+        _refVerts[tet->v[1]].p +
+        _refVerts[tet->v[2]].p +
+        _refVerts[tet->v[3]].p);
+
+    glm::dvec3 dir =
+        glm::normalize(orig - position);
+
+
     double coor[4];
-    while(!tetParams(_refVerts, *tet, position, coor))
+    bool isOut = true;
+    while(isOut)
     {
-        uint n = -1;
-        double minCoor = 1/0.0;
-
-        if(coor[0] < minCoor && !isTaboo(tet->n[0], taboo, tabooCount))
+        if(tetParams(_refVerts, *tet, position, coor))
         {
-            n = 0;
-            minCoor = coor[0];
-        }
-        if(coor[1] < minCoor && !isTaboo(tet->n[1], taboo, tabooCount))
-        {
-            n = 1;
-            minCoor = coor[1];
-        }
-        if(coor[2] < minCoor && !isTaboo(tet->n[2], taboo, tabooCount))
-        {
-            n = 2;
-            minCoor = coor[2];
-        }
-        if(coor[3] < minCoor && !isTaboo(tet->n[3], taboo, tabooCount))
-        {
-            n = 3;
-            minCoor = coor[3];
+            isOut = false;
+            break;
         }
 
-        bool clipCurrentTet = false;
-        if(n != -1)
+        int t=0;
+        for(;t < 4; ++t)
         {
-            uint nextTet = tet->n[n];
-
-            if((nextTet != -1))
+            if(triIntersect(
+                _refVerts[tet->v[MeshTet::tris[t].v[0]]].p,
+                _refVerts[tet->v[MeshTet::tris[t].v[1]]].p,
+                _refVerts[tet->v[MeshTet::tris[t].v[2]]].p,
+                orig, dir))
             {
-                if(tabooCount < MAX_TABOO)
+                if(tet->n[t] != -1)
                 {
-                    // Add last tet to taboo list
-                    taboo[tabooCount] = cachedRefTet;
-                    ++tabooCount;
-
-                    // Fetch the next local tet
-                    tet = &_localTets[nextTet];
-                    cachedRefTet = nextTet;
+                    tet = &_localTets[tet->n[t]];
                 }
                 else
                 {
-                    // We went too far,
-                    // stay where we are
-                    clipCurrentTet = true;
-                    getLog().postMessage(new Message('E', false,
-                       "Visited to many tets during local search", "LocalSampler"));
-
-                    _failedSamples.push_back(glm::dvec4(position, 1.0));
+                    tet = nullptr;
                 }
-            }
-            else
-            {
-                // The sampling point is on
-                // the other side of the boundary
-                clipCurrentTet = true;
-                // This may not be an issue
+
+                break;
             }
         }
-        else
+
+        if(t == 4)
         {
-            // Every surrounding tet
-            // were already visited
-            clipCurrentTet = true;
             getLog().postMessage(new Message('E', false,
-               "Surrounded by taboo tets during local search", "LocalSampler"));
+                "Did not find a way out of the tet...",
+                "LocalSampler"));
 
-            _failedSamples.push_back(glm::dvec4(position, 0.5));
+            break;
         }
-
-
-        if(clipCurrentTet)
+        else if(tet == nullptr)
         {
-            // Clamp sample to current tet
-            // It's seems to be the closest
-            // we can get to the sampling point
-            double sum = 0.0;
-            if(coor[0] < 0.0) coor[0] = 0.0; else sum += coor[0];
-            if(coor[1] < 0.0) coor[1] = 0.0; else sum += coor[1];
-            if(coor[2] < 0.0) coor[2] = 0.0; else sum += coor[2];
-            if(coor[3] < 0.0) coor[3] = 0.0; else sum += coor[3];
-            coor[0] /= sum;
-            coor[1] /= sum;
-            coor[2] /= sum;
-            coor[3] /= sum;
+            // Boundary reached
             break;
         }
     }
 
-//    if(_maxSearchDepth < tabooCount)
-//    {
-//        _maxSearchDepth = tabooCount;
-//        getLog().postMessage(new Message('I', false,
-//           "New search depth record : " + std::to_string(_maxSearchDepth),
-//           "LocalSampler"));
-//    }
+
+    if(isOut)
+    {
+        // Clamp sample to current tet
+        // It's seems to be the closest
+        // we can get to the sampling point
+        double sum = 0.0;
+        if(coor[0] < 0.0) coor[0] = 0.0; else sum += coor[0];
+        if(coor[1] < 0.0) coor[1] = 0.0; else sum += coor[1];
+        if(coor[2] < 0.0) coor[2] = 0.0; else sum += coor[2];
+        if(coor[3] < 0.0) coor[3] = 0.0; else sum += coor[3];
+        coor[0] /= sum;
+        coor[1] /= sum;
+        coor[2] /= sum;
+        coor[3] /= sum;
+    }
 
     return coor[0] * _refMetrics[tet->v[0]] +
            coor[1] * _refMetrics[tet->v[1]] +

@@ -230,10 +230,46 @@ bool tetParams(
     coor[2] = y[2];
     coor[3] = 1.0 - (y[0] + y[1] + y[2]);
 
-    const double EPSILON_IN = -1e-8;
+    const double EPSILON_IN = -1e-6;
     bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
                  coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
     return isIn;
+}
+
+inline bool triIntersect(
+        const glm::dvec3& v1,
+        const glm::dvec3& v2,
+        const glm::dvec3& v3,
+        const glm::dvec3& orig,
+        const glm::dvec3& dir)
+{
+    const double EPSILON = 1e-8;
+
+    glm::dvec3 e1 = v2 - v1;
+    glm::dvec3 e2 = v3 - v1;
+    glm::dvec3 pvec = glm::cross(dir, e2);
+
+    double det = glm::dot(pvec, e1);
+    if (det < EPSILON)
+    {
+        return false;
+    }
+
+    glm::dvec3 tvec = orig - v1;
+    double u = glm::dot(tvec, pvec);
+    if (u < 0.0 || u > det)
+    {
+        return false;
+    }
+
+    glm::dvec3 qvec = glm::cross(tvec,e1);
+    double v = glm::dot(dir, qvec);
+    if (v < 0.0 || v + u > det)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 #endif // GPUMESH_TETRAHEDRALIZER
