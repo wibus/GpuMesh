@@ -120,6 +120,8 @@ struct Topo
 extern __constant__ uint verts_length;
 extern __device__ Vert* verts;
 
+extern __constant__ Tri MeshTet_tris[4];
+
 extern __constant__ uint tets_length;
 extern __device__ Tet* tets;
 
@@ -152,8 +154,6 @@ extern __device__ mat4* refMetrics;
 // GPU independent groups
 extern __constant__ int GroupBase;
 extern __constant__ int GroupSize;
-
-
 
 
 /////////////////////////

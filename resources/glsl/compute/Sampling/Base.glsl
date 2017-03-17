@@ -26,19 +26,6 @@ mat3 vertMetric(in vec3 position)
             vec3(0,  0,  Mz));
 }
 
-void boundingBox(out vec3 minBounds, out vec3 maxBounds)
-{
-    minBounds = vec3(1.0/0.0);
-    maxBounds = vec3(-1.0/0.0);
-    uint vertCount = verts.length();
-    for(uint v=0; v < vertCount; ++v)
-    {
-        vec3 vertPos = verts[v].p;
-        minBounds = min(minBounds, vertPos);
-        maxBounds = max(maxBounds, vertPos);
-    }
-}
-
 bool tetParams(in uint vi[4], in vec3 p, out float coor[4])
 {
     dvec3 vp0 = dvec3(refVerts[vi[0]].p);
@@ -54,8 +41,44 @@ bool tetParams(in uint vi[4], in vec3 p, out float coor[4])
     coor[2] = float(y[2]);
     coor[3] = float(1.0LF - (y[0] + y[1] + y[2]));
 
-    const float EPSILON_IN = -1e-8;
+    const float EPSILON_IN = -1e-4;
     bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
                  coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
     return isIn;
+}
+
+bool triIntersect(
+        in vec3 v1,
+        in vec3 v2,
+        in vec3 v3,
+        in vec3 orig,
+        in vec3 dir)
+{
+    const float EPSILON = 1e-12;
+
+    vec3 e1 = v2 - v1;
+    vec3 e2 = v3 - v1;
+    vec3 pvec = cross(dir, e2);
+
+    float det = dot(pvec, e1);
+    if (det < EPSILON)
+    {
+        return false;
+    }
+
+    vec3 tvec = orig - v1;
+    float u = dot(tvec, pvec);
+    if (u < 0.0 || u > det)
+    {
+        return false;
+    }
+
+    vec3 qvec = cross(tvec,e1);
+    float v = dot(dir, qvec);
+    if (v < 0.0 || v + u > det)
+    {
+        return false;
+    }
+
+    return true;
 }

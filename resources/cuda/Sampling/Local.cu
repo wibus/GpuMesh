@@ -19,117 +19,111 @@ __device__ LocalTet* localTets;
 ///////////////////////////////
 __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4]);
 
-
-#define MAX_TABOO 128
-__device__ bool isTaboo(uint tId, uint taboo[MAX_TABOO], uint count)
-{
-    if(tId != -1)
-    {
-        for(uint i=0; i < count; ++i)
-            if(tId == taboo[i])
-                return true;
-    }
-
-    return false;
-}
+__device__ bool triIntersect(
+        const vec3& v1,
+        const vec3& v2,
+        const vec3& v3,
+        const vec3& orig,
+        const vec3& dir);
 
 __device__ mat3 localMetricAt(const vec3& position, uint& cachedRefTet)
 {
-    // Taboo search structures
-    uint tabooCount = 0;
-    uint taboo[MAX_TABOO];
-
-    LocalTet tet = localTets[cachedRefTet];
+    const LocalTet* tet = &localTets[cachedRefTet];
 
     float coor[4];
-    while(!tetParams(tet.v, position, coor))
+    int visitedTet = 0;
+    bool outOfTet = false;
+    bool outOfBounds = false;
+
+    while(!outOfBounds && !tetParams(tet->v, position, coor))
     {
-        uint n = -1;
-        float minCoor = 1/0.0;
+        vec3 orig, dir;
 
-        if(coor[0] < minCoor && !isTaboo(tet.n[0], taboo, tabooCount))
+        if(visitedTet == 0)
         {
-            n = 0;
-            minCoor = coor[0];
-        }
-        if(coor[1] < minCoor && !isTaboo(tet.n[1], taboo, tabooCount))
-        {
-            n = 1;
-            minCoor = coor[1];
-        }
-        if(coor[2] < minCoor && !isTaboo(tet.n[2], taboo, tabooCount))
-        {
-            n = 2;
-            minCoor = coor[2];
-        }
-        if(coor[3] < minCoor && !isTaboo(tet.n[3], taboo, tabooCount))
-        {
-            n = 3;
-            minCoor = coor[3];
+            orig = 0.25f * (
+                refVerts[tet->v[0]].p +
+                refVerts[tet->v[1]].p +
+                refVerts[tet->v[2]].p +
+                refVerts[tet->v[3]].p);
+
+            dir = normalize(orig - position);
         }
 
-        bool clipCurrentTet = false;
-        if(n != -1)
-        {
-            uint nextTet = tet.n[n];
 
-            if((nextTet != -1))
+        int t=0;
+        for(;t < 4; ++t)
+        {
+            if(triIntersect(
+                refVerts[tet->v[MeshTet_tris[t].v[0]]].p,
+                refVerts[tet->v[MeshTet_tris[t].v[1]]].p,
+                refVerts[tet->v[MeshTet_tris[t].v[2]]].p,
+                orig, dir))
             {
-                if(tabooCount < MAX_TABOO)
+                if(tet->n[t] != -1)
                 {
-                    // Add last tet to taboo list
-                    taboo[tabooCount] = cachedRefTet;
-                    ++tabooCount;
-
-                    // Fetch the next local tet
-                    tet = localTets[nextTet];
-                    cachedRefTet = nextTet;
+                    ++visitedTet;
+                    tet = &localTets[tet->n[t]];
                 }
                 else
                 {
-                    // We went too far,
-                    // stay where we are
-                    clipCurrentTet = true;
+                    outOfBounds = true;
+                    outOfTet = true;
                 }
+
+                break;
+            }
+        }
+
+        if(t == 4)
+        {
+            if(visitedTet == 0)
+            {
+                outOfTet = true;
+                break;
             }
             else
             {
-                // The sampling point is on
-                // the other side of the boundary
-                clipCurrentTet = true;
-                // This may not be an issue
+                visitedTet = 0;
+
+                if(coor[0] < 0.0 && tet->n[0] != -1)
+                    tet = &localTets[tet->n[0]];
+                else if(coor[1] < 0.0 && tet->n[1] != -1)
+                    tet = &localTets[tet->n[1]];
+                else if(coor[2] < 0.0 && tet->n[2] != -1)
+                    tet = &localTets[tet->n[2]];
+                else if(tet->n[3] != -1)
+                    tet = &localTets[tet->n[3]];
+                else
+                {
+                    // Boundary reached
+                    outOfTet = true;
+                    break;
+                }
             }
-        }
-        else
-        {
-            // Every surrounding tet
-            // were already visited
-            clipCurrentTet = true;
-        }
-
-
-        if(clipCurrentTet)
-        {
-            // Clamp sample to current tet
-            // It's seems to be the closest
-            // we can get to the sampling point
-            float sum = 0.0;
-            if(coor[0] < 0.0) coor[0] = 0.0; else sum += coor[0];
-            if(coor[1] < 0.0) coor[1] = 0.0; else sum += coor[1];
-            if(coor[2] < 0.0) coor[2] = 0.0; else sum += coor[2];
-            if(coor[3] < 0.0) coor[3] = 0.0; else sum += coor[3];
-            coor[0] /= sum;
-            coor[1] /= sum;
-            coor[2] /= sum;
-            coor[3] /= sum;
-            break;
         }
     }
 
-    return coor[0] * mat3(refMetrics[tet.v[0]]) +
-           coor[1] * mat3(refMetrics[tet.v[1]]) +
-           coor[2] * mat3(refMetrics[tet.v[2]]) +
-           coor[3] * mat3(refMetrics[tet.v[3]]);
+    if(outOfTet)
+    {
+        // Clamp sample to current tet
+        // It's seems to be the closest
+        // we can get to the sampling point
+        float sum = 0.0;
+        if(coor[0] < 0.0) coor[0] = 0.0; else sum += coor[0];
+        if(coor[1] < 0.0) coor[1] = 0.0; else sum += coor[1];
+        if(coor[2] < 0.0) coor[2] = 0.0; else sum += coor[2];
+        if(coor[3] < 0.0) coor[3] = 0.0; else sum += coor[3];
+        coor[0] /= sum;
+        coor[1] /= sum;
+        coor[2] /= sum;
+        coor[3] /= sum;
+    }
+
+    return coor[0] * mat3(refMetrics[tet->v[0]]) +
+           coor[1] * mat3(refMetrics[tet->v[1]]) +
+           coor[2] * mat3(refMetrics[tet->v[2]]) +
+           coor[3] * mat3(refMetrics[tet->v[3]]);
 }
 
 __device__ metricAtFct localMetricAtPtr = localMetricAt;

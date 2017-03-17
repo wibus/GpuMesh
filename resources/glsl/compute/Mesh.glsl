@@ -196,3 +196,8 @@ layout(std140, binding = REF_METRICS_BUFFER_BINDING) buffer RefMetrics
     mat4 refMetrics[];
 };
 
+Tri MeshTet_tris[] = {
+    {{1, 2, 3}},
+    {{0, 3, 2}},
+    {{0, 1, 3}},
+    {{0, 2, 1}}};

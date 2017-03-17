@@ -230,7 +230,7 @@ bool tetParams(
     coor[2] = y[2];
     coor[3] = 1.0 - (y[0] + y[1] + y[2]);
 
-    const double EPSILON_IN = -1e-6;
+    const double EPSILON_IN = -1e-4;
     bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
                  coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
     return isIn;
@@ -243,7 +243,7 @@ inline bool triIntersect(
         const glm::dvec3& orig,
         const glm::dvec3& dir)
 {
-    const double EPSILON = 1e-8;
+    const double EPSILON = 1e-12;
 
     glm::dvec3 e1 = v2 - v1;
     glm::dvec3 e2 = v3 - v1;

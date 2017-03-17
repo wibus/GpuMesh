@@ -262,25 +262,26 @@ MeshMetric LocalSampler::metricAt(
 {
     const MeshLocalTet* tet = &_localTets[cachedRefTet];
 
-    glm::dvec3 orig = 0.25 * (
-        _refVerts[tet->v[0]].p +
-        _refVerts[tet->v[1]].p +
-        _refVerts[tet->v[2]].p +
-        _refVerts[tet->v[3]].p);
-
-    glm::dvec3 dir =
-        glm::normalize(orig - position);
-
-
     double coor[4];
-    bool isOut = true;
-    while(isOut)
+    int visitedTet = 0;
+    bool outOfTet = false;
+    bool outOfBounds = false;
+
+    while(!outOfBounds && !tetParams(_refVerts, *tet, position, coor))
     {
-        if(tetParams(_refVerts, *tet, position, coor))
+        glm::dvec3 orig, dir;
+
+        if(visitedTet == 0)
         {
-            isOut = false;
-            break;
+            orig = 0.25 * (
+                _refVerts[tet->v[0]].p +
+                _refVerts[tet->v[1]].p +
+                _refVerts[tet->v[2]].p +
+                _refVerts[tet->v[3]].p);
+
+            dir = glm::normalize(orig - position);
         }
+
 
         int t=0;
         for(;t < 4; ++t)
@@ -293,11 +294,13 @@ MeshMetric LocalSampler::metricAt(
             {
                 if(tet->n[t] != -1)
                 {
+                    ++visitedTet;
                     tet = &_localTets[tet->n[t]];
                 }
                 else
                 {
-                    tet = nullptr;
+                    outOfBounds = true;
+                    outOfTet = true;
                 }
 
                 break;
@@ -306,21 +309,40 @@ MeshMetric LocalSampler::metricAt(
 
         if(t == 4)
         {
-            getLog().postMessage(new Message('E', false,
-                "Did not find a way out of the tet...",
-                "LocalSampler"));
+            if(visitedTet == 0)
+            {
+                getLog().postMessage(new Message('E', false,
+                    "Did not find a way out of the tet...",
+                    "LocalSampler"));
 
-            break;
-        }
-        else if(tet == nullptr)
-        {
-            // Boundary reached
-            break;
+                outOfTet = true;
+                break;
+            }
+            else
+            {
+                uint n = tet->n[0];
+                double c = coor[0];
+
+                if(coor[1] < c) n = tet->n[1];
+                else if(coor[2] < c) n = tet->n[2];
+                else if(coor[3] < c) n = tet->n[3];
+
+                if(n != -1)
+                {
+                    visitedTet = 0;
+                    tet= &_localTets[n];
+                }
+                else
+                {
+                    outOfTet = true;
+                    outOfBounds = true;
+                }
+            }
         }
     }
 
 
-    if(isOut)
+    if(outOfTet)
     {
         // Clamp sample to current tet
         // It's seems to be the closest

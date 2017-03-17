@@ -40,24 +40,6 @@ __device__ mat3 vertMetric(const vec3& position)
             vec3(0,  0,  Mz));
 }
 
-__device__ mat3 vertMetric(uint vId)
-{
-    return vertMetric(verts[vId].p);
-}
-
-__device__ void boundingBox(vec3& minBounds, vec3& maxBounds)
-{
-    minBounds = vec3(1.0/0.0);
-    maxBounds = vec3(-1.0/0.0);
-    uint vertCount = verts_length;
-    for(uint v=0; v < vertCount; ++v)
-    {
-        vec3 vertPos = verts[v].p;
-        minBounds = min(minBounds, vertPos);
-        maxBounds = max(maxBounds, vertPos);
-    }
-}
-
 __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4])
 {
     dvec3 vp0 = dvec3(refVerts[vi[0]].p);
@@ -73,10 +55,46 @@ __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4])
     coor[2] = float(y[2]);
     coor[3] = float(1.0 - (y[0] + y[1] + y[2]));
 
-    const float EPSILON_IN = -1e-8;
+    const float EPSILON_IN = -1e-4;
     bool isIn = (coor[0] >= EPSILON_IN && coor[1] >= EPSILON_IN &&
                  coor[2] >= EPSILON_IN && coor[3] >= EPSILON_IN);
     return isIn;
+}
+
+__device__ bool triIntersect(
+        const vec3& v1,
+        const vec3& v2,
+        const vec3& v3,
+        const vec3& orig,
+        const vec3& dir)
+{
+    const float EPSILON = 1e-12;
+
+    vec3 e1 = v2 - v1;
+    vec3 e2 = v3 - v1;
+    vec3 pvec = cross(dir, e2);
+
+    float det = dot(pvec, e1);
+    if (det < EPSILON)
+    {
+        return false;
+    }
+
+    vec3 tvec = orig - v1;
+    float u = dot(tvec, pvec);
+    if (u < 0.0 || u > det)
+    {
+        return false;
+    }
+
+    vec3 qvec = cross(tvec,e1);
+    float v = dot(dir, qvec);
+    if (v < 0.0 || v + u > det)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 

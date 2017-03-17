@@ -30,6 +30,13 @@ __device__ uint neigElems_length = 0;
 __device__ uint* groupMembers = nullptr;
 __device__ uint groupMembers_length = 0;
 
+__constant__ Tri MeshTet_tris[4] = {
+    {{1, 2, 3}},
+    {{0, 3, 2}},
+    {{0, 1, 3}},
+    {{0, 2, 1}}};
+
+
 // Reference mesh
 __constant__ uint refVerts_length;
 __device__ Vert* refVerts;
