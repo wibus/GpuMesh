@@ -323,9 +323,9 @@ MeshMetric LocalSampler::metricAt(
                 uint n = tet->n[0];
                 double c = coor[0];
 
-                if(coor[1] < c) n = tet->n[1];
-                else if(coor[2] < c) n = tet->n[2];
-                else if(coor[3] < c) n = tet->n[3];
+                if(coor[1] < c) {n = tet->n[1]; c = coor[1];}
+                if(coor[2] < c) {n = tet->n[2]; c = coor[2];}
+                if(coor[3] < c) {n = tet->n[3]; c = coor[3];}
 
                 if(n != -1)
                 {

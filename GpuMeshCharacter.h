@@ -69,6 +69,8 @@ public:
             const std::string& modelName,
             size_t vertexCount);
 
+    virtual size_t getNodeCount() const;
+
     virtual void clearMesh();
 
     virtual void saveMesh(

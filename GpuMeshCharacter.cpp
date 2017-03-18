@@ -492,6 +492,11 @@ void GpuMeshCharacter::generateMesh(
     }
 }
 
+size_t GpuMeshCharacter::getNodeCount() const
+{
+    return _mesh->verts.size();
+}
+
 void GpuMeshCharacter::clearMesh()
 {
     _mesh->clear();

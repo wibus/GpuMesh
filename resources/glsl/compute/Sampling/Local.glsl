@@ -86,21 +86,22 @@ mat3 metricAtImpl(in vec3 position, inout uint cachedRefTet)
             }
             else
             {
-                visitedTet = 0;
+                uint n = tet.n[0];
+                float c = coor[0];
 
-                if(coor[0] < 0.0 && tet.n[0] != -1)
-                    tet = localTets[tet.n[0]];
-                else if(coor[1] < 0.0 && tet.n[1] != -1)
-                    tet = localTets[tet.n[1]];
-                else if(coor[2] < 0.0 && tet.n[2] != -1)
-                    tet = localTets[tet.n[2]];
-                else if(tet.n[3] != -1)
-                    tet = localTets[tet.n[3]];
+                if(coor[1] < c) {n = tet.n[1]; c = coor[1];}
+                if(coor[2] < c) {n = tet.n[2]; c = coor[2];}
+                if(coor[3] < c) {n = tet.n[3]; c = coor[3];}
+
+                if(n != -1)
+                {
+                    visitedTet = 0;
+                    tet = localTets[n];
+                }
                 else
                 {
-                    // outOfBounds reached
                     outOfTet = true;
-                    break;
+                    outOfBounds = true;
                 }
             }
         }

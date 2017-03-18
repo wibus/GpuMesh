@@ -36,7 +36,15 @@ const string MESH_TETCUBE_K12 = RESULT_MESH_PATH + "TetCube (K=12).json";
 const string MESH_TETCUBE_K16 = RESULT_MESH_PATH + "TetCube (K=16).json";
 const string MESH_TETCUBE_K24 = RESULT_MESH_PATH + "TetCube (K=24).json";
 const string MESH_HEXGRID_500K = RESULT_MESH_PATH + "HexGrid (N=500K).json";
-const string MESH_TURBINE_500K = DATA_MESH_PATH + "FINAL_MESH.cgns";
+const string MESH_TURBINE_500K = RESULT_MESH_PATH + "Turbine (N=500K).cgns";
+
+const string MESH_SPHERE_SCALED = RESULT_MESH_PATH + "Sphere (Scale=%1).json";
+
+const int BASE_SCALE = 1e4;
+const vector<int> SPHERE_TARGET_SIZES = {
+    1*BASE_SCALE,  2*BASE_SCALE,  4*BASE_SCALE,  8*BASE_SCALE,
+    16*BASE_SCALE, 32*BASE_SCALE, 64*BASE_SCALE, 128*BASE_SCALE};
+double sizeToScale(int size) {return glm::pow(size, 1/2.9) / 4.08;}
 
 const double ADAPTATION_METRIC_K12 = 12;
 const double ADAPTATION_METRIC_K16 = 16;
@@ -96,6 +104,12 @@ MastersTestSuite::MastersTestSuite(
 
         {testNumber(++tId) + ". Smoothers Speed (MeshTex)",
         MastersTestFunc(bind(&MastersTestSuite::smootherSpeedMeshTex,   this, _1))},
+
+        {testNumber(++tId) + ". Scaling (Relocation only)",
+        MastersTestFunc(bind(&MastersTestSuite::scalingRelocOnly,       this, _1))},
+
+        {testNumber(++tId) + ". Scaling (Topo and relocation)",
+        MastersTestFunc(bind(&MastersTestSuite::scalingTopoReloc,       this, _1))},
     });
 
     _translateSamplingTechniques = {
@@ -230,6 +244,26 @@ void MastersTestSuite::runTests(
             return;
         }
     }
+
+    for(int s=0; s < SPHERE_TARGET_SIZES.size(); ++s)
+    {
+        size_t size = SPHERE_TARGET_SIZES[s];
+        QString name = QString(MESH_SPHERE_SCALED.c_str()).arg(s);
+
+        if(!QFile(name).exists())
+        {
+            _character.generateMesh("Delaunay", "Sphere", size);
+
+            _character.setMetricScaling(sizeToScale(size));
+            _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
+
+            _character.useSampler("Analytic");
+            _character.restructureMesh(10);
+
+            _character.saveMesh(name.toStdString());
+        }
+    }
+
 
     _character.clearMesh();
     QCoreApplication::processEvents();
@@ -925,7 +959,7 @@ void MastersTestSuite::metricPrecision(
     // Setup test
     setupAdaptedCube(ADAPTATION_METRIC_K12, 1.0);
 
-    QString meshName = (RESULT_MESH_PATH + testName + " (A=%1).json").c_str();
+    QString meshName = (RESULT_MESH_PATH + "Metric Precision (A=%1).json").c_str();
     _character.saveMesh(meshName.arg(0).toStdString());
 
     _character.setMetricScaling(ADAPTATION_METRIC_K12);
@@ -1598,4 +1632,87 @@ void MastersTestSuite::smootherSpeedMeshTex(
         lineNames.push_back(_translateSmoothers[smooth]);
 
     output(testName, header, subheader, lineNames, data);
+}
+
+void MastersTestSuite::scaling(
+        const std::string& testName,
+        bool enableRelocation)
+{
+    // Test case description
+    string evaluator = "Metric Conformity";
+
+    vector<Configuration> configs;
+    configs.push_back(Configuration{"Local", "Gradient Descent", "Serial"});
+    configs.push_back(Configuration{"Local", "Gradient Descent", "Thread"});
+    configs.push_back(Configuration{"Texture", "Patch GD", "GLSL"});
+    configs.push_back(Configuration{"Texture", "Patch GD", "CUDA"});
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = enableRelocation;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
+    schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
+
+
+    // Setup test
+    _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
+
+    _character.useEvaluator(evaluator);
+    _character.setGlslEvaluatorThreadCount(EVALUATION_THREAD_COUNT_GLSL);
+    _character.setCudaEvaluatorThreadCount(EVALUATION_THREAD_COUNT_CUDA);
+
+    _character.setGlslSmootherThreadCount(SMOOTHING_THREAD_COUNT_GLSL);
+    _character.setCudaSmootherThreadCount(SMOOTHING_THREAD_COUNT_CUDA);
+
+
+    // Run test
+    Grid2D<double> data(4, SPHERE_TARGET_SIZES.size());
+
+    for(int s=0; s < SPHERE_TARGET_SIZES.size(); ++s)
+    {
+        int size = SPHERE_TARGET_SIZES[s];
+        _character.setMetricScaling(sizeToScale(size));
+
+        _character.loadMesh(QString(
+            MESH_SPHERE_SCALED.c_str()).arg(s).toStdString());
+
+
+        OptimizationPlot plot;
+        _character.benchmarkSmoothers(
+            plot, schedule, configs);
+
+        for(int i=0; i < plot.implementations().size(); ++i)
+        {
+            data[s][i] = plot.implementations()[i]
+                    .passes.back().timeStamp;
+        }
+    }
+
+
+    // Print results
+    vector<pair<string, int>> header = {
+        {"Tailles", 1},
+        {_translateImplementations["Serial"], 1},
+        {_translateImplementations["Thread"], 1},
+        {_translateImplementations["GLSL"], 1},
+        {_translateImplementations["CUDA"], 1}};
+    vector<pair<string, int>> subheader = {};
+
+    vector<string> lineNames;
+    for(int size : SPHERE_TARGET_SIZES)
+        lineNames.push_back(to_string(size));
+
+    output(testName, header, subheader, lineNames, data);
+}
+
+void MastersTestSuite::scalingRelocOnly(
+        const std::string& testName)
+{
+    scaling(testName, false);
+}
+
+void MastersTestSuite::scalingTopoReloc(
+        const std::string& testName)
+{
+    scaling(testName, true);
 }

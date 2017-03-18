@@ -136,6 +136,15 @@ protected:
             const std::string& testName);
 
 
+    void scaling(
+            const std::string& testName,
+            bool enableRelocation);
+
+    void scalingRelocOnly(
+            const std::string& testName);
+
+    void scalingTopoReloc(
+            const std::string& testName);
 
 
 private:
