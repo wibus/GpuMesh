@@ -38,12 +38,15 @@ const string MESH_TETCUBE_K24 = RESULT_MESH_PATH + "TetCube (K=24).json";
 const string MESH_HEXGRID_500K = RESULT_MESH_PATH + "HexGrid (N=500K).json";
 const string MESH_TURBINE_500K = RESULT_MESH_PATH + "Turbine (N=500K).cgns";
 
-const string MESH_SPHERE_SCALED = RESULT_MESH_PATH + "Sphere (Scale=%1).json";
+const string MESH_PRECISION_BASE = RESULT_MESH_PATH + "Precision (A=%1).json";
+const string MESH_SCALING_BASE = RESULT_MESH_PATH + "Scaling (Scale=%1).json";
 
-const int BASE_SCALE = 1e4;
+vector<double> PRECISION_METRIC_As = {1, 2, 4, 8, 16};
+
+const int BS = 1e4;
 const vector<int> SPHERE_TARGET_SIZES = {
-    1*BASE_SCALE,  2*BASE_SCALE,  4*BASE_SCALE,  8*BASE_SCALE,
-    16*BASE_SCALE, 32*BASE_SCALE, 64*BASE_SCALE, 128*BASE_SCALE};
+    1*BS,  2*BS,  4*BS,  8*BS,
+    16*BS, 32*BS, 64*BS, 128*BS};
 double sizeToScale(int size) {return glm::pow(size, 1/2.9) / 4.08;}
 
 const double ADAPTATION_METRIC_K12 = 12;
@@ -245,10 +248,29 @@ void MastersTestSuite::runTests(
         }
     }
 
+    if(!QFile(QString(MESH_PRECISION_BASE.c_str()).arg(PRECISION_METRIC_As.back())).exists())
+    {
+        setupAdaptedCube(ADAPTATION_METRIC_K12, PRECISION_METRIC_As.front());
+
+        for(int a=0; a < PRECISION_METRIC_As.size(); ++a)
+        {
+            double metricA = PRECISION_METRIC_As[a];
+            QString name = QString(MESH_PRECISION_BASE.c_str()).arg(metricA);
+
+            _character.setMetricAspectRatio(metricA);
+            _character.restructureMesh(ADAPTATION_TOPO_PASS);
+
+            if(!QFile(name).exists())
+            {
+                _character.saveMesh(name.toStdString());
+            }
+        }
+    }
+
     for(int s=0; s < SPHERE_TARGET_SIZES.size(); ++s)
     {
         size_t size = SPHERE_TARGET_SIZES[s];
-        QString name = QString(MESH_SPHERE_SCALED.c_str()).arg(s);
+        QString name = QString(MESH_SCALING_BASE.c_str()).arg(s);
 
         if(!QFile(name).exists())
         {
@@ -946,10 +968,6 @@ void MastersTestSuite::metricPrecision(
         "Kd-Tree"
     };
 
-    vector<double> metricAs = {
-        1, 2, 4, 8, 16
-    };
-
     Schedule schedule;
     schedule.autoPilotEnabled = false;
     schedule.topoOperationEnabled = false;
@@ -957,11 +975,6 @@ void MastersTestSuite::metricPrecision(
 
 
     // Setup test
-    setupAdaptedCube(ADAPTATION_METRIC_K12, 1.0);
-
-    QString meshName = (RESULT_MESH_PATH + "Metric Precision (A=%1).json").c_str();
-    _character.saveMesh(meshName.arg(0).toStdString());
-
     _character.setMetricScaling(ADAPTATION_METRIC_K12);
 
     _character.useEvaluator(evaluator);
@@ -969,24 +982,16 @@ void MastersTestSuite::metricPrecision(
 
     // Run test
     vector<QualityHistogram> histograms;
-    Grid2D<double> minData(metricAs.size(), samplings.size() + 1);
-    Grid2D<double> meanData(metricAs.size(), samplings.size() + 1);
+    Grid2D<double> minData(PRECISION_METRIC_As.size(), samplings.size() + 1);
+    Grid2D<double> meanData(PRECISION_METRIC_As.size(), samplings.size() + 1);
 
-    for(int a=0; a < metricAs.size(); ++a)
+    for(int a=0; a < PRECISION_METRIC_As.size(); ++a)
     {
-        if(a != 0)
-        {
-            _character.loadMesh(meshName.arg(metricAs[a-1]).toStdString());
-        }
+        double metricA = PRECISION_METRIC_As[a];
 
-        _character.useSampler("Analytic");
-        _character.setMetricAspectRatio(metricAs[a]);
-        _character.restructureMesh(ADAPTATION_TOPO_PASS);
-
-        _character.saveMesh(meshName.arg(metricAs[a]).toStdString());
-
-
-        QCoreApplication::processEvents();
+        _character.setMetricAspectRatio(metricA);
+        _character.loadMesh(QString(MESH_PRECISION_BASE.c_str())
+            .arg(metricA).toStdString());
 
         OptimizationPlot plot;
         vector<Configuration> configs;
@@ -1009,7 +1014,7 @@ void MastersTestSuite::metricPrecision(
             meanData[s+1][a] = hist.harmonicMean();
         }
 
-        if(a == metricAs.size()-1)
+        if(a == PRECISION_METRIC_As.size()-1)
         {
             histograms.push_back(initHist);
 
@@ -1022,7 +1027,7 @@ void MastersTestSuite::metricPrecision(
 
     // Print results
     vector<pair<string, int>> header = {{"Métriques", 1}};
-    for(double r : metricAs)
+    for(double r : PRECISION_METRIC_As)
         header.push_back({"A = " + to_string(r), 1});
 
     vector<pair<string, int>> subheader = {};
@@ -1674,7 +1679,7 @@ void MastersTestSuite::scaling(
         _character.setMetricScaling(sizeToScale(size));
 
         _character.loadMesh(QString(
-            MESH_SPHERE_SCALED.c_str()).arg(s).toStdString());
+            MESH_SCALING_BASE.c_str()).arg(s).toStdString());
 
 
         OptimizationPlot plot;
