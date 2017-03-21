@@ -19,10 +19,6 @@ public:
             const Mesh& mesh) const override;
 
 protected:
-    static QJsonValue toJson(const MeshVert& v);
-    static QJsonValue toJson(const MeshTet& e);
-    static QJsonValue toJson(const MeshPri& e);
-    static QJsonValue toJson(const MeshHex& e);
 };
 
 #endif // GPUMESH_JSONSERIALIZER
