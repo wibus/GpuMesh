@@ -263,86 +263,79 @@ MeshMetric LocalSampler::metricAt(
     const MeshLocalTet* tet = &_localTets[cachedRefTet];
 
     double coor[4];
-    int visitedTet = 0;
-    bool outOfTet = false;
-    bool outOfBounds = false;
+    bool isUnreachable = false;
 
-    while(!outOfBounds && !tetParams(_refVerts, *tet, position, coor))
+    while(!isUnreachable && !tetParams(_refVerts, *tet, position, coor))
     {
-        glm::dvec3 orig, dir;
+        glm::dvec3 vp[] = {
+            _refVerts[tet->v[0]].p,
+            _refVerts[tet->v[1]].p,
+            _refVerts[tet->v[2]].p,
+            _refVerts[tet->v[3]].p
+        };
 
-        if(visitedTet == 0)
+        glm::dvec3 orig = 0.25 * (vp[0] + vp[1] + vp[2] + vp[3]);
+        glm::dvec3 dir = glm::normalize(orig - position);
+
+        int t = 4;
+        int trialCount = -1;
+        while(t == 4 && !isUnreachable)
         {
-            orig = 0.25 * (
-                _refVerts[tet->v[0]].p +
-                _refVerts[tet->v[1]].p +
-                _refVerts[tet->v[2]].p +
-                _refVerts[tet->v[3]].p);
-
-            dir = glm::normalize(orig - position);
-        }
-
-
-        int t=0;
-        for(;t < 4; ++t)
-        {
-            if(triIntersect(
-                _refVerts[tet->v[MeshTet::tris[t].v[0]]].p,
-                _refVerts[tet->v[MeshTet::tris[t].v[1]]].p,
-                _refVerts[tet->v[MeshTet::tris[t].v[2]]].p,
-                orig, dir))
+            // Find exit face
+            for(t = 0; t < 4; ++t)
             {
-                if(tet->n[t] != -1)
+                if(triIntersect(
+                    vp[MeshTet::tris[t].v[0]],
+                    vp[MeshTet::tris[t].v[1]],
+                    vp[MeshTet::tris[t].v[2]],
+                    orig, dir))
                 {
-                    ++visitedTet;
-                    tet = &_localTets[tet->n[t]];
+                    if(tet->n[t] != -1)
+                        tet = &_localTets[tet->n[t]];
+                    else
+                        isUnreachable = true;
+
+                    break;
+                }
+            }
+
+            // If exit face not found
+            if(t == 4)
+            {
+                // Start from an other position in the tet
+                ++trialCount;
+
+                // If there are still untried positions
+                if(trialCount < 4)
+                {
+                    const double INV_MASS = 1.0 / 10.0;
+                    const double WEIGHTS[] = {1.0, 2.0, 3.0, 4.0};
+
+                    // Initialize ray from next position
+                    orig = INV_MASS * (
+                        WEIGHTS[(trialCount + 0) % 4] * vp[0] +
+                        WEIGHTS[(trialCount + 1) % 4] * vp[1] +
+                        WEIGHTS[(trialCount + 2) % 4] * vp[2] +
+                        WEIGHTS[(trialCount + 3) % 4] * vp[3]);
+
+                    dir = glm::normalize(orig - position);
                 }
                 else
                 {
-                    outOfBounds = true;
-                    outOfTet = true;
-                }
+                    // Get projection on current tet
+                    getLog().postMessage(new Message('E', false,
+                        "Did not find a way out of the tet...",
+                        "LocalSampler"));
 
-                break;
-            }
-        }
-
-        if(t == 4)
-        {
-            if(visitedTet == 0)
-            {
-                getLog().postMessage(new Message('E', false,
-                    "Did not find a way out of the tet...",
-                    "LocalSampler"));
-
-                outOfTet = true;
-                break;
-            }
-            else
-            {
-                uint n = tet->n[0];
-                double c = coor[0];
-
-                if(coor[1] < c) {n = tet->n[1]; c = coor[1];}
-                if(coor[2] < c) {n = tet->n[2]; c = coor[2];}
-                if(coor[3] < c) {n = tet->n[3]; c = coor[3];}
-
-                if(n != -1)
-                {
-                    visitedTet = 0;
-                    tet= &_localTets[n];
-                }
-                else
-                {
-                    outOfTet = true;
-                    outOfBounds = true;
+                    isUnreachable = true;
+                    break;
                 }
             }
         }
     }
 
 
-    if(outOfTet)
+    if(isUnreachable)
     {
         // Clamp sample to current tet
         // It's seems to be the closest

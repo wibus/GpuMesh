@@ -31,81 +31,74 @@ __device__ mat3 localMetricAt(const vec3& position, uint& cachedRefTet)
     const LocalTet* tet = &localTets[cachedRefTet];
 
     float coor[4];
-    int visitedTet = 0;
-    bool outOfTet = false;
-    bool outOfBounds = false;
+    bool isUnreachable = false;
 
-    while(!outOfBounds && !tetParams(tet->v, position, coor))
+    while(!isUnreachable && !tetParams(tet->v, position, coor))
     {
-        vec3 orig, dir;
+        vec3 vp[] = {
+            refVerts[tet->v[0]].p,
+            refVerts[tet->v[1]].p,
+            refVerts[tet->v[2]].p,
+            refVerts[tet->v[3]].p
+        };
 
-        if(visitedTet == 0)
+        vec3 orig = 0.25f * (vp[0] + vp[1] + vp[2] + vp[3]);
+        vec3 dir = normalize(orig - position);
+
+        int t = 4;
+        int trialCount = -1;
+        while(t == 4 && !isUnreachable)
         {
-            orig = 0.25f * (
-                refVerts[tet->v[0]].p +
-                refVerts[tet->v[1]].p +
-                refVerts[tet->v[2]].p +
-                refVerts[tet->v[3]].p);
-
-            dir = normalize(orig - position);
-        }
-
-
-        int t=0;
-        for(;t < 4; ++t)
-        {
-            if(triIntersect(
-                refVerts[tet->v[MeshTet_tris[t].v[0]]].p,
-                refVerts[tet->v[MeshTet_tris[t].v[1]]].p,
-                refVerts[tet->v[MeshTet_tris[t].v[2]]].p,
-                orig, dir))
+            // Find exit face
+            for(t = 0; t < 4; ++t)
             {
-                if(tet->n[t] != -1)
+                if(triIntersect(
+                    vp[MeshTet_tris[t].v[0]],
+                    vp[MeshTet_tris[t].v[1]],
+                    vp[MeshTet_tris[t].v[2]],
+                    orig, dir))
                 {
-                    ++visitedTet;
-                    tet = &localTets[tet->n[t]];
+                    if(tet->n[t] != -1)
+                        tet = &localTets[tet->n[t]];
+                    else
+                        isUnreachable = true;
+
+                    break;
+                }
+            }
+
+            // If exit face not found
+            if(t == 4)
+            {
+                // Start from an other position in the tet
+                ++trialCount;
+
+                // If there are still untried positions
+                if(trialCount < 4)
+                {
+                    const float INV_MASS = 1.0 / 10.0;
+                    const float WEIGHTS[] = {1.0, 2.0, 3.0, 4.0};
+
+                    // Initialize ray from next position
+                    orig = INV_MASS * (
+                        WEIGHTS[(trialCount + 0) % 4] * vp[0] +
+                        WEIGHTS[(trialCount + 1) % 4] * vp[1] +
+                        WEIGHTS[(trialCount + 2) % 4] * vp[2] +
+                        WEIGHTS[(trialCount + 3) % 4] * vp[3]);
+
+                    dir = normalize(orig - position);
                 }
                 else
                 {
-                    outOfBounds = true;
-                    outOfTet = true;
-                }
-
-                break;
-            }
-        }
-
-        if(t == 4)
-        {
-            if(visitedTet == 0)
-            {
-                outOfTet = true;
-                break;
-            }
-            else
-            {
-                uint n = tet->n[0];
-                float c = coor[0];
-
-                if(coor[1] < c) {n = tet->n[1]; c = coor[1];}
-                if(coor[2] < c) {n = tet->n[2]; c = coor[2];}
-                if(coor[3] < c) {n = tet->n[3]; c = coor[3];}
-
-                if(n != -1)
-                {
-                    visitedTet = 0;
-                    tet = &localTets[n];
-                }
-                else
-                {
-                    outOfTet = true;
-                    outOfBounds = true;
+                    isUnreachable = true;
+                    break;
                 }
             }
         }
     }
 
-    if(outOfTet)
+
+    if(isUnreachable)
     {
         // Clamp sample to current tet
         // It's seems to be the closest
