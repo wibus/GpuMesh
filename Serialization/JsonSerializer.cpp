@@ -114,6 +114,7 @@ bool JsonSerializer::serialize(
     file << INDENT << "]\n";
 
     file << "}" << endl;
+    file.close();
 
     return true;
 }

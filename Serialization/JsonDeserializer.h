@@ -1,7 +1,7 @@
 #ifndef GPUMESH_JSONDESERIALIZER
 #define GPUMESH_JSONDESERIALIZER
 
-#include <QJsonValue>
+#include <iostream>
 
 #include "AbstractDeserializer.h"
 #include "DataStructures/Mesh.h"
@@ -18,10 +18,15 @@ public:
             Mesh& mesh) const override;
 
 protected:
-    static MeshVert toVert(const QJsonValue& v);
-    static MeshTet  toTet(const QJsonValue& v);
-    static MeshPri  toPri(const QJsonValue& v);
-    static MeshHex  toHex(const QJsonValue& v);
+    bool readTag(std::istream &is, std::string& str) const;
+    bool readString(std::istream &is, std::string& str) const;
+
+    bool openArray(std::istream &is) const;
+    bool closeArray(std::istream &is) const;
+
+    template<typename T>
+    bool readArray(std::istream &is, std::vector<T>& a) const;
+
 };
 
 #endif // GPUMESH_JSONDESERIALIZER

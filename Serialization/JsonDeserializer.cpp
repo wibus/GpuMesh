@@ -1,12 +1,14 @@
 #include "JsonDeserializer.h"
 
-#include <QFile>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonDocument>
+#include <fstream>
+
+#include <CellarWorkbench/Misc/Log.h>
 
 #include "Boundaries/AbstractBoundary.h"
 #include "JsonMeshTags.h"
+
+using namespace std;
+using namespace cellar;
 
 
 JsonDeserializer::JsonDeserializer()
@@ -22,90 +24,216 @@ bool JsonDeserializer::deserialize(
         const std::string& fileName,
         Mesh& mesh) const
 {
-    QFile jsonFile(fileName.c_str());
-    if(!jsonFile.open(QFile::ReadOnly | QFile::Text))
-       return false;
+    ifstream file;
+    file.open(fileName);
+    if(!file.is_open())
+    {
+        return false;
+    }
 
-    QJsonDocument doc = QJsonDocument::fromJson(jsonFile.readAll());
+    string tag;
+    while(readTag(file, tag))
+    {
+        if(tag == MESH_MODEL_TAG)
+        {
+            mesh.modelName.clear();
+            readString(file, mesh.modelName);
+        }
+        else if(tag == MESH_BOUND_TAG)
+        {
+            string boundaryName;
+            readString(file, boundaryName);
+            mesh.setBoundary(boundary(boundaryName));
+        }
+        else if(tag == MESH_VERTS_TAG)
+        {
+            openArray(file);
 
-    if(!doc.isObject())
+            vector<double> a;
+            while(readArray(file, a))
+            {
+                mesh.verts.push_back(MeshVert(
+                    glm::dvec3(a[0], a[1], a[2])));
+                a.clear();
+            }
+
+            closeArray(file);
+        }
+        else if(tag == MESH_TOPOS_TAG)
+        {
+            vector<int> a;
+            if(readArray(file, a))
+            {
+                for(int i : a)
+                {
+                    mesh.topos.push_back(MeshTopo(
+                        mesh.boundary().constraint(i)));
+                }
+                a.clear();
+            }
+        }
+        else if(tag == MESH_TETS_TAG)
+        {
+            openArray(file);
+
+            vector<int> a;
+            while(readArray(file, a))
+            {
+                mesh.tets.push_back(MeshTet(
+                    a[0], a[1], a[2], a[3]));
+                a.clear();
+            }
+
+            closeArray(file);
+        }
+        else if(tag == MESH_PRIS_TAG)
+        {
+            openArray(file);
+
+            vector<int> a;
+            while(readArray(file, a))
+            {
+                mesh.pris.push_back(MeshPri(
+                    a[0], a[1], a[2], a[3],
+                    a[4], a[5]));
+                a.clear();
+            }
+
+            closeArray(file);
+        }
+        else if(tag == MESH_HEXS_TAG)
+        {
+            openArray(file);
+
+            vector<int> a;
+            while(readArray(file, a))
+            {
+                mesh.hexs.push_back(MeshHex(
+                    a[0], a[1], a[2], a[3],
+                    a[4], a[5], a[6], a[7]));
+                a.clear();
+            }
+
+            closeArray(file);
+        }
+        else
+        {
+            getLog().postMessage(new Message('E', false,
+                "Unknown tag found while reading json mesh: " + tag,
+                "JsonDeserializer"));
+            file.close();
+            return false;
+        }
+
+        tag.clear();
+    }
+
+    file.close();
+    return true;
+}
+
+bool JsonDeserializer::readTag(std::istream& is, std::string& str) const
+{
+    char c = '\0';
+    while(c != '"' && !is.eof())
+    {
+        is.get(c);
+    }
+
+    if(is.eof())
         return false;
 
-    QJsonObject meshObj = doc.object();
-    mesh.modelName = meshObj[MESH_MODEL_TAG].toString().toStdString();
+    is.get(c);
+    while(c != '"' && !is.eof())
+    {
+        str.push_back(c);
+        is.get(c);
+    }
 
-    std::shared_ptr<AbstractBoundary> bound = boundary(
-        meshObj[MESH_BOUND_TAG].toString().toStdString());
-    mesh.setBoundary(bound);
-
-    // Vertices
-    for(QJsonValue val : meshObj[MESH_VERTS_TAG].toArray())
-        mesh.verts.push_back(toVert(val));
-
-    // Topos
-    for(QJsonValue val : meshObj[MESH_TOPOS_TAG].toArray())
-        mesh.topos.push_back(MeshTopo(bound->constraint(val.toInt())));
-
-    // Tetrahedra
-    for(QJsonValue val : meshObj[MESH_TETS_TAG].toArray())
-        mesh.tets.push_back(toTet(val));
-
-    // Prisms
-    for(QJsonValue val : meshObj[MESH_PRIS_TAG].toArray())
-        mesh.pris.push_back(toPri(val));
-
-    // Hexahedra
-    for(QJsonValue val : meshObj[MESH_HEXS_TAG].toArray())
-        mesh.hexs.push_back(toHex(val));
+    if(is.eof())
+        return false;
 
     return true;
 }
 
-MeshVert JsonDeserializer::toVert(const QJsonValue& v)
+bool JsonDeserializer::readString(std::istream& is, std::string& str) const
 {
-    QJsonArray val = v.toArray();
-    MeshVert vert(glm::dvec3(
-        val[0].toDouble(),
-        val[1].toDouble(),
-        val[2].toDouble()));
-    return vert;
+    char c = '\0';
+    while(c != '"' && !is.eof())
+    {
+        is.get(c);
+    }
+
+    if(is.eof())
+        return false;
+
+    is.get(c);
+    while(c != '"' && !is.eof())
+    {
+        str.push_back(c);
+        is.get(c);
+    }
+
+    if(is.eof())
+        return false;
+
+    return true;
 }
 
-MeshTet JsonDeserializer::toTet(const QJsonValue& v)
+bool JsonDeserializer::openArray(std::istream &is) const
 {
-    QJsonArray val = v.toArray();
-    MeshTet elem(
-        val[0].toInt(),
-        val[1].toInt(),
-        val[2].toInt(),
-        val[3].toInt());
-    return elem;
+    char c = '\0';
+    while(c != '[' && !is.eof())
+    {
+        is.get(c);
+    }
+
+    if(is.eof())
+        return false;
+
+    return true;
 }
 
-MeshPri JsonDeserializer::toPri(const QJsonValue& v)
+bool JsonDeserializer::closeArray(std::istream &is) const
 {
-    QJsonArray val = v.toArray();
-    MeshPri elem(
-        val[0].toInt(),
-        val[1].toInt(),
-        val[2].toInt(),
-        val[3].toInt(),
-        val[4].toInt(),
-        val[5].toInt());
-    return elem;
+    char c = '\0';
+    while(c != ']' && c != ',' && !is.eof())
+    {
+        is.get(c);
+    }
+
+    if(is.eof())
+        return false;
+
+    return true;
 }
 
-MeshHex JsonDeserializer::toHex(const QJsonValue& v)
+template<typename T>
+bool JsonDeserializer::readArray(std::istream &is, std::vector<T>& a) const
 {
-    QJsonArray val = v.toArray();
-    MeshHex elem(
-        val[0].toInt(),
-        val[1].toInt(),
-        val[2].toInt(),
-        val[3].toInt(),
-        val[4].toInt(),
-        val[5].toInt(),
-        val[6].toInt(),
-        val[7].toInt());
-    return elem;
+    char c = '\0';
+    while(c != '[' && c!= ']' && !is.eof())
+    {
+        is.get(c);
+    }
+
+    if(c == ']' || is.eof())
+        return false;
+
+    T v;
+    while(is >> v)
+    {
+        a.push_back(v);
+
+        is.get(c);
+        while(c != ',' && c != ']')
+            is.get(c);
+
+        if(c == ']')
+            break;
+    }
+
+    is.clear();
+
+    return true;
 }
