@@ -18,11 +18,17 @@ const AbstractConstraint* EdgeConstraint::subconstraint(int id) const
         return this;
 
     const AbstractConstraint* constraint = nullptr;
-    constraint = _vertices[0]->subconstraint(id);
-    if(constraint != nullptr) return constraint;
+    if(_vertices[0] != nullptr)
+    {
+        constraint = _vertices[0]->subconstraint(id);
+        if(constraint != nullptr) return constraint;
+    }
 
-    constraint = _vertices[1]->subconstraint(id);
-    if(constraint != nullptr) return constraint;
+    if(_vertices[1] != nullptr)
+    {
+        constraint = _vertices[1]->subconstraint(id);
+        if(constraint != nullptr) return constraint;
+    }
 
     return nullptr;
 }
