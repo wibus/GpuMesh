@@ -47,13 +47,6 @@ public:
             const Mesh& mesh,
             const AbstractSampler& sampler,
             uint vId) const override;
-
-protected:
-    virtual glm::dvec3 computeSpringForce(
-            const AbstractSampler& sampler,
-            const glm::dvec3& pi,
-            const glm::dvec3& pj,
-            uint& cachedRefTet) const;
 };
 
 #endif // GPUMESH_METRICWISEMEASURER

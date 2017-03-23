@@ -95,42 +95,61 @@ __device__ float metricWiseHexVolume(const vec3 vp[HEX_VERTEX_COUNT], const Hex&
 
 
 // High level measurement
-__device__ vec3 computeSpringForce(const vec3& pi, const vec3& pj, uint& cachedRefTet)
+__device__ void sumNode(
+        float& totalWeight,
+        vec3& displacement,
+        const vec3& pos,
+        const Vert& v)
 {
-    if(pi == pj)
-        return vec3(0.0);
+    vec3 d = v.p - pos;
 
-    float d = metricWiseRiemannianDistance(pi, pj, cachedRefTet);
-    vec3 u = (pi - pj) / d;
+    if(d != vec3(0))
+    {
+        vec3 n = normalize(d);
+        mat3 M = metricAt(v.p, v.c);
+        float weight = sqrt(dot(n, M * n));
 
-    float d2 = d * d;
-    //float d4 = d2 * d2;
-
-    //float f = (1 - d4) * exp(-d4);
-    //float f = (1-d2)*exp(-d2/4.0)/2.0;
-    float f = (1-d2)*exp(-abs(d)/(sqrt(2.0)));
-
-    return f * u;
+        totalWeight += weight;
+        displacement += weight * d;
+    }
 }
 
 __device__ vec3 metricWiseComputeVertexEquilibrium(uint vId)
 {
-    Topo topo = topos[vId];
-    vec3 pos = verts[vId].p;
-    uint& cachedRefTet = verts[vId].c;
+    const Topo& topo = topos[vId];
 
-    vec3 forceTotal = vec3(0.0);
-    uint neigVertCount = topo.neigVertCount;
-    for(uint i=0, n = topo.neigVertBase; i < neigVertCount; ++i, ++n)
+    float totalWeight = 0.0f;
+    vec3 displacement = vec3(0.0);
+    const vec3& pos = verts[vId].p;
+
+    uint neigElemCount = topo.neigElemCount;
+    for(uint i=0, n = topo.neigElemBase; i<neigElemCount; ++i, ++n)
     {
-        NeigVert neigVert = neigVerts[n];
-        vec3 npos = verts[neigVert.v].p;
+        const NeigElem& neigElem = neigElems[n];
 
-        forceTotal += computeSpringForce(pos, npos, cachedRefTet);
+        switch(neigElem.type)
+        {
+        case TET_ELEMENT_TYPE:
+            for(uint i=0; i < TET_VERTEX_COUNT; ++i)
+                sumNode(totalWeight, displacement, pos,
+                        verts[tets[neigElem.id].v[i]]);
+            break;
+
+        case PRI_ELEMENT_TYPE:
+            for(uint i=0; i < PRI_VERTEX_COUNT; ++i)
+                sumNode(totalWeight, displacement, pos,
+                        verts[pris[neigElem.id].v[i]]);
+            break;
+
+        case HEX_ELEMENT_TYPE:
+            for(uint i=0; i < HEX_VERTEX_COUNT; ++i)
+                sumNode(totalWeight, displacement, pos,
+                        verts[hexs[neigElem.id].v[i]]);
+            break;
+        }
     }
 
-    vec3 equilibrium = pos + forceTotal;
-    return equilibrium;
+    return pos + displacement / totalWeight;
 }
 
 

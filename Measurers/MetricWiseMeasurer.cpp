@@ -187,49 +187,69 @@ double MetricWiseMeasurer::hexVolume(
     return detSum / 6.0;
 }
 
+void sumNode(
+        double& totalWeight,
+        glm::dvec3& displacement,
+        const AbstractSampler& sampler,
+        const glm::dvec3& pos,
+        const MeshVert& v)
+{
+    glm::dvec3 d = v.p - pos;
+
+    if(d != glm::dvec3(0))
+    {
+        glm::dvec3 n = glm::normalize(d);
+        MeshMetric M = sampler.metricAt(v.p, v.c);
+        double weight = glm::sqrt(glm::dot(n, M * n));
+
+        totalWeight += weight;
+        displacement += weight * d;
+    }
+}
+
 glm::dvec3 MetricWiseMeasurer::computeVertexEquilibrium(
         const Mesh& mesh,
         const AbstractSampler& sampler,
         uint vId) const
 {
     const std::vector<MeshVert>& verts = mesh.verts;
+    const std::vector<MeshTet>& tets = mesh.tets;
+    const std::vector<MeshPri>& pris = mesh.pris;
+    const std::vector<MeshHex>& hexs = mesh.hexs;
 
     const MeshTopo& topo = mesh.topos[vId];
+
+
+    double totalWeight = 0.0;
+    glm::dvec3 displacement(0.0);
     const glm::dvec3& pos = verts[vId].p;
-    uint& cachedRefTet = verts[vId].c;
 
-    glm::dvec3 forceTotal(0.0);
-    uint neigVertCount = topo.neighborVerts.size();
-    for(uint n=0; n < neigVertCount; ++n)
+    uint neigElemCount = topo.neighborElems.size();
+    for(uint d=0; d < neigElemCount; ++d)
     {
-        const MeshNeigVert& neigVert = topo.neighborVerts[n];
-        const glm::dvec3& npos = verts[neigVert.v];
+        const MeshNeigElem& neigElem = topo.neighborElems[d];
 
-        forceTotal += computeSpringForce(sampler, pos, npos, cachedRefTet);
+        switch(neigElem.type)
+        {
+        case MeshTet::ELEMENT_TYPE:
+            for(uint i=0; i < MeshTet::VERTEX_COUNT; ++i)
+                sumNode(totalWeight, displacement, sampler, pos,
+                        verts[tets[neigElem.id].v[i]]);
+            break;
+
+        case MeshPri::ELEMENT_TYPE:
+            for(uint i=0; i < MeshPri::VERTEX_COUNT; ++i)
+                sumNode(totalWeight, displacement, sampler, pos,
+                        verts[pris[neigElem.id].v[i]]);
+            break;
+
+        case MeshHex::ELEMENT_TYPE:
+            for(uint i=0; i < MeshHex::VERTEX_COUNT; ++i)
+                sumNode(totalWeight, displacement, sampler, pos,
+                        verts[hexs[neigElem.id].v[i]]);
+            break;
+        }
     }
 
-    glm::dvec3 equilibrium = pos + forceTotal;
-    return equilibrium;
-}
-
-glm::dvec3 MetricWiseMeasurer::computeSpringForce(
-        const AbstractSampler& sampler,
-        const glm::dvec3& pi,
-        const glm::dvec3& pj,
-        uint& cachedRefTet) const
-{
-    if(pi == pj)
-        return glm::dvec3();
-
-    double d = riemannianDistance(sampler, pi, pj, cachedRefTet);
-    glm::dvec3 u = (pi - pj) / d;
-
-    double d2 = d * d;
-    //double d4 = d2 * d2;
-
-    //double f = (1 - d4) * glm::exp(-d4);
-    //double f = (1-d2)*glm::exp(-d2/4.0)/2.0;
-    double f = (1-d2)*glm::exp(-glm::abs(d)/(sqrt(2.0)));
-
-    return f * u;
+    return pos + displacement / totalWeight;
 }
