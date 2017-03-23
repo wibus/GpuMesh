@@ -116,37 +116,37 @@ glm::dvec3 MetricFreeMeasurer::computeVertexEquilibrium(
 
     const MeshTopo& topo = mesh.topos[vId];
 
-    uint totalVertCount = 0;
-    glm::dvec3 patchCenter(0.0);
+
+    double totalWeight = 0.0;
+    glm::dvec3 displacement(0.0);
+    const glm::dvec3& pos = verts[vId].p;
+
     uint neigElemCount = topo.neighborElems.size();
     for(uint n=0; n < neigElemCount; ++n)
     {
         const MeshNeigElem& neigElem = topo.neighborElems[n];
+
         switch(neigElem.type)
         {
         case MeshTet::ELEMENT_TYPE:
-            totalVertCount += MeshTet::VERTEX_COUNT - 1;
+            totalWeight += MeshTet::VERTEX_COUNT - 1;
             for(uint i=0; i < MeshTet::VERTEX_COUNT; ++i)
-                patchCenter += verts[tets[neigElem.id].v[i]].p;
+                displacement += verts[tets[neigElem.id].v[i]].p - pos;
             break;
 
         case MeshPri::ELEMENT_TYPE:
-            totalVertCount += MeshPri::VERTEX_COUNT - 1;
+            totalWeight += MeshPri::VERTEX_COUNT - 1;
             for(uint i=0; i < MeshPri::VERTEX_COUNT; ++i)
-                patchCenter += verts[pris[neigElem.id].v[i]].p;
+                displacement += verts[pris[neigElem.id].v[i]].p - pos;
             break;
 
         case MeshHex::ELEMENT_TYPE:
-            totalVertCount += MeshHex::VERTEX_COUNT - 1;
+            totalWeight += MeshHex::VERTEX_COUNT - 1;
             for(uint i=0; i < MeshHex::VERTEX_COUNT; ++i)
-                patchCenter += verts[hexs[neigElem.id].v[i]].p;
+                displacement += verts[hexs[neigElem.id].v[i]].p - pos;
             break;
         }
     }
 
-    const glm::dvec3& pos = verts[vId].p;
-    patchCenter = (patchCenter - pos * double(neigElemCount))
-                    / double(totalVertCount);
-
-    return patchCenter;
+    return pos + displacement / totalWeight;
 }

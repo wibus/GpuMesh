@@ -74,8 +74,10 @@ vec3 computeVertexEquilibrium(in uint vId)
 {
     Topo topo = topos[vId];
 
-    uint totalVertCount = 0;
-    vec3 patchCenter = vec3(0.0);
+    float totalWeight = 0.0f;
+    vec3 displacement = vec3(0.0);
+    vec3 pos = verts[vId].p;
+
     uint neigElemCount = topo.neigElemCount;
     for(uint i=0, n = topo.neigElemBase; i<neigElemCount; ++i, ++n)
     {
@@ -84,27 +86,24 @@ vec3 computeVertexEquilibrium(in uint vId)
         switch(neigElem.type)
         {
         case TET_ELEMENT_TYPE:
-            totalVertCount += TET_VERTEX_COUNT - 1;
+            totalWeight += TET_VERTEX_COUNT - 1;
             for(uint i=0; i < TET_VERTEX_COUNT; ++i)
-                patchCenter += verts[tets[neigElem.id].v[i]].p;
+                displacement += verts[tets[neigElem.id].v[i]].p - pos;
             break;
 
         case PRI_ELEMENT_TYPE:
-            totalVertCount += PRI_VERTEX_COUNT - 1;
+            totalWeight += PRI_VERTEX_COUNT - 1;
             for(uint i=0; i < PRI_VERTEX_COUNT; ++i)
-                patchCenter += verts[pris[neigElem.id].v[i]].p;
+                displacement += verts[pris[neigElem.id].v[i]].p - pos;
             break;
 
         case HEX_ELEMENT_TYPE:
-            totalVertCount += HEX_VERTEX_COUNT - 1;
+            totalWeight += HEX_VERTEX_COUNT - 1;
             for(uint i=0; i < HEX_VERTEX_COUNT; ++i)
-                patchCenter += verts[hexs[neigElem.id].v[i]].p;
+                displacement += verts[hexs[neigElem.id].v[i]].p - pos;
             break;
         }
     }
 
-    vec3 pos = verts[vId].p;
-    patchCenter = (patchCenter - pos * float(neigElemCount))
-                    / float(totalVertCount);
-    return patchCenter;
+    return pos + displacement / totalWeight;
 }
