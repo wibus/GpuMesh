@@ -77,7 +77,14 @@ MastersTestSuite::MastersTestSuite(
     int tId = 0;
     _availableMastersTests.setDefault("N/A");
 
-    _availableMastersTests.setContent({                                          
+    _availableMastersTests.setContent({
+
+        {testNumber(++tId) + ". Metric Precision",
+        MastersTestFunc(bind(&MastersTestSuite::metricPrecision,        this, _1))},
+
+        {testNumber(++tId) + ". Texture Precision",
+        MastersTestFunc(bind(&MastersTestSuite::texturePrecision,       this, _1))},
+
         {testNumber(++tId) + ". Evaluator Block Size",
         MastersTestFunc(bind(&MastersTestSuite::evaluatorBlockSize,     this, _1))},
 
@@ -86,12 +93,6 @@ MastersTestSuite::MastersTestSuite(
 
         {testNumber(++tId) + ". Metric Cost (HexGrid)",
         MastersTestFunc(bind(&MastersTestSuite::metricCostHexGrid,      this, _1))},
-
-        {testNumber(++tId) + ". Metric Precision",
-        MastersTestFunc(bind(&MastersTestSuite::metricPrecision,        this, _1))},
-
-        {testNumber(++tId) + ". Texture Precision",
-        MastersTestFunc(bind(&MastersTestSuite::texturePrecision,       this, _1))},
 
         {testNumber(++tId) + ". Node Order",
         MastersTestFunc(bind(&MastersTestSuite::nodeOrder,              this, _1))},
@@ -903,7 +904,8 @@ void MastersTestSuite::metricCost(
 
 
     // Run test
-    Grid2D<double> data(implementations.size(), samplings.size());
+    int implCount = implementations.size();
+    Grid2D<double> data((implCount-1)*2+1, samplings.size());
 
     for(int s=0; s < samplings.size(); ++s)
     {
@@ -920,19 +922,30 @@ void MastersTestSuite::metricCost(
         map<string, double> avgTimes;
         _character.benchmarkEvaluator(avgTimes, evaluator, currCycle);
 
-        for(int i=0; i < implementations.size(); ++i)
+        for(int i=0; i < implCount; ++i)
             data[s][i] = avgTimes[implementations[i]];
+
+        for(int i=1; i < implCount; ++i)
+            data[s][implCount+i-1] = avgTimes[implementations[0]]
+                    / avgTimes[implementations[i]];
     }
 
 
     // Print results
     vector<pair<string, int>> header = {
-        {"Métriques", 1}, {"Temps (ms)", implementations.size()}};
+        {"Métriques", 1},
+        {"Temps (ms)", implementations.size()},
+        {"Accélérations", implementations.size()-1}};
 
     vector<pair<string, int>> subheader = {{"", 1}};
     for(const string& i : implementations)
         subheader.push_back({
             _translateImplementations[i], 1});
+
+    for(int i=1; i < implementations.size(); ++i)
+        subheader.push_back({
+            _translateImplementations[implementations[i]], 1});
+
 
     vector<string> lineNames;
     for(const string& s : samplings)
