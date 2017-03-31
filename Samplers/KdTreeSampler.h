@@ -50,6 +50,7 @@ private:
             KdNode* node,
             int height,
             const Mesh& mesh,
+            const AbstractSampler& localSampler,
             const glm::dvec3& minBox,
             const glm::dvec3& maxBox,
             std::vector<unsigned int>& xSort,

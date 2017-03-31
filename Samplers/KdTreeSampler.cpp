@@ -9,6 +9,8 @@
 #include "DataStructures/GpuMesh.h"
 #include "DataStructures/Tetrahedralizer.h"
 
+#include "LocalSampler.h"
+
 using namespace cellar;
 
 
@@ -142,12 +144,18 @@ void KdTreeSampler::setReferenceMesh(
         return mesh.verts[a].p.z < mesh.verts[b].p.z;});
 
 
+    LocalSampler localSampler;
+    localSampler.setScaling(scaling());
+    localSampler.setAspectRatio(aspectRatio());
+    localSampler.setReferenceMesh(mesh);
+
     // Fill Sampler's data strucutres
     glm::dvec3 minBounds, maxBounds;
     boundingBox(mesh, minBounds, maxBounds);
 
     _rootNode.reset(new KdNode());
-    build(_rootNode.get(), height, mesh,
+    build(_rootNode.get(), height,
+          mesh, localSampler,
           minBounds, maxBounds,
           xSort, ySort, zSort);
 }
@@ -210,6 +218,7 @@ void KdTreeSampler::build(
         KdNode* node,
         int height,
         const Mesh& mesh,
+        const AbstractSampler& localSampler,
         const glm::dvec3& minBox,
         const glm::dvec3& maxBox,
         std::vector<uint>& xSort,
@@ -304,23 +313,25 @@ void KdTreeSampler::build(
 
         // Build children nodes
         node->left = new KdNode();
-        build(node->left,  height-1, mesh, minBoxL, maxBoxL, xSortL, ySortL, zSortL);
+        build(node->left,  height-1, mesh, localSampler, minBoxL, maxBoxL, xSortL, ySortL, zSortL);
 
         node->right = new KdNode();
-        build(node->right, height-1, mesh, minBoxR, maxBoxR, xSortR, ySortR, zSortR);
+        build(node->right, height-1, mesh, localSampler, minBoxR, maxBoxR, xSortR, ySortR, zSortR);
     }
     else
     {
         assert(vertCount > 0);
         node->separator.w = 0.0;
 
-        node->metric = MeshMetric(0.0);
+        glm::dvec3 meanPos;
         for(uint v : xSort)
         {
-            node->metric += vertMetric(mesh.verts[v].p);
+            meanPos += mesh.verts[v].p;
         }
+        meanPos /= vertCount;
 
-        node->metric /= vertCount;
+        node->metric = localSampler.metricAt(
+            meanPos, mesh.verts[xSort.front()].c);
     }
 }
 
