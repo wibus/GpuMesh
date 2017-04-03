@@ -1173,8 +1173,8 @@ void MastersTestSuite::nodeOrder(
         const string& testName)
 {
     // Test case description
-    int fullRelocationPassCount = 10;
-    int displayRelocationPassCount = 100;
+    int fullRelocationPassCount = 100;
+    int displayRelocationPassCount = 10;
     string mesh = MESH_SPHERE_100K;
 
     const string sampler = "Analytic";
@@ -1185,7 +1185,9 @@ void MastersTestSuite::nodeOrder(
 
     const vector<string> implementations = {
         "Serial",
-        "Thread"
+        "Thread",
+        "GLSL",
+        "CUDA"
     };
 
     OptimizationPlot plot;
@@ -1214,47 +1216,74 @@ void MastersTestSuite::nodeOrder(
     _character.benchmarkSmoothers(
         plot, schedule, configs);
 
-    Grid2D<double> data(implementations.size()*2, displayRelocationPassCount+2);
+    Grid2D<double> dataCPU(2 * 2, displayRelocationPassCount+2);
+    Grid2D<double> dataPara((implementations.size()-1) * 2, displayRelocationPassCount+2);
 
     for(int r=0; r <= displayRelocationPassCount; ++r)
     {
-        for(int i=0; i < implementations.size(); ++i)
+        for(int i=0; i < 2; ++i)
         {
             const QualityHistogram& hist =
                 plot.implementations()[i].passes[r].histogram;
-            data[r][0 + i] = hist.minimumQuality();
-            data[r][2 + i] = hist.harmonicMean();
+            dataCPU[r][0 + i] = hist.minimumQuality();
+            dataCPU[r][2 + i] = hist.harmonicMean();
+        }
+
+        for(int i=1; i < implementations.size(); ++i)
+        {
+            const QualityHistogram& hist =
+                plot.implementations()[i].passes[r].histogram;
+            dataPara[r][0 + i-1] = hist.minimumQuality();
+            dataPara[r][3 + i-1] = hist.harmonicMean();
         }
     }
 
-    for(int i=0; i < implementations.size(); ++i)
+    for(int i=0; i < 2; ++i)
     {
         const QualityHistogram& hist =
             plot.implementations()[i].passes[fullRelocationPassCount].histogram;
-        data[displayRelocationPassCount+1][0 + i] = hist.minimumQuality();
-        data[displayRelocationPassCount+1][2 + i] = hist.harmonicMean();
+        dataCPU[displayRelocationPassCount+1][0 + i] = hist.minimumQuality();
+        dataCPU[displayRelocationPassCount+1][2 + i] = hist.harmonicMean();
+    }
+
+    for(int i=1; i < implementations.size(); ++i)
+    {
+        const QualityHistogram& hist =
+            plot.implementations()[i].passes[fullRelocationPassCount].histogram;
+        dataPara[displayRelocationPassCount+1][0 + i-1] = hist.minimumQuality();
+        dataPara[displayRelocationPassCount+1][3 + i-1] = hist.harmonicMean();
     }
 
     vector<QualityHistogram> histograms;
     histograms.push_back(plot.initialHistogram());
-    for(int i=0; i < implementations.size(); ++i)
+    for(int i=0; i < 2; ++i)
         histograms.push_back(plot.implementations()[i].finalHistogram);
 
 
     // Print results
-    vector<pair<string, int>> header = {
+    vector<pair<string, int>> headerCPU = {
         {"Itérations", 1}, {"Minimums", 2}, {"Moyennes", 2}};
+    vector<pair<string, int>> headerPara = {
+        {"Itérations", 1}, {"Minimums", 3}, {"Moyennes", 3}};
 
-    vector<string> histHeader = {"Initial"};
-    for(const string& impl : implementations)
-        histHeader.push_back(_translateImplementations[impl]);
-
-    vector<pair<string, int>> subheader = {{"", 1}};
+    vector<pair<string, int>> subheaderCPU = {{"", 1}};
     for(int m=0; m < 2; ++m)
     {
-        for(const string& i : implementations)
-            subheader.push_back(
-                {_translateImplementations[i], 1});
+        for(int i=0; i < 2; ++i)
+        {
+            subheaderCPU.push_back(
+                {_translateImplementations[implementations[i]], 1});
+        }
+    }
+
+    vector<pair<string, int>> subheaderPara = {{"", 1}};
+    for(int m=0; m < 2; ++m)
+    {
+        for(int i=1; i < implementations.size(); ++i)
+        {
+            subheaderPara.push_back(
+                {_translateImplementations[implementations[i]], 1});
+        }
     }
 
     vector<string> lineNames;
@@ -1262,7 +1291,14 @@ void MastersTestSuite::nodeOrder(
         lineNames.push_back(to_string(p));
     lineNames.push_back(to_string(fullRelocationPassCount));
 
-    output(testName + "(Iterations)", header, subheader, lineNames, data);
+    vector<string> histHeader = {"Initial"};
+    for(int i=0; i < 2; ++i)
+    {
+        histHeader.push_back(_translateImplementations[implementations[i]]);
+    }
+
+    output(testName + "(CPU)",      headerCPU,  subheaderCPU,  lineNames, dataCPU);
+    output(testName + "(Parallel)", headerPara, subheaderPara, lineNames, dataPara);
     output(testName + "(Histograms)", histHeader, histograms);
 }
 
