@@ -406,6 +406,8 @@ void MastersTestSuite::saveCsvTable(
 {
     stringstream ss;
 
+    ss << "Qualités" << ", ";
+
     for(int h=0; h < header.size(); ++h)
     {
         if(h != 0)
@@ -421,6 +423,11 @@ void MastersTestSuite::saveCsvTable(
 
     for(int b=0; b < bc; ++b)
     {
+        double bottom = b / double(bc);
+        double top = (b+1) / double(bc);
+
+        ss << bottom << " - " << top << ", ";
+
         for(int h=0; h < histograms.size(); ++h)
         {
             const QualityHistogram& hist =
@@ -450,6 +457,8 @@ void MastersTestSuite::saveLatexTable(
 
     ss << "\\hline\n";
 
+    ss << "Qualités" << "\t& ";
+
     for(int h=0; h < header.size(); ++h)
     {
         if(h != 0)
@@ -467,6 +476,11 @@ void MastersTestSuite::saveLatexTable(
 
     for(int b=0; b < bc; ++b)
     {
+        double bottom = b / double(bc);
+        double top = (b+1) / double(bc);
+
+        ss << bottom << " - " << top << "\t& ";
+
         for(int h=0; h < histograms.size(); ++h)
         {
             const QualityHistogram& hist =
@@ -506,19 +520,24 @@ void MastersTestSuite::saveReportTable(
     propertyTableFormat.setBorderStyle(
         QTextFrameFormat::BorderStyle_Solid);
 
-    size_t rc = histograms.size();
+    size_t hc = histograms.size();
     size_t bc = histograms.front().bucketCount();
 
     cursor.movePosition(QTextCursor::End);
     cursor.insertBlock(blockFormat);
     cursor.insertHtml(("<h3>" + title + "</h3>").c_str());
     table = cursor.insertTable(
-        bc + 1, rc, propertyTableFormat);
+        bc + 1, hc+1, propertyTableFormat);
+
+
+    cell = table->cellAt(0, 0);
+    QTextCursor cellCursor = cell.firstCursorPosition();
+    cellCursor.insertText("Qualités", tableHeaderFormat);
 
 
     for(int h=0; h < header.size(); ++h)
     {
-        cell = table->cellAt(0, h);
+        cell = table->cellAt(0, h+1);
         QTextCursor cellCursor =
             cell.firstCursorPosition();
 
@@ -527,12 +546,23 @@ void MastersTestSuite::saveReportTable(
 
     for(int b=0; b < bc; ++b)
     {
+        double bottom = b / double(bc);
+        double top = (b+1) / double(bc);
+
+        cell = table->cellAt(b+1, 0);
+        QTextCursor cellCursor =
+            cell.firstCursorPosition();
+
+        cellCursor.insertText(QString("%1 - %2")
+                .arg(bottom).arg(top));
+
+
         for(int h=0; h < histograms.size(); ++h)
         {
             const QualityHistogram& hist =
                     histograms[h];
 
-            cell = table->cellAt(b+1, h);
+            cell = table->cellAt(b+1, h+1);
             QTextCursor cellCursor =
                 cell.firstCursorPosition();
 
@@ -1143,6 +1173,8 @@ void MastersTestSuite::nodeOrder(
         const string& testName)
 {
     // Test case description
+    int fullRelocationPassCount = 10;
+    int displayRelocationPassCount = 100;
     string mesh = MESH_SPHERE_100K;
 
     const string sampler = "Analytic";
@@ -1165,7 +1197,7 @@ void MastersTestSuite::nodeOrder(
     Schedule schedule;
     schedule.autoPilotEnabled = false;
     schedule.topoOperationEnabled = false;
-    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
+    schedule.relocationPassCount = fullRelocationPassCount;
 
 
     // Setup test
@@ -1182,9 +1214,9 @@ void MastersTestSuite::nodeOrder(
     _character.benchmarkSmoothers(
         plot, schedule, configs);
 
-    Grid2D<double> data(implementations.size()*2, schedule.relocationPassCount+1);
+    Grid2D<double> data(implementations.size()*2, displayRelocationPassCount+2);
 
-    for(int r=0; r <= schedule.relocationPassCount; ++r)
+    for(int r=0; r <= displayRelocationPassCount; ++r)
     {
         for(int i=0; i < implementations.size(); ++i)
         {
@@ -1192,14 +1224,30 @@ void MastersTestSuite::nodeOrder(
                 plot.implementations()[i].passes[r].histogram;
             data[r][0 + i] = hist.minimumQuality();
             data[r][2 + i] = hist.harmonicMean();
-
         }
     }
+
+    for(int i=0; i < implementations.size(); ++i)
+    {
+        const QualityHistogram& hist =
+            plot.implementations()[i].passes[fullRelocationPassCount].histogram;
+        data[displayRelocationPassCount+1][0 + i] = hist.minimumQuality();
+        data[displayRelocationPassCount+1][2 + i] = hist.harmonicMean();
+    }
+
+    vector<QualityHistogram> histograms;
+    histograms.push_back(plot.initialHistogram());
+    for(int i=0; i < implementations.size(); ++i)
+        histograms.push_back(plot.implementations()[i].finalHistogram);
 
 
     // Print results
     vector<pair<string, int>> header = {
         {"Itérations", 1}, {"Minimums", 2}, {"Moyennes", 2}};
+
+    vector<string> histHeader = {"Initial"};
+    for(const string& impl : implementations)
+        histHeader.push_back(_translateImplementations[impl]);
 
     vector<pair<string, int>> subheader = {{"", 1}};
     for(int m=0; m < 2; ++m)
@@ -1210,10 +1258,12 @@ void MastersTestSuite::nodeOrder(
     }
 
     vector<string> lineNames;
-    for(int p=0; p <= schedule.relocationPassCount; ++p)
+    for(int p=0; p <= displayRelocationPassCount; ++p)
         lineNames.push_back(to_string(p));
+    lineNames.push_back(to_string(fullRelocationPassCount));
 
-    output(testName, header, subheader, lineNames, data);
+    output(testName + "(Iterations)", header, subheader, lineNames, data);
+    output(testName + "(Histograms)", histHeader, histograms);
 }
 
 void MastersTestSuite::smootherEfficacity(
