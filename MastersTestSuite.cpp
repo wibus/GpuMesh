@@ -147,7 +147,7 @@ MastersTestSuite::MastersTestSuite(
         {MESH_TETCUBE_K12, "TetCube (K=12)"},
         {MESH_TETCUBE_K16, "TetCube (K=16)"},
         {MESH_TETCUBE_K24, "TetCube (K=24)"},
-        {MESH_HEXGRID_500K, "HexGrid (N=500K)"},
+        {MESH_HEXGRID_500K, "HexCube (N=500K)"},
         {MESH_TURBINE_500K, "Turbine (N=500K)"}
     };
 
@@ -820,8 +820,7 @@ void MastersTestSuite::evaluatorBlockSize(
     // Test case description
     const vector<string> meshes = {
         MESH_TETCUBE_K24,
-        MESH_HEXGRID_500K,
-        MESH_TURBINE_500K
+        MESH_HEXGRID_500K
     };
 
     const string sampler = "Texture";
