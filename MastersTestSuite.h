@@ -18,6 +18,7 @@ namespace cellar
 
 class GpuMeshCharacter;
 class QualityHistogram;
+class Configuration;
 
 
 class MastersTestSuite
@@ -97,6 +98,14 @@ protected:
 
 
 
+
+    void metricPrecision(
+            const std::string& testName);
+
+    void texturePrecision(
+            const std::string& testName);
+
+
     void evaluatorBlockSize(
             const std::string& testName);
 
@@ -108,42 +117,41 @@ protected:
     void metricCostTetCube(
             const std::string& testName);
 
-    void metricCostHexGrid(
-            const std::string& testName);
-
-
-    void metricPrecision(
-            const std::string& testName);
-
-    void texturePrecision(
+    void metricCostHexCube(
             const std::string& testName);
 
 
     void nodeOrder(
             const std::string& testName);
 
+
     void smootherEfficacity(
             const std::string& testName);
 
+
     void smootherBlockSize(
-            const std::string& testName);
-
-
-    void smootherSpeedAnalytic(
-            const std::string& testName);
-
-    void smootherSpeedMeshTex(
-            const std::string& testName);
-
-
-    void scaling(
             const std::string& testName,
-            bool enableRelocation);
+            const std::string& mesh);
 
-    void scalingRelocOnly(
+    void smootherBlockSizeTetCube(
             const std::string& testName);
 
-    void scalingTopoReloc(
+    void smootherBlockSizeHexCube(
+            const std::string& testName);
+
+
+    void smootherSpeed(
+            const std::string& testName,
+            const std::string& mesh);
+
+    void smootherSpeedTetCube(
+            const std::string& testName);
+
+    void smootherSpeedHexCube(
+            const std::string& testName);
+
+
+    void relocationScaling(
             const std::string& testName);
 
 

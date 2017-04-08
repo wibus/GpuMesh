@@ -174,6 +174,97 @@ void DebugMesher::genHexGrid(Mesh& mesh, size_t vertexCount)
             {
                 glm::dvec3 a = glm::dvec3(x, y, z) / glm::dvec3(SECTION_COUNT);
                 mesh.verts.push_back(glm::mix(gridMin, gridMax, a));
+
+                if(z==0)
+                {
+                    if(y == 0)
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v0()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v1()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e01()));
+                    }
+                    else if(y == SECTION_COUNT)
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v3()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v2()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e23()));
+                    }
+                    else
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e03()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e12()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->zNegFace()));
+                    }
+                }
+                else if(z== SECTION_COUNT)
+                {
+                    if(y == 0)
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v4()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v5()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e45()));
+                    }
+                    else if(y == SECTION_COUNT)
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v7()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->v6()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e67()));
+                    }
+                    else
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e47()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e56()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->zPosFace()));
+                    }
+                }
+                else
+                {
+                    if(y == 0)
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e04()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e15()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->yNegFace()));
+                    }
+                    else if(y == SECTION_COUNT)
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e37()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->e26()));
+                        else
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->yPosFace()));
+                    }
+                    else
+                    {
+                        if(x == 0)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->xNegFace()));
+                        else if(x == SECTION_COUNT)
+                            mesh.topos.push_back(MeshTopo(_boxBoundary->xPosFace()));
+                        else
+                            mesh.topos.push_back(MeshTopo());
+                    }
+                }
             }
         }
     }
@@ -200,6 +291,8 @@ void DebugMesher::genHexGrid(Mesh& mesh, size_t vertexCount)
             }
         }
     }
+
+    mesh.setBoundary(_boxBoundary);
 }
 
 void DebugMesher::genTetGrid(Mesh& mesh, size_t vertexCount)
