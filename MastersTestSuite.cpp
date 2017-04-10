@@ -1535,13 +1535,15 @@ void MastersTestSuite::smootherSpeed(
         "CUDA"
     };
 
+    int gradDescPos = 4;
+
     std::vector<Configuration> configs;
 
-    for(int s=0; s <= 3; ++s)
+    for(int s=0; s < gradDescPos; ++s)
         configs.push_back({cpuSampler, smoothers[s], "Serial"});
     int serialConfigEnd = configs.size();
 
-    for(int s=0; s <= 3; ++s)
+    for(int s=0; s < gradDescPos; ++s)
         configs.push_back({cpuSampler, smoothers[s], "Thread"});
     int threadConfigEnd = configs.size();
 
