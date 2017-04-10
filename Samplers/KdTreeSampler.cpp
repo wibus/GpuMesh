@@ -117,47 +117,62 @@ void KdTreeSampler::setReferenceMesh(
     _debugMesh.reset();
     _rootNode.reset();
 
-    // Compute Kd Tree depth
-    int height = discretizationDepth();
-    if(height < 0)
+
+    if(vertCount == 0)
     {
-        height = (int)std::log2(std::ceil(vertCount/3.0));
+        _rootNode.reset(new KdNode());
+        _rootNode->metric = MeshMetric(1.0);
+
+        getLog().postMessage(new Message('I', false,
+            "Creating single cell for empty mesh",
+            "KdTreeSampler"));
+
+        return;
     }
+    else
+    {
+        // Compute Kd Tree depth
+        int height = discretizationDepth();
+        if(height < 0)
+        {
+            height = (int)std::log2(std::ceil(vertCount/3.0));
+        }
 
-    getLog().postMessage(new Message('I', false,
-        "Sampling mesh metric in a Kd-Tree",
-        "KdTreeSampler"));
-    getLog().postMessage(new Message('I', false,
-        "Maximum Kd-Tree's depth: " + std::to_string(height),
-        "KdTreeSampler"));
+        getLog().postMessage(new Message('I', false,
+            "Sampling mesh metric in a Kd-Tree",
+            "KdTreeSampler"));
+        getLog().postMessage(new Message('I', false,
+            "Maximum Kd-Tree's depth: " + std::to_string(height),
+            "KdTreeSampler"));
 
-    std::vector<uint> xSort(vertCount);
-    std::iota(xSort.begin(), xSort.end(), 0);
-    std::vector<uint> ySort(xSort);
-    std::vector<uint> zSort(xSort);
+        std::vector<uint> xSort(vertCount);
+        std::iota(xSort.begin(), xSort.end(), 0);
+        std::vector<uint> ySort(xSort);
+        std::vector<uint> zSort(xSort);
 
-    std::sort(xSort.begin(), xSort.end(), [&mesh](uint a, uint b){
-        return mesh.verts[a].p.x < mesh.verts[b].p.x;});
-    std::sort(ySort.begin(), ySort.end(), [&mesh](uint a, uint b){
-        return mesh.verts[a].p.y < mesh.verts[b].p.y;});
-    std::sort(zSort.begin(), zSort.end(), [&mesh](uint a, uint b){
-        return mesh.verts[a].p.z < mesh.verts[b].p.z;});
+        std::sort(xSort.begin(), xSort.end(), [&mesh](uint a, uint b){
+            return mesh.verts[a].p.x < mesh.verts[b].p.x;});
+        std::sort(ySort.begin(), ySort.end(), [&mesh](uint a, uint b){
+            return mesh.verts[a].p.y < mesh.verts[b].p.y;});
+        std::sort(zSort.begin(), zSort.end(), [&mesh](uint a, uint b){
+            return mesh.verts[a].p.z < mesh.verts[b].p.z;});
 
 
-    LocalSampler localSampler;
-    localSampler.setScaling(scaling());
-    localSampler.setAspectRatio(aspectRatio());
-    localSampler.setReferenceMesh(mesh);
+        LocalSampler localSampler;
+        localSampler.setScaling(scaling());
+        localSampler.setAspectRatio(aspectRatio());
+        localSampler.setReferenceMesh(mesh);
 
-    // Fill Sampler's data strucutres
-    glm::dvec3 minBounds, maxBounds;
-    boundingBox(mesh, minBounds, maxBounds);
+        // Fill Sampler's data strucutres
+        glm::dvec3 minBounds, maxBounds;
+        boundingBox(mesh, minBounds, maxBounds);
 
-    _rootNode.reset(new KdNode());
-    build(_rootNode.get(), height,
-          mesh, localSampler,
-          minBounds, maxBounds,
-          xSort, ySort, zSort);
+        _rootNode.reset(new KdNode());
+        build(_rootNode.get(), height,
+              mesh, localSampler,
+              minBounds, maxBounds,
+              xSort, ySort, zSort);
+    }
 }
 
 MeshMetric KdTreeSampler::metricAt(
