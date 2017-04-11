@@ -11,7 +11,7 @@
 using namespace std;
 using namespace cellar;
 
-const double SSMoveCoeff = 1 / 28.0;
+const double SSMoveCoeff = 1 / 20.0;
 std::vector<glm::dvec4> g_offsets;
 
 

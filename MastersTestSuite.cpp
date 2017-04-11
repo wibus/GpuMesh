@@ -879,8 +879,8 @@ void MastersTestSuite::metricPrecision(
 
     // Run test
     vector<QualityHistogram> histograms;
-    Grid2D<double> minData(PRECISION_METRIC_As.size(), samplings.size() + 1);
-    Grid2D<double> meanData(PRECISION_METRIC_As.size(), samplings.size() + 1);
+    Grid2D<double> minData(samplings.size() + 1, PRECISION_METRIC_As.size());
+    Grid2D<double> meanData(samplings.size() + 1, PRECISION_METRIC_As.size());
 
     for(int a=0; a < PRECISION_METRIC_As.size(); ++a)
     {
@@ -901,14 +901,14 @@ void MastersTestSuite::metricPrecision(
 
         const QualityHistogram& initHist = plot.initialHistogram();
 
-        minData[0][a] = initHist.minimumQuality();
-        meanData[0][a] = initHist.harmonicMean();
+        minData[a][0] = initHist.minimumQuality();
+        meanData[a][0] = initHist.harmonicMean();
         for(int s=0; s < samplings.size(); ++s)
         {
             const QualityHistogram& hist =
                 plot.implementations()[s].finalHistogram;
-            minData[s+1][a] = hist.minimumQuality();
-            meanData[s+1][a] = hist.harmonicMean();
+            minData[a][s+1] = hist.minimumQuality();
+            meanData[a][s+1] = hist.harmonicMean();
         }
 
         if(a == PRECISION_METRIC_As.size()-1)
@@ -923,15 +923,15 @@ void MastersTestSuite::metricPrecision(
 
 
     // Print results
-    vector<pair<string, int>> header = {{"Métriques", 1}};
-    for(double r : PRECISION_METRIC_As)
-        header.push_back({"A = " + to_string(r), 1});
+    vector<pair<string, int>> header = {{"A", 1}};
+    for(const string& s : samplings)
+        header.push_back({_translateSamplingTechniques[s], 1});
 
     vector<pair<string, int>> subheader = {};
 
     vector<string> lineNames = {"Initial"};
-    for(const string& s : samplings)
-        lineNames.push_back(_translateSamplingTechniques[s]);
+    for(double r : PRECISION_METRIC_As)
+        lineNames.push_back(QString::number(r).toStdString());
 
     vector<string> histHeader = {"Initial"};
     for(const string& s : samplings)
