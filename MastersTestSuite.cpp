@@ -949,9 +949,10 @@ void MastersTestSuite::texturePrecision(
         const string& testName)
 {
     // Test case description
-    string mesh = MESH_TETCUBE_K12;
-    double metricK = ADAPTATION_METRIC_K12;
     double metricA = ADAPTATION_METRIC_A;
+    double metricK = PRECISION_METRIC_As[3];
+    string mesh = QString(MESH_PRECISION_BASE.c_str())
+            .arg(metricK).toStdString();
 
     string implementation = "Thread";
     string smoother = "Gradient Descent";
