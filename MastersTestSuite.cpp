@@ -32,9 +32,11 @@ const string RESULT_CSV_PATH = RESULTS_PATH + "csv/";
 const string DATA_MESH_PATH = "resources/data/";
 
 const string MESH_SPHERE_100K = RESULT_MESH_PATH + "Sphere (N=100K).json";
+const string MESH_TETCUBE_K5 = RESULT_MESH_PATH + "TetCube (K=5).json";
 const string MESH_TETCUBE_K12 = RESULT_MESH_PATH + "TetCube (K=12).json";
 const string MESH_TETCUBE_K16 = RESULT_MESH_PATH + "TetCube (K=16).json";
 const string MESH_TETCUBE_K24 = RESULT_MESH_PATH + "TetCube (K=24).json";
+const string MESH_HEXCUBE_10K = RESULT_MESH_PATH + "HexCube (N=10K).json";
 const string MESH_HEXCUBE_175K = RESULT_MESH_PATH + "HexCube (N=175K).json";
 const string MESH_HEXCUBE_500K = RESULT_MESH_PATH + "HexCube (N=500K).json";
 const string MESH_TURBINE_500K = RESULT_MESH_PATH + "Turbine (N=500K).cgns";
@@ -50,6 +52,7 @@ const vector<int> SPHERE_TARGET_SIZES = {
     16*BS, 32*BS, 64*BS, 128*BS};
 double sizeToScale(int size) {return glm::pow(size, 1/2.9) / 4.08;}
 
+const double ADAPTATION_METRIC_K5 = 5;
 const double ADAPTATION_METRIC_K12 = 12;
 const double ADAPTATION_METRIC_K16 = 16;
 const double ADAPTATION_METRIC_K24 = 24;
@@ -145,9 +148,11 @@ MastersTestSuite::MastersTestSuite(
 
     _meshNames = {
         {MESH_SPHERE_100K, "Sphere (N=100K)"},
+        {MESH_TETCUBE_K5, "TetCube (K=5)"},
         {MESH_TETCUBE_K12, "TetCube (K=12)"},
         {MESH_TETCUBE_K16, "TetCube (K=16)"},
         {MESH_TETCUBE_K24, "TetCube (K=24)"},
+        {MESH_HEXCUBE_10K, "HexCube (N=10K)"},
         {MESH_HEXCUBE_175K, "HexCube (N=175K)"},
         {MESH_HEXCUBE_500K, "HexCube (N=500K)"},
         {MESH_TURBINE_500K, "Turbine (N=500K)"}
@@ -190,6 +195,15 @@ void MastersTestSuite::runTests(
         _character.saveMesh(MESH_SPHERE_100K);
     }
 
+    if(!QFile(MESH_TETCUBE_K5.c_str()).exists())
+    {
+        setupAdaptedCube(
+            ADAPTATION_METRIC_K5,
+            ADAPTATION_METRIC_A);
+
+        _character.saveMesh(MESH_TETCUBE_K5);
+    }
+
     if(!QFile(MESH_TETCUBE_K12.c_str()).exists())
     {
         setupAdaptedCube(
@@ -215,6 +229,16 @@ void MastersTestSuite::runTests(
             ADAPTATION_METRIC_A);
 
         _character.saveMesh(MESH_TETCUBE_K24);
+    }
+
+    if(!QFile(MESH_HEXCUBE_10K.c_str()).exists())
+    {
+        _character.useSampler("Analytic");
+
+        _character.generateMesh("Debug", "HexGrid", 10e3);
+        QCoreApplication::processEvents();
+
+        _character.saveMesh(MESH_HEXCUBE_10K);
     }
 
     if(!QFile(MESH_HEXCUBE_175K.c_str()).exists())
@@ -1318,8 +1342,8 @@ void MastersTestSuite::smootherEfficacity(
 {
     // Test case description
     vector<string> meshes = {
-        MESH_TETCUBE_K24,
-        MESH_HEXCUBE_500K,
+        MESH_TETCUBE_K5,
+        MESH_HEXCUBE_10K,
     };
 
     string sampler = "Analytic";
@@ -1350,7 +1374,7 @@ void MastersTestSuite::smootherEfficacity(
 
     // Setup test
     _character.useSampler(sampler);
-    _character.setMetricScaling(ADAPTATION_METRIC_K24);
+    _character.setMetricScaling(ADAPTATION_METRIC_K5);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
@@ -1518,7 +1542,7 @@ void MastersTestSuite::smootherSpeed(
     string gpuSampler = "Texture";
 
     vector<string> smoothers = {
-        //"Spring Laplace",
+        "Spring Laplace",
         "Quality Laplace",
         "Spawn Search",
         "Nelder-Mead",
@@ -1535,7 +1559,7 @@ void MastersTestSuite::smootherSpeed(
         "CUDA"
     };
 
-    int gradDescPos = 4;
+    int gradDescPos = 5;
 
     std::vector<Configuration> configs;
 
