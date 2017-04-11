@@ -57,11 +57,11 @@ const double ADAPTATION_METRIC_A = 8;
 const double ADAPTATION_TOPO_PASS = 5;
 const double ADAPTATION_RELOC_PASS = 10;
 
-const int EVALUATION_THREAD_COUNT_GLSL = 32;
+const int EVALUATION_THREAD_COUNT_GLSL = 16;
 const int EVALUATION_THREAD_COUNT_CUDA = 32;
 
-const int SMOOTHING_THREAD_COUNT_GLSL = 64;
-const int SMOOTHING_THREAD_COUNT_CUDA = 64;
+const int SMOOTHING_THREAD_COUNT_GLSL = 16;
+const int SMOOTHING_THREAD_COUNT_CUDA = 32;
 
 string testNumber(int n)
 {
@@ -1387,7 +1387,7 @@ void MastersTestSuite::smootherEfficacity(
     vector<pair<string, int>> subheader = {{"", 1}};
     for(int m=0; m < meshes.size(); ++m)
     {
-        header.push_back({_meshNames[meshes[m]], 1});
+        header.push_back({_meshNames[meshes[m]], 2});
         subheader.push_back({"Minimums", 1});
         subheader.push_back({"Moyennes", 1});
     }
