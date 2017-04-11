@@ -45,8 +45,8 @@ void smoothVert(uint vId)
     );
 
     const float LINE_SAMPS[LINE_SAMP_COUNT] = float[](
-        -0.25, 0.00, 0.25, 0.50,
-         0.75, 1.00, 1.25, 1.50
+        -0.25, 0.00, 0.10, 0.20,
+         0.40, 0.80, 1.20, 1.60
     );
 
     uint pId = gl_LocalInvocationID.x;

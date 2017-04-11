@@ -12,7 +12,7 @@ using namespace std;
 
 // Parameters
 const int GDSecurityCycleCount = 5;
-const double GDLocalSizeToNodeShift = 1.0 / 25.0;
+const double GDLocalSizeToNodeShift = 1.0 / 75.0;
 
 
 // CUDA Drivers
@@ -139,15 +139,16 @@ void GradientDescentSmoother::smoothVertices(
                 break;
 
 
-            const uint PROPOSITION_COUNT = 7;
+            const uint PROPOSITION_COUNT = 8;
             const double OFFSETS[PROPOSITION_COUNT] = {
                 -0.25,
                  0.00,
-                 0.25,
-                 0.50,
-                 0.75,
-                 1.00,
-                 1.25,
+                 0.10,
+                 0.20,
+                 0.40,
+                 0.80,
+                 1.20,
+                 1.60
             };
 
             glm::dvec3 shift = gradQ * (nodeShift / gradQNorm);
@@ -159,6 +160,7 @@ void GradientDescentSmoother::smoothVertices(
                 pos + shift * OFFSETS[4],
                 pos + shift * OFFSETS[5],
                 pos + shift * OFFSETS[6],
+                pos + shift * OFFSETS[7]
             };
 
             if(topo.snapToBoundary->isConstrained())

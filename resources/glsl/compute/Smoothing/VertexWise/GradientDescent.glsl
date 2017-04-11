@@ -54,15 +54,10 @@ void smoothVert(uint vId)
             break;
 
 
-        const uint PROPOSITION_COUNT = 7;
+        const uint PROPOSITION_COUNT = 8;
         const float OFFSETS[PROPOSITION_COUNT] = float[](
-            -0.25,
-             0.00,
-             0.25,
-             0.50,
-             0.75,
-             1.00,
-             1.25
+            -0.25, 0.00, 0.10, 0.20,
+             0.40, 0.80, 1.20, 1.60
         );
 
         vec3 shift = gradQ * (nodeShift / gradQNorm);
@@ -73,7 +68,8 @@ void smoothVert(uint vId)
             pos + shift * OFFSETS[3],
             pos + shift * OFFSETS[4],
             pos + shift * OFFSETS[5],
-            pos + shift * OFFSETS[6]
+            pos + shift * OFFSETS[6],
+            pos + shift * OFFSETS[7]
         );
 
         uint bestProposition = 0;
