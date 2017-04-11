@@ -78,9 +78,9 @@ void QualityLaplaceSmoother::smoothVertices(
         // Define propositions for new vertex's position
         glm::dvec3 propositions[PROPOSITION_COUNT] = {
             pos,
-            patchCenter - centerDist * QLMoveCoeff,
-            patchCenter,
-            patchCenter + centerDist * QLMoveCoeff,
+            pos + centerDist * (QLMoveCoeff * QLMoveCoeff),
+            pos + centerDist * QLMoveCoeff,
+            patchCenter
         };
 
         const MeshTopo& topo = topos[vId];

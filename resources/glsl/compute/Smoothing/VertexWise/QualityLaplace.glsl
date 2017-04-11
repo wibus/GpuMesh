@@ -20,9 +20,9 @@ void smoothVert(uint vId)
     // Define propositions for new vertex's position
     vec3 propositions[PROPOSITION_COUNT] = vec3[](
         pos,
-        patchCenter - centerDist * MoveCoeff,
-        patchCenter,
-        patchCenter + centerDist * MoveCoeff
+        pos + centerDist * (MoveCoeff * MoveCoeff),
+        pos + centerDist * MoveCoeff,
+        patchCenter
     );
 
 

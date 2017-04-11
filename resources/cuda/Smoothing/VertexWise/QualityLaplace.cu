@@ -21,9 +21,9 @@ __device__ void qualityLaplaceSmoothVert(uint vId)
     // Define propositions for new vertex's position
     vec3 propositions[PROPOSITION_COUNT] = {
         pos,
-        patchCenter - centerDist * QLMoveCoeff,
-        patchCenter,
-        patchCenter + centerDist * QLMoveCoeff
+        pos + centerDist * (QLMoveCoeff * QLMoveCoeff),
+        pos + centerDist * QLMoveCoeff,
+        patchCenter
     };
 
 
