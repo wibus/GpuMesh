@@ -26,8 +26,8 @@ using namespace cellar;
 
 
 const string RESULTS_PATH = "resources/reports/";
-const string RESULT_LATEX_PATH = RESULTS_PATH + "latex/";
 const string RESULT_MESH_PATH = RESULTS_PATH + "mesh/";
+const string RESULT_LATEX_PATH = RESULTS_PATH + "latex/";
 const string RESULT_CSV_PATH = RESULTS_PATH + "csv/";
 const string DATA_MESH_PATH = "resources/data/";
 
@@ -1610,35 +1610,47 @@ void MastersTestSuite::smootherSpeed(
 
     for(int s=0; s < serialConfigEnd; ++s)
     {
-        data[s][0] = plot.implementations()[s].passes.back().timeStamp;
+        int i = s - 0;
+        data[i][0] = plot.implementations()[s].passes.back().timeStamp;
     }
 
     for(int s=serialConfigEnd; s < threadConfigEnd; ++s)
     {
-        data[s][1] = plot.implementations()[s].passes.back().timeStamp;
-        data[s][4] = data[s][1] / data[glm::min(s-serialConfigEnd, serialConfigEnd-1)][0];
+        int i = s - serialConfigEnd;
+        data[i][1] = plot.implementations()[s].passes.back().timeStamp;
+        data[i][4] = data[glm::min(i, serialConfigEnd-1)][0] / data[i][1];
     }
 
     for(int s=threadConfigEnd; s < glslConfigEnd; ++s)
     {
-        data[s][2] = plot.implementations()[s].passes.back().timeStamp;
-        data[s][5] = data[s][2] / data[glm::min(s-threadConfigEnd, serialConfigEnd-1)][0];
+        int i = s - threadConfigEnd;
+        data[i][2] = plot.implementations()[s].passes.back().timeStamp;
+        data[i][5] = data[glm::min(i, serialConfigEnd-1)][0] / data[i][2];
     }
 
     for(int s=glslConfigEnd; s < cudaConfigEnd; ++s)
     {
-        data[s][3] = plot.implementations()[s].passes.back().timeStamp;
-        data[s][6] = data[s][3] / data[glm::min(s-glslConfigEnd, serialConfigEnd-1)][0];
+        int i = s - glslConfigEnd;
+        data[i][3] = plot.implementations()[s].passes.back().timeStamp;
+        data[i][6] = data[glm::min(i, serialConfigEnd-1)][0] / data[i][3];
     }
 
 
     // Print results
-    vector<pair<string, int>> header = {{"Algorithmes", 1}};
-    vector<pair<string, int>> subheader = {};
-    for(const string& impl : implementations)
-    {
-        header.push_back({_translateImplementations[impl], 1});
-    }
+    vector<pair<string, int>> header = {
+        {"Algorithmes", 1},
+        {"Temps (ms)", implementations.size()},
+        {"Accélérations", implementations.size()-1}
+    };
+
+    vector<pair<string, int>> subheader = {{"", 1}};
+    for(const string& i : implementations)
+        subheader.push_back({
+            _translateImplementations[i], 1});
+
+    for(int i=1; i < implementations.size(); ++i)
+        subheader.push_back({
+            _translateImplementations[implementations[i]], 1});
 
     vector<string> lineNames;
     for(const string& smooth : smoothers)
