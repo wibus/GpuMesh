@@ -139,6 +139,7 @@ MastersTestSuite::MastersTestSuite(
         {"Quality Laplace",     "Laplace de qualité"},
         {"Spawn Search",        "Recherche par grappe"},
         {"Nelder-Mead",         "Nelder-Mead"},
+        {"Multi Elem NM",       "NM multi-éléments"},
         {"Gradient Descent",    "Descente du gradient"},
         {"Multi Elem GD",       "DG multi-éléments"},
         {"Multi Pos GD",        "DG multi-positions"},
@@ -1547,11 +1548,15 @@ void MastersTestSuite::smootherSpeed(
         "Quality Laplace",
         "Spawn Search",
         "Nelder-Mead",
+        "Multi Elem NM",
         "Gradient Descent",
         "Multi Elem GD",
         "Multi Pos GD",
         "Patch GD",
     };
+
+    int nelderMeadPos = 3;
+    int gradDescPos = 5;
 
     vector<string> implementations = {
         "Serial",
@@ -1560,16 +1565,28 @@ void MastersTestSuite::smootherSpeed(
         "CUDA"
     };
 
-    int gradDescPos = 5;
+    vector<int> refImpls = {
+        0,
+        1,
+        2,
+        3,
+        3, // Multi Elem NM
+        5,
+        5, // Multi Elem GD
+        5, // Multi Pos GD
+        5  // Patch GD
+    };
 
     std::vector<Configuration> configs;
 
-    for(int s=0; s < gradDescPos; ++s)
+    for(int s=0; s <= nelderMeadPos; ++s)
         configs.push_back({cpuSampler, smoothers[s], "Serial"});
+    configs.push_back({cpuSampler, smoothers[gradDescPos], "Serial"});
     int serialConfigEnd = configs.size();
 
-    for(int s=0; s < gradDescPos; ++s)
+    for(int s=0; s <= nelderMeadPos; ++s)
         configs.push_back({cpuSampler, smoothers[s], "Thread"});
+    configs.push_back({cpuSampler, smoothers[gradDescPos], "Thread"});
     int threadConfigEnd = configs.size();
 
     for(int s=0; s < smoothers.size(); ++s)
@@ -1619,21 +1636,21 @@ void MastersTestSuite::smootherSpeed(
     {
         int i = s - serialConfigEnd;
         data[i][1] = plot.implementations()[s].passes.back().timeStamp;
-        data[i][4] = data[glm::min(i, serialConfigEnd-1)][0] / data[i][1];
+        data[i][4] = data[refImpls[i]][0] / data[i][1];
     }
 
     for(int s=threadConfigEnd; s < glslConfigEnd; ++s)
     {
         int i = s - threadConfigEnd;
         data[i][2] = plot.implementations()[s].passes.back().timeStamp;
-        data[i][5] = data[glm::min(i, serialConfigEnd-1)][0] / data[i][2];
+        data[i][5] = data[refImpls[i]][0] / data[i][2];
     }
 
     for(int s=glslConfigEnd; s < cudaConfigEnd; ++s)
     {
         int i = s - glslConfigEnd;
         data[i][3] = plot.implementations()[s].passes.back().timeStamp;
-        data[i][6] = data[glm::min(i, serialConfigEnd-1)][0] / data[i][3];
+        data[i][6] = data[refImpls[i]][0] / data[i][3];
     }
 
 
