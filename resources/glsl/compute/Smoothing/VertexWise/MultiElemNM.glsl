@@ -62,6 +62,8 @@ float parallelPatchQualityImpl(
 
     barrier();
 
+    float threadMin = 1.0/0.0;
+    float threadMean = 0.0;
 
     for(uint e = nBeg; e < nEnd; ++e)
     {
@@ -105,9 +107,12 @@ float parallelPatchQualityImpl(
             break;
         }
 
-        atomicMin(patchMin[nId], int(qual * MIN_MAX));
-        atomicAdd(patchMean[nId], 1.0 / qual);
+        threadMin = min(threadMin, qual);
+        threadMean += 1.0 / qual;
     }
+
+    atomicMin(patchMin[nId], int(threadMin * MIN_MAX));
+    atomicAdd(patchMean[nId], threadMean);
 
     barrier();
 

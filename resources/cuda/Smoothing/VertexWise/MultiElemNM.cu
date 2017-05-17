@@ -45,6 +45,8 @@ __device__ float multiElemPatchQuality(
 
     __syncthreads();
 
+    float threadMin = 1.0/0.0;
+    float threadMean = 0.0;
 
     for(uint e = nBeg; e < nEnd; ++e)
     {
@@ -88,9 +90,12 @@ __device__ float multiElemPatchQuality(
             break;
         }
 
-        atomicMin(&patchMin[nId], qual * MIN_MAX);
-        atomicAdd(&patchMean[nId], 1.0 / qual);
+        threadMin = min(threadMin, qual);
+        threadMean += 1.0 / qual;
     }
+
+    atomicMin(&patchMin[nId], threadMin * MIN_MAX);
+    atomicAdd(&patchMean[nId], threadMean);
 
     __syncthreads();
 
