@@ -7,6 +7,12 @@
 
 class NelderMeadSmoother : public AbstractVertexWiseSmoother
 {
+protected:
+    NelderMeadSmoother(
+        const std::vector<std::string>& smoothShaders,
+        const installCudaFct& installCuda,
+        const launchCudaKernelFct& launchCudaKernel);
+
 public:
     NelderMeadSmoother();
     virtual ~NelderMeadSmoother();

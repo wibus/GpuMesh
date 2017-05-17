@@ -64,3 +64,11 @@ bool isSmoothableHex(uint eId)
 
     return true;
 }
+
+
+void swap(inout vec4 v1, inout vec4 v2)
+{
+    vec4 tmp = v1;
+    v1 = v2;
+    v2 = tmp;
+}

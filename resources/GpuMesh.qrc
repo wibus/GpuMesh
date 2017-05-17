@@ -53,5 +53,6 @@
         <file>glsl/compute/Smoothing/VertexWise/PatchGradDsnt.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/MultiPosGradDsnt.glsl</file>
         <file>glsl/compute/Smoothing/VertexWise/MultiElemGradDsnt.glsl</file>
+        <file>glsl/compute/Smoothing/VertexWise/MultiElemNM.glsl</file>
     </qresource>
 </RCC>

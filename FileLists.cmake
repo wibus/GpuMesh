@@ -82,6 +82,7 @@ SET(GpuMesh_VERTEXWISE_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiElemGradDsntSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiPosGradDsntSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/PatchGradDsntSmoother.h
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiElemNMSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/NelderMeadSmoother.h
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpawnSearchSmoother.h)
 
@@ -212,6 +213,7 @@ SET(GpuMesh_VERTEXWISE_SOURCES
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiElemGradDsntSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiPosGradDsntSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/PatchGradDsntSmoother.cpp
+    ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/MultiElemNMSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/NelderMeadSmoother.cpp
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/SpawnSearchSmoother.cpp)
 
@@ -350,6 +352,7 @@ SET(GpuMesh_VERTEXWISE_SHADERS
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/MultiElemGradDsnt.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/MultiPosGradDsnt.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/PatchGradDsnt.glsl
+    ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/MultiElemNM.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/NelderMead.glsl
     ${GpuMesh_GLSL_DIR}/compute/Smoothing/VertexWise/SpawnSearch.glsl)
 
@@ -417,6 +420,7 @@ SET(GpuMesh_VERTEXWISE_CUDA
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/MultiElemGradDsnt.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/MultiPosGradDsnt.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/PatchGradDsnt.cu
+    ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/MultiElemNM.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/NelderMead.cu
     ${GpuMesh_CUDA_DIR}/Smoothing/VertexWise/SpawnSearch.cu)
 

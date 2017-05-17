@@ -46,6 +46,7 @@
 #include "Smoothers/VertexWise/MultiElemGradDsntSmoother.h"
 #include "Smoothers/VertexWise/MultiPosGradDsntSmoother.h"
 #include "Smoothers/VertexWise/PatchGradDsntSmoother.h"
+#include "Smoothers/VertexWise/MultiElemNMSmoother.h"
 #include "Smoothers/VertexWise/NelderMeadSmoother.h"
 #include "Smoothers/VertexWise/SpawnSearchSmoother.h"
 #include "Smoothers/ElementWise/GetmeSmoother.h"
@@ -126,6 +127,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Multi Elem GD"),    shared_ptr<AbstractSmoother>(new MultiElemGradDsntSmoother())},
         {string("Multi Pos GD"),     shared_ptr<AbstractSmoother>(new MultiPosGradDsntSmoother())},
         {string("Patch GD"),         shared_ptr<AbstractSmoother>(new PatchGradDsntSmoother())},
+        {string("Multi Elem NM"),    shared_ptr<AbstractSmoother>(new MultiElemNMSmoother())},
         {string("Nelder-Mead"),      shared_ptr<AbstractSmoother>(new NelderMeadSmoother())},
         {string("Spawn Search"),     shared_ptr<AbstractSmoother>(new SpawnSearchSmoother())},
         {string("GETMe"),            shared_ptr<AbstractSmoother>(new GetmeSmoother())},

@@ -1,23 +1,23 @@
 #include "Base.cuh"
 
-__constant__ float NMValueConvergence;
-__constant__ int NMSecurityCycleCount;
-__constant__ float NMLocalSizeToNodeShift;
-__constant__ float NMAlpha;
-__constant__ float NMBeta;
-__constant__ float NMGamma;
-__constant__ float NMDelta;
+namespace nm
+{
+    __constant__ float VALUE_CONVERGENCE;
+    __constant__ int SECURITY_CYCLE_COUNT;
+    __constant__ float LOCALE_SIZE_TO_NODE_SHIFT;
+    __constant__ float ALPHA;
+    __constant__ float BETA;
+    __constant__ float GAMMA;
+    __constant__ float DELTA;
+}
+
+using namespace nm;
 
 
 // Smoothing Helper
 __device__ float computeLocalElementSize(uint vId);
 __device__ float patchQuality(uint vId);
-__device__ void swap(vec4& v1, vec4& v2)
-{
-    glm::dvec4 tmp = v1;
-    v1 = v2;
-    v2 = tmp;
-}
+
 
 // ENTRY POINT //
 __device__ void nelderMeadSmoothVert(uint vId)
@@ -26,7 +26,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
     float localSize = computeLocalElementSize(vId);
 
     // Initialize node shift distance
-    float nodeShift = localSize * NMLocalSizeToNodeShift;
+    float nodeShift = localSize * LOCALE_SIZE_TO_NODE_SHIFT;
 
     vec3 pos = verts[vId].p;
     vec4 vo(pos, patchQuality(vId));
@@ -68,7 +68,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
             swap(simplex[0], simplex[1]);
 
 
-        for(; cycle < NMSecurityCycleCount; ++cycle)
+        for(; cycle < SECURITY_CYCLE_COUNT; ++cycle)
         {
             // Centroid
             vec3 c = 1/3.0f * (
@@ -79,7 +79,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
             float f = 0.0;
 
             // Reflect
-            verts[vId].p = c + NMAlpha*(c - vec3(simplex[0]));
+            verts[vId].p = c + ALPHA*(c - vec3(simplex[0]));
             float fr = f = patchQuality(vId);
 
             vec3 xr = verts[vId].p;
@@ -87,7 +87,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
             // Expand
             if(simplex[3].w < fr)
             {
-                verts[vId].p = c + NMGamma*(verts[vId].p - c);
+                verts[vId].p = c + GAMMA*(verts[vId].p - c);
                 float fe = f = patchQuality(vId);
 
                 if(fe <= fr)
@@ -102,13 +102,13 @@ __device__ void nelderMeadSmoothVert(uint vId)
                 // Outside
                 if(fr > simplex[0].w)
                 {
-                    verts[vId].p = c + NMBeta*(vec3(xr) - c);
+                    verts[vId].p = c + BETA*(vec3(xr) - c);
                     f = patchQuality(vId);
                 }
                 // Inside
                 else
                 {
-                    verts[vId].p = c + NMBeta*(vec3(simplex[0]) - c), 0;
+                    verts[vId].p = c + BETA*(vec3(simplex[0]) - c), 0;
                     f = patchQuality(vId);
                 }
             }
@@ -125,14 +125,14 @@ __device__ void nelderMeadSmoothVert(uint vId)
                 swap(simplex[0], vertex);
 
 
-            if( (simplex[3].w - simplex[1].w) < NMValueConvergence )
+            if( (simplex[3].w - simplex[1].w) < VALUE_CONVERGENCE )
             {
                 terminated = true;
                 break;
             }
         }
 
-        if( terminated || (cycle >= NMSecurityCycleCount && reset) )
+        if( terminated || (cycle >= SECURITY_CYCLE_COUNT && reset) )
         {
             break;
         }
@@ -167,13 +167,13 @@ void installCudaNelderMeadSmoother(
     cudaMemcpyFromSymbol(&d_smoothVert, nelderMeadSmoothVertPtr, sizeof(smoothVertFct));
     cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
-    cudaMemcpyToSymbol(NMValueConvergence, &h_valueConvergence, sizeof(float));
-    cudaMemcpyToSymbol(NMSecurityCycleCount, &h_securityCycleCount, sizeof(int));
-    cudaMemcpyToSymbol(NMLocalSizeToNodeShift, &h_localSizeToNodeShift, sizeof(float));
-    cudaMemcpyToSymbol(NMAlpha, &h_alpha, sizeof(float));
-    cudaMemcpyToSymbol(NMBeta,  &h_beta,  sizeof(float));
-    cudaMemcpyToSymbol(NMGamma, &h_gamma, sizeof(float));
-    cudaMemcpyToSymbol(NMDelta, &h_delta, sizeof(float));
+    cudaMemcpyToSymbol(VALUE_CONVERGENCE, &h_valueConvergence, sizeof(float));
+    cudaMemcpyToSymbol(SECURITY_CYCLE_COUNT, &h_securityCycleCount, sizeof(int));
+    cudaMemcpyToSymbol(LOCALE_SIZE_TO_NODE_SHIFT, &h_localSizeToNodeShift, sizeof(float));
+    cudaMemcpyToSymbol(ALPHA, &h_alpha, sizeof(float));
+    cudaMemcpyToSymbol(BETA,  &h_beta,  sizeof(float));
+    cudaMemcpyToSymbol(GAMMA, &h_gamma, sizeof(float));
+    cudaMemcpyToSymbol(DELTA, &h_delta, sizeof(float));
 
 
     if(verboseCuda)

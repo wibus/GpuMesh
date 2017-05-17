@@ -16,3 +16,10 @@ __device__ inline vec3 toVec3(const float3& v)
 {
     return vec3(v.x, v.y, v.z);
 }
+
+__device__ inline void swap(vec4& v1, vec4& v2)
+{
+    glm::dvec4 tmp = v1;
+    v1 = v2;
+    v2 = tmp;
+}

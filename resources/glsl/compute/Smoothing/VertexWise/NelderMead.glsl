@@ -9,12 +9,8 @@ uniform float Delta;
 // Smoothing Helper
 float computeLocalElementSize(in uint vId);
 float patchQuality(in uint vId);
-void swap(inout vec4 v1, inout vec4 v2)
-{
-    vec4 tmp = v1;
-    v1 = v2;
-    v2 = tmp;
-}
+void swap(inout vec4 v1, inout vec4 v2);
+
 
 // ENTRY POINT //
 void smoothVert(uint vId)

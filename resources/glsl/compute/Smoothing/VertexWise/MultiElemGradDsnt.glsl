@@ -56,8 +56,8 @@ void smoothVert(uint vId)
     Topo topo = topos[vId];
     uint neigBase = topo.neigElemBase;
     uint neigElemCount = topo.neigElemCount;
-    uint eBeg = neigBase + (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
-    uint eEnd = neigBase + ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint nBeg = neigBase + (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint nEnd = neigBase + ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
 
 
     if(eId < POSITION_SLOT_COUNT)
@@ -83,7 +83,7 @@ void smoothVert(uint vId)
     {
         vec3 pos = verts[vId].p;
 
-        for(uint e = eBeg; e < eEnd; ++e)
+        for(uint e = nBeg; e < nEnd; ++e)
         {
             NeigElem elem = neigElems[e];
             vec3 vertPos[HEX_VERTEX_COUNT];
@@ -177,7 +177,7 @@ void smoothVert(uint vId)
             break;
 
 
-        for(uint e = eBeg; e < eEnd; ++e)
+        for(uint e = nBeg; e < nEnd; ++e)
         {
             NeigElem elem = neigElems[e];
             vec3 vertPos[HEX_VERTEX_COUNT];

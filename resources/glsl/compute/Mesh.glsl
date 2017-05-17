@@ -144,6 +144,8 @@ const uint METRIC_AT_SUBROUTINE_LOC         = 0;
 const uint METRIC_AT_SUBROUTINE_IDX         = 0;
 const uint PATCH_QUALITY_SUBROUTINE_LOC     = 1;
 const uint PATCH_QUALITY_SUBROUTINE_IDX     = 1;
+const uint PARALLEL_PATCH_QUALITY_SUBROUTINE_LOC = 2;
+const uint PARALLEL_PATCH_QUALITY_SUBROUTINE_IDX = 2;
 
 
 layout(shared, binding = 0) buffer Verts

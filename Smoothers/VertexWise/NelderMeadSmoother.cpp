@@ -45,6 +45,15 @@ void installCudaNelderMeadSmoother()
 void smoothCudaVertices(const NodeGroups::GpuDispatch& dispatch);
 
 
+NelderMeadSmoother::NelderMeadSmoother(
+        const std::vector<std::string>& smoothShaders,
+        const installCudaFct& installCuda,
+        const launchCudaKernelFct& launchCudaKernel) :
+    AbstractVertexWiseSmoother(smoothShaders, installCuda, launchCudaKernel)
+{
+
+}
+
 NelderMeadSmoother::NelderMeadSmoother() :
     AbstractVertexWiseSmoother(
         {":/glsl/compute/Smoothing/VertexWise/NelderMead.glsl"},
