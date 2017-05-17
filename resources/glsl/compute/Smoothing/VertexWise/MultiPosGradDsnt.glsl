@@ -41,8 +41,8 @@ void smoothVert(uint vId)
 
     Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
-    uint eBeg = topo.neigElemBase;
-    uint eEnd = topo.neigElemBase + neigElemCount;
+    uint nBeg = topo.neigElemBase;
+    uint nEnd = topo.neigElemBase + neigElemCount;
 
     if(pId == 0)
     {
@@ -68,7 +68,7 @@ void smoothVert(uint vId)
         {
             vec3 gradSamp = pos + GRAD_SAMPS[pId] * nodeShift[nId];
 
-            for(uint e = eBeg; e < eEnd; ++e)
+            for(uint e = nBeg; e < nEnd; ++e)
             {
                 NeigElem elem = neigElems[e];
                 vec3 vertPos[HEX_VERTEX_COUNT];
@@ -141,7 +141,7 @@ void smoothVert(uint vId)
 
         vec3 lineSamp = pos + lineShift * LINE_SAMPS[pId];
 
-        for(uint e = eBeg; e < eEnd; ++e)
+        for(uint e = nBeg; e < nEnd; ++e)
         {
             NeigElem elem = neigElems[e];
             vec3 vertPos[HEX_VERTEX_COUNT];
