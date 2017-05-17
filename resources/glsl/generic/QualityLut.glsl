@@ -6,11 +6,15 @@ vec3 qualityLut(in float q)
 
     vec3 grad = vec3(
         // Red
-        1.0 - smoothstep(0.25, 0.5, q),
+        clamp(2.0 - 4*q, 0.0, 1.0),
         // Green
-        smoothstep(0.0, 0.25, q) - smoothstep(0.75, 1.0, q),
+
+        clamp(1.3*(1.0 - pow(2*abs(0.5-q), 2)), 0.0, 1.0),
+
         // Blue
-        smoothstep(0.5, 0.75, q));
+        clamp(4*q - 2, 0.0, 1.0));
+
+    //grad /= max(max(grad.r, grad.g), grad.b);
 
     return mix(grad, vec3(1.0), q <= 0);
 }
