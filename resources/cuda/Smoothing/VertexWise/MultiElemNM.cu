@@ -34,7 +34,8 @@ __device__ bool isSmoothableVertex(uint vId);
 __device__ float computeLocalElementSize(uint vId);
 
 __device__ float multiElemPatchQuality(
-        uint nBeg, uint nEnd,
+        PatchElem elems[],
+        uint eBeg, uint eEnd,
         uint neigElemCount,
         const vec3& pos)
 {
@@ -48,45 +49,21 @@ __device__ float multiElemPatchQuality(
     float threadMin = 1.0/0.0;
     float threadMean = 0.0;
 
-    for(uint e = nBeg; e < nEnd; ++e)
+    for(uint e=0, id = eBeg; id < eEnd; ++e, ++id)
     {
-        NeigElem& elem = neigElems[e];
-        vec3 vertPos[HEX_VERTEX_COUNT];
+        elems[e].p[elems[e].n] = pos;
 
         float qual = 0.0;
-        switch(elem.type)
+        switch(elems[e].type)
         {
         case TET_ELEMENT_TYPE :
-            vertPos[0] = verts[tets[elem.id].v[0]].p;
-            vertPos[1] = verts[tets[elem.id].v[1]].p;
-            vertPos[2] = verts[tets[elem.id].v[2]].p;
-            vertPos[3] = verts[tets[elem.id].v[3]].p;
-            vertPos[elem.vId] = pos;
-            qual = (*tetQualityImpl)(vertPos, tets[elem.id]);
+            qual = (*tetQualityImpl)(elems[e].p, elems[e].tet);
             break;
-
         case PRI_ELEMENT_TYPE :
-            vertPos[0] = verts[pris[elem.id].v[0]].p;
-            vertPos[1] = verts[pris[elem.id].v[1]].p;
-            vertPos[2] = verts[pris[elem.id].v[2]].p;
-            vertPos[3] = verts[pris[elem.id].v[3]].p;
-            vertPos[4] = verts[pris[elem.id].v[4]].p;
-            vertPos[5] = verts[pris[elem.id].v[5]].p;
-            vertPos[elem.vId] = pos;
-            qual = (*priQualityImpl)(vertPos, pris[elem.id]);
+            qual = (*priQualityImpl)(elems[e].p, elems[e].pri);
             break;
-
         case HEX_ELEMENT_TYPE :
-            vertPos[0] = verts[hexs[elem.id].v[0]].p;
-            vertPos[1] = verts[hexs[elem.id].v[1]].p;
-            vertPos[2] = verts[hexs[elem.id].v[2]].p;
-            vertPos[3] = verts[hexs[elem.id].v[3]].p;
-            vertPos[4] = verts[hexs[elem.id].v[4]].p;
-            vertPos[5] = verts[hexs[elem.id].v[5]].p;
-            vertPos[6] = verts[hexs[elem.id].v[6]].p;
-            vertPos[7] = verts[hexs[elem.id].v[7]].p;
-            vertPos[elem.vId] = pos;
-            qual = (*hexQualityImpl)(vertPos, hexs[elem.id]);
+            qual = (*hexQualityImpl)(elems[e].p, elems[e].hex);
             break;
         }
 
@@ -118,9 +95,51 @@ __device__ void multiElemNMSmoothVert(uint vId)
 
     Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
-    uint nBeg = topo.neigElemBase + (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
-    uint nEnd = topo.neigElemBase + ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint eBeg = (eId * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint eEnd = ((eId+1) * neigElemCount) / ELEMENT_THREAD_COUNT;
+    uint nBeg = topo.neigElemBase + eBeg;
+    uint nEnd = topo.neigElemBase + eEnd;
 
+    PatchElem elems[ELEMENT_PER_THREAD_COUNT];
+    for(uint e=0, ne = nBeg; ne < nEnd; ++e, ++ne)
+    {
+        NeigElem elem = neigElems[ne];
+        elems[e].type = elem.type;
+        elems[e].n = elem.vId;
+
+        switch(elems[e].type)
+        {
+        case TET_ELEMENT_TYPE :
+            elems[e].tet = tets[elem.id];
+            elems[e].p[0] = verts[elems[e].tet.v[0]].p;
+            elems[e].p[1] = verts[elems[e].tet.v[1]].p;
+            elems[e].p[2] = verts[elems[e].tet.v[2]].p;
+            elems[e].p[3] = verts[elems[e].tet.v[3]].p;
+            break;
+
+        case PRI_ELEMENT_TYPE :
+            elems[e].pri = pris[elem.id];
+            elems[e].p[0] = verts[elems[e].pri.v[0]].p;
+            elems[e].p[1] = verts[elems[e].pri.v[1]].p;
+            elems[e].p[2] = verts[elems[e].pri.v[2]].p;
+            elems[e].p[3] = verts[elems[e].pri.v[3]].p;
+            elems[e].p[4] = verts[elems[e].pri.v[4]].p;
+            elems[e].p[5] = verts[elems[e].pri.v[5]].p;
+            break;
+
+        case HEX_ELEMENT_TYPE :
+            elems[e].hex = hexs[elem.id];
+            elems[e].p[0] = verts[elems[e].hex.v[0]].p;
+            elems[e].p[1] = verts[elems[e].hex.v[1]].p;
+            elems[e].p[2] = verts[elems[e].hex.v[2]].p;
+            elems[e].p[3] = verts[elems[e].hex.v[3]].p;
+            elems[e].p[4] = verts[elems[e].hex.v[4]].p;
+            elems[e].p[5] = verts[elems[e].hex.v[5]].p;
+            elems[e].p[6] = verts[elems[e].hex.v[6]].p;
+            elems[e].p[7] = verts[elems[e].hex.v[7]].p;
+            break;
+        }
+    }
 
     // Compute local element size
     float localSize = computeLocalElementSize(vId);
@@ -129,7 +148,7 @@ __device__ void multiElemNMSmoothVert(uint vId)
     float nodeShift = localSize * LOCALE_SIZE_TO_NODE_SHIFT;
 
     vec3 pos = verts[vId].p;
-    vec4 vo(pos, multiElemPatchQuality(nBeg, nEnd, neigElemCount, pos));
+    vec4 vo(pos, multiElemPatchQuality(elems, eBeg, eEnd, neigElemCount, pos));
 
     vec4 simplex[TET_VERTEX_COUNT] = {
         vec4(pos + vec3(nodeShift, 0, 0), 0),
@@ -150,7 +169,7 @@ __device__ void multiElemNMSmoothVert(uint vId)
             verts[vId].p = vec3(simplex[p]);
 
             // Compute patch quality
-            simplex[p] = vec4(verts[vId].p, multiElemPatchQuality(nBeg, nEnd, neigElemCount, verts[vId].p));
+            simplex[p] = vec4(verts[vId].p, multiElemPatchQuality(elems, eBeg, eEnd, neigElemCount, verts[vId].p));
         }
 
         // Mini bubble sort
@@ -180,7 +199,7 @@ __device__ void multiElemNMSmoothVert(uint vId)
 
             // Reflect
             verts[vId].p = c + ALPHA*(c - vec3(simplex[0]));
-            float fr = f = multiElemPatchQuality(nBeg, nEnd, neigElemCount, verts[vId].p);
+            float fr = f = multiElemPatchQuality(elems, eBeg, eEnd, neigElemCount, verts[vId].p);
 
             vec3 xr = verts[vId].p;
 
@@ -188,7 +207,7 @@ __device__ void multiElemNMSmoothVert(uint vId)
             if(simplex[3].w < fr)
             {
                 verts[vId].p = c + GAMMA*(verts[vId].p - c);
-                float fe = f = multiElemPatchQuality(nBeg, nEnd, neigElemCount, verts[vId].p);
+                float fe = f = multiElemPatchQuality(elems, eBeg, eEnd, neigElemCount, verts[vId].p);
 
                 if(fe <= fr)
                 {
@@ -203,13 +222,13 @@ __device__ void multiElemNMSmoothVert(uint vId)
                 if(fr > simplex[0].w)
                 {
                     verts[vId].p = c + BETA*(vec3(xr) - c);
-                    f = multiElemPatchQuality(nBeg, nEnd, neigElemCount, verts[vId].p);
+                    f = multiElemPatchQuality(elems, eBeg, eEnd, neigElemCount, verts[vId].p);
                 }
                 // Inside
                 else
                 {
                     verts[vId].p = c + BETA*(vec3(simplex[0]) - c), 0;
-                    f = multiElemPatchQuality(nBeg, nEnd, neigElemCount, verts[vId].p);
+                    f = multiElemPatchQuality(elems, eBeg, eEnd, neigElemCount, verts[vId].p);
                 }
             }
 

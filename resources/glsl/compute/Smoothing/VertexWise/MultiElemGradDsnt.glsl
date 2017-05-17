@@ -122,22 +122,20 @@ void smoothVert(uint vId)
             for(uint p=0; p < GRAD_SAMP_COUNT; ++p)
             {
                 vec3 gradSamp = pos + GRAD_SAMPS[p] * nodeShift[nId];
+                vertPos[elem.vId] = gradSamp;
 
                 float qual = 0.0;
                 switch(elem.type)
                 {
                 case TET_ELEMENT_TYPE :
-                    vertPos[elem.vId] = gradSamp;
                     qual = tetQuality(vertPos, tets[elem.id]);
                     break;
 
                 case PRI_ELEMENT_TYPE :
-                    vertPos[elem.vId] = gradSamp;
                     qual = priQuality(vertPos, pris[elem.id]);
                     break;
 
                 case HEX_ELEMENT_TYPE :
-                    vertPos[elem.vId] = gradSamp;
                     qual = hexQuality(vertPos, hexs[elem.id]);
                     break;
                 }
@@ -215,22 +213,20 @@ void smoothVert(uint vId)
             for(uint p=0; p < LINE_SAMP_COUNT; ++p)
             {
                 vec3 lineSamp = pos + lineShift * LINE_SAMPS[p];
+                vertPos[elem.vId] = lineSamp;
 
                 float qual = 0.0;
                 switch(elem.type)
                 {
                 case TET_ELEMENT_TYPE :
-                    vertPos[elem.vId] = lineSamp;
                     qual = tetQuality(vertPos, tets[elem.id]);
                     break;
 
                 case PRI_ELEMENT_TYPE :
-                    vertPos[elem.vId] = lineSamp;
                     qual = priQuality(vertPos, pris[elem.id]);
                     break;
 
                 case HEX_ELEMENT_TYPE :
-                    vertPos[elem.vId] = lineSamp;
                     qual = hexQuality(vertPos, hexs[elem.id]);
                     break;
                 }
