@@ -128,7 +128,7 @@ void smoothVert(uint vId)
 
         if(pId < GRAD_SAMP_COUNT)
         {
-            vec3 gradSamp = GRAD_SAMPS[pId] * nodeShift;
+            vec3 gradSamp = pos + GRAD_SAMPS[pId] * nodeShift;
 
             for(uint e = eBeg; e < eEnd; ++e)
             {
@@ -143,7 +143,7 @@ void smoothVert(uint vId)
                     patchElems[e].p[7]
                 );
 
-                vertPos[patchElems[e].n] = pos + gradSamp;
+                vertPos[patchElems[e].n] = gradSamp;
 
                 float qual = 0.0;
                 switch(patchElems[e].type)
@@ -194,7 +194,7 @@ void smoothVert(uint vId)
             break;
 
 
-        vec3 lineSamp = lineShift * LINE_SAMPS[pId];
+        vec3 lineSamp = pos + lineShift * LINE_SAMPS[pId];
 
         for(uint e = eBeg; e < eEnd; ++e)
         {
@@ -209,7 +209,7 @@ void smoothVert(uint vId)
                 patchElems[e].p[7]
             );
 
-            vertPos[patchElems[e].n] = pos + lineSamp;
+            vertPos[patchElems[e].n] = lineSamp;
 
             float qual = 0.0;
             switch(patchElems[e].type)
