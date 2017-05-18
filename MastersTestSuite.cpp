@@ -880,8 +880,8 @@ void MastersTestSuite::metricPrecision(
 
     // Run test
     vector<QualityHistogram> histograms;
-    Grid2D<double> minData(samplings.size() + 1, PRECISION_METRIC_As.size());
-    Grid2D<double> meanData(samplings.size() + 1, PRECISION_METRIC_As.size());
+    Grid2D<double> minData(samplings.size() + 1, PRECISION_METRIC_As.size(), 0.0);
+    Grid2D<double> meanData(samplings.size() + 1, PRECISION_METRIC_As.size(), 0.0);
 
     for(int a=0; a < PRECISION_METRIC_As.size(); ++a)
     {
@@ -979,7 +979,7 @@ void MastersTestSuite::texturePrecision(
 
 
     // Run test
-    Grid2D<double> data(2, depths.size() + 1);
+    Grid2D<double> data(2, depths.size() + 1, 0.0);
 
     for(int d=0; d < depths.size(); ++d)
     {
@@ -1061,7 +1061,7 @@ void MastersTestSuite::evaluatorBlockSize(
 
 
     // Run test
-    Grid2D<double> data(meshes.size() * 2, threadCounts.size());
+    Grid2D<double> data(meshes.size() * 2, threadCounts.size(), 0.0);
 
     for(int m=0; m < meshes.size(); ++m)
     {
@@ -1145,7 +1145,7 @@ void MastersTestSuite::metricCost(
 
     // Run test
     int implCount = implementations.size();
-    Grid2D<double> data((implCount-1)*2+1, samplings.size());
+    Grid2D<double> data((implCount-1)*2+1, samplings.size(), 0.0);
 
     for(int s=0; s < samplings.size(); ++s)
     {
@@ -1253,8 +1253,8 @@ void MastersTestSuite::nodeOrder(
     _character.benchmarkSmoothers(
         plot, schedule, configs);
 
-    Grid2D<double> dataCPU(2 * 2, displayRelocationPassCount+2);
-    Grid2D<double> dataPara((implementations.size()-1) * 2, displayRelocationPassCount+2);
+    Grid2D<double> dataCPU(2 * 2, displayRelocationPassCount+2, 0.0);
+    Grid2D<double> dataPara((implementations.size()-1) * 2, displayRelocationPassCount+2, 0.0);
 
     for(int r=0; r <= displayRelocationPassCount; ++r)
     {
@@ -1383,7 +1383,7 @@ void MastersTestSuite::smootherEfficacity(
 
 
     // Run test
-    Grid2D<double> data(2*meshes.size(), smoothers.size()+1);
+    Grid2D<double> data(2*meshes.size(), smoothers.size()+1, 0.0);
 
     for(int m=0; m < meshes.size(); ++m)
     {
@@ -1471,7 +1471,7 @@ void MastersTestSuite::smootherBlockSize(
 
 
     // Run test
-    Grid2D<double> data(smoothers.size()*implementations.size(), threadCounts.size());
+    Grid2D<double> data(smoothers.size()*implementations.size(), threadCounts.size(), 0.0);
 
     for(int t=0; t < threadCounts.size(); ++t)
     {
@@ -1565,16 +1565,18 @@ void MastersTestSuite::smootherSpeed(
         "CUDA"
     };
 
+    vector<int> cpuLocs = {
+        0, 1, 2, 3, 5
+    };
+
     vector<int> refImpls = {
-        0,
-        1,
-        2,
-        3,
-        3, // Multi Elem NM
-        5,
-        5, // Multi Elem GD
-        5, // Multi Pos GD
-        5  // Patch GD
+        0,1,    // Laplace
+        2,      // Spawn
+
+        nelderMeadPos, nelderMeadPos,
+
+        gradDescPos, gradDescPos,
+        gradDescPos, gradDescPos
     };
 
     std::vector<Configuration> configs;
@@ -1620,7 +1622,7 @@ void MastersTestSuite::smootherSpeed(
 
 
     // Run test
-    Grid2D<double> data(4 + 3, smoothers.size());
+    Grid2D<double> data(4 + 3, smoothers.size(), 0.0);
 
     OptimizationPlot plot;
     _character.benchmarkSmoothers(
@@ -1628,13 +1630,13 @@ void MastersTestSuite::smootherSpeed(
 
     for(int s=0; s < serialConfigEnd; ++s)
     {
-        int i = s - 0;
+        int i = cpuLocs[s - 0];
         data[i][0] = plot.implementations()[s].passes.back().timeStamp;
     }
 
     for(int s=serialConfigEnd; s < threadConfigEnd; ++s)
     {
-        int i = s - serialConfigEnd;
+        int i = cpuLocs[s - serialConfigEnd];
         data[i][1] = plot.implementations()[s].passes.back().timeStamp;
         data[i][4] = data[refImpls[i]][0] / data[i][1];
     }
@@ -1700,10 +1702,10 @@ void MastersTestSuite::relocationScaling(
     string evaluator = "Metric Conformity";
 
     vector<Configuration> configs;
-    configs.push_back(Configuration{"Local", "Gradient Descent", "Serial"});
-    configs.push_back(Configuration{"Local", "Gradient Descent", "Thread"});
-    configs.push_back(Configuration{"Texture", "Patch GD", "GLSL"});
-    configs.push_back(Configuration{"Texture", "Patch GD", "CUDA"});
+    configs.push_back(Configuration{"Local", "Nelder-Mead", "Serial"});
+    configs.push_back(Configuration{"Local", "Nelder-Mead", "Thread"});
+    configs.push_back(Configuration{"Texture", "Multi Elem NM", "GLSL"});
+    configs.push_back(Configuration{"Texture", "Multi Elem NM", "CUDA"});
 
     Schedule schedule;
     schedule.autoPilotEnabled = false;
@@ -1724,7 +1726,7 @@ void MastersTestSuite::relocationScaling(
 
 
     // Run test
-    Grid2D<double> data(4, SPHERE_TARGET_SIZES.size());
+    Grid2D<double> data(4, SPHERE_TARGET_SIZES.size(), 0.0);
 
     for(int s=0; s < SPHERE_TARGET_SIZES.size(); ++s)
     {
