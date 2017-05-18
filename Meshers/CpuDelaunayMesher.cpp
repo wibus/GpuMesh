@@ -211,6 +211,8 @@ void CpuDelaunayMesher::genShell(Mesh& mesh, size_t vertexCount)
 
 void CpuDelaunayMesher::genSphere(Mesh& mesh, size_t vertexCount)
 {
+    srand(4);
+
     std::vector<glm::dvec3> vertices;
     double padding = 1.0 - 1.0/glm::pow(vertexCount, 1/3.0);
 
