@@ -116,7 +116,7 @@ std::string MultiElemNMSmoother::glslLauncher() const
 
 NodeGroups::GpuDispatcher MultiElemNMSmoother::glslDispatcher() const
 {
-    const uint NODE_THREAD_COUNT = 32;
+    const uint NODE_THREAD_COUNT = 4;
 
     return [](NodeGroups::GpuDispatch& d)
     {

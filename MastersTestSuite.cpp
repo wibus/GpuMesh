@@ -1659,7 +1659,7 @@ void MastersTestSuite::smootherSpeed(
     // Print results
     vector<pair<string, int>> header = {
         {"Algorithmes", 1},
-        {"Temps (ms)", implementations.size()},
+        {"Temps (s)", implementations.size()},
         {"Accélérations", implementations.size()-1}
     };
 

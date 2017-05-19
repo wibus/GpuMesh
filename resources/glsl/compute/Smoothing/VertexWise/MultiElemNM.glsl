@@ -1,4 +1,4 @@
-const uint NODE_THREAD_COUNT = 32;
+const uint NODE_THREAD_COUNT = 4;
 const uint ELEMENT_THREAD_COUNT = 8;
 
 const int MIN_MAX = 2147483647;
