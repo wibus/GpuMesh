@@ -239,8 +239,6 @@ __global__ void smoothMultiPosGradDsntVerticesCudaMain()
     }
 }
 
-//__device__ smoothVertFct patchGradDsntSmoothVertPtr = patchGradDsntSmoothVert;
-
 
 
 // CUDA Drivers
@@ -250,12 +248,6 @@ void installCudaMultiPosGradDsntSmoother(
         int h_securityCycleCount,
         float h_localSizeToNodeShift)
 {
-    // Main function is directly calling patchGradDsntSmoothVert
-
-//    smoothVertFct d_smoothVert = nullptr;
-//    cudaMemcpyFromSymbol(&d_smoothVert, patchGradDsntSmoothVertPtr, sizeof(smoothVertFct));
-//    cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
-
     cudaMemcpyToSymbol(SECURITY_CYCLE_COUNT, &h_securityCycleCount, sizeof(int));
     cudaMemcpyToSymbol(LOCAL_SIZE_TO_NODE_SHIFT, &h_localSizeToNodeShift, sizeof(float));
 

@@ -102,7 +102,7 @@ __device__ void nelderMeadSmoothVert(uint vId)
                 // Outside
                 if(fr > simplex[0].w)
                 {
-                    verts[vId].p = c + BETA*(vec3(xr) - c);
+                    verts[vId].p = c + BETA*(xr - c);
                     f = patchQuality(vId);
                 }
                 // Inside

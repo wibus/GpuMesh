@@ -132,7 +132,7 @@ NodeGroups::GpuDispatcher MultiElemNMSmoother::cudaDispatcher() const
 
     return [](NodeGroups::GpuDispatch& d)
     {
-        d.workgroupSize = glm::uvec3(NODE_THREAD_COUNT, ELEMENT_THREAD_COUNT, 1);
+        d.workgroupSize = glm::uvec3(ELEMENT_THREAD_COUNT, NODE_THREAD_COUNT, 1);
         d.workgroupCount = glm::uvec3(
             glm::ceil(double(d.gpuBufferSize)/NODE_THREAD_COUNT), 1, 1);
     };

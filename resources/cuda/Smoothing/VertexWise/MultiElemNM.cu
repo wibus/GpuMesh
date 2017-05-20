@@ -39,13 +39,6 @@ __device__ float multiElemPatchQuality(
         uint neigElemCount,
         const vec3& pos)
 {
-    uint nId = threadIdx.x;
-
-    patchMin[nId] = MIN_MAX;
-    patchMean[nId] = 0.0;
-
-    __syncthreads();
-
     float threadMin = 1.0/0.0;
     float threadMean = 0.0;
 
@@ -71,8 +64,18 @@ __device__ float multiElemPatchQuality(
         threadMean += 1.0 / qual;
     }
 
+
+    uint nId = threadIdx.y;
+    patchMin[nId] = MIN_MAX;
+    patchMean[nId] = 0.0;
+
+
+    __syncthreads();
+
+
     atomicMin(&patchMin[nId], threadMin * MIN_MAX);
     atomicAdd(&patchMean[nId], threadMean);
+
 
     __syncthreads();
 
@@ -84,6 +87,10 @@ __device__ float multiElemPatchQuality(
     else
         patchQual = neigElemCount / patchMean[nId];
 
+
+    __syncthreads();
+
+
     return patchQual;
 }
 
@@ -91,7 +98,7 @@ __device__ float multiElemPatchQuality(
 // ENTRY POINT //
 __device__ void multiElemNMSmoothVert(uint vId)
 {
-    uint eId = threadIdx.y;
+    uint eId = threadIdx.x;
 
     Topo topo = topos[vId];
     uint neigElemCount = topo.neigElemCount;
@@ -164,8 +171,6 @@ __device__ void multiElemNMSmoothVert(uint vId)
     {
         for(uint p=0; p < TET_VERTEX_COUNT-1; ++p)
         {
-            // Since 'pos' is a reference on vertex's position
-            // modifing its value here should be seen by the evaluator
             verts[vId].p = vec3(simplex[p]);
 
             // Compute patch quality
@@ -227,7 +232,7 @@ __device__ void multiElemNMSmoothVert(uint vId)
                 // Inside
                 else
                 {
-                    verts[vId].p = c + BETA*(vec3(simplex[0]) - c), 0;
+                    verts[vId].p = c + BETA*(vec3(simplex[0]) - c);
                     f = multiElemPatchQuality(elems, eBeg, eEnd, neigElemCount, verts[vId].p);
                 }
             }
@@ -271,15 +276,16 @@ __device__ void multiElemNMSmoothVert(uint vId)
 
 __global__ void smoothMultiElemNMVerticesCudaMain()
 {
-    uint vId = getInvocationVertexId();
+    uint localId = blockIdx.x * blockDim.y + threadIdx.y;
 
-    if(isSmoothableVertex(vId))
+    if(localId < GroupSize)
     {
+        uint idx = GroupBase + localId;
+        uint vId = groupMembers[idx];
         multiElemNMSmoothVert(vId);
     }
 }
 
-// __device__ smoothVertFct multiElemNMSmoothVertPtr = multiElemNMSmoothVert;
 
 
 // CUDA Drivers
@@ -294,10 +300,6 @@ void installCudaMultiElemNMSmoother(
         float h_gamma,
         float h_delta)
 {
-//    smoothVertFct d_smoothVert = nullptr;
-//    cudaMemcpyFromSymbol(&d_smoothVert, multiElemNMSmoothVertPtr, sizeof(smoothVertFct));
-//    cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
-
     cudaMemcpyToSymbol(VALUE_CONVERGENCE, &h_valueConvergence, sizeof(float));
     cudaMemcpyToSymbol(SECURITY_CYCLE_COUNT, &h_securityCycleCount, sizeof(int));
     cudaMemcpyToSymbol(LOCALE_SIZE_TO_NODE_SHIFT, &h_localSizeToNodeShift, sizeof(float));

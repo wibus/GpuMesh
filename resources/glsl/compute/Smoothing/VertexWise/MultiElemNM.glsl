@@ -55,13 +55,6 @@ float parallelPatchQualityImpl(
         in uint neigElemCount,
         in vec3 pos)
 {
-    uint nId = gl_LocalInvocationID.y;
-
-    patchMin[nId] = MIN_MAX;
-    patchMean[nId] = 0.0;
-
-    barrier();
-
     float threadMin = 1.0/0.0;
     float threadMean = 0.0;
 
@@ -111,8 +104,19 @@ float parallelPatchQualityImpl(
         threadMean += 1.0 / qual;
     }
 
+
+    uint nId = gl_LocalInvocationID.y;
+
+    patchMin[nId] = MIN_MAX;
+    patchMean[nId] = 0.0;
+
+
+    barrier();
+
+
     atomicMin(patchMin[nId], int(threadMin * MIN_MAX));
     atomicAdd(patchMean[nId], threadMean);
+
 
     barrier();
 
@@ -123,6 +127,10 @@ float parallelPatchQualityImpl(
         patchQual = patchMin[nId] / float(MIN_MAX);
     else
         patchQual = neigElemCount / patchMean[nId];
+
+
+    barrier();
+
 
     return patchQual;
 }
@@ -163,8 +171,6 @@ void smoothVert(uint vId)
     {
         for(uint p=0; p < TET_VERTEX_COUNT-1; ++p)
         {
-            // Since 'pos' is a reference on vertex's position
-            // modifing its value here should be seen by the evaluator
             verts[vId].p = vec3(simplex[p]);
 
             // Compute patch quality

@@ -95,7 +95,7 @@ void smoothVert(uint vId)
                 // Outside
                 if(fr > simplex[0].w)
                 {
-                    verts[vId].p = c + Beta*(vec3(xr) - c);
+                    verts[vId].p = c + Beta*(xr - c);
                     f = patchQuality(vId);
                 }
                 // Inside

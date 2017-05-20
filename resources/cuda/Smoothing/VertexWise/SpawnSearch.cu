@@ -183,6 +183,7 @@ __global__ void smoothSpawnVerticesCudaMain()
 }
 
 
+
 // CUDA Drivers
 void setupCudaIndependentDispatch(const NodeGroups::GpuDispatch& dispatch);
 
@@ -192,12 +193,6 @@ void installCudaSpawnSearchSmoother(float moveCoeff,
         const std::vector<glm::vec4> offsetsBuff)
 {
     cudaMemcpyToSymbol(MoveCoeff, &moveCoeff, sizeof(float));
-
-    // Main function is directly calling spawnSearchSmoothVert
-
-//    smoothVertFct d_smoothVert = nullptr;
-//    cudaMemcpyFromSymbol(&d_smoothVert, spawnSearchSmoothVertPtr, sizeof(smoothVertFct));
-//    cudaMemcpyToSymbol(smoothVert, &d_smoothVert, sizeof(smoothVertFct));
 
 
     uint offsetsLength = offsetsBuff.size();
