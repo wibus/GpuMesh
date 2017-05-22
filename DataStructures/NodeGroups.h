@@ -179,10 +179,9 @@ private:
     Range _interiorNodes;
 
 
-    // Sorted node vector
     // Contains all the movable nodes
     // MUST be processed in a serial fashion
-    std::vector<uint> _nodeVector;
+    std::vector<uint> _serialGroup;
 
     // Contains all the nodes processed on the GPU
     // GpuDispatch referes to sections of this buffer
@@ -228,7 +227,7 @@ inline const NodeGroups::Range& NodeGroups::interiorNodes() const
 
 inline const std::vector<uint>& NodeGroups::serialGroup() const
 {
-    return _nodeVector;
+    return _serialGroup;
 }
 
 inline const std::vector<uint>& NodeGroups::gpuGroupsBuffer() const

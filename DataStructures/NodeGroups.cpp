@@ -69,8 +69,8 @@ void NodeGroups::clear()
     _subsurfaceNodes = Range();
     _interiorNodes = Range();
 
-    _nodeVector.clear();
-    _nodeVector.shrink_to_fit();
+    _serialGroup.clear();
+    _serialGroup.shrink_to_fit();
 
     _gpuGroupsBuffer.clear();
     _gpuGroupsBuffer.shrink_to_fit();
@@ -81,7 +81,7 @@ void NodeGroups::clear()
 
 void NodeGroups::shrink_to_fit()
 {
-    _nodeVector.shrink_to_fit();
+    _serialGroup.shrink_to_fit();
 
     _gpuGroupsBuffer.shrink_to_fit();
 
@@ -486,7 +486,7 @@ void NodeGroups::clusterNodes(Mesh& mesh,
 
         if(type > FIXED_TYPE)
         {
-            _nodeVector.push_back(vId);
+            _serialGroup.push_back(vId);
 
 
             int gId = groups[vId];
@@ -580,6 +580,7 @@ void NodeGroups::dispatchCpuWorkgroups()
         size_t maxDispatchSize = glm::ceil(double(allGroupSize) / _cpuWorkerCount);
         for(size_t w=0; w < _cpuWorkerCount; ++w)
         {
+            // !!! for( [...] ; v += _cpuWorkerCount)
             // Nodes are sorted according to their number of neighbor elements
             // This distribution pattern makes sure CPU dispatches are well balanced
 
@@ -613,6 +614,7 @@ void NodeGroups::dispatchGpuWorkgroups()
         size_t maxDispatchSize = glm::ceil(double(cpuGroupSize) / _cpuWorkerCount);
         for(size_t w=0; w < _cpuWorkerCount; ++w)
         {
+            // !!! for( [...] ; v += _cpuWorkerCount)
             // Nodes are sorted according to their number of neighbor elements
             // This distribution pattern makes sure CPU dispatches are well balanced
 
