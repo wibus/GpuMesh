@@ -319,7 +319,7 @@ bool CgnsDeserializer::deserialize(
                 {
                     for(size_t bi = 0; bi < eSize; ++bi)
                     {
-                        mesh.topos[elems[bi]] = MeshTopo(
+                        mesh.topos[elems[bi]-1] = MeshTopo(
                             cgnsBoundary->fixedConstrait());
                     }
                 }
@@ -385,22 +385,22 @@ bool CgnsDeserializer::deserialize(
                         switch(et)
                         {
                         case TRI_3 :
-                            mesh.topos[elems[eb + 0]] = MeshTopo(
+                            mesh.topos[elems[eb + 0]-1] = MeshTopo(
                                 cgnsBoundary->fixedConstrait());
-                            mesh.topos[elems[eb + 1]] = MeshTopo(
+                            mesh.topos[elems[eb + 1]-1] = MeshTopo(
                                 cgnsBoundary->fixedConstrait());
-                            mesh.topos[elems[eb + 2]] = MeshTopo(
+                            mesh.topos[elems[eb + 2]-1] = MeshTopo(
                                 cgnsBoundary->fixedConstrait());
                             break;
 
                         case QUAD_4 :
-                            mesh.topos[elems[eb + 0]] = MeshTopo(
+                            mesh.topos[elems[eb + 0]-1] = MeshTopo(
                                 cgnsBoundary->fixedConstrait());
-                            mesh.topos[elems[eb + 1]] = MeshTopo(
+                            mesh.topos[elems[eb + 1]-1] = MeshTopo(
                                 cgnsBoundary->fixedConstrait());
-                            mesh.topos[elems[eb + 2]] = MeshTopo(
+                            mesh.topos[elems[eb + 2]-1] = MeshTopo(
                                 cgnsBoundary->fixedConstrait());
-                            mesh.topos[elems[eb + 3]] = MeshTopo(
+                            mesh.topos[elems[eb + 3]-1] = MeshTopo(
                                 cgnsBoundary->fixedConstrait());
                             break;
 
