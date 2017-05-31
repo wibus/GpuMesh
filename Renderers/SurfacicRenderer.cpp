@@ -351,6 +351,74 @@ void SurfacicRenderer::compileMeshAttributes(
     }
 
 
+    // Pyramids
+    if(_pyrVisibility)
+    {
+        int pyrCount = mesh.pyrs.size();
+        for(int i=0; i < pyrCount; ++i)
+        {
+            const MeshPyr& pyr = mesh.pyrs[i];
+
+            glm::dvec3 verts[] = {
+                glm::dvec3(mesh.verts[pyr[0]]),
+                glm::dvec3(mesh.verts[pyr[1]]),
+                glm::dvec3(mesh.verts[pyr[2]]),
+                glm::dvec3(mesh.verts[pyr[3]]),
+                glm::dvec3(mesh.verts[pyr[4]])
+            };
+
+            if(_cutType == ECutType::PhysicalPlane)
+            {
+                if(glm::dot(verts[0], cutNormal) > cutDistance ||
+                   glm::dot(verts[1], cutNormal) > cutDistance ||
+                   glm::dot(verts[2], cutNormal) > cutDistance ||
+                   glm::dot(verts[3], cutNormal) > cutDistance ||
+                   glm::dot(verts[4], cutNormal) > cutDistance)
+                    continue;
+            }
+
+
+            double quality = pyr.value;
+            if(quality >= _qualityCullingMin &&
+               quality <= _qualityCullingMax)
+            {
+                if(_cutType == ECutType::InvertedElements)
+                {
+                    if(quality >= 0.0)
+                        continue;
+                    quality = glm::min(-quality, 1.0);
+                }
+                else
+                {
+                    quality = glm::max(quality, 0.0);
+                }
+
+                for(int f=0; f < MeshPyr::TRI_COUNT; ++f)
+                {
+                    const MeshTri& tri = MeshPyr::tris[f];
+                    glm::dvec3 A = verts[tri[1]] - verts[tri[0]];
+                    glm::dvec3 B = verts[tri[2]] - verts[tri[1]];
+                    glm::dvec3 normal = glm::normalize(glm::cross(A, B));
+                    pushTriangle(faceVertices, normals, qualities,
+                                 verts[tri[0]], verts[tri[1]], verts[tri[2]],
+                                 normal, quality);
+                }
+
+                // Add verts to edge
+                for(uint e=0; e < MeshPyr::EDGE_COUNT; ++e)
+                {
+                    MeshEdge local = MeshPyr::edges[e];
+                    MeshEdge global(pyr.v[local.v[0]], pyr.v[local.v[1]]);
+                    if(global.v[0] < global.v[1])
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[0], global.v[1]));
+                    else
+                        edgeSet.insert(pair<GLuint, GLuint>(global.v[1], global.v[0]));
+                }
+            }
+        }
+    }
+
+
     // Prisms
     if(_priVisibility)
     {

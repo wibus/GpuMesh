@@ -18,6 +18,7 @@ AbstractRenderer::AbstractRenderer() :
     _physicalCutPlane(0.0),
     _virtualCutPlane(0.0),
     _tetVisibility(true),
+    _pyrVisibility(true),
     _priVisibility(true),
     _hexVisibility(true),
     _qualityCullingMin(-INFINITY),
@@ -156,9 +157,10 @@ void AbstractRenderer::displayBackdrop(bool display)
     _displayBackdrop = display;
 }
 
-void AbstractRenderer::setElementVisibility(bool tet, bool pri, bool hex)
+void AbstractRenderer::setElementVisibility(bool tet, bool pyr, bool pri, bool hex)
 {
     _tetVisibility = tet;
+    _pyrVisibility = pyr;
     _priVisibility = pri;
     _hexVisibility = hex;
     notifyMeshUpdate();

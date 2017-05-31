@@ -76,6 +76,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _cutAltitude(-glm::pi<double>() / 2.0),
     _cutDistance(1.0e-8),
     _tetVisibility(true),
+    _pyrVisibility(true),
     _priVisibility(true),
     _hexVisibility(true),
     _qualityCullingMin(-INFINITY),
@@ -97,7 +98,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSerializers("Available Mesh Serializers"),
     _availableDeserializers("Available Mesh Deserializers")
 {
-    _availableMeshers.setDefault("Delaunay");
+    _availableMeshers.setDefault("Debug");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
@@ -133,7 +134,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("GETMe"),            shared_ptr<AbstractSmoother>(new GetmeSmoother())},
     });
 
-    _availableRenderers.setDefault("Surfacic");
+    _availableRenderers.setDefault("Scaffold");
     _availableRenderers.setContent({
         {string("Blind"),    shared_ptr<AbstractRenderer>(new BlindRenderer())},
         {string("Scaffold"), shared_ptr<AbstractRenderer>(new ScaffoldRenderer())},
@@ -887,15 +888,16 @@ void GpuMeshCharacter::displayBackdrop(bool display)
     }
 }
 
-void GpuMeshCharacter::setElementVisibility(bool tet, bool pri, bool hex)
+void GpuMeshCharacter::setElementVisibility(bool tet, bool pyr, bool pri, bool hex)
 {
     _tetVisibility = tet;
+    _pyrVisibility = pyr;
     _priVisibility = pri;
     _hexVisibility = hex;
 
     if(_meshCrew->initialized())
     {
-        _renderer->setElementVisibility(tet, pri, hex);
+        _renderer->setElementVisibility(tet, pyr, pri, hex);
     }
 }
 
@@ -1010,7 +1012,11 @@ void GpuMeshCharacter::setupInstalledRenderer()
         // Setup cut plane position
         moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);
 
-        setElementVisibility( _tetVisibility, _priVisibility, _hexVisibility);
+        setElementVisibility(
+            _tetVisibility,
+            _pyrVisibility,
+            _priVisibility,
+            _hexVisibility);
 
         setQualityCullingBounds(_qualityCullingMin, _qualityCullingMax);
 

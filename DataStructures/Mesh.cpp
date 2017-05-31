@@ -39,6 +39,32 @@ const MeshTet MeshTet::tets[MeshTet::TET_COUNT] = {
 };
 
 
+const MeshEdge MeshPyr::edges[MeshPyr::EDGE_COUNT] = {
+    MeshEdge(0, 1),
+    MeshEdge(1, 2),
+    MeshEdge(2, 3),
+    MeshEdge(3, 0),
+    MeshEdge(0, 4),
+    MeshEdge(1, 4),
+    MeshEdge(2, 4),
+    MeshEdge(3, 4)
+};
+
+const MeshTri MeshPyr::tris[MeshPyr::TRI_COUNT] = {
+    MeshTri(3, 1, 0), // Z neg face 0
+    MeshTri(1, 3, 2), // Z neg face 1
+    MeshTri(0, 1, 4), // Front
+    MeshTri(1, 2, 4), // Right
+    MeshTri(2, 3, 4), // Back
+    MeshTri(3, 0, 4), // Left
+};
+
+const MeshTet MeshPyr::tets[MeshPyr::TET_COUNT] = {
+    MeshTet(0, 1, 2, 4),
+    MeshTet(0, 2, 3, 4),
+};
+
+
 const MeshEdge MeshPri::edges[MeshPri::EDGE_COUNT] = {
     MeshEdge(0, 1),
     MeshEdge(0, 2),
@@ -350,6 +376,22 @@ void Mesh::compileNeighborhoods()
         {
             addEdge(tets[i].v[MeshTet::edges[e][0]],
                     tets[i].v[MeshTet::edges[e][1]]);
+        }
+    }
+
+    size_t pyramidCount = pyrs.size();
+    for(size_t i=0; i < pyramidCount; ++i)
+    {
+        for(int v=0; v < MeshPyr::VERTEX_COUNT; ++v)
+        {
+            topos[pyrs[i].v[v]].neighborElems.push_back(
+                MeshNeigElem(i, MeshPyr::ELEMENT_TYPE, v));
+        }
+
+        for(int e=0; e < MeshPyr::EDGE_COUNT; ++e)
+        {
+            addEdge(pyrs[i].v[MeshPyr::edges[e][0]],
+                    pyrs[i].v[MeshPyr::edges[e][1]]);
         }
     }
 

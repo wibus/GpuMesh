@@ -123,6 +123,43 @@ struct MeshLocalTet
     uint n[4];
 };
 
+struct MeshPyr
+{
+    uint v[5];
+    double value;
+    mutable uint c[5];
+
+
+    inline MeshPyr() :
+        v{0, 0, 0, 0, 0},
+        c{0, 0, 0, 0, 0}
+    {}
+    inline MeshPyr(uint v0, uint v1, uint v2,
+                   uint v3, uint v4) :
+        v{v0, v1, v2, v3, v4},
+        c{0,  0,  0,  0,  0}
+    {}
+    inline MeshPyr(uint v0, uint v1, uint v2,
+                   uint v3, uint v4,
+                   uint c0, uint c1, uint c2,
+                   uint c3, uint c4) :
+        v{v0, v1, v2, v3, v4},
+        c{c0, c1, c2, c3, c4}
+    {}
+
+    inline uint operator[] (uint i) { return v[i]; }
+    inline const uint& operator[] (uint i) const { return v[i]; }
+
+    static const int ELEMENT_TYPE = 1;
+    static const uint VERTEX_COUNT = 5;
+    static const uint EDGE_COUNT = 8;
+    static const MeshEdge edges[EDGE_COUNT];
+    static const uint TRI_COUNT = 6;
+    static const MeshTri tris[TRI_COUNT];
+    static const uint TET_COUNT = 2;
+    static const MeshTet tets[TET_COUNT];
+};
+
 struct MeshPri
 {
     uint v[6];
@@ -312,6 +349,7 @@ public:
     std::vector<MeshVert> verts;
     std::vector<MeshTopo> topos;
     std::vector<MeshTet>  tets;
+    std::vector<MeshPyr>  pyrs;
     std::vector<MeshPri>  pris;
     std::vector<MeshHex>  hexs;
 

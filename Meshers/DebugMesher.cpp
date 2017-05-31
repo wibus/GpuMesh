@@ -16,7 +16,7 @@ DebugMesher::DebugMesher() :
     _tetBoundary(new TetBoundary())
 {
     using namespace std::placeholders;
-    _modelFuncs.setDefault("Tet");
+    _modelFuncs.setDefault("Regular");
     _modelFuncs.setContent({
         {string("Singles"), ModelFunc(bind(&DebugMesher::genSingles, this, _1, _2))},
         {string("Squish"),  ModelFunc(bind(&DebugMesher::genSquish,  this, _1, _2))},
@@ -24,6 +24,9 @@ DebugMesher::DebugMesher() :
         {string("TetGrid"), ModelFunc(bind(&DebugMesher::genTetGrid, this, _1, _2))},
         {string("Cube"),    ModelFunc(bind(&DebugMesher::genCube,    this, _1, _2))},
         {string("Tet"),     ModelFunc(bind(&DebugMesher::genTet,     this, _1, _2))},
+
+        {string("Regular"),         ModelFunc(bind(&DebugMesher::genRegularPolyhedra,    this, _1, _2))},
+        {string("Degenerate"),      ModelFunc(bind(&DebugMesher::genDegenerateTetra,     this, _1, _2))},
     });
 }
 
@@ -359,4 +362,57 @@ void DebugMesher::genTet(Mesh& mesh, size_t vertexCount)
     }
 
     mesh.setBoundary(_tetBoundary);
+}
+
+void DebugMesher::genRegularPolyhedra(Mesh& mesh, size_t vertexCount)
+{
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
+    mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
+    for(int v=0; v < 4; ++v)
+        mesh.verts[v].p += glm::dvec3(-2.25, 0.0, 0.0);
+
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0.5, 0.5, sqrt(2.0)/2.0));
+    for(int v=4; v < 9; ++v)
+        mesh.verts[v].p += glm::dvec3(-0.75, 0.0, 0.0);
+
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(0, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0, 0.5, sqrt(3.0)/2));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 1, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
+    for(int v=9; v < 15; ++v)
+        mesh.verts[v].p += glm::dvec3(0.75, 0.0, 0.0);
+
+    mesh.verts.push_back(glm::dvec3(0, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 0, 0));
+    mesh.verts.push_back(glm::dvec3(1, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0, 1, 0));
+    mesh.verts.push_back(glm::dvec3(0, 0, 1));
+    mesh.verts.push_back(glm::dvec3(1, 0, 1));
+    mesh.verts.push_back(glm::dvec3(1, 1, 1));
+    mesh.verts.push_back(glm::dvec3(0, 1, 1));
+    for(int v=15; v < 23; ++v)
+        mesh.verts[v].p += glm::dvec3(2.25, 0.0, 0.0);
+
+    mesh.tets.push_back(MeshTet(0, 1, 2, 3));
+    mesh.pyrs.push_back(MeshPyr(4, 5, 6, 7, 8));
+    mesh.pris.push_back(MeshPri(9, 10, 11, 12, 13, 14));
+    mesh.hexs.push_back(MeshHex(15, 16, 17, 18, 19, 20, 21, 22));
+
+    mesh.tets.front().value = 0.90;
+    mesh.pyrs.front().value = 0.90;
+    mesh.pris.front().value = 0.90;
+    mesh.hexs.front().value = 0.90;
+}
+
+void DebugMesher::genDegenerateTetra(Mesh& mesh, size_t vertexCount)
+{
+
 }

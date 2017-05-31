@@ -749,7 +749,7 @@
               <string>Display backdrop</string>
              </property>
              <property name="checked">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -780,6 +780,16 @@
             <widget class="QCheckBox" name="tetrahedraVisibility">
              <property name="text">
               <string>Tetrahedra</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="pyramidsVisibility">
+             <property name="text">
+              <string>Pyramids</string>
              </property>
              <property name="checked">
               <bool>true</bool>

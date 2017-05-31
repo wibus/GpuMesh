@@ -41,6 +41,8 @@ RenderTab::RenderTab(Ui::MainWindow* ui,
     // Connect element visibility
     connect(_ui->tetrahedraVisibility, &QCheckBox::toggled,
             this, &RenderTab::elementVisibilityChanged);
+    connect(_ui->pyramidsVisibility, &QCheckBox::toggled,
+            this, &RenderTab::elementVisibilityChanged);
     connect(_ui->prismsVisibility, &QCheckBox::toggled,
             this, &RenderTab::elementVisibilityChanged);
     connect(_ui->hexahedraVisibility, &QCheckBox::toggled,
@@ -185,6 +187,7 @@ void RenderTab::elementVisibilityChanged(bool unused)
 {
     _character->setElementVisibility(
         _ui->tetrahedraVisibility->isChecked(),
+        _ui->pyramidsVisibility->isChecked(),
         _ui->prismsVisibility->isChecked(),
         _ui->hexahedraVisibility->isChecked());
 }

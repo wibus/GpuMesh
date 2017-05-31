@@ -258,6 +258,19 @@ void ScaffoldRenderer::compileBuffers(
         if(qual < qualMins[tet.v[3]]) qualMins[tet.v[3]] = qual;
     }
 
+    // Pyramids
+    int pyrCount = mesh.pyrs.size();
+    for(int i=0; i < pyrCount; ++i)
+    {
+        const MeshPyr& pyr = mesh.pyrs[i];
+        double qual = pyr.value;
+        if(qual < qualMins[pyr.v[0]]) qualMins[pyr.v[0]] = qual;
+        if(qual < qualMins[pyr.v[1]]) qualMins[pyr.v[1]] = qual;
+        if(qual < qualMins[pyr.v[2]]) qualMins[pyr.v[2]] = qual;
+        if(qual < qualMins[pyr.v[3]]) qualMins[pyr.v[3]] = qual;
+        if(qual < qualMins[pyr.v[4]]) qualMins[pyr.v[4]] = qual;
+    }
+
     // Prisms
     int priCount = mesh.pris.size();
     for(int i=0; i < priCount; ++i)
@@ -311,6 +324,7 @@ void ScaffoldRenderer::compileBuffers(
             for(const MeshNeigElem& n : mesh.topos[v].neighborElems)
             {
                 if((_tetVisibility && n.type == MeshTet::ELEMENT_TYPE) ||
+                   (_pyrVisibility && n.type == MeshPyr::ELEMENT_TYPE) ||
                    (_priVisibility && n.type == MeshPri::ELEMENT_TYPE) ||
                    (_hexVisibility && n.type == MeshHex::ELEMENT_TYPE))
                 {

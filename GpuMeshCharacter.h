@@ -129,7 +129,7 @@ public:
     virtual void useCameraMan(const std::string& cameraManName);
     virtual void useCutType(const std::string& cutTypeName);
     virtual void displayBackdrop(bool display);
-    virtual void setElementVisibility(bool tet, bool pri, bool hex);
+    virtual void setElementVisibility(bool tet, bool pyr, bool pri, bool hex);
     virtual void setQualityCullingBounds(double min, double max);
 
 
@@ -170,6 +170,7 @@ protected:
     double _cutDistance;
 
     bool _tetVisibility;
+    bool _pyrVisibility;
     bool _priVisibility;
     bool _hexVisibility;
 

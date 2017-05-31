@@ -33,7 +33,7 @@ public:
     virtual void useShading(const std::string& shadingName);
     virtual void useCutType(const ECutType& cutType);
     virtual void displayBackdrop(bool display);
-    virtual void setElementVisibility(bool tet, bool pri, bool hex);
+    virtual void setElementVisibility(bool tet, bool pyr, bool pri, bool hex);
     virtual void setQualityCullingBounds(double min, double max);
 
 
@@ -75,6 +75,7 @@ protected:
 
     // Element visibility
     bool _tetVisibility;
+    bool _pyrVisibility;
     bool _priVisibility;
     bool _hexVisibility;
 

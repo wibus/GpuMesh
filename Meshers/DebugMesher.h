@@ -25,6 +25,9 @@ protected:
     virtual void genCube(Mesh& mesh, size_t vertexCount);
     virtual void genTet(Mesh& mesh, size_t vertexCount);
 
+    virtual void genRegularPolyhedra(Mesh& mesh, size_t vertexCount);
+    virtual void genDegenerateTetra(Mesh& mesh, size_t vertexCount);
+
 private:
     std::shared_ptr<BoxBoundary> _boxBoundary;
     std::shared_ptr<TetBoundary> _tetBoundary;

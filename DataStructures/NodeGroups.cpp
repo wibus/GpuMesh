@@ -144,6 +144,24 @@ void NodeGroups::determineTypes(const Mesh& mesh, std::vector<int>& types)
     }
 
     ///////////////////
+    // Classify pyrs //
+    ///////////////////
+    const std::vector<MeshPyr>& pyrs = mesh.pyrs;
+    std::vector<bool> boundingPyrs(pyrs.size(), false);
+    for(size_t eId=0; eId < pyrs.size(); ++eId)
+    {
+        const MeshPyr& elem = pyrs[eId];
+        if(isMovableBound(topos[elem.v[0]]) ||
+           isMovableBound(topos[elem.v[1]]) ||
+           isMovableBound(topos[elem.v[2]]) ||
+           isMovableBound(topos[elem.v[3]]) ||
+           isMovableBound(topos[elem.v[4]]))
+        {
+            boundingPyrs[eId] = true;
+        }
+    }
+
+    ///////////////////
     // Classify pris //
     ///////////////////
     const std::vector<MeshPri>& pris = mesh.pris;
@@ -204,6 +222,7 @@ void NodeGroups::determineTypes(const Mesh& mesh, std::vector<int>& types)
             for(const MeshNeigElem& ne : topo.neighborElems)
             {
                 if((ne.type == MeshTet::ELEMENT_TYPE && boundingTets[ne.id]) ||
+                   (ne.type == MeshPyr::ELEMENT_TYPE && boundingPyrs[ne.id]) ||
                    (ne.type == MeshPri::ELEMENT_TYPE && boundingPris[ne.id]) ||
                    (ne.type == MeshHex::ELEMENT_TYPE && boundingHexs[ne.id]))
                 {
@@ -224,6 +243,7 @@ void NodeGroups::determineGroups(const Mesh& mesh, std::vector<int>& groups)
 {
     size_t vertCount = mesh.verts.size();
     const std::vector<MeshTet>& tets = mesh.tets;
+    const std::vector<MeshPyr>& pyrs = mesh.pyrs;
     const std::vector<MeshPri>& pris = mesh.pris;
     const std::vector<MeshHex>& hexs = mesh.hexs;
     const std::vector<MeshTopo>& topos = mesh.topos;
@@ -259,6 +279,23 @@ void NodeGroups::determineGroups(const Mesh& mesh, std::vector<int>& groups)
                 {
                     const MeshTet& elem = tets[neigElem.id];
                     for(size_t n=0; n < MeshTet::VERTEX_COUNT; ++n)
+                    {
+                        int& group = groups[elem.v[n]];
+                        if(group == NO_GROUP)
+                        {
+                            group = UNSET_GROUP;
+                            nextNodes.push_back(elem.v[n]);
+                        }
+                        else if(group != UNSET_GROUP)
+                        {
+                            availableGroups.erase(group);
+                        }
+                    }
+                }
+                else if(neigElem.type == MeshPyr::ELEMENT_TYPE)
+                {
+                    const MeshPyr& elem = pyrs[neigElem.id];
+                    for(size_t n=0; n < MeshPyr::VERTEX_COUNT; ++n)
                     {
                         int& group = groups[elem.v[n]];
                         if(group == NO_GROUP)
@@ -418,6 +455,7 @@ void NodeGroups::clusterNodes(Mesh& mesh,
 {
     size_t vertCount = mesh.verts.size();
     std::vector<MeshTet>& tets = mesh.tets;
+    std::vector<MeshPyr>& pyrs = mesh.pyrs;
     std::vector<MeshPri>& pris = mesh.pris;
     std::vector<MeshHex>& hexs = mesh.hexs;
     std::vector<MeshVert>& verts = mesh.verts;
@@ -429,6 +467,15 @@ void NodeGroups::clusterNodes(Mesh& mesh,
         tet.v[1] = positions[tet.v[1]];
         tet.v[2] = positions[tet.v[2]];
         tet.v[3] = positions[tet.v[3]];
+    }
+
+    for(MeshPyr& pyr : pyrs)
+    {
+        pyr.v[0] = positions[pyr.v[0]];
+        pyr.v[1] = positions[pyr.v[1]];
+        pyr.v[2] = positions[pyr.v[2]];
+        pyr.v[3] = positions[pyr.v[3]];
+        pyr.v[4] = positions[pyr.v[4]];
     }
 
     for(MeshPri& pri : pris)
