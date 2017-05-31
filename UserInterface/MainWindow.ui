@@ -738,6 +738,25 @@
          </widget>
         </item>
         <item>
+         <widget class="QGroupBox" name="backdropGroup">
+          <property name="title">
+           <string>Backdrop</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_9">
+           <item>
+            <widget class="QCheckBox" name="displayBackdropCheck">
+             <property name="text">
+              <string>Display backdrop</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="cameraGroup">
           <property name="title">
            <string>Camera</string>

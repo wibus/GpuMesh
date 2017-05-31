@@ -128,6 +128,7 @@ public:
     virtual void useShading(const std::string& shadingName);
     virtual void useCameraMan(const std::string& cameraManName);
     virtual void useCutType(const std::string& cutTypeName);
+    virtual void displayBackdrop(bool display);
     virtual void setElementVisibility(bool tet, bool pri, bool hex);
     virtual void setQualityCullingBounds(double min, double max);
 
@@ -158,6 +159,7 @@ protected:
     float _camDistance;
     ECameraMan _cameraMan;
     ECutType _cutType;
+    bool _displayBackdrop;
 
     float _lightAzimuth;
     float _lightAltitude;

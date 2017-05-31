@@ -19,6 +19,10 @@ RenderTab::RenderTab(Ui::MainWindow* ui,
             static_cast<void(QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged),
             this, &RenderTab::renderTypeChanged);
 
+    // Display Backdrop
+    displayBackdrop(_ui->displayBackdropCheck->isChecked());
+    connect(_ui->displayBackdropCheck, &QCheckBox::toggled,
+            this, &RenderTab::displayBackdrop);
 
     // Defining shadings
     deployShadings();
@@ -152,6 +156,11 @@ void RenderTab::renderTypeChanged(const QString& text)
     _character->useRenderer(text.toStdString());
 
     deployShadings();
+}
+
+void RenderTab::displayBackdrop(bool display)
+{
+    _character->displayBackdrop(display);
 }
 
 void RenderTab::shadingChanged(const QString& text)

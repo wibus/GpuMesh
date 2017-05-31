@@ -32,6 +32,7 @@ public:
     virtual OptionMapDetails availableShadings() const;
     virtual void useShading(const std::string& shadingName);
     virtual void useCutType(const ECutType& cutType);
+    virtual void displayBackdrop(bool display);
     virtual void setElementVisibility(bool tet, bool pri, bool hex);
     virtual void setQualityCullingBounds(double min, double max);
 
@@ -67,6 +68,7 @@ protected:
 
     // Cut plane
     ECutType _cutType;
+    bool _displayBackdrop;
     glm::dvec4 _cutPlaneEq;
     glm::dvec4 _physicalCutPlane;
     glm::dvec4 _virtualCutPlane;

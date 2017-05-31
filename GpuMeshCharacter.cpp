@@ -877,6 +877,16 @@ void GpuMeshCharacter::useCutType(const std::string& cutTypeName)
     }
 }
 
+void GpuMeshCharacter::displayBackdrop(bool display)
+{
+    _displayBackdrop = display;
+
+    if(_meshCrew->initialized())
+    {
+        _renderer->displayBackdrop(_displayBackdrop);
+    }
+}
+
 void GpuMeshCharacter::setElementVisibility(bool tet, bool pri, bool hex)
 {
     _tetVisibility = tet;
@@ -993,6 +1003,9 @@ void GpuMeshCharacter::setupInstalledRenderer()
 
         // Set cut type
         _renderer->useCutType(_cutType);
+
+        // Display backdrop
+        _renderer->displayBackdrop(_displayBackdrop);
 
         // Setup cut plane position
         moveCutPlane(_cutAzimuth, _cutAltitude, _cutDistance);

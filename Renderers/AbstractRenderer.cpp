@@ -14,6 +14,7 @@ AbstractRenderer::AbstractRenderer() :
     _buffNeedUpdate(false),
     _cutType(ECutType::None),
     _cutPlaneEq(0.0),
+    _displayBackdrop(false),
     _physicalCutPlane(0.0),
     _virtualCutPlane(0.0),
     _tetVisibility(true),
@@ -150,6 +151,11 @@ void AbstractRenderer::useCutType(const ECutType& cutType)
     updateCutPlane(_cutPlaneEq);
 }
 
+void AbstractRenderer::displayBackdrop(bool display)
+{
+    _displayBackdrop = display;
+}
+
 void AbstractRenderer::setElementVisibility(bool tet, bool pri, bool hex)
 {
     _tetVisibility = tet;
@@ -202,19 +208,26 @@ bool AbstractRenderer::handleKeyPress(const scaena::KeyboardEvent& event)
 
 void AbstractRenderer::drawBackdrop()
 {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _filterTex);
-    glActiveTexture(GL_TEXTURE0);
+    if(_displayBackdrop)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, _filterTex);
+        glActiveTexture(GL_TEXTURE0);
 
-    _gradientShader.pushProgram();
-    glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
+        _gradientShader.pushProgram();
+        glDepthMask(GL_FALSE);
+        glDisable(GL_DEPTH_TEST);
 
-    fullScreenDraw();
+        fullScreenDraw();
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    _gradientShader.popProgram();
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        _gradientShader.popProgram();
+    }
+    else
+    {
+        glClearColor(1.0, 1.0, 1.0, 0.0);
+    }
 }
 
 void AbstractRenderer::fullScreenDraw()

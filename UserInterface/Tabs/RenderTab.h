@@ -23,6 +23,7 @@ public:
 
 protected slots:
     virtual void renderTypeChanged(const QString& text);
+    virtual void displayBackdrop(bool display);
     virtual void shadingChanged(const QString& text);
     virtual void useCameraMan(const std::string& cameraName);
     virtual void useCutType(const std::string& cutName);
