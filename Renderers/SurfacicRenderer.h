@@ -11,8 +11,7 @@ public:
     virtual ~SurfacicRenderer();
 
 
-    virtual void updateCamera(const glm::mat4& view,
-                              const glm::vec3& pos) override;
+    virtual void updateCamera(const glm::vec3& pos) override;
     virtual void updateLight(const glm::mat4& view,
                              const glm::vec3& pos) override;
     virtual void updateCutPlane(const glm::dvec4& cutEq) override;

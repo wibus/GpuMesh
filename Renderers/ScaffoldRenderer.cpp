@@ -37,23 +37,17 @@ ScaffoldRenderer::~ScaffoldRenderer()
     clearResources();
 }
 
-void ScaffoldRenderer::updateCamera(const glm::mat4& view,
-                                      const glm::vec3& pos)
+void ScaffoldRenderer::updateCamera(const glm::vec3& pos)
 {
-    _viewMat = view;
-
     _scaffoldJointProgram.pushProgram();
-    _scaffoldJointProgram.setMat4f("ViewMat", _viewMat);
     _scaffoldJointProgram.setVec3f("CameraPosition", pos);
     _scaffoldJointProgram.popProgram();
 
     _scaffoldTubeProgram.pushProgram();
-    _scaffoldTubeProgram.setMat4f("ViewMat", _viewMat);
     _scaffoldTubeProgram.setVec3f("CameraPosition", pos);
     _scaffoldTubeProgram.popProgram();
 
     _wireframeProgram.pushProgram();
-    _wireframeProgram.setMat4f("ProjViewMat", _projMat * _viewMat);
     _wireframeProgram.popProgram();
 }
 
@@ -129,35 +123,34 @@ void ScaffoldRenderer::handleInputs(
 
 void ScaffoldRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
 {
-    if(msg.change == CameraMsg::EChange::VIEWPORT)
+    if(msg.change == CameraMsg::EChange::VIEWPORT ||
+       msg.change == CameraMsg::EChange::PROJECTION ||
+       msg.change == CameraMsg::EChange::VIEW)
     {
         const glm::ivec2& viewport = msg.camera.viewport();
 
-        // Camera projection
-        const float n = 0.1;
-        const float f = 12.0;
-        _projMat = glm::perspectiveFov(
-                glm::pi<float>() / 6,
-                (float) viewport.x,
-                (float) viewport.y,
-                n, f);
+        const glm::mat4& proj = msg.camera.projectionMatrix();
 
-        glm::mat4 projInv = glm::inverse(_projMat);
+        const glm::mat4& view = msg.camera.viewMatrix();
+
+        glm::mat4 projInv = glm::inverse(proj);
 
         _scaffoldJointProgram.pushProgram();
         _scaffoldJointProgram.setMat4f("ProjInv", projInv);
-        _scaffoldJointProgram.setMat4f("ProjMat", _projMat);
+        _scaffoldJointProgram.setMat4f("ProjMat", proj);
+        _scaffoldJointProgram.setMat4f("ViewMat", view);
         _scaffoldJointProgram.setVec2f("Viewport", viewport);
         _scaffoldJointProgram.popProgram();
 
         _scaffoldTubeProgram.pushProgram();
         _scaffoldTubeProgram.setMat4f("ProjInv", projInv);
-        _scaffoldTubeProgram.setMat4f("ProjMat", _projMat);
+        _scaffoldTubeProgram.setMat4f("ProjMat", proj);
+        _scaffoldTubeProgram.setMat4f("ViewMat", view);
         _scaffoldTubeProgram.setVec2f("Viewport", viewport);
         _scaffoldTubeProgram.popProgram();
 
         _wireframeProgram.pushProgram();
-        _wireframeProgram.setMat4f("ProjViewMat", _projMat * _viewMat);
+        _wireframeProgram.setMat4f("ProjViewMat", proj * view);
         _wireframeProgram.popProgram();
     }
 }

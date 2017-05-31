@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <GLM/gtx/transform.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
 
 #include <QFileInfo>
 
@@ -66,7 +67,7 @@ const glm::vec3 GpuMeshCharacter::upVec = glm::vec3(0, 0, 1);
 GpuMeshCharacter::GpuMeshCharacter() :
     Character("GpuMeshChracter"),
     _camAzimuth(-glm::pi<float>() / 2.0),
-    _camAltitude(-glm::pi<float>() / 2.0),
+    _camAltitude(0),
     _camDistance(4.0),
     _cameraMan(ECameraMan::Sphere),
     _lightAzimuth(-glm::pi<float>() * 3.5 / 8.0),
@@ -98,7 +99,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableSerializers("Available Mesh Serializers"),
     _availableDeserializers("Available Mesh Deserializers")
 {
-    _availableMeshers.setDefault("Debug");
+    _availableMeshers.setDefault("Delaunay");
     _availableMeshers.setContent({
         {string("Delaunay"),   shared_ptr<AbstractMesher>(new CpuDelaunayMesher())},
         {string("Parametric"), shared_ptr<AbstractMesher>(new CpuParametricMesher())},
@@ -134,7 +135,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("GETMe"),            shared_ptr<AbstractSmoother>(new GetmeSmoother())},
     });
 
-    _availableRenderers.setDefault("Scaffold");
+    _availableRenderers.setDefault("Surfacic");
     _availableRenderers.setContent({
         {string("Blind"),    shared_ptr<AbstractRenderer>(new BlindRenderer())},
         {string("Scaffold"), shared_ptr<AbstractRenderer>(new ScaffoldRenderer())},
@@ -143,8 +144,9 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableCameraMen.setDefault("Sphere");
     _availableCameraMen.setContent({
-        {string("Sphere"), ECameraMan::Sphere},
-        {string("Free"),   ECameraMan::Free},
+        {string("Oblique"), ECameraMan::Oblique},
+        {string("Sphere"),  ECameraMan::Sphere},
+        {string("Free"),    ECameraMan::Free},
     });
 
     _availableCutTypes.setDefault("None");
@@ -245,10 +247,9 @@ void GpuMeshCharacter::enterStage()
     _cameraManFree->setPosition(glm::vec3(0, 0, _camDistance));
     _cameraManFree->setOrientation( glm::pi<float>() * 0.5f,
                                    -glm::pi<float>() * 0.48f);
-
+    play().view()->camera3D()->registerObserver(*this);
     setupInstalledRenderer();
     _meshCrew->initialize(*_mesh);
-
 
 
     GLint variableGroupSize[3] = {0, 0, 0};
@@ -318,17 +319,19 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
     else
     {
         // Camera management
-        if(_cameraMan == ECameraMan::Sphere)
+        if(_cameraMan == ECameraMan::Oblique)
+            ;
+        else if(_cameraMan == ECameraMan::Sphere)
         {
             if(mouse->buttonIsPressed(EMouseButton::LEFT))
             {
-                moveCamera(_camAzimuth - mouse->displacement().x / 100.0f,
+                moveSphereCamera(_camAzimuth - mouse->displacement().x / 100.0f,
                            _camAltitude - mouse->displacement().y / 100.0f,
                            _camDistance);
             }
             else if(mouse->degreeDelta() != 0)
             {
-                moveCamera(_camAzimuth,
+                moveSphereCamera(_camAzimuth,
                            _camAltitude,
                            _camDistance + mouse->degreeDelta() / 80.0f);
             }
@@ -369,8 +372,7 @@ void GpuMeshCharacter::beginStep(const StageTime &time)
             }
 
             if(updated)
-                _renderer->updateCamera(_cameraManFree->camera()->viewMatrix(),
-                                        _cameraManFree->position());
+                _renderer->updateCamera(_cameraManFree->position());
         }
     }
 
@@ -912,6 +914,42 @@ void GpuMeshCharacter::setQualityCullingBounds(double min, double max)
     }
 }
 
+void GpuMeshCharacter::notify(cellar::CameraMsg& msg)
+{
+    if(msg.change == CameraMsg::EChange::VIEWPORT)
+    {
+        const glm::ivec2& viewport = msg.camera.viewport();
+
+        glm::mat4 proj(1.0);
+
+        if(_cameraMan == ECameraMan::Oblique)
+        {
+            glm::mat4 ortho = glm::ortho(
+                -viewport.x / 200.0f, viewport.x / 200.0f,
+                -viewport.y / 200.0f, viewport.y / 200.0f,
+                -5.0f, 5.0f);
+
+            glm::mat4 oblique(1.0);
+            oblique[2][0] = -1.0 / tan(glm::pi<double>() * (110.0 / 180.0));
+            oblique[2][1] = 1.0 / tan(glm::pi<double>() * (110.0 / 180.0));
+
+            proj = ortho * oblique;
+
+        }
+        else
+        {
+            proj = glm::perspectiveFov(
+                glm::pi<float>() / 6.0f,
+                (float) viewport.x,
+                (float) viewport.y,
+                0.1f,
+                12.0f);
+        }
+
+        msg.camera.updateProjection(proj);
+    }
+}
+
 void GpuMeshCharacter::runMastersTests(
         QTextDocument& reportDocument,
         const vector<string>& tests)
@@ -926,11 +964,14 @@ void GpuMeshCharacter::printStep(const std::string& stepDescription)
 
 void GpuMeshCharacter::refreshCamera()
 {
-    if(_cameraMan == ECameraMan::Sphere)
-        moveCamera(_camAzimuth, _camAltitude, _camDistance);
+    play().view()->camera3D()->refresh();
+
+    if(_cameraMan == ECameraMan::Oblique)
+        moveObliqueCamera();
+    else if(_cameraMan == ECameraMan::Sphere)
+        moveSphereCamera(_camAzimuth, _camAltitude, _camDistance);
     else if(_cameraMan == ECameraMan::Free)
-        _renderer->updateCamera(_cameraManFree->camera()->viewMatrix(),
-                                _cameraManFree->position());
+        moveFreeCamera();
 }
 
 void GpuMeshCharacter::updateMeshMeasures()
@@ -1046,7 +1087,16 @@ void GpuMeshCharacter::installRenderer(const std::shared_ptr<AbstractRenderer>& 
         setupInstalledRenderer();
 }
 
-void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
+void GpuMeshCharacter::moveObliqueCamera()
+{
+    glm::vec3 from(0.0f, 0.0f, 0.0f);
+    glm::vec3 to(0.0f, -1.0f, 0.0f);
+
+    glm::mat4 viewMatrix = glm::lookAt(from, to, upVec);
+    play().view()->camera3D()->updateView(viewMatrix);
+}
+
+void GpuMeshCharacter::moveSphereCamera(float azimuth, float altitude, float distance)
 {
     const float PI = glm::pi<float>();
     _camAzimuth = glm::mod(azimuth, 2 * PI);
@@ -1059,9 +1109,16 @@ void GpuMeshCharacter::moveCamera(float azimuth, float altitude, float distance)
             glm::vec4(_camDistance, 0.0f, 0.0f, 1.0f));
 
     glm::mat4 viewMatrix = glm::lookAt(from, nullVec, upVec);
+    play().view()->camera3D()->updateView(viewMatrix);
+
     glm::vec3 camPos(from);
 
-    _renderer->updateCamera(viewMatrix, camPos);
+    _renderer->updateCamera(camPos);
+}
+
+void GpuMeshCharacter::moveFreeCamera()
+{
+    _renderer->updateCamera(_cameraManFree->position());
 }
 
 void GpuMeshCharacter::moveLight(float azimuth, float altitude, float distance)

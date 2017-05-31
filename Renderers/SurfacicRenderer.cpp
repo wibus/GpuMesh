@@ -40,21 +40,17 @@ SurfacicRenderer::~SurfacicRenderer()
     clearResources();
 }
 
-void SurfacicRenderer::updateCamera(const glm::mat4& view,
-                                    const glm::vec3& pos)
+void SurfacicRenderer::updateCamera(const glm::vec3& pos)
 {
     _litShader.pushProgram();
-    _litShader.setMat4f("ViewMat", view);
     _litShader.setVec3f("CameraPosition", pos);
     _litShader.popProgram();
 
     _unlitShader.pushProgram();
-    _unlitShader.setMat4f("ViewMat", view);
     _unlitShader.setVec3f("CameraPosition", pos);
     _unlitShader.popProgram();
 
     _edgeShader.pushProgram();
-    _edgeShader.setMat4f("ViewMat", view);
     _edgeShader.setVec3f("CameraPosition", pos);
     _edgeShader.popProgram();
 }
@@ -138,27 +134,6 @@ void SurfacicRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
     {
         const glm::ivec2& viewport = msg.camera.viewport();
 
-        // Camera projection
-        glm::mat4 proj = glm::perspectiveFov(
-                glm::pi<float>() / 6,
-                (float) viewport.x,
-                (float) viewport.y,
-                0.1f,
-                12.0f);
-
-        _litShader.pushProgram();
-        _litShader.setMat4f("ProjMat", proj);
-        _litShader.popProgram();
-
-        _unlitShader.pushProgram();
-        _unlitShader.setMat4f("ProjMat", proj);
-        _unlitShader.popProgram();
-
-        _edgeShader.pushProgram();
-        _edgeShader.setMat4f("ProjMat", proj);
-        _edgeShader.popProgram();
-
-
         // Effects scale
         glm::vec2 scale = filterScale();
 
@@ -190,6 +165,38 @@ void SurfacicRenderer::notifyCameraUpdate(cellar::CameraMsg& msg)
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32,
                               viewport.x, viewport.y);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+    else if(msg.change == CameraMsg::EChange::PROJECTION)
+    {
+        const glm::mat4& proj = msg.camera.projectionMatrix();
+
+        _litShader.pushProgram();
+        _litShader.setMat4f("ProjMat", proj);
+        _litShader.popProgram();
+
+        _unlitShader.pushProgram();
+        _unlitShader.setMat4f("ProjMat", proj);
+        _unlitShader.popProgram();
+
+        _edgeShader.pushProgram();
+        _edgeShader.setMat4f("ProjMat", proj);
+        _edgeShader.popProgram();
+    }
+    else if(msg.change == CameraMsg::EChange::VIEW)
+    {
+        const glm::mat4& view = msg.camera.viewMatrix();
+
+        _litShader.pushProgram();
+        _litShader.setMat4f("ViewMat", view);
+        _litShader.popProgram();
+
+        _unlitShader.pushProgram();
+        _unlitShader.setMat4f("ViewMat", view);
+        _unlitShader.popProgram();
+
+        _edgeShader.pushProgram();
+        _edgeShader.setMat4f("ViewMat", view);
+        _edgeShader.popProgram();
     }
 }
 

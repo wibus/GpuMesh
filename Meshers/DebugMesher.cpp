@@ -371,7 +371,7 @@ void DebugMesher::genRegularPolyhedra(Mesh& mesh, size_t vertexCount)
     mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/2, 0));
     mesh.verts.push_back(glm::dvec3(0.5, sqrt(3.0)/6, sqrt(2.0/3)));
     for(int v=0; v < 4; ++v)
-        mesh.verts[v].p += glm::dvec3(-2.25, 0.0, 0.0);
+        mesh.verts[v].p += glm::dvec3(-2.75, 0.0, 0.0);
 
     mesh.verts.push_back(glm::dvec3(0, 0, 0));
     mesh.verts.push_back(glm::dvec3(1, 0, 0));
@@ -379,7 +379,7 @@ void DebugMesher::genRegularPolyhedra(Mesh& mesh, size_t vertexCount)
     mesh.verts.push_back(glm::dvec3(0, 1, 0));
     mesh.verts.push_back(glm::dvec3(0.5, 0.5, sqrt(2.0)/2.0));
     for(int v=4; v < 9; ++v)
-        mesh.verts[v].p += glm::dvec3(-0.75, 0.0, 0.0);
+        mesh.verts[v].p += glm::dvec3(-1.25, 0.0, 0.0);
 
     mesh.verts.push_back(glm::dvec3(0, 0, 0));
     mesh.verts.push_back(glm::dvec3(0, 1, 0));
@@ -388,7 +388,7 @@ void DebugMesher::genRegularPolyhedra(Mesh& mesh, size_t vertexCount)
     mesh.verts.push_back(glm::dvec3(1, 1, 0));
     mesh.verts.push_back(glm::dvec3(1, 0.5, sqrt(3.0)/2));
     for(int v=9; v < 15; ++v)
-        mesh.verts[v].p += glm::dvec3(0.75, 0.0, 0.0);
+        mesh.verts[v].p += glm::dvec3(0.25, 0.0, 0.0);
 
     mesh.verts.push_back(glm::dvec3(0, 0, 0));
     mesh.verts.push_back(glm::dvec3(1, 0, 0));
@@ -399,7 +399,7 @@ void DebugMesher::genRegularPolyhedra(Mesh& mesh, size_t vertexCount)
     mesh.verts.push_back(glm::dvec3(1, 1, 1));
     mesh.verts.push_back(glm::dvec3(0, 1, 1));
     for(int v=15; v < 23; ++v)
-        mesh.verts[v].p += glm::dvec3(2.25, 0.0, 0.0);
+        mesh.verts[v].p += glm::dvec3(1.75, 0.0, 0.0);
 
     mesh.tets.push_back(MeshTet(0, 1, 2, 3));
     mesh.pyrs.push_back(MeshPyr(4, 5, 6, 7, 8));

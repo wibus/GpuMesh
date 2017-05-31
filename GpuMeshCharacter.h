@@ -5,6 +5,7 @@
 
 class QTextDocument;
 
+#include <CellarWorkbench/DesignPattern/SpecificObserver.h>
 #include <CellarWorkbench/Camera/CameraManFree.h>
 
 #include <PropRoom2D/Prop/Hud/TextHud.h>
@@ -30,12 +31,14 @@ enum class ECutType;
 
 enum class ECameraMan
 {
+    Oblique,
     Sphere,
     Free
 };
 
 
-class GpuMeshCharacter : public scaena::Character
+class GpuMeshCharacter : public scaena::Character,
+        public cellar::SpecificObserver<cellar::CameraMsg>
 {
 public:
     GpuMeshCharacter();
@@ -132,6 +135,8 @@ public:
     virtual void setElementVisibility(bool tet, bool pyr, bool pri, bool hex);
     virtual void setQualityCullingBounds(double min, double max);
 
+    virtual void notify(cellar::CameraMsg& msg) override;
+
 
     // Master's tests
     virtual void runMastersTests(
@@ -148,7 +153,9 @@ protected:
     virtual void setupInstalledRenderer();
     virtual void tearDownInstalledRenderer();
     virtual void installRenderer(const std::shared_ptr<AbstractRenderer>& renderer);
-    virtual void moveCamera(float azimuth, float altitude, float distance);
+    virtual void moveObliqueCamera();
+    virtual void moveSphereCamera(float azimuth, float altitude, float distance);
+    virtual void moveFreeCamera();
     virtual void moveLight(float azimuth, float altitude, float distance);
     virtual void moveCutPlane(double azimuth, double altitude, double distance);
 

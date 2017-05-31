@@ -16,9 +16,7 @@ BlindRenderer::~BlindRenderer()
 
 }
 
-void BlindRenderer::updateCamera(
-        const glm::mat4& view,
-        const glm::vec3& pos)
+void BlindRenderer::updateCamera(const glm::vec3& pos)
 {
 
 }

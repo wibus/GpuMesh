@@ -37,8 +37,7 @@ public:
     virtual void setQualityCullingBounds(double min, double max);
 
 
-    virtual void updateCamera(const glm::mat4& view,
-                              const glm::vec3& pos) = 0;
+    virtual void updateCamera(const glm::vec3& pos) = 0;
     virtual void updateLight(const glm::mat4& view,
                              const glm::vec3& pos) = 0;
     virtual void updateCutPlane(const glm::dvec4& cutEq) = 0;
@@ -72,6 +71,7 @@ protected:
     glm::dvec4 _cutPlaneEq;
     glm::dvec4 _physicalCutPlane;
     glm::dvec4 _virtualCutPlane;
+
 
     // Element visibility
     bool _tetVisibility;

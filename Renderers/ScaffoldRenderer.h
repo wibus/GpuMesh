@@ -10,8 +10,7 @@ public:
     ScaffoldRenderer();
     virtual ~ScaffoldRenderer();
 
-    virtual void updateCamera(const glm::mat4& view,
-                              const glm::vec3& pos) override;
+    virtual void updateCamera(const glm::vec3& pos) override;
     virtual void updateLight(const glm::mat4& view,
                              const glm::vec3& pos) override;
     virtual void updateCutPlane(const glm::dvec4& cutEq) override;
@@ -45,9 +44,6 @@ protected:
     cellar::GlProgram _scaffoldJointProgram;
     cellar::GlProgram _scaffoldTubeProgram;
     cellar::GlProgram _wireframeProgram;
-
-    glm::mat4 _projMat;
-    glm::mat4 _viewMat;
 
     int _vertElemCount;
     int _indxElemCount;
