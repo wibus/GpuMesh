@@ -163,6 +163,7 @@ Mesh::Mesh(const Mesh& m) :
     verts(m.verts),
     topos(m.topos),
     tets(m.tets),
+    pyrs(m.pyrs),
     pris(m.pris),
     hexs(m.hexs),
     _nodeGroups(new NodeGroups(m.nodeGroups())),
@@ -183,6 +184,7 @@ Mesh& Mesh::operator=(const Mesh& mesh)
     verts = mesh.verts;
     topos = mesh.topos;
     tets = mesh.tets;
+    pyrs = mesh.pyrs;
     pris = mesh.pris;
     hexs = mesh.hexs;
 
@@ -196,6 +198,8 @@ void Mesh::clear()
     verts.shrink_to_fit();
     tets.clear();
     tets.shrink_to_fit();
+    pyrs.clear();
+    pyrs.shrink_to_fit();
     pris.clear();
     pris.shrink_to_fit();
     hexs.clear();
@@ -216,6 +220,7 @@ void Mesh::compileTopology(bool verbose)
     // Compact verts and elems data structures
     verts.shrink_to_fit();
     tets.shrink_to_fit();
+    pyrs.shrink_to_fit();
     pris.shrink_to_fit();
     hexs.shrink_to_fit();
 
@@ -343,6 +348,7 @@ void Mesh::printPropperties(OptimizationPlot& plot) const
     plot.addMeshProperty("Model Name",        modelName);
     plot.addMeshProperty("Vertex Count",      to_string(verts.size()));
     plot.addMeshProperty("Tet Count",         to_string(tets.size()));
+    plot.addMeshProperty("Pyramid Count",     to_string(pyrs.size()));
     plot.addMeshProperty("Prism Count",       to_string(pris.size()));
     plot.addMeshProperty("Hex Count",         to_string(hexs.size()));
     plot.addMeshProperty("Patch Group Count", to_string(nodeGroups().count()));

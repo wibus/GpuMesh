@@ -648,7 +648,7 @@ void GpuMeshCharacter::setMetricDiscretizationDepth(int depth)
     _metricDiscretizationDepth = depth;
 
     updateSampling();
-    updateMeshMeasures();
+    //updateMeshMeasures();
 }
 
 void GpuMeshCharacter::setGlslEvaluatorThreadCount(uint threadCount)
@@ -1026,9 +1026,8 @@ void GpuMeshCharacter::updateSampling()
 
         _meshCrew->sampler().setReferenceMesh(*_mesh);
 
-        if(_displaySamplingMesh)
-            if(_renderer.get() != nullptr)
-                _renderer->notifyMeshUpdate();
+        if(_renderer.get() != nullptr)
+            _renderer->notifyMeshUpdate();
     }
 }
 

@@ -173,6 +173,35 @@ void KdTreeSampler::setReferenceMesh(
               minBounds, maxBounds,
               xSort, ySort, zSort);
     }
+
+    /*
+    double color = 0.0;
+    std::vector<KdNode*> nodes = {_rootNode.get()};
+    for(int i=0; i < nodes.size(); ++i)
+    {
+        KdNode* n = nodes[i];
+        if(n->left) nodes.push_back(n->left);
+        if(n->right) nodes.push_back(n->right);
+        if(!n->left && !n->right)
+        {
+            n->metric[0][0] = color;
+            color += 1 / 8.0;
+        }
+    }
+
+    std::vector<MeshTet>& tets = const_cast<std::vector<MeshTet>&>(mesh.tets);
+
+    for(MeshTet& t : tets)
+    {
+        glm::dvec3 mid = 0.25 * (
+            mesh.verts[t.v[0]].p +
+            mesh.verts[t.v[1]].p +
+            mesh.verts[t.v[2]].p +
+            mesh.verts[t.v[3]].p);
+       MeshMetric m = metricAt(mid, t.c[0]);
+       t.value = m[0][0];
+    }
+    */
 }
 
 MeshMetric KdTreeSampler::metricAt(
