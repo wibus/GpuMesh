@@ -648,7 +648,7 @@ void GpuMeshCharacter::setMetricDiscretizationDepth(int depth)
     _metricDiscretizationDepth = depth;
 
     updateSampling();
-    //updateMeshMeasures();
+    updateMeshMeasures();
 }
 
 void GpuMeshCharacter::setGlslEvaluatorThreadCount(uint threadCount)
