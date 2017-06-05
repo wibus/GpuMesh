@@ -1,7 +1,5 @@
 #include "Base.cuh"
 
-#define PROPOSITION_COUNT uint(4)
-
 __device__  float QLMoveCoeff = 0.35;
 
 
@@ -17,13 +15,23 @@ __device__ void qualityLaplaceSmoothVert(uint vId)
     vec3 patchCenter = computeVertexEquilibrium(vId);
     vec3 centerDist = patchCenter - pos;
 
+    const uint PROPOSITION_COUNT = 8;
+    const float OFFSETS[PROPOSITION_COUNT] = {
+        -0.25, 0.00, 0.10, 0.20,
+         0.40, 0.80, 1.20, 1.60
+    };
 
     // Define propositions for new vertex's position
+    vec3 shift = centerDist * QLMoveCoeff;
     vec3 propositions[PROPOSITION_COUNT] = {
-        pos,
-        pos + centerDist * (QLMoveCoeff * QLMoveCoeff),
-        pos + centerDist * QLMoveCoeff,
-        patchCenter
+        pos + shift * OFFSETS[0],
+        pos + shift * OFFSETS[1],
+        pos + shift * OFFSETS[2],
+        pos + shift * OFFSETS[3],
+        pos + shift * OFFSETS[4],
+        pos + shift * OFFSETS[5],
+        pos + shift * OFFSETS[6],
+        pos + shift * OFFSETS[7]
     };
 
 

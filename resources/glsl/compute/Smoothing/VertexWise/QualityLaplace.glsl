@@ -1,7 +1,5 @@
 uniform float MoveCoeff;
 
-const uint PROPOSITION_COUNT = 4;
-
 
 // Smoothing helper
 vec3 computeVertexEquilibrium(in uint vId);
@@ -18,11 +16,22 @@ void smoothVert(uint vId)
 
 
     // Define propositions for new vertex's position
+    const uint PROPOSITION_COUNT = 8;
+    const float OFFSETS[PROPOSITION_COUNT] = float[](
+        -0.25, 0.00, 0.10, 0.20,
+         0.40, 0.80, 1.20, 1.60
+    );
+
+    vec3 shift = centerDist * MoveCoeff;
     vec3 propositions[PROPOSITION_COUNT] = vec3[](
-        pos,
-        pos + centerDist * (MoveCoeff * MoveCoeff),
-        pos + centerDist * MoveCoeff,
-        patchCenter
+        pos + shift * OFFSETS[0],
+        pos + shift * OFFSETS[1],
+        pos + shift * OFFSETS[2],
+        pos + shift * OFFSETS[3],
+        pos + shift * OFFSETS[4],
+        pos + shift * OFFSETS[5],
+        pos + shift * OFFSETS[6],
+        pos + shift * OFFSETS[7]
     );
 
 

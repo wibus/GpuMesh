@@ -8,7 +8,7 @@
 using namespace std;
 
 
-const uint PROPOSITION_COUNT = 4;
+const uint PROPOSITION_COUNT = 8;
 const double QLMoveCoeff = 0.35;
 
 
@@ -75,18 +75,28 @@ void QualityLaplaceSmoother::smoothVertices(
         glm::dvec3 centerDist = patchCenter - pos;
 
 
+        const double OFFSETS[PROPOSITION_COUNT] = {
+            -0.25, 0.00, 0.10, 0.20,
+             0.40, 0.80, 1.20, 1.60
+        };
+
         // Define propositions for new vertex's position
+        glm::dvec3 shift = centerDist * QLMoveCoeff;
         glm::dvec3 propositions[PROPOSITION_COUNT] = {
-            pos,
-            pos + centerDist * (QLMoveCoeff * QLMoveCoeff),
-            pos + centerDist * QLMoveCoeff,
-            patchCenter
+            pos + shift * OFFSETS[0],
+            pos + shift * OFFSETS[1],
+            pos + shift * OFFSETS[2],
+            pos + shift * OFFSETS[3],
+            pos + shift * OFFSETS[4],
+            pos + shift * OFFSETS[5],
+            pos + shift * OFFSETS[6],
+            pos + shift * OFFSETS[7]
         };
 
         const MeshTopo& topo = topos[vId];
         if(topo.snapToBoundary->isConstrained())
         {
-            for(uint p=1; p < PROPOSITION_COUNT; ++p)
+            for(uint p=0; p < PROPOSITION_COUNT; ++p)
                 propositions[p] = (*topo.snapToBoundary)(propositions[p]);
         }
 
