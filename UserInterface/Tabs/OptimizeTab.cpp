@@ -64,6 +64,11 @@ OptimizeTab::OptimizeTab(Ui::MainWindow* ui,
             static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             this, &OptimizeTab::topologyPassCount);
 
+    refinementSweeps(_ui->refinementSweepsSpin->value());
+    connect(_ui->refinementSweepsSpin,
+            static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, &OptimizeTab::refinementSweeps);
+
     connect(_ui->restructureMeshButton,
             static_cast<void(QPushButton::*)(bool)>(&QPushButton::clicked),
             this, &OptimizeTab::restructureMesh);
@@ -166,10 +171,14 @@ void OptimizeTab::topologyPassCount(int count)
     _schedule.topoOperationPassCount = count;
 }
 
+void OptimizeTab::refinementSweeps(int count)
+{
+    _schedule.refinementSweepCount = count;
+}
+
 void OptimizeTab::restructureMesh()
 {
-    _character->restructureMesh(
-        _ui->topoPassCountSpin->value());
+    _character->restructureMesh(_schedule);
 }
 
 void OptimizeTab::techniqueChanged(const QString&)

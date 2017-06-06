@@ -801,10 +801,10 @@ void GpuMeshCharacter::benchmarkSmoothers(
     updateMeshMeasures();
 }
 
-void GpuMeshCharacter::restructureMesh(int passCount)
+void GpuMeshCharacter::restructureMesh(const Schedule& schedule)
 {
     _meshCrew->topologist().restructureMesh(
-        *_mesh, *_meshCrew, passCount);
+        *_mesh, *_meshCrew, schedule);
 
     updateSampling();
     updateMeshMeasures();

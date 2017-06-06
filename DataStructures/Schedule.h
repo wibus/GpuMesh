@@ -12,6 +12,7 @@ public:
 
     bool topoOperationEnabled;
     int topoOperationPassCount;
+    int refinementSweepCount;
 
     int globalPassCount;
     int relocationPassCount;

@@ -37,6 +37,7 @@ protected slots:
 
     virtual void enableTopology(bool checked);
     virtual void topologyPassCount(int count);
+    virtual void refinementSweeps(int count);
     virtual void restructureMesh();
 
     virtual void techniqueChanged(const QString&);

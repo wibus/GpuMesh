@@ -20,7 +20,7 @@ public:
     virtual void restructureMesh(
             Mesh& mesh,
             const MeshCrew& crew,
-            unsigned int passCount) const override;
+            const Schedule& schedule) const override;
 
     virtual void printOptimisationParameters(
             const Mesh& mesh,
@@ -30,15 +30,18 @@ public:
 protected:    
     virtual size_t edgeSplitMerge(
             Mesh& mesh,
-            const MeshCrew& crew) const;
+            const MeshCrew& crew,
+            const Schedule& schedule) const;
 
     virtual size_t faceSwapping(
             Mesh& mesh,
-            const MeshCrew& crew) const;
+            const MeshCrew& crew,
+            const Schedule& schedule) const;
 
     virtual size_t edgeSwapping(
             Mesh& mesh,
-            const MeshCrew& crew) const;
+            const MeshCrew& crew,
+            const Schedule& schedule) const;
 
 private:
     template<typename T, typename V>
@@ -97,7 +100,6 @@ private:
     };
 
     std::vector<std::vector<RingConfig>> _ringConfigDictionary;
-    size_t _refinementCoarseningMaxPassCount;
     double _minAcceptableGenQuality;
 };
 

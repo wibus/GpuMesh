@@ -57,8 +57,9 @@ const double ADAPTATION_METRIC_K12 = 12;
 const double ADAPTATION_METRIC_K16 = 16;
 const double ADAPTATION_METRIC_K24 = 24;
 const double ADAPTATION_METRIC_A = 8;
-const double ADAPTATION_TOPO_PASS = 5;
-const double ADAPTATION_RELOC_PASS = 10;
+const int ADAPTATION_TOPO_PASS = 5;
+const int ADAPTATION_REFINEMENT_SWEEPS = 5;
+const int ADAPTATION_RELOC_PASS = 10;
 
 const int EVALUATION_THREAD_COUNT_GLSL = 16;
 const int EVALUATION_THREAD_COUNT_CUDA = 32;
@@ -295,8 +296,14 @@ void MastersTestSuite::runTests(
             double metricA = PRECISION_METRIC_As[a];
             QString name = QString(MESH_PRECISION_BASE.c_str()).arg(metricA);
 
+            _character.useSampler("Analytic");
             _character.setMetricAspectRatio(metricA);
-            _character.restructureMesh(ADAPTATION_TOPO_PASS);
+
+            Schedule schedule;
+            schedule.topoOperationEnabled = true;
+            schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
+            schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
+            _character.restructureMesh(schedule);
 
             if(!QFile(name).exists())
             {
@@ -314,11 +321,15 @@ void MastersTestSuite::runTests(
         {
             _character.generateMesh("Delaunay", "Sphere", size);
 
+            _character.useSampler("Analytic");
             _character.setMetricScaling(sizeToScale(size));
             _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
-            _character.useSampler("Analytic");
-            _character.restructureMesh(10);
+            Schedule schedule;
+            schedule.topoOperationEnabled = true;
+            schedule.topoOperationPassCount = 10;
+            schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
+            _character.restructureMesh(schedule);
 
             _character.saveMesh(name.toStdString());
         }
@@ -397,17 +408,22 @@ void MastersTestSuite::setupAdaptedCube(
     QCoreApplication::processEvents();
 
 
+    Schedule schedule;
+    schedule.topoOperationEnabled = true;
+    schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
+    schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
+
     for(double k=1.0; k < metricK; k *= 2.0)
     {
         _character.setMetricScaling(k);
-        _character.restructureMesh(ADAPTATION_TOPO_PASS);
+        _character.restructureMesh(schedule);
 
         QCoreApplication::processEvents();
     }
 
 
     _character.setMetricScaling(metricK);
-    _character.restructureMesh(ADAPTATION_TOPO_PASS);
+    _character.restructureMesh(schedule);
 
     QCoreApplication::processEvents();
 }

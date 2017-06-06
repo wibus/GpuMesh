@@ -5,6 +5,7 @@
 
 class Mesh;
 class MeshCrew;
+class Schedule;
 
 
 class AbstractTopologist
@@ -22,7 +23,7 @@ public:
     virtual void restructureMesh(
             Mesh& mesh,
             const MeshCrew& crew,
-            unsigned int passCount) const = 0;
+            const Schedule& schedule) const = 0;
 
     virtual void printOptimisationParameters(
             const Mesh& mesh,

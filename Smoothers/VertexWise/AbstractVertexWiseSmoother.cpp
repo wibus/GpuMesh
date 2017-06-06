@@ -64,8 +64,7 @@ void AbstractVertexWiseSmoother::smoothMeshSerial(
         if(isTopoEnabled)
         {
             verboseCuda = false;
-            crew.topologist().restructureMesh(mesh, crew,
-                _schedule.topoOperationPassCount);
+            crew.topologist().restructureMesh(mesh, crew, _schedule);
             verboseCuda = true;
         }
 
@@ -100,8 +99,7 @@ void AbstractVertexWiseSmoother::smoothMeshThread(
         if(isTopoEnabled)
         {
             verboseCuda = false;
-            crew.topologist().restructureMesh(mesh, crew,
-                _schedule.topoOperationPassCount);
+            crew.topologist().restructureMesh(mesh, crew, _schedule);
             verboseCuda = true;
         }
 
@@ -192,8 +190,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
         {
             verboseCuda = false;
             mesh.fetchGlslVertices();
-            crew.topologist().restructureMesh(mesh, crew,
-                _schedule.topoOperationPassCount);
+            crew.topologist().restructureMesh(mesh, crew, _schedule);
             mesh.updateGlslTopology();
             mesh.updateGlslVertices();
             verboseCuda = true;
@@ -401,8 +398,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
         {
             verboseCuda = false;
             mesh.fetchCudaVertices();
-            crew.topologist().restructureMesh(mesh, crew,
-                _schedule.topoOperationPassCount);
+            crew.topologist().restructureMesh(mesh, crew, _schedule);
             mesh.updateCudaTopology();
             mesh.updateCudaVertices();
             verboseCuda = true;

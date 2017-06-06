@@ -119,7 +119,7 @@ public:
 
 
     // Topology
-    virtual void restructureMesh(int passCount);
+    virtual void restructureMesh(const Schedule& schedule);
 
 
     // Render

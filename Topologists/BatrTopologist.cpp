@@ -9,6 +9,7 @@
 #include "Boundaries/AbstractBoundary.h"
 #include "DataStructures/Mesh.h"
 #include "DataStructures/MeshCrew.h"
+#include "DataStructures/Schedule.h"
 #include "Measurers/AbstractMeasurer.h"
 #include "Evaluators/AbstractEvaluator.h"
 
@@ -32,7 +33,6 @@ inline void appendElems(std::vector<MeshNeigElem>& elems, const std::vector<uint
 
 
 BatrTopologist::BatrTopologist() :
-    _refinementCoarseningMaxPassCount(5),
     _minAcceptableGenQuality(1e-6)
 {
     _ringConfigDictionary = {
@@ -75,7 +75,7 @@ bool BatrTopologist::needTopologicalModifications(
 void BatrTopologist::restructureMesh(
         Mesh& mesh,
         const MeshCrew& crew,
-        unsigned int passCount) const
+        const Schedule& schedule) const
 {
     if(mesh.tets.empty() || !(mesh.pris.empty() && mesh.hexs.empty()))
         return;
@@ -107,15 +107,15 @@ void BatrTopologist::restructureMesh(
     {
         size_t passOpCount = 0;
 
-        passOpCount += faceSwapping(mesh, crew);
-        passOpCount += edgeSwapping(mesh, crew);
-        passOpCount += edgeSplitMerge(mesh, crew);
+        passOpCount += faceSwapping(mesh, crew, schedule);
+        passOpCount += edgeSwapping(mesh, crew, schedule);
+        passOpCount += edgeSplitMerge(mesh, crew, schedule);
 
         ++passDone;
 
         if(passOpCount == 0 ||
            passOpCount == lastPassOpCount ||
-           passDone >= passCount)
+           passDone >= schedule.topoOperationPassCount)
         {
             break;
         }
@@ -135,7 +135,8 @@ void BatrTopologist::printOptimisationParameters(
 
 size_t BatrTopologist::edgeSplitMerge(
         Mesh& mesh,
-        const MeshCrew& crew) const
+        const MeshCrew& crew,
+        const Schedule& schedule) const
 {
     std::vector<MeshTet>& tets = mesh.tets;
     std::vector<MeshVert>& verts = mesh.verts;
@@ -152,7 +153,7 @@ size_t BatrTopologist::edgeSplitMerge(
     size_t passCount = 0;
     size_t vertMergeCount = 0;
     size_t edgeSplitCount = 0;
-    for(;passCount < _refinementCoarseningMaxPassCount && stillVertsToTry; ++passCount)
+    for(;passCount < schedule.refinementSweepCount && stillVertsToTry; ++passCount)
     {
         stillVertsToTry = false;
 
@@ -632,7 +633,8 @@ size_t BatrTopologist::edgeSplitMerge(
 
 size_t BatrTopologist::faceSwapping(
         Mesh& mesh,
-        const MeshCrew& crew) const
+        const MeshCrew& crew,
+        const Schedule& schedule) const
 {
     std::vector<MeshTet>& tets = mesh.tets;
     std::vector<MeshVert>& verts = mesh.verts;
@@ -834,7 +836,8 @@ size_t BatrTopologist::faceSwapping(
 
 size_t BatrTopologist::edgeSwapping(
         Mesh& mesh,
-        const MeshCrew& crew) const
+        const MeshCrew& crew,
+        const Schedule& schedule) const
 {
     std::vector<MeshTet>& tets = mesh.tets;
     std::vector<MeshVert>& verts = mesh.verts;
