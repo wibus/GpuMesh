@@ -22,6 +22,8 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
     _ui->setupUi(this);
     _ui->horizontalLayout->addWidget(_view.get());
 
+    setWindowTitle("GpuMesh");
+
     _play->addView(_view);
 
     _meshTab.reset(new MeshTab(_ui, character));
