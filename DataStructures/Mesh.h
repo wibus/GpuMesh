@@ -127,24 +127,24 @@ struct MeshPyr
 {
     uint v[5];
     double value;
-    mutable uint c[5];
+    mutable uint c[4];
 
 
     inline MeshPyr() :
         v{0, 0, 0, 0, 0},
-        c{0, 0, 0, 0, 0}
+        c{0, 0, 0, 0}
     {}
     inline MeshPyr(uint v0, uint v1, uint v2,
                    uint v3, uint v4) :
         v{v0, v1, v2, v3, v4},
-        c{0,  0,  0,  0,  0}
+        c{0,  0,  0,  0}
     {}
     inline MeshPyr(uint v0, uint v1, uint v2,
                    uint v3, uint v4,
                    uint c0, uint c1, uint c2,
-                   uint c3, uint c4) :
+                   uint c3) :
         v{v0, v1, v2, v3, v4},
-        c{c0, c1, c2, c3, c4}
+        c{c0, c1, c2, c3}
     {}
 
     inline uint operator[] (uint i) { return v[i]; }

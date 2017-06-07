@@ -639,6 +639,22 @@ void NodeGroups::dispatchCpuWorkgroups()
             }
         }
     }
+
+
+//    for(size_t w=0; w < _cpuWorkerCount; ++w)
+//    {
+//        std::cout << w+1;
+//        for(ParallelGroup& group : _parallelGroups)
+//            std::cout << " & " << group.allDispatchedNodes[w].size();
+//        std::cout << " \\\\" << std::endl;
+//    }
+
+
+//    std::cout << std::endl << std::endl;
+//    const ParallelGroup& group = _parallelGroups[7];
+//    int vCount = group.allDispatchedNodes[2].size();
+//    for(int v = 0; v < std::min(vCount, 8); ++v)
+//        std::cout << group.allDispatchedNodes[2][v] << " & ";
 }
 
 void NodeGroups::dispatchGpuWorkgroups()
