@@ -2,6 +2,10 @@
 
 #include <GLM/gtc/matrix_transform.hpp>
 
+#include <QImage>
+#include <QPainter>
+#include <QLabel>
+
 #include <CellarWorkbench/DataStructure/Grid3D.h>
 #include <CellarWorkbench/GL/GlProgram.h>
 #include <CellarWorkbench/Misc/Log.h>
@@ -346,6 +350,73 @@ void TextureSampler::setReferenceMesh(
             }
         }
     }
+
+    /*
+    int zoom = 4;
+    glm::dvec2 zoom2 = glm::dvec2(size*zoom);
+    int halfZ = size.z / 2;
+    QImage image(size.x*zoom, size.y*zoom, QImage::Format_RGB32);
+    QPainter painter(&image);
+    QBrush brush(QColor(70, 70, 70));
+
+    painter.fillRect(0, 0, size.x*zoom, size.y*zoom, brush);
+
+    // Metric
+    for(int j=0; j< size.y; ++j)
+    {
+        for(int i=0; i < size.x; ++i)
+        {
+            double m = _grid->at(i,j,halfZ)[0][0];
+            if(m != 1.0)
+            {
+                brush.setColor(QColor((26.0 / sqrt(m))*255, 0, 0));
+                painter.fillRect(i*zoom, j*zoom, zoom, zoom, brush);
+            }
+        }
+    }
+
+    // Grid
+    painter.setPen(Qt::black);
+    for(int j=0; j< size.y; ++j)
+    {
+        for(int i=0; i < size.x; ++i)
+        {
+            painter.drawLine(i*zoom, 0, i*zoom, size.y*zoom);
+            painter.drawLine(0, j*zoom, size.x*zoom, j*zoom);
+        }
+    }
+
+    // Geometry
+    std::vector<glm::dvec2> geo;
+    geo.push_back(glm::dvec2(-1,0.2));
+    geo.push_back(glm::dvec2(-1,0.8));
+    geo.push_back(glm::dvec2(0.5,0.8));
+    for(double a=0; a < glm::pi<double>(); a+=glm::pi<double>()/100.0)
+        geo.push_back(glm::dvec2(0.5 + 0.8*sin(a), 0.8*cos(a)));
+    geo.push_back(glm::dvec2(0.5,-0.8));
+    geo.push_back(glm::dvec2(-1,-0.8));
+    geo.push_back(glm::dvec2(-1,-0.2));
+    geo.push_back(glm::dvec2(0.5,-0.2));
+    for(double a=0; a < glm::pi<double>(); a+=glm::pi<double>()/100.0)
+        geo.push_back(glm::dvec2(0.5 + 0.2*sin(a), -0.2*cos(a)));
+    geo.push_back(glm::dvec2(0.5,0.2));
+    geo.push_back(glm::dvec2(-1,0.2));
+
+    QPen pen(Qt::cyan);
+    pen.setWidthF(2.0);
+    painter.setPen(pen);
+    for(int i=0; i < geo.size(); ++i)
+    {
+        int ip = (i+1) % geo.size();
+        glm::dvec2 x1 = glm::dvec2(_transform * glm::dvec4(geo[i], 0, 1)) * zoom2;
+        glm::dvec2 x2 = glm::dvec2(_transform * glm::dvec4(geo[ip], 0, 1)) * zoom2;
+        painter.drawLine(x1.x, x1.y, x2.x, x2.y);
+    }
+
+    QLabel* label = new QLabel();
+    label->setPixmap(QPixmap::fromImage(image));
+    label->show();
+    */
 }
 
 MeshMetric TextureSampler::metricAt(
@@ -463,7 +534,7 @@ void TextureSampler::meshGrid(TextureGrid& grid, Mesh& mesh)
                         xt + yt + zt,
                         xb + yt + zt);
 
-                    hex.value = glm::sqrt(25.0 / _grid->at(cellId)[0][0]);
+                    hex.value = 26.0 / sqrt(_grid->at(cellId)[0][0]);
                     mesh.hexs.push_back(hex);
                 }
             }
