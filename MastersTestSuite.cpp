@@ -879,7 +879,7 @@ void MastersTestSuite::metricPrecision(
         "Analytic",
         "Local",
         "Texture",
-        "Kd-Tree"
+        //"Kd-Tree"
     };
 
     Schedule schedule;
@@ -1133,7 +1133,7 @@ void MastersTestSuite::metricCost(
         "Analytic",
         "Local",
         "Texture",
-        "Kd-Tree"
+        //"Kd-Tree"
     };
 
     vector<string> implementations = {
