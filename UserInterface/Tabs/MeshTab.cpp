@@ -83,7 +83,7 @@ void MeshTab::saveMesh()
 void MeshTab::loadMesh()
 {
     QString fileName = QFileDialog::getOpenFileName(
-        nullptr, "Load Mesh", "resources/reports/mesh/");
+        nullptr, "Load Mesh", "resources/data/");
     if(!fileName.isNull())
     {
         _character->loadMesh(fileName.toStdString());

@@ -40,6 +40,7 @@
 #include "Serialization/CgnsDeserializer.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonDeserializer.h"
+#include "Serialization/PieDeserializer.h"
 #include "Serialization/StlSerializer.h"
 #include "Smoothers/VertexWise/SpringLaplaceSmoother.h"
 #include "Smoothers/VertexWise/QualityLaplaceSmoother.h"
@@ -167,6 +168,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableDeserializers.setContent({
         {string("cgns"), shared_ptr<AbstractDeserializer>(new CgnsDeserializer())},
         {string("json"), shared_ptr<AbstractDeserializer>(new JsonDeserializer())},
+        {string("pie"), shared_ptr<AbstractDeserializer>(new PieDeserializer())},
     });
 }
 

@@ -72,7 +72,8 @@ SET(GpuMesh_SERIALIZATION_HEADERS
     ${GpuMesh_SRC_DIR}/Serialization/JsonSerializer.h
     ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.h
     ${GpuMesh_SRC_DIR}/Serialization/StlSerializer.h
-    ${GpuMesh_SRC_DIR}/Serialization/CgnsDeserializer.h)
+    ${GpuMesh_SRC_DIR}/Serialization/CgnsDeserializer.h
+    ${GpuMesh_SRC_DIR}/Serialization/PieDeserializer.h)
 
 SET(GpuMesh_VERTEXWISE_HEADERS
     ${GpuMesh_SRC_DIR}/Smoothers/VertexWise/AbstractVertexWiseSmoother.h
@@ -202,7 +203,8 @@ SET(GpuMesh_SERIALIZATION_SOURCES
     ${GpuMesh_SRC_DIR}/Serialization/JsonSerializer.cpp
     ${GpuMesh_SRC_DIR}/Serialization/JsonDeserializer.cpp
     ${GpuMesh_SRC_DIR}/Serialization/StlSerializer.cpp
-    ${GpuMesh_SRC_DIR}/Serialization/CgnsDeserializer.cpp)
+    ${GpuMesh_SRC_DIR}/Serialization/CgnsDeserializer.cpp
+    ${GpuMesh_SRC_DIR}/Serialization/PieDeserializer.cpp)
 
 
 SET(GpuMesh_VERTEXWISE_SOURCES

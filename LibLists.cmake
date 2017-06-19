@@ -23,9 +23,11 @@ FIND_PACKAGE(ExperimentalTheatre REQUIRED)
 SET(GpuMesh_LIBRARIES
     ${ExTh_LIBRARIES}
     pthread
-    cgns)
+    cgns
+    "${GpuMesh_SRC_DIR}/../common/apps/Linux_5.4.0/lib/libPir.a")
 SET(GpuMesh_INCLUDE_DIRS
     ${GpuMesh_SRC_DIR}
-    ${ExTh_INCLUDE_DIRS})
+    ${ExTh_INCLUDE_DIRS}
+    "${GpuMesh_SRC_DIR}/../common/apps/Linux_5.4.0/include")
 SET(GpuMesh_QT_MODULES
     OpenGL)
