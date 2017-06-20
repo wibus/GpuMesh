@@ -10,6 +10,8 @@
 #include "Boundaries/AbstractBoundary.h"
 #include "Boundaries/Constraints/VertexConstraint.h"
 
+#include "Samplers/ComputedSampler.h"
+
 
 using namespace std;
 using namespace cellar;
@@ -64,9 +66,9 @@ void logInfo(const std::string& msg)
     getLog().postMessage(new Message('I', false, msg, "PieDeserializer"));
 }
 
-bool PieDeserializer::deserialize(
-        const std::string& fileName,
-        Mesh& mesh) const
+bool PieDeserializer::deserialize(const std::string& fileName,
+        Mesh& mesh,
+        const std::shared_ptr<AbstractSampler> &computedSampler) const
 {
     PI_FICHIER_IMPORT pifich(fileName, "", 0);
 
@@ -226,6 +228,9 @@ bool PieDeserializer::deserialize(
             }
         }
     }
+
+    static_cast<ComputedSampler*>(computedSampler.get())
+        ->setComputedMetrics(mesh,vector<MeshMetric>(mesh.verts.size()));
 
     return true;
 }

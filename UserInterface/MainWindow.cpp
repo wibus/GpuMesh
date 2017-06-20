@@ -31,6 +31,9 @@ MainWindow::MainWindow(const std::shared_ptr<scaena::Play>& play,
     _optimizeTab.reset(new OptimizeTab(_ui, character));
     _renderTab.reset(new RenderTab(_ui, character));
 
+    connect(_meshTab.get(),     &MeshTab::metricLoaded,
+            _evaluateTab.get(), &EvaluateTab::metricLoaded);
+
     resize(1080, 780);
     move(0, 0);
 }

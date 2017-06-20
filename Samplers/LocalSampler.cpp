@@ -24,6 +24,15 @@ void updateCudaRefMetrics(
         const std::vector<GpuMetric>& refMetricsBuff);
 
 
+LocalSampler::LocalSampler(const std::string& name) :
+    AbstractSampler(name, ":/glsl/compute/Sampling/Local.glsl", installCudaLocalSampler),
+    _debugMesh(nullptr),
+    _localTetsSsbo(0),
+    _refVertsSsbo(0),
+    _refMetricsSsbo(0)
+{
+}
+
 LocalSampler::LocalSampler() :
     AbstractSampler("Local", ":/glsl/compute/Sampling/Local.glsl", installCudaLocalSampler),
     _debugMesh(nullptr),

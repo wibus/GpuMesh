@@ -21,6 +21,9 @@ public:
     EvaluateTab(Ui::MainWindow* ui, const std::shared_ptr<GpuMeshCharacter>& character);
     virtual ~EvaluateTab();
 
+public slots:
+    virtual void metricLoaded();
+
 protected slots:
     virtual void shapeMeasureTypeChanged(const QString& type);
     virtual void implementationChanged(const QString&);

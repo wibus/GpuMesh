@@ -8,6 +8,7 @@
 
 class Mesh;
 class AbstractBoundary;
+class AbstractSampler;
 
 
 class AbstractDeserializer
@@ -20,7 +21,8 @@ public:
 
     virtual bool deserialize(
             const std::string& fileName,
-            Mesh& mesh) const = 0;
+            Mesh& mesh,
+            const std::shared_ptr<AbstractSampler>& computedSampler) const = 0;
 
 protected:
     std::shared_ptr<AbstractBoundary> boundary(const std::string& name) const;

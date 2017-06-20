@@ -15,7 +15,8 @@ public:
 
     virtual bool deserialize(
             const std::string& fileName,
-            Mesh& mesh) const override;
+            Mesh& mesh,
+            const std::shared_ptr<AbstractSampler>& computedSampler) const override;
 
 protected:
     bool readTag(std::istream &is, std::string& str) const;

@@ -11,6 +11,9 @@ class Triangle;
 
 class LocalSampler : public AbstractSampler
 {
+protected:
+    LocalSampler(const std::string& name);
+
 public:
     LocalSampler();
     virtual ~LocalSampler();
@@ -42,12 +45,16 @@ public:
     const std::vector<MeshLocalTet>& localTets() const;
 
 
-private:
-    std::shared_ptr<Mesh> _debugMesh;
-
+protected :
     std::vector<MeshVert> _refVerts;
     std::vector<MeshMetric>   _refMetrics;
     std::vector<MeshLocalTet> _localTets;
+
+
+private:
+    friend class ComputedSampler;
+
+    std::shared_ptr<Mesh> _debugMesh;
 
     mutable GLuint _localTetsSsbo;
     mutable GLuint _refVertsSsbo;

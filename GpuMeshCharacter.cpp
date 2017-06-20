@@ -26,6 +26,7 @@
 #include "Samplers/TextureSampler.h"
 #include "Samplers/KdTreeSampler.h"
 #include "Samplers/LocalSampler.h"
+#include "Samplers/ComputedSampler.h"
 #include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/MetricConformityEvaluator.h"
 #include "Measurers/MetricFreeMeasurer.h"
@@ -114,6 +115,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
         {string("Texture"),  shared_ptr<AbstractSampler>(new TextureSampler())},
         {string("Kd-Tree"),  shared_ptr<AbstractSampler>(new KdTreeSampler())},
         {string("Local"),    shared_ptr<AbstractSampler>(new LocalSampler())},
+        {string("Computed"), shared_ptr<AbstractSampler>(new ComputedSampler())},
     });
 
     _availableEvaluators.setDefault("Metric Conformity");
@@ -537,7 +539,7 @@ void GpuMeshCharacter::saveMesh(
     }
 }
 
-void GpuMeshCharacter::loadMesh(
+bool GpuMeshCharacter::loadMesh(
         const std::string& fileName)
 {
     printStep("Loading mesh from " + fileName);
@@ -548,12 +550,16 @@ void GpuMeshCharacter::loadMesh(
     {
         _mesh->clear();
 
-        if(deserializer->deserialize(fileName, *_mesh))
+        std::shared_ptr<AbstractSampler> computedSampler;
+        _availableSamplers.select("Computed", computedSampler);
+        if(deserializer->deserialize(fileName, *_mesh, computedSampler))
         {
             _mesh->compileTopology();
 
             updateSampling();
             updateMeshMeasures();
+
+            return true;
         }
         else
         {
@@ -561,6 +567,8 @@ void GpuMeshCharacter::loadMesh(
                 "An error occured while loading the mesh.", "GpuMeshCharacter"));
         }
     }
+
+    return false;
 }
 
 void GpuMeshCharacter::evaluateMesh(

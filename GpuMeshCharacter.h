@@ -79,7 +79,7 @@ public:
     virtual void saveMesh(
             const std::string& fileName);
 
-    virtual void loadMesh(
+    virtual bool loadMesh(
             const std::string& fileName);
 
 

@@ -7,6 +7,8 @@
 #include "Boundaries/AbstractBoundary.h"
 #include "Boundaries/Constraints/VertexConstraint.h"
 
+#include "Samplers/ComputedSampler.h"
+
 
 using namespace std;
 using namespace cellar;
@@ -51,9 +53,9 @@ CgnsDeserializer::~CgnsDeserializer()
 
 }
 
-bool CgnsDeserializer::deserialize(
-        const std::string& fileName,
-        Mesh& mesh) const
+bool CgnsDeserializer::deserialize(const std::string& fileName,
+        Mesh& mesh,
+        const std::shared_ptr<AbstractSampler> &computedSampler) const
 {
     string indent = "";
 
@@ -495,6 +497,9 @@ bool CgnsDeserializer::deserialize(
 
 
     cg_close(fn);
+
+    static_cast<ComputedSampler*>(computedSampler.get())
+        ->setComputedMetrics(mesh,vector<MeshMetric>(mesh.verts.size()));
 
     return true;
 }

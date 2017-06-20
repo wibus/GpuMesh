@@ -21,6 +21,9 @@ public:
     MeshTab(Ui::MainWindow* ui, const std::shared_ptr<GpuMeshCharacter>& character);
     virtual ~MeshTab();
 
+signals:
+    void metricLoaded();
+
 protected slots:
     virtual void techniqueChanged(const QString&);
     virtual void generateMesh();
