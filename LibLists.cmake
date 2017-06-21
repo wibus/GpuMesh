@@ -24,7 +24,8 @@ SET(GpuMesh_LIBRARIES
     ${ExTh_LIBRARIES}
     pthread
     cgns
-    "${GpuMesh_SRC_DIR}/../common/apps/Linux_5.4.0/lib/libPir.a")
+    optimized "${GpuMesh_SRC_DIR}/../common/apps/Linux_5.4.0/lib/libPir.a"
+    debug "${GpuMesh_SRC_DIR}/../common/apps/dbgLinux_5.4.0/lib/libPir.a")
 SET(GpuMesh_INCLUDE_DIRS
     ${GpuMesh_SRC_DIR}
     ${ExTh_INCLUDE_DIRS}

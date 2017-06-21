@@ -5,6 +5,8 @@
 #include <Pir/pifich.h>
 #include <Pir/pmzone.h>
 #include <Pir/ptintgeo.h>
+#include <Pir/PS_SOLUTION.h>
+#include <Pir/PS_VARIABLE.h>
 #include <Pir/pmelement.h>
 
 #include "Boundaries/AbstractBoundary.h"
@@ -229,8 +231,46 @@ bool PieDeserializer::deserialize(const std::string& fileName,
         }
     }
 
+    int vertCount = mesh.verts.size();
+    vector<MeshMetric> metrics(vertCount);
+    int nbsol = pifich.get_nbsolutions();
+
+    double metricScale = (1.0e6) / (scale*scale);
+
+    if(nbsol > 0)
+    {
+        PS_SOLUTION* sol = pifich.get_solution(0);
+
+        int nbVar = sol->get_nbvariables();
+        for(int i=0; i < nbVar; ++i)
+        {
+            PS_VARIABLE* var = sol->get_variable(i);
+            int nbComp = var->get_nbcomposantes();
+
+            logInfo(var->get_nomDeLIdentificateur() + " : " +
+                    to_string(nbComp));
+
+            if(nbComp == 6)
+            {
+                for(int v=0; v < vertCount; ++v)
+                {
+                    double h[6];
+                    var->get_champ_valeurs()->get_champ_donnees()
+                            ->v_get_groupe(v, h);
+
+                    metrics[v] = MeshMetric(
+                        h[0], h[1], h[2],
+                        h[1], h[3], h[4],
+                        h[2], h[4], h[5]) * metricScale;
+                }
+
+            }
+        }
+
+    }
+
     static_cast<ComputedSampler*>(computedSampler.get())
-        ->setComputedMetrics(mesh,vector<MeshMetric>(mesh.verts.size()));
+        ->setComputedMetrics(mesh, metrics);
 
     return true;
 }
