@@ -33,7 +33,6 @@ const string DATA_MESH_PATH = "resources/data/";
 
 const string MESH_SPHERE_100K = RESULT_MESH_PATH + "Sphere (N=100K).json";
 const string MESH_TETCUBE_K5 = RESULT_MESH_PATH + "TetCube (K=5).json";
-const string MESH_TETCUBE_K12 = RESULT_MESH_PATH + "TetCube (K=12).json";
 const string MESH_TETCUBE_K16 = RESULT_MESH_PATH + "TetCube (K=16).json";
 const string MESH_TETCUBE_K24 = RESULT_MESH_PATH + "TetCube (K=24).json";
 const string MESH_HEXCUBE_10K = RESULT_MESH_PATH + "HexCube (N=10K).json";
@@ -151,7 +150,6 @@ MastersTestSuite::MastersTestSuite(
     _meshNames = {
         {MESH_SPHERE_100K, "Sphere (N=100K)"},
         {MESH_TETCUBE_K5, "TetCube (K=5)"},
-        {MESH_TETCUBE_K12, "TetCube (K=12)"},
         {MESH_TETCUBE_K16, "TetCube (K=16)"},
         {MESH_TETCUBE_K24, "TetCube (K=24)"},
         {MESH_HEXCUBE_10K, "HexCube (N=10K)"},
@@ -204,15 +202,6 @@ void MastersTestSuite::runTests(
             ADAPTATION_METRIC_A);
 
         _character.saveMesh(MESH_TETCUBE_K5);
-    }
-
-    if(!QFile(MESH_TETCUBE_K12.c_str()).exists())
-    {
-        setupAdaptedCube(
-            ADAPTATION_METRIC_K12,
-            ADAPTATION_METRIC_A);
-
-        _character.saveMesh(MESH_TETCUBE_K12);
     }
 
     if(!QFile(MESH_TETCUBE_K16.c_str()).exists())
@@ -289,7 +278,7 @@ void MastersTestSuite::runTests(
 
     if(!QFile(QString(MESH_PRECISION_BASE.c_str()).arg(PRECISION_METRIC_As.back())).exists())
     {
-        setupAdaptedCube(ADAPTATION_METRIC_K12, PRECISION_METRIC_As.front());
+        setupAdaptedCube(ADAPTATION_METRIC_K16, PRECISION_METRIC_As.front());
 
         for(int a=0; a < PRECISION_METRIC_As.size(); ++a)
         {
@@ -889,7 +878,7 @@ void MastersTestSuite::metricPrecision(
 
 
     // Setup test
-    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+    _character.setMetricScaling(ADAPTATION_METRIC_K16);
 
     _character.useEvaluator(evaluator);
 
@@ -966,10 +955,10 @@ void MastersTestSuite::texturePrecision(
         const string& testName)
 {
     // Test case description
-    double metricA = ADAPTATION_METRIC_A;
-    double metricK = PRECISION_METRIC_As[3];
+    double metricK = ADAPTATION_METRIC_K16;
+    double metricA = PRECISION_METRIC_As.back();
     string mesh = QString(MESH_PRECISION_BASE.c_str())
-            .arg(metricK).toStdString();
+            .arg(metricA).toStdString();
 
     string implementation = "Thread";
     string smoother = "Gradient Descent";

@@ -110,7 +110,7 @@ void EvaluateTab::benchmarkImplementations()
 
 void EvaluateTab::metricLoaded()
 {
-    _ui->discretizationTypeMenu->setCurrentText("Computed");
+    //_ui->discretizationTypeMenu->setCurrentText("Computed");
 }
 
 void EvaluateTab::enableAnisotropy(bool enabled)
