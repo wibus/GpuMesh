@@ -13,9 +13,15 @@ public:
 
     virtual bool isMetricWise() const override;
 
+    virtual bool useComputedMetric() const override;
 
-    virtual void setReferenceMesh(
+
+    virtual void updateAnalyticalMetric(
             const Mesh& mesh) override;
+
+    virtual void updateComputedMetric(
+            const Mesh& mesh,
+            const std::shared_ptr<LocalSampler>& sampler) override;
 
     virtual MeshMetric metricAt(
             const glm::dvec3& position,

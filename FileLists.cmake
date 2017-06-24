@@ -41,7 +41,8 @@ SET(GpuMesh_SAMPLERS_HEADERS
     ${GpuMesh_SRC_DIR}/Samplers/KdTreeSampler.h
     ${GpuMesh_SRC_DIR}/Samplers/UniformSampler.h
     ${GpuMesh_SRC_DIR}/Samplers/LocalSampler.h
-    ${GpuMesh_SRC_DIR}/Samplers/ComputedSampler.h)
+    ${GpuMesh_SRC_DIR}/Samplers/ComputedLocSampler.h
+    ${GpuMesh_SRC_DIR}/Samplers/ComputedTexSampler.h)
 
 SET(GpuMesh_EVALUATORS_HEADERS
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.h
@@ -173,7 +174,8 @@ SET(GpuMesh_SAMPLERS_SOURCES
     ${GpuMesh_SRC_DIR}/Samplers/KdTreeSampler.cpp
     ${GpuMesh_SRC_DIR}/Samplers/UniformSampler.cpp
     ${GpuMesh_SRC_DIR}/Samplers/LocalSampler.cpp
-    ${GpuMesh_SRC_DIR}/Samplers/ComputedSampler.cpp)
+    ${GpuMesh_SRC_DIR}/Samplers/ComputedLocSampler.cpp
+    ${GpuMesh_SRC_DIR}/Samplers/ComputedTexSampler.cpp)
 
 SET(GpuMesh_EVALUATORS_SOURCES
     ${GpuMesh_SRC_DIR}/Evaluators/AbstractEvaluator.cpp

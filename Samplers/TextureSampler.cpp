@@ -80,6 +80,13 @@ void updateCudaSamplerTextures(
         const glm::ivec3 texDims);
 
 
+TextureSampler::TextureSampler(const std::string& name) :
+    AbstractSampler(name, ":/glsl/compute/Sampling/Texture.glsl", installCudaTextureSampler),
+    _topLineTex(0),
+    _sideTriTex(0)
+{
+}
+
 TextureSampler::TextureSampler() :
     AbstractSampler("Texture", ":/glsl/compute/Sampling/Texture.glsl", installCudaTextureSampler),
     _topLineTex(0),
@@ -98,6 +105,11 @@ TextureSampler::~TextureSampler()
 bool TextureSampler::isMetricWise() const
 {
     return true;
+}
+
+bool TextureSampler::useComputedMetric() const
+{
+    return false;
 }
 
 void TextureSampler::setPluginGlslUniforms(
@@ -242,8 +254,27 @@ void TextureSampler::clearCudaMemory(const Mesh& mesh) const
         topLineBuff, sideTriBuff, _transform, size);
 }
 
-void TextureSampler::setReferenceMesh(
+void TextureSampler::updateAnalyticalMetric(
         const Mesh& mesh)
+{
+    LocalSampler localSampler;
+    localSampler.setScaling(scaling());
+    localSampler.setAspectRatio(aspectRatio());
+
+    localSampler.updateAnalyticalMetric(mesh);
+
+    buildGrid(mesh, localSampler);
+}
+
+void TextureSampler::updateComputedMetric(
+        const Mesh& mesh,
+        const std::shared_ptr<LocalSampler>& sampler)
+{
+}
+
+void TextureSampler::buildGrid(
+        const Mesh& mesh,
+        LocalSampler& sampler)
 {
     _debugMesh.reset();
 
@@ -269,7 +300,7 @@ void TextureSampler::setReferenceMesh(
     if(depth > 0)
         cellCount = depth * depth * depth;
 
-    double alpha = glm::pow(cellCount / (extents.x*extents.y*extents.z), 1/3.0);
+    double alpha = glm::pow(2.0 * cellCount / (extents.x*extents.y*extents.z), 1/3.0);
     glm::ivec3 size = glm::round(glm::max(glm::dvec3(1), alpha * extents));
 
     _transform = glm::scale(glm::mat4(),
@@ -291,12 +322,7 @@ void TextureSampler::setReferenceMesh(
         "TextureSampler"));
 
 
-    LocalSampler localSampler;
-    localSampler.setScaling(scaling());
-    localSampler.setAspectRatio(aspectRatio());
-
-    localSampler.setReferenceMesh(mesh);
-    const auto& localTets = localSampler.localTets();
+    const auto& localTets = sampler.localTets();
 
     std::vector<ElemValue> elemValues;
     size_t tetCount = localTets.size();
@@ -344,7 +370,7 @@ void TextureSampler::setReferenceMesh(
                     glm::dvec3 pos = _grid->minBounds + cellExtents *
                         (glm::dvec3(id) + glm::dvec3(0.5));
 
-                    _grid->at(id) = localSampler.metricAt(pos, ev.cacheTetId);
+                    _grid->at(id) = sampler.metricAt(pos, ev.cacheTetId);
                     cellIsSet.set(i, j, k, true);
                 }
             }

@@ -61,6 +61,11 @@ bool KdTreeSampler::isMetricWise() const
     return true;
 }
 
+bool KdTreeSampler::useComputedMetric() const
+{
+    return false;
+}
+
 void KdTreeSampler::updateGlslData(const Mesh& mesh) const
 {
     if(_kdNodesSsbo == 0)
@@ -108,7 +113,7 @@ void KdTreeSampler::clearCudaMemory(const Mesh& mesh) const
     }
 }
 
-void KdTreeSampler::setReferenceMesh(
+void KdTreeSampler::updateAnalyticalMetric(
         const Mesh& mesh)
 {
     size_t vertCount = mesh.verts.size();
@@ -161,7 +166,7 @@ void KdTreeSampler::setReferenceMesh(
         LocalSampler localSampler;
         localSampler.setScaling(scaling());
         localSampler.setAspectRatio(aspectRatio());
-        localSampler.setReferenceMesh(mesh);
+        localSampler.updateAnalyticalMetric(mesh);
 
         // Fill Sampler's data strucutres
         glm::dvec3 minBounds, maxBounds;
@@ -202,6 +207,13 @@ void KdTreeSampler::setReferenceMesh(
        t.value = m[0][0];
     }
     */
+}
+
+void KdTreeSampler::updateComputedMetric(
+        const Mesh& mesh,
+        const std::shared_ptr<LocalSampler>& sampler)
+{
+
 }
 
 MeshMetric KdTreeSampler::metricAt(

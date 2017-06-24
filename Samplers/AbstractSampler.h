@@ -16,6 +16,9 @@ struct MeshTet;
 struct MeshPri;
 struct MeshHex;
 struct MeshVert;
+
+class LocalSampler;
+
 typedef glm::dmat3 MeshMetric;
 
 
@@ -32,6 +35,8 @@ public:
 
 
     virtual bool isMetricWise() const = 0;
+
+    virtual bool useComputedMetric() const = 0;
 
 
     double scaling() const;
@@ -69,8 +74,12 @@ public:
     virtual void clearCudaMemory(const Mesh& mesh) const;
 
 
-    virtual void setReferenceMesh(
-            const Mesh& mesh) = 0;
+    virtual void updateAnalyticalMetric(
+            const Mesh& mesh) = 0;    
+
+    virtual void updateComputedMetric(
+            const Mesh& mesh,
+            const std::shared_ptr<LocalSampler>& sampler) = 0;
 
     virtual MeshMetric metricAt(
             const glm::dvec3& position,

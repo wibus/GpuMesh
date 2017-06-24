@@ -70,30 +70,34 @@ protected:
 
     void output(
             const std::string& title,
-            const std::vector<std::pair<std::string, int>> header,
-            const std::vector<std::pair<std::string, int>> subHeader,
-            const std::vector<std::string> lineNames,
+            const std::vector<std::pair<std::string, int>>& header,
+            const std::vector<std::pair<std::string, int>>& subHeader,
+            const std::vector<std::string>& lineNames,
+            const std::vector<int>& columnPrecision,
             const cellar::Grid2D<double>& data);
 
     void saveCsvTable(
             const std::string& title,
-            const std::vector<std::pair<std::string, int>> header,
-            const std::vector<std::pair<std::string, int>> subHeader,
-            const std::vector<std::string> lineNames,
+            const std::vector<std::pair<std::string, int>>& header,
+            const std::vector<std::pair<std::string, int>>& subHeader,
+            const std::vector<std::string>& lineNames,
+            const std::vector<int>& columnPrecision,
             const cellar::Grid2D<double>& data);
 
     void saveLatexTable(
             const std::string& title,
-            const std::vector<std::pair<std::string, int>> header,
-            const std::vector<std::pair<std::string, int>> subHeader,
-            const std::vector<std::string> lineNames,
+            const std::vector<std::pair<std::string, int>>& header,
+            const std::vector<std::pair<std::string, int>>& subHeader,
+            const std::vector<std::string>& lineNames,
+            const std::vector<int>& columnPrecision,
             const cellar::Grid2D<double>& data);
 
     void saveReportTable(
             const std::string& title,
-            const std::vector<std::pair<std::string, int>> header,
-            const std::vector<std::pair<std::string, int>> subHeader,
-            const std::vector<std::string> lineNames,
+            const std::vector<std::pair<std::string, int>>& header,
+            const std::vector<std::pair<std::string, int>>& subHeader,
+            const std::vector<std::string>& lineNames,
+            const std::vector<int>& columnPrecision,
             const cellar::Grid2D<double>& data);
 
 

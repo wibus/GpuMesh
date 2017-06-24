@@ -21,6 +21,8 @@ public:
 
     virtual bool isMetricWise() const override;
 
+    virtual bool useComputedMetric() const override;
+
 
     virtual void updateGlslData(const Mesh& mesh) const override;
 
@@ -31,8 +33,13 @@ public:
     virtual void clearCudaMemory(const Mesh& mesh) const override;
 
 
-    virtual void setReferenceMesh(
+    virtual void updateAnalyticalMetric(
             const Mesh& mesh) override;
+
+    virtual void updateComputedMetric(
+            const Mesh& mesh,
+            const std::shared_ptr<LocalSampler>& sampler) override;
+
 
     virtual MeshMetric metricAt(
             const glm::dvec3& position,
@@ -43,6 +50,10 @@ public:
     virtual const Mesh& debugMesh() override;
 
     const std::vector<MeshLocalTet>& localTets() const;
+
+    void buildBackgroundMesh(
+            const Mesh& mesh,
+            const std::vector<MeshMetric>& metrics);
 
 
 protected :

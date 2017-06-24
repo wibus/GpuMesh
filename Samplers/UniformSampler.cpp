@@ -24,8 +24,20 @@ bool UniformSampler::isMetricWise() const
     return false;
 }
 
-void UniformSampler::setReferenceMesh(
+bool UniformSampler::useComputedMetric() const
+{
+    return false;
+}
+
+void UniformSampler::updateAnalyticalMetric(
         const Mesh& mesh)
+{
+
+}
+
+void UniformSampler::updateComputedMetric(
+        const Mesh& mesh,
+        const std::shared_ptr<LocalSampler>& sampler)
 {
 
 }

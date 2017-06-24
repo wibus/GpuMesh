@@ -1,9 +1,10 @@
 #include "MastersTestSuite.h"
 
 #include <set>
-#include <fstream>
 #include <chrono>
+#include <fstream>
 #include <sstream>
+#include <iomanip>
 
 #include <QDir>
 #include <QString>
@@ -65,6 +66,11 @@ const int EVALUATION_THREAD_COUNT_CUDA = 32;
 
 const int SMOOTHING_THREAD_COUNT_GLSL = 16;
 const int SMOOTHING_THREAD_COUNT_CUDA = 32;
+
+const int QUAL_MIN_PREC = 4;
+const int QUAL_MEAN_PREC = 3;
+const int TIME_PREC = 2;
+const int ACC_PREC = 1;
 
 string testNumber(int n)
 {
@@ -619,21 +625,23 @@ void MastersTestSuite::saveReportTable(
 
 void MastersTestSuite::output(
         const std::string& title,
-        const std::vector<std::pair<std::string, int>> header,
-        const std::vector<std::pair<std::string, int>> subHeader,
-        const std::vector<std::string> lineNames,
+        const std::vector<std::pair<std::string, int>>& header,
+        const std::vector<std::pair<std::string, int>>& subHeader,
+        const std::vector<std::string>& lineNames,
+        const std::vector<int>& columnPrecision,
         const cellar::Grid2D<double>& data)
 {
-    saveCsvTable(title, header, subHeader, lineNames, data);
-    saveLatexTable(title, header, subHeader, lineNames, data);
-    saveReportTable(title, header, subHeader, lineNames, data);
+    saveCsvTable(title, header, subHeader, lineNames, columnPrecision, data);
+    saveLatexTable(title, header, subHeader, lineNames, columnPrecision, data);
+    saveReportTable(title, header, subHeader, lineNames, columnPrecision, data);
 }
 
 void MastersTestSuite::saveCsvTable(
         const std::string& title,
-        const std::vector<std::pair<std::string, int>> header,
-        const std::vector<std::pair<std::string, int>> subHeader,
-        const std::vector<std::string> lineNames,
+        const std::vector<std::pair<std::string, int>>& header,
+        const std::vector<std::pair<std::string, int>>& subHeader,
+        const std::vector<std::string>& lineNames,
+        const std::vector<int>& columnPrecision,
         const cellar::Grid2D<double>& data)
 {
     stringstream ss;
@@ -693,9 +701,10 @@ void MastersTestSuite::saveCsvTable(
 
 void MastersTestSuite::saveLatexTable(
         const std::string& title,
-        const std::vector<std::pair<std::string, int>> header,
-        const std::vector<std::pair<std::string, int>> subHeader,
-        const std::vector<std::string> lineNames,
+        const std::vector<std::pair<std::string, int>>& header,
+        const std::vector<std::pair<std::string, int>>& subHeader,
+        const std::vector<std::string>& lineNames,
+        const std::vector<int>& columnPrecision,
         const cellar::Grid2D<double>& data)
 {
     stringstream ss;
@@ -748,13 +757,17 @@ void MastersTestSuite::saveLatexTable(
     }
     ss << "\\hline\n";
 
+    ss << std::fixed;
+
     for(int l=0; l < lineNames.size(); ++l)
     {
         ss << lineNames[l];
 
         for(int c=0; c < data.getWidth(); ++c)
         {
-            ss << " \t& " << data[l][c];
+            ss << " \t& " <<
+               std::setprecision(columnPrecision[c])
+               << data[l][c];
         }
 
         ss << "\\\\\n";
@@ -768,9 +781,10 @@ void MastersTestSuite::saveLatexTable(
 
 void MastersTestSuite::saveReportTable(
         const std::string& title,
-        const std::vector<std::pair<std::string, int>> header,
-        const std::vector<std::pair<std::string, int>> subHeader,
-        const std::vector<std::string> lineNames,
+        const std::vector<std::pair<std::string, int>>& header,
+        const std::vector<std::pair<std::string, int>>& subHeader,
+        const std::vector<std::string>& lineNames,
+        const std::vector<int>& columnPrecision,
         const cellar::Grid2D<double>& data)
 {
     QTextCursor cursor(_reportDocument);
@@ -848,7 +862,9 @@ void MastersTestSuite::saveReportTable(
             cell = table->cellAt(linepos+l, c+1);
             cellCursor = cell.firstCursorPosition();
 
-                cellCursor.insertText(QString::number(data[l][c]));
+                cellCursor.insertText(
+                    QString::number(data[l][c],
+                        'f', columnPrecision[c]));
         }
     }
 
@@ -943,10 +959,13 @@ void MastersTestSuite::metricPrecision(
     for(const string& s : samplings)
         histHeader.push_back(_translateSamplingTechniques[s]);
 
+    vector<int> minPrec(samplings.size(), QUAL_MIN_PREC);
+    vector<int> meanPrec(samplings.size(), QUAL_MEAN_PREC);
+
     output(testName + "(Minimums)",
-           header, subheader, lineNames, minData);
+           header, subheader, lineNames, minPrec, minData);
     output(testName + "(Harmonic means)",
-           header, subheader, lineNames, meanData);
+           header, subheader, lineNames, meanPrec, meanData);
     output(testName + "(Histograms)",
            histHeader, histograms);
 }
@@ -966,7 +985,7 @@ void MastersTestSuite::texturePrecision(
     string sampling = "Texture";
 
     vector<double> depths = {
-        1, 2, 4, 8, 16, 32, 64
+        1, 2, 4, 8, 16, 32, 64, 128
     };
 
 
@@ -1027,7 +1046,9 @@ void MastersTestSuite::texturePrecision(
     for(int d : depths)
         lineNames.push_back(to_string(d));
 
-    output(testName, header, subheader, lineNames, data);
+    vector<int> precision = {QUAL_MIN_PREC, QUAL_MEAN_PREC};
+
+    output(testName, header, subheader, lineNames, precision, data);
 }
 
 void MastersTestSuite::evaluatorBlockSize(
@@ -1066,7 +1087,7 @@ void MastersTestSuite::evaluatorBlockSize(
 
 
     // Run test
-    Grid2D<double> data(meshes.size() * 2, threadCounts.size(), 0.0);
+    Grid2D<double> data(meshes.size() * implementations.size(), threadCounts.size(), 0.0);
 
     for(int m=0; m < meshes.size(); ++m)
     {
@@ -1107,7 +1128,9 @@ void MastersTestSuite::evaluatorBlockSize(
     for(int tc : threadCounts)
         lineNames.push_back(to_string(tc));
 
-    output(testName, header, subheader, lineNames, data);
+    vector<int> precision(meshes.size()*implementations.size(), TIME_PREC);
+
+    output(testName, header, subheader, lineNames, precision, data);
 }
 
 void MastersTestSuite::metricCost(
@@ -1196,7 +1219,13 @@ void MastersTestSuite::metricCost(
     for(const string& s : samplings)
         lineNames.push_back(_translateSamplingTechniques[s]);
 
-    output(testName, header, subheader, lineNames, data);
+    vector<int> precisions;
+    for(int i=0; i < implementations.size(); ++i)
+        precisions.push_back(TIME_PREC);
+    for(int i=1; i < implementations.size(); ++i)
+        precisions.push_back(ACC_PREC);
+
+    output(testName, header, subheader, lineNames, precisions, data);
 }
 
 void MastersTestSuite::metricCostTetCube(
@@ -1339,8 +1368,15 @@ void MastersTestSuite::nodeOrder(
         histHeader.push_back(_translateImplementations[implementations[i]]);
     }
 
-    output(testName + "(CPU)",      headerCPU,  subheaderCPU,  lineNames, dataCPU);
-    output(testName + "(Parallel)", headerPara, subheaderPara, lineNames, dataPara);
+    vector<int> cpuPrecisions = {
+        QUAL_MIN_PREC, QUAL_MIN_PREC,
+        QUAL_MEAN_PREC, QUAL_MEAN_PREC};
+    vector<int> paraPrecisions = {
+        QUAL_MIN_PREC, QUAL_MIN_PREC, QUAL_MIN_PREC,
+        QUAL_MEAN_PREC, QUAL_MEAN_PREC, QUAL_MEAN_PREC};
+
+    output(testName + "(CPU)",      headerCPU,  subheaderCPU,  lineNames, cpuPrecisions, dataCPU);
+    output(testName + "(Parallel)", headerPara, subheaderPara, lineNames, paraPrecisions, dataPara);
     output(testName + "(Histograms)", histHeader, histograms);
 }
 
@@ -1427,7 +1463,14 @@ void MastersTestSuite::smootherEfficacity(
     for(const string& s : smoothers)
         lineNames.push_back(_translateSmoothers[s]);
 
-    output(testName, header, subheader, lineNames, data);
+    vector<int> precisions;
+    for(const auto& m : meshes)
+    {
+        precisions.push_back(QUAL_MIN_PREC);
+        precisions.push_back(QUAL_MEAN_PREC);
+    }
+
+    output(testName, header, subheader, lineNames, precisions, data);
 }
 
 void MastersTestSuite::smootherBlockSize(
@@ -1519,7 +1562,12 @@ void MastersTestSuite::smootherBlockSize(
     for(int tc : threadCounts)
         lineNames.push_back(to_string(tc));
 
-    output(testName, header, subheader, lineNames, data);
+    vector<int> precisions;
+    for(const auto& s : smoothers)
+        for(const auto& i : implementations)
+            precisions.push_back(TIME_PREC);
+
+    output(testName, header, subheader, lineNames, precisions, data);
 }
 
 void MastersTestSuite::smootherBlockSizeTetCube(
@@ -1681,7 +1729,13 @@ void MastersTestSuite::smootherSpeed(
     for(const string& smooth : smoothers)
         lineNames.push_back(_translateSmoothers[smooth]);
 
-    output(testName, header, subheader, lineNames, data);
+    vector<int> precisions;
+    for(int i=0; i < implementations.size(); ++i)
+        precisions.push_back(TIME_PREC);
+    for(int i=1; i < implementations.size(); ++i)
+        precisions.push_back(ACC_PREC);
+
+    output(testName, header, subheader, lineNames, precisions, data);
 }
 
 void MastersTestSuite::smootherSpeedTetCube(
@@ -1767,5 +1821,9 @@ void MastersTestSuite::relocationScaling(
     for(int size : SPHERE_TARGET_SIZES)
         lineNames.push_back(to_string(size));
 
-    output(testName, header, subheader, lineNames, data);
+    vector<int> precisions;
+    for(int i=0; i < configs.size(); ++i)
+        precisions.push_back(TIME_PREC);
+
+    output(testName, header, subheader, lineNames, precisions, data);
 }

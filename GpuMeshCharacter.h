@@ -21,6 +21,7 @@ class Mesh;
 class Schedule;
 class AbstractMesher;
 class AbstractSampler;
+class LocalSampler;
 class AbstractEvaluator;
 class AbstractSmoother;
 class AbstractRenderer;
@@ -28,6 +29,8 @@ class AbstractSerializer;
 class AbstractDeserializer;
 class MastersTestSuite;
 enum class ECutType;
+
+typedef glm::dmat3 MeshMetric;
 
 enum class ECameraMan
 {
@@ -200,6 +203,7 @@ private:
     std::shared_ptr<AbstractRenderer> _renderer;
     std::shared_ptr<cellar::CameraManFree> _cameraManFree;
     std::unique_ptr<MastersTestSuite> _mastersTestSuite;
+    std::shared_ptr<LocalSampler> _computedMetricSmapler;
 
     static const glm::vec3 nullVec;
     static const glm::vec3 upVec;

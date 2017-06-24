@@ -1,19 +1,32 @@
-#ifndef GPUMESH_UNIFORMSAMPLER
-#define GPUMESH_UNIFORMSAMPLER
+#ifndef GPUMESH_COMPUTEDLOCSAMPLER
+#define GPUMESH_COMPUTEDLOCSAMPLER
+
+#include <GL3/gl3w.h>
 
 #include "AbstractSampler.h"
 
+class LocalSampler;
 
-class UniformSampler : public AbstractSampler
+
+class ComputedLocSampler : public AbstractSampler
 {
 public:
-    UniformSampler();
-    virtual ~UniformSampler();
+    ComputedLocSampler();
+    virtual ~ComputedLocSampler();
 
 
     virtual bool isMetricWise() const override;
 
     virtual bool useComputedMetric() const override;
+
+
+    virtual void updateGlslData(const Mesh& mesh) const override;
+
+    virtual void updateCudaData(const Mesh& mesh) const override;
+
+    virtual void clearGlslMemory(const Mesh& mesh) const override;
+
+    virtual void clearCudaMemory(const Mesh& mesh) const override;
 
 
     virtual void updateAnalyticalMetric(
@@ -32,9 +45,8 @@ public:
     virtual void releaseDebugMesh() override;
     virtual const Mesh& debugMesh() override;
 
-
 private:
-    std::shared_ptr<Mesh> _debugMesh;
+    std::shared_ptr<LocalSampler> _localSampler;
 };
 
-#endif // GPUMESH_UNIFORMSAMPLER
+#endif // GPUMESH_COMPUTEDLOCSAMPLER

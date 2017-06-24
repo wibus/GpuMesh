@@ -10,12 +10,17 @@ class TextureGrid;
 
 class TextureSampler : public AbstractSampler
 {
+protected:
+    TextureSampler(const std::string& name);
+
 public:
     TextureSampler();
     virtual ~TextureSampler();
 
 
     virtual bool isMetricWise() const override;
+
+    virtual bool useComputedMetric() const override;
 
 
     virtual void setPluginGlslUniforms(
@@ -35,9 +40,20 @@ public:
     virtual void clearCudaMemory(const Mesh& mesh) const override;
 
 
-    virtual void setReferenceMesh(
+    virtual void updateAnalyticalMetric(
             const Mesh& mesh) override;
 
+    virtual void updateComputedMetric(
+            const Mesh& mesh,
+            const std::shared_ptr<LocalSampler>& sampler) override;
+
+protected:
+    void buildGrid(
+            const Mesh& mesh,
+            LocalSampler& sampler);
+
+
+public:
     virtual MeshMetric metricAt(
             const glm::dvec3& position,
             uint& cachedRefTet) const override;

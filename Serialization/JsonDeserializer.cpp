@@ -7,8 +7,6 @@
 #include "Boundaries/AbstractBoundary.h"
 #include "JsonMeshTags.h"
 
-#include "Samplers/ComputedSampler.h"
-
 using namespace std;
 using namespace cellar;
 
@@ -25,7 +23,7 @@ JsonDeserializer::~JsonDeserializer()
 bool JsonDeserializer::deserialize(
         const std::string& fileName,
         Mesh& mesh,
-        const std::shared_ptr<AbstractSampler>& computedSampler) const
+        std::vector<MeshMetric>& metrics) const
 {
     ifstream file;
     file.open(fileName);
@@ -132,10 +130,6 @@ bool JsonDeserializer::deserialize(
     }
 
     file.close();
-
-
-    static_cast<ComputedSampler*>(computedSampler.get())
-        ->setComputedMetrics(mesh,vector<MeshMetric>(mesh.verts.size()));
 
     return true;
 }

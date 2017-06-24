@@ -24,8 +24,20 @@ bool AnalyticSampler::isMetricWise() const
     return true;
 }
 
-void AnalyticSampler::setReferenceMesh(
+bool AnalyticSampler::useComputedMetric() const
+{
+    return false;
+}
+
+void AnalyticSampler::updateAnalyticalMetric(
         const Mesh& mesh)
+{
+
+}
+
+void AnalyticSampler::updateComputedMetric(
+        const Mesh& mesh,
+        const std::shared_ptr<LocalSampler>& sampler)
 {
 
 }

@@ -26,7 +26,8 @@
 #include "Samplers/TextureSampler.h"
 #include "Samplers/KdTreeSampler.h"
 #include "Samplers/LocalSampler.h"
-#include "Samplers/ComputedSampler.h"
+#include "Samplers/ComputedLocSampler.h"
+#include "Samplers/ComputedTexSampler.h"
 #include "Evaluators/MeanRatioEvaluator.h"
 #include "Evaluators/MetricConformityEvaluator.h"
 #include "Measurers/MetricFreeMeasurer.h"
@@ -91,6 +92,7 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _mesh(new GpuMesh()),
     _meshCrew(new MeshCrew()),
     _mastersTestSuite(new MastersTestSuite(*this)),
+    _computedMetricSmapler(new LocalSampler()),
     _availableMeshers("Available Meshers"),
     _availableSamplers("Available Samplers"),
     _availableEvaluators("Available Evaluators"),
@@ -110,12 +112,13 @@ GpuMeshCharacter::GpuMeshCharacter() :
 
     _availableSamplers.setDefault("Analytic");
     _availableSamplers.setContent({
-        {NO_METRIC_SAMPLING, shared_ptr<AbstractSampler>(new UniformSampler())},
-        {string("Analytic"), shared_ptr<AbstractSampler>(new AnalyticSampler())},
-        {string("Texture"),  shared_ptr<AbstractSampler>(new TextureSampler())},
-        {string("Kd-Tree"),  shared_ptr<AbstractSampler>(new KdTreeSampler())},
-        {string("Local"),    shared_ptr<AbstractSampler>(new LocalSampler())},
-        {string("Computed"), shared_ptr<AbstractSampler>(new ComputedSampler())},
+        {NO_METRIC_SAMPLING,     shared_ptr<AbstractSampler>(new UniformSampler())},
+        {string("Analytic"),     shared_ptr<AbstractSampler>(new AnalyticSampler())},
+        {string("Texture"),      shared_ptr<AbstractSampler>(new TextureSampler())},
+        {string("Kd-Tree"),      shared_ptr<AbstractSampler>(new KdTreeSampler())},
+        {string("Local"),        shared_ptr<AbstractSampler>(new LocalSampler())},
+        {string("Computed Loc"), shared_ptr<AbstractSampler>(new ComputedLocSampler())},
+        {string("Computed Tex"), shared_ptr<AbstractSampler>(new ComputedTexSampler())},
     });
 
     _availableEvaluators.setDefault("Metric Conformity");
@@ -481,7 +484,7 @@ void GpuMeshCharacter::generateMesh(
         const std::string& modelName,
         size_t vertexCount)
 {
-    _mesh->clear();
+    clearMesh();
 
     printStep("Mesh Generation "\
               ": mesher=" + mesherName +
@@ -495,6 +498,9 @@ void GpuMeshCharacter::generateMesh(
 
         _mesh->modelName = modelName;
         _mesh->compileTopology();
+
+        _computedMetricSmapler->buildBackgroundMesh(
+            *_mesh, vector<MeshMetric>(getNodeCount(), MeshMetric()));
 
         updateSampling();
         updateMeshMeasures();
@@ -510,6 +516,9 @@ void GpuMeshCharacter::clearMesh()
 {
     _mesh->clear();
     _mesh->modelName = "";
+
+    _computedMetricSmapler->buildBackgroundMesh(
+        *_mesh, std::vector<MeshMetric>());
 
     updateSampling();
     updateMeshMeasures();
@@ -548,13 +557,17 @@ bool GpuMeshCharacter::loadMesh(
     shared_ptr<AbstractDeserializer> deserializer;
     if(_availableDeserializers.select(ext, deserializer))
     {
-        _mesh->clear();
+        clearMesh();
 
-        std::shared_ptr<AbstractSampler> computedSampler;
-        _availableSamplers.select("Computed", computedSampler);
-        if(deserializer->deserialize(fileName, *_mesh, computedSampler))
+        std::vector<MeshMetric> metrics;
+        if(deserializer->deserialize(fileName, *_mesh, metrics))
         {
+            _computedMetricSmapler->buildBackgroundMesh(*_mesh, metrics);
+
             _mesh->compileTopology();
+
+            if(metrics.empty())
+                metrics.resize(getNodeCount(), MeshMetric());
 
             updateSampling();
             updateMeshMeasures();
@@ -1034,7 +1047,8 @@ void GpuMeshCharacter::updateSampling()
         _meshCrew->sampler().setAspectRatio(_metricAspectRatio);
         _meshCrew->sampler().setDiscretizationDepth(_metricDiscretizationDepth);
 
-        _meshCrew->sampler().setReferenceMesh(*_mesh);
+        _meshCrew->sampler().updateAnalyticalMetric(*_mesh);
+        _meshCrew->sampler().updateComputedMetric(*_mesh, _computedMetricSmapler);
 
         if(_renderer.get() != nullptr)
             _renderer->notifyMeshUpdate();

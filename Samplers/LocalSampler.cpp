@@ -57,6 +57,11 @@ bool LocalSampler::isMetricWise() const
     return true;
 }
 
+bool LocalSampler::useComputedMetric() const
+{
+    return false;
+}
+
 void LocalSampler::updateGlslData(const Mesh& mesh) const
 {
     if(_localTetsSsbo == 0)
@@ -185,84 +190,23 @@ void LocalSampler::clearCudaMemory(const Mesh& mesh) const
     }
 }
 
-void LocalSampler::setReferenceMesh(
+void LocalSampler::updateAnalyticalMetric(
         const Mesh& mesh)
 {
     size_t vertCount = mesh.verts.size();
 
-    // Clear resources
-    _localTets.clear();
-    _localTets.shrink_to_fit();
-    _refVerts = mesh.verts;
-    _refVerts.shrink_to_fit();
-    _refMetrics.resize(mesh.verts.size());
+    std::vector<MeshMetric> metrics(vertCount);
     for(size_t vId=0; vId < vertCount; ++vId)
-        _refMetrics[vId] = vertMetric(mesh, vId);
-    _refMetrics.shrink_to_fit();
+        metrics[vId] = vertMetric(mesh, vId);
 
+    buildBackgroundMesh(mesh, metrics);
+}
 
-    // Break prisms and hex into tetrahedra
-    tetrahedrize(_localTets, mesh);
-    size_t tetCount = _localTets.size();
-    size_t triCount = tetCount * 4;
-    if(tetCount == 0)
-    {
-        getLog().postMessage(new Message('I', false,
-            "Empty refrence mesh : no local tets created", "LocalSampler"));
-        return;
-    }
+void LocalSampler::updateComputedMetric(
+        const Mesh& mesh,
+        const std::shared_ptr<LocalSampler>& sampler)
+{
 
-
-    // Find tets neighbors
-    TriSet triSet;
-    size_t bucketCount = pow(double(triCount), 2.0/3.0);
-    triSet.reset(bucketCount);
-
-    getLog().postMessage(new Message('I', false,
-        "Finding local tets neighborhood (bucket="+
-        std::to_string(bucketCount)+")", "LocalSampler"));
-
-    for(size_t t=0; t < tetCount; ++t)
-    {
-        MeshLocalTet& tet = _localTets[t];
-        for(uint s=0; s < MeshTet::TRI_COUNT; ++s)
-        {
-            Triangle tri(tet.v[MeshTet::tris[s][0]],
-                         tet.v[MeshTet::tris[s][1]],
-                         tet.v[MeshTet::tris[s][2]]);
-            glm::uvec2 con = triSet.xOrTri(tri, t, s);
-
-            uint owner = con[0];
-            uint side = con[1];
-            tet.n[s] = owner;
-
-            if(owner != TriSet::NO_OWNER)
-            {
-                _localTets[owner].n[side] = t;
-            }
-        }
-
-        mesh.verts[tet.v[0]].c = t;
-        mesh.verts[tet.v[1]].c = t;
-        mesh.verts[tet.v[2]].c = t;
-        mesh.verts[tet.v[3]].c = t;
-    }
-
-    _surfTris = triSet.gather();
-    size_t remTriCount = _surfTris.size();
-    getLog().postMessage(new Message('I', false,
-        "Surface triangle count: " + std::to_string(remTriCount) +
-        " / " + std::to_string(triCount), "LocalSampler"));
-    triSet.releaseMemoryPool();
-
-    _failedSamples.clear();
-    if(_debugMesh.get() != nullptr)
-    {
-        releaseDebugMesh();
-        debugMesh();
-    }
-
-    _maxSearchDepth = 0;
 }
 
 MeshMetric LocalSampler::metricAt(
@@ -403,4 +347,83 @@ const Mesh& LocalSampler::debugMesh()
     }
 
     return *_debugMesh;
+}
+
+void LocalSampler::buildBackgroundMesh(
+        const Mesh& mesh,
+        const std::vector<MeshMetric>& metrics)
+{
+    assert(metrics.size() == mesh.verts.size());
+
+    // Clear resources
+    _localTets.clear();
+    _localTets.shrink_to_fit();
+    _refVerts = mesh.verts;
+    _refVerts.shrink_to_fit();
+    _refMetrics = metrics;
+    _refMetrics.shrink_to_fit();
+
+
+    // Break prisms and hex into tetrahedra
+    tetrahedrize(_localTets, mesh);
+    size_t tetCount = _localTets.size();
+    size_t triCount = tetCount * 4;
+    if(tetCount == 0)
+    {
+        getLog().postMessage(new Message('I', false,
+            "Empty refrence mesh : no local tets created", "LocalSampler"));
+        return;
+    }
+
+
+    // Find tets neighbors
+    TriSet triSet;
+    size_t bucketCount = pow(double(triCount), 2.0/3.0);
+    triSet.reset(bucketCount);
+
+    getLog().postMessage(new Message('I', false,
+        "Finding local tets neighborhood (bucket="+
+        std::to_string(bucketCount)+")", "LocalSampler"));
+
+    for(size_t t=0; t < tetCount; ++t)
+    {
+        MeshLocalTet& tet = _localTets[t];
+        for(uint s=0; s < MeshTet::TRI_COUNT; ++s)
+        {
+            Triangle tri(tet.v[MeshTet::tris[s][0]],
+                         tet.v[MeshTet::tris[s][1]],
+                         tet.v[MeshTet::tris[s][2]]);
+            glm::uvec2 con = triSet.xOrTri(tri, t, s);
+
+            uint owner = con[0];
+            uint side = con[1];
+            tet.n[s] = owner;
+
+            if(owner != TriSet::NO_OWNER)
+            {
+                _localTets[owner].n[side] = t;
+            }
+        }
+
+        mesh.verts[tet.v[0]].c = t;
+        mesh.verts[tet.v[1]].c = t;
+        mesh.verts[tet.v[2]].c = t;
+        mesh.verts[tet.v[3]].c = t;
+    }
+
+    _surfTris = triSet.gather();
+    size_t remTriCount = _surfTris.size();
+    getLog().postMessage(new Message('I', false,
+        "Surface triangle count: " + std::to_string(remTriCount) +
+        " / " + std::to_string(triCount), "LocalSampler"));
+    triSet.releaseMemoryPool();
+
+    _failedSamples.clear();
+    if(_debugMesh.get() != nullptr)
+    {
+        releaseDebugMesh();
+        debugMesh();
+    }
+
+    _maxSearchDepth = 0;
 }

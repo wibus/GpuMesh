@@ -4,11 +4,15 @@
 #include <memory>
 #include <string>
 
+#include <GLM/glm.hpp>
+
 #include "DataStructures/OptionMap.h"
 
 class Mesh;
 class AbstractBoundary;
 class AbstractSampler;
+
+typedef glm::dmat3 MeshMetric;
 
 
 class AbstractDeserializer
@@ -22,7 +26,7 @@ public:
     virtual bool deserialize(
             const std::string& fileName,
             Mesh& mesh,
-            const std::shared_ptr<AbstractSampler>& computedSampler) const = 0;
+            std::vector<MeshMetric>& metrics) const = 0;
 
 protected:
     std::shared_ptr<AbstractBoundary> boundary(const std::string& name) const;
