@@ -67,10 +67,11 @@ const int EVALUATION_THREAD_COUNT_CUDA = 32;
 const int SMOOTHING_THREAD_COUNT_GLSL = 16;
 const int SMOOTHING_THREAD_COUNT_CUDA = 32;
 
-const int QUAL_MIN_PREC = 4;
+const int QUAL_MIN_PREC = 3;
 const int QUAL_MEAN_PREC = 3;
-const int TIME_PREC = 2;
-const int ACC_PREC = 1;
+const int TIME_SEC_PREC = 2;
+const int TIME_MS_PREC = 0;
+const int TIME_ACC_PREC = 1;
 
 string testNumber(int n)
 {
@@ -946,12 +947,13 @@ void MastersTestSuite::metricPrecision(
 
     // Print results
     vector<pair<string, int>> header = {{"A", 1}};
+    header.push_back({"Initial", 1});
     for(const string& s : samplings)
         header.push_back({_translateSamplingTechniques[s], 1});
 
     vector<pair<string, int>> subheader = {};
 
-    vector<string> lineNames = {"Initial"};
+    vector<string> lineNames = {};
     for(double r : PRECISION_METRIC_As)
         lineNames.push_back(QString::number(r).toStdString());
 
@@ -959,8 +961,8 @@ void MastersTestSuite::metricPrecision(
     for(const string& s : samplings)
         histHeader.push_back(_translateSamplingTechniques[s]);
 
-    vector<int> minPrec(samplings.size(), QUAL_MIN_PREC);
-    vector<int> meanPrec(samplings.size(), QUAL_MEAN_PREC);
+    vector<int> minPrec(samplings.size()+1, QUAL_MIN_PREC);
+    vector<int> meanPrec(samplings.size()+1, QUAL_MEAN_PREC);
 
     output(testName + "(Minimums)",
            header, subheader, lineNames, minPrec, minData);
@@ -1128,7 +1130,7 @@ void MastersTestSuite::evaluatorBlockSize(
     for(int tc : threadCounts)
         lineNames.push_back(to_string(tc));
 
-    vector<int> precision(meshes.size()*implementations.size(), TIME_PREC);
+    vector<int> precision(meshes.size()*implementations.size(), TIME_MS_PREC);
 
     output(testName, header, subheader, lineNames, precision, data);
 }
@@ -1221,9 +1223,9 @@ void MastersTestSuite::metricCost(
 
     vector<int> precisions;
     for(int i=0; i < implementations.size(); ++i)
-        precisions.push_back(TIME_PREC);
+        precisions.push_back(TIME_MS_PREC);
     for(int i=1; i < implementations.size(); ++i)
-        precisions.push_back(ACC_PREC);
+        precisions.push_back(TIME_ACC_PREC);
 
     output(testName, header, subheader, lineNames, precisions, data);
 }
@@ -1565,7 +1567,7 @@ void MastersTestSuite::smootherBlockSize(
     vector<int> precisions;
     for(const auto& s : smoothers)
         for(const auto& i : implementations)
-            precisions.push_back(TIME_PREC);
+            precisions.push_back(TIME_MS_PREC);
 
     output(testName, header, subheader, lineNames, precisions, data);
 }
@@ -1731,9 +1733,9 @@ void MastersTestSuite::smootherSpeed(
 
     vector<int> precisions;
     for(int i=0; i < implementations.size(); ++i)
-        precisions.push_back(TIME_PREC);
+        precisions.push_back(TIME_SEC_PREC);
     for(int i=1; i < implementations.size(); ++i)
-        precisions.push_back(ACC_PREC);
+        precisions.push_back(TIME_ACC_PREC);
 
     output(testName, header, subheader, lineNames, precisions, data);
 }
@@ -1823,7 +1825,7 @@ void MastersTestSuite::relocationScaling(
 
     vector<int> precisions;
     for(int i=0; i < configs.size(); ++i)
-        precisions.push_back(TIME_PREC);
+        precisions.push_back(TIME_SEC_PREC);
 
     output(testName, header, subheader, lineNames, precisions, data);
 }

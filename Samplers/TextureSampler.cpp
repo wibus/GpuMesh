@@ -300,7 +300,7 @@ void TextureSampler::buildGrid(
     if(depth > 0)
         cellCount = depth * depth * depth;
 
-    double alpha = glm::pow(2.0 * cellCount / (extents.x*extents.y*extents.z), 1/3.0);
+    double alpha = glm::pow(cellCount / (extents.x*extents.y*extents.z), 1/3.0);
     glm::ivec3 size = glm::round(glm::max(glm::dvec3(1), alpha * extents));
 
     _transform = glm::scale(glm::mat4(),
