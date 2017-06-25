@@ -322,6 +322,29 @@ void TextureSampler::buildGrid(
         "TextureSampler"));
 
 
+    // Build gauss points and weights for integration
+    double pa = glm::sqrt(1/3.0);
+    double wa = (5/9.0) / 8.0;
+
+    _gaussP.clear();
+    _gaussW.clear();
+    for(int i=-1; i <=1; i+=2)
+    {
+        for(int j=-1; j <=1; j+=2)
+        {
+            for(int k=-1; k <=1; k+=2)
+            {
+                _gaussW.push_back(wa);
+                _gaussP.push_back(
+                    glm::dvec3(0.5) +
+                    pa * glm::dvec3(i, j, k));
+            }
+        }
+    }
+
+    _gaussP.push_back(glm::dvec3(0.5));
+    _gaussW.push_back((32/9.0) / 8.0);
+
     const auto& localTets = sampler.localTets();
 
     std::vector<ElemValue> elemValues;
@@ -367,10 +390,18 @@ void TextureSampler::buildGrid(
                         continue;
 
                     glm::ivec3 id(i, j, k);
-                    glm::dvec3 pos = _grid->minBounds + cellExtents *
-                        (glm::dvec3(id) + glm::dvec3(0.5));
 
-                    _grid->at(id) = sampler.metricAt(pos, ev.cacheTetId);
+                    MeshMetric metric(0.0);
+                    for(int p=0; p < _gaussP.size(); ++p)
+                    {
+                        glm::dvec3 pos = _grid->minBounds + cellExtents *
+                            (glm::dvec3(id) + _gaussP[p]);
+
+                        metric += sampler.metricAt(pos, ev.cacheTetId) * _gaussW[p];
+                    }
+
+                    _grid->at(id) = metric;
+
                     cellIsSet.set(i, j, k, true);
                 }
             }

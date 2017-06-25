@@ -285,24 +285,43 @@ void MastersTestSuite::runTests(
 
     if(!QFile(QString(MESH_PRECISION_BASE.c_str()).arg(PRECISION_METRIC_As.back())).exists())
     {
-        setupAdaptedCube(ADAPTATION_METRIC_K16, PRECISION_METRIC_As.front());
+        int firstMetricAToTry = 0;
+        double firstMetricA = PRECISION_METRIC_As.front();
+        QString firstName = QString(MESH_PRECISION_BASE.c_str()).arg(firstMetricA);
 
-        for(int a=0; a < PRECISION_METRIC_As.size(); ++a)
+        if(!QFile(firstName).exists())
+        {
+            setupAdaptedCube(ADAPTATION_METRIC_K16, PRECISION_METRIC_As.front());
+            firstMetricAToTry = 0;
+        }
+        else
+        {
+            _character.loadMesh(firstName.toStdString());
+            firstMetricAToTry = 1;
+        }
+
+        _character.setMetricScaling(ADAPTATION_METRIC_K16);
+
+        for(int a=firstMetricAToTry; a < PRECISION_METRIC_As.size(); ++a)
         {
             double metricA = PRECISION_METRIC_As[a];
             QString name = QString(MESH_PRECISION_BASE.c_str()).arg(metricA);
 
-            _character.useSampler("Analytic");
-            _character.setMetricAspectRatio(metricA);
-
-            Schedule schedule;
-            schedule.topoOperationEnabled = true;
-            schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
-            schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
-            _character.restructureMesh(schedule);
-
-            if(!QFile(name).exists())
+            if(QFile(name).exists())
             {
+                _character.loadMesh(name.toStdString());
+            }
+            else
+            {
+                _character.useSampler("Analytic");
+                _character.setMetricAspectRatio(metricA);
+
+                Schedule schedule;
+                schedule.topoOperationEnabled = true;
+                schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
+                schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
+                _character.restructureMesh(schedule);
+
                 _character.saveMesh(name.toStdString());
             }
         }
