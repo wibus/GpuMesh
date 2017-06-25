@@ -562,12 +562,10 @@ bool GpuMeshCharacter::loadMesh(
         std::vector<MeshMetric> metrics;
         if(deserializer->deserialize(fileName, *_mesh, metrics))
         {
+            if(metrics.empty()) metrics.resize(getNodeCount(), MeshMetric());
             _computedMetricSmapler->buildBackgroundMesh(*_mesh, metrics);
 
             _mesh->compileTopology();
-
-            if(metrics.empty())
-                metrics.resize(getNodeCount(), MeshMetric());
 
             updateSampling();
             updateMeshMeasures();
