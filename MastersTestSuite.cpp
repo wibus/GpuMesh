@@ -144,7 +144,7 @@ MastersTestSuite::MastersTestSuite(
     _translateSmoothers = {
         {"Spring Laplace",      "Laplace à ressorts"},
         {"Quality Laplace",     "Laplace de qualité"},
-        {"Spawn Search",        "Recherche par grappe"},
+        {"Spawn Search",        "Force brute"},
         {"Nelder-Mead",         "Nelder-Mead"},
         {"Multi Elem NM",       "NM multi-éléments"},
         {"Gradient Descent",    "Descente du gradient"},
