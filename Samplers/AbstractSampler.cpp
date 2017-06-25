@@ -1,6 +1,7 @@
 #include "AbstractSampler.h"
 
 #include <GLM/gtc/constants.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
 
 #include <CellarWorkbench/GL/GlProgram.h>
 
@@ -26,7 +27,17 @@ AbstractSampler::AbstractSampler(
     _baseShader(":/glsl/compute/Sampling/Base.glsl"),
     _installCuda(installCuda)
 {
+    _rotMat = glm::dmat3(glm::rotate(
+                glm::dmat4(_rotMat),
+                glm::pi<double>() / 4.0,
+                glm::dvec3(0, 0, 1)));
 
+    _rotMat = glm::dmat3(glm::rotate(
+                glm::dmat4(_rotMat),
+                glm::pi<double>() / 4.0,
+                glm::dvec3(0, -1, 0)));
+
+    _rotInv = glm::transpose(_rotMat);
 }
 
 AbstractSampler::~AbstractSampler()
@@ -174,17 +185,22 @@ inline MeshMetric atanXY(double scaling, double ratio, const glm::dvec3& positio
 
 MeshMetric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
-    double x = position.x * (2.5 * glm::pi<double>());
-    double sizeX = scaling() * glm::pow(aspectRatio(), (1.0 - glm::cos(x)) / 2.0);
+    double x = (_rotMat * position).x * (2.5 * glm::pi<double>());
+
+    double a = aspectRatio();
+    double c = (1.0 - glm::cos(x)) / 2.0;
+    double sizeX = scaling() * glm::pow(a, glm::pow(c, a));
 
     double Mx = sizeX * sizeX;
     double My = scalingSqr();
     double Mz = My;
 
-    return MeshMetric(
-            glm::dvec3(Mx, 0,  0),
-            glm::dvec3(0,  My, 0),
-            glm::dvec3(0,  0,  Mz));
+    glm::dmat3 M = MeshMetric(
+        glm::dvec3(Mx, 0,  0),
+        glm::dvec3(0,  My, 0),
+        glm::dvec3(0,  0,  Mz));
+
+    return _rotInv * M * _rotMat;
 }
 
 void AbstractSampler::boundingBox(
