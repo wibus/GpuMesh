@@ -78,9 +78,6 @@ private:
 
     mutable GLuint _topLineTex;
     mutable GLuint _sideTriTex;
-
-    std::vector<glm::dvec3> _gaussP;
-    std::vector<double> _gaussW;
 };
 
 #endif // GPUMESH_TEXTURESAMPLER
