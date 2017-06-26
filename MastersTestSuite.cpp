@@ -129,7 +129,7 @@ MastersTestSuite::MastersTestSuite(
 
     _translateSamplingTechniques = {
         {"Analytic",    "Analytique"},
-        {"Local",       "Maillage"},
+        {"Local",       "Rech. loc."},
         {"Texture",     "Texture"},
         {"Kd-Tree",     "kD-Tree"},
     };
@@ -1348,7 +1348,7 @@ void MastersTestSuite::nodeOrder(
 
     vector<QualityHistogram> histograms;
     histograms.push_back(plot.initialHistogram());
-    for(int i=0; i < 2; ++i)
+    for(int i=0; i < implementations.size(); ++i)
         histograms.push_back(plot.implementations()[i].finalHistogram);
 
 
@@ -1384,7 +1384,7 @@ void MastersTestSuite::nodeOrder(
     lineNames.push_back(to_string(fullRelocationPassCount));
 
     vector<string> histHeader = {"Initial"};
-    for(int i=0; i < 2; ++i)
+    for(int i=0; i < implementations.size(); ++i)
     {
         histHeader.push_back(_translateImplementations[implementations[i]]);
     }
