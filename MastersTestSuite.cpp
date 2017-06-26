@@ -32,11 +32,11 @@ const string RESULT_LATEX_PATH = RESULTS_PATH + "latex/";
 const string RESULT_CSV_PATH = RESULTS_PATH + "csv/";
 const string DATA_MESH_PATH = "resources/data/";
 
-const string MESH_SPHERE_100K = RESULT_MESH_PATH + "Sphere (N=100K).json";
-const string MESH_TETCUBE_K5 = RESULT_MESH_PATH + "TetCube (K=5).json";
-const string MESH_TETCUBE_K16 = RESULT_MESH_PATH + "TetCube (K=16).json";
-const string MESH_TETCUBE_K24 = RESULT_MESH_PATH + "TetCube (K=24).json";
-const string MESH_HEXCUBE_10K = RESULT_MESH_PATH + "HexCube (N=10K).json";
+const string MESH_NODE_ORDER  = RESULT_MESH_PATH + "Sphere (node order).json";
+const string MESH_TETCUBE_10K  = RESULT_MESH_PATH + "TetCube (N=10K).json";
+const string MESH_TETCUBE_175K = RESULT_MESH_PATH + "TetCube (N=175K).json";
+const string MESH_TETCUBE_500K = RESULT_MESH_PATH + "TetCube (N=500K).json";
+const string MESH_HEXCUBE_10K  = RESULT_MESH_PATH + "HexCube (N=10K).json";
 const string MESH_HEXCUBE_175K = RESULT_MESH_PATH + "HexCube (N=175K).json";
 const string MESH_HEXCUBE_500K = RESULT_MESH_PATH + "HexCube (N=500K).json";
 const string MESH_TURBINE_500K = RESULT_MESH_PATH + "Turbine (N=500K).cgns";
@@ -44,22 +44,37 @@ const string MESH_TURBINE_500K = RESULT_MESH_PATH + "Turbine (N=500K).cgns";
 const string MESH_PRECISION_BASE = RESULT_MESH_PATH + "Precision (A=%1).json";
 const string MESH_SCALING_BASE = RESULT_MESH_PATH + "Scaling (Scale=%1).json";
 
-vector<double> PRECISION_METRIC_As = {1, 2, 4, 8, 16};
 
 const int BS = 1e4;
 const vector<int> SPHERE_TARGET_SIZES = {
     1*BS,  2*BS,  4*BS,  8*BS,
     16*BS, 32*BS, 64*BS, 128*BS};
-double sizeToScale(int size) {return glm::pow(size, 1/2.9) / 4.08;}
 
-const double ADAPTATION_METRIC_K5 = 5;
-const double ADAPTATION_METRIC_K12 = 12;
-const double ADAPTATION_METRIC_K16 = 16;
-const double ADAPTATION_METRIC_K24 = 24;
+double spherePower = 2.897029276;
+double sphereCoeff = 3.1359873691;
+double sphereSizeToScale(int size) {
+    return glm::pow(size, 1/spherePower) / sphereCoeff;}
+
+double cubePower = 2.917814;
+double cubeCoeff = 3.141715;
+double cubeSizeToScale(int size) {
+    return glm::pow(size, 1/cubePower) / cubeCoeff;}
+
+
+const double PRECISION_METRIC_K = 16.0;
+vector<double> PRECISION_METRIC_As = {1, 2, 4, 8, 16};
+
+const double NODE_ORDER_METRIC_K = cubeSizeToScale(100e3);
+
+const double ADAPTATION_METRIC_K_10K  = cubeSizeToScale(10e3);
+const double ADAPTATION_METRIC_K_175K = cubeSizeToScale(175e3);
+const double ADAPTATION_METRIC_K_500K = cubeSizeToScale(500e3);
 const double ADAPTATION_METRIC_A = 8;
+
 const int ADAPTATION_TOPO_PASS = 5;
 const int ADAPTATION_REFINEMENT_SWEEPS = 5;
 const int ADAPTATION_RELOC_PASS = 10;
+
 
 const int EVALUATION_THREAD_COUNT_GLSL = 16;
 const int EVALUATION_THREAD_COUNT_CUDA = 32;
@@ -72,6 +87,7 @@ const int QUAL_MEAN_PREC = 3;
 const int TIME_SEC_PREC = 2;
 const int TIME_MS_PREC = 0;
 const int TIME_ACC_PREC = 1;
+
 
 string testNumber(int n)
 {
@@ -155,11 +171,11 @@ MastersTestSuite::MastersTestSuite(
     };
 
     _meshNames = {
-        {MESH_SPHERE_100K, "Sphere (N=100K)"},
-        {MESH_TETCUBE_K5, "TetCube (K=5)"},
-        {MESH_TETCUBE_K16, "TetCube (K=16)"},
-        {MESH_TETCUBE_K24, "TetCube (K=24)"},
-        {MESH_HEXCUBE_10K, "HexCube (N=10K)"},
+        {MESH_NODE_ORDER,  "Sphere"},
+        {MESH_TETCUBE_10K,  "TetCube (N=10K)"},
+        {MESH_TETCUBE_175K, "TetCube (N=175K)"},
+        {MESH_TETCUBE_500K, "TetCube (N=500K)"},
+        {MESH_HEXCUBE_10K,  "HexCube (N=10K)"},
         {MESH_HEXCUBE_175K, "HexCube (N=175K)"},
         {MESH_HEXCUBE_500K, "HexCube (N=500K)"},
         {MESH_TURBINE_500K, "Turbine (N=500K)"}
@@ -194,39 +210,83 @@ void MastersTestSuite::runTests(
         QTextDocument& reportDocument,
         const vector<string>& tests)
 {
+#ifdef COMPUTE_CUBE_SIZE_FUNC
+    double cubeSmallK = 10.0;
+    setupAdaptedCube(cubeSmallK, ADAPTATION_METRIC_A);
+    double cubeSmallSize = _character.getNodeCount();
+
+    double cubeBigK = 20.0;
+    setupAdaptedCube(cubeBigK, ADAPTATION_METRIC_A);
+    double cubeBigSize = _character.getNodeCount();
+
+    _character.clearMesh();
+
+    double cubePower = glm::log(cubeSmallK / cubeBigK) /
+            glm::log(cubeSmallSize/cubeBigSize);
+    double cubeCoeff = cubeSmallK / glm::pow(cubeSmallSize, cubePower);
+
+    getLog().postMessage(new Message('D', false, "Cube K = N^(1/" +
+        to_string(1/cubePower) + ") /" + to_string(1/cubeCoeff),
+        "MastersTestSuite"));
+
+    exit(0);
+#endif
+
+#ifdef COMPUTE_SPHERE_SIZE_FUNC
+    double sphereSmallK = 10.0;
+    setupAdaptedSphere(sphereSmallK, ADAPTATION_METRIC_A);
+    double sphereSmallSize = _character.getNodeCount();
+
+    double sphereBigK = 20.0;
+    setupAdaptedSphere(sphereBigK, ADAPTATION_METRIC_A);
+    double sphereBigSize = _character.getNodeCount();
+
+    _character.clearMesh();
+
+    double spherePower = glm::log(sphereSmallK / sphereBigK) /
+            glm::log(sphereSmallSize/sphereBigSize);
+    double sphereCoeff = sphereSmallK / glm::pow(sphereSmallSize, spherePower);
+
+    getLog().postMessage(new Message('D', false, "Sphere K = N^(1/" +
+        to_string(1/spherePower) + ") /" + to_string(1/sphereCoeff),
+        "MastersTestSuite"));
+
+    exit(0);
+#endif
+
     // Prepare cases
-    if(!QFile(MESH_SPHERE_100K.c_str()).exists())
+    if(!QFile(MESH_NODE_ORDER.c_str()).exists())
     {
         _character.generateMesh("Delaunay", "Sphere", 10e3);
 
-        _character.saveMesh(MESH_SPHERE_100K);
+        _character.saveMesh(MESH_NODE_ORDER);
     }
 
-    if(!QFile(MESH_TETCUBE_K5.c_str()).exists())
+    if(!QFile(MESH_TETCUBE_10K.c_str()).exists())
     {
         setupAdaptedCube(
-            ADAPTATION_METRIC_K5,
+            ADAPTATION_METRIC_K_10K,
             ADAPTATION_METRIC_A);
 
-        _character.saveMesh(MESH_TETCUBE_K5);
+        _character.saveMesh(MESH_TETCUBE_10K);
     }
 
-    if(!QFile(MESH_TETCUBE_K16.c_str()).exists())
+    if(!QFile(MESH_TETCUBE_175K.c_str()).exists())
     {
         setupAdaptedCube(
-            ADAPTATION_METRIC_K16,
+            ADAPTATION_METRIC_K_175K,
             ADAPTATION_METRIC_A);
 
-        _character.saveMesh(MESH_TETCUBE_K16);
+        _character.saveMesh(MESH_TETCUBE_175K);
     }
 
-    if(!QFile(MESH_TETCUBE_K24.c_str()).exists())
+    if(!QFile(MESH_TETCUBE_500K.c_str()).exists())
     {
         setupAdaptedCube(
-            ADAPTATION_METRIC_K24,
+            ADAPTATION_METRIC_K_500K,
             ADAPTATION_METRIC_A);
 
-        _character.saveMesh(MESH_TETCUBE_K24);
+        _character.saveMesh(MESH_TETCUBE_500K);
     }
 
     if(!QFile(MESH_HEXCUBE_10K.c_str()).exists())
@@ -285,27 +345,30 @@ void MastersTestSuite::runTests(
 
     if(!QFile(QString(MESH_PRECISION_BASE.c_str()).arg(PRECISION_METRIC_As.back())).exists())
     {
-        int firstMetricAToTry = 0;
-        double firstMetricA = PRECISION_METRIC_As.front();
-        QString firstName = QString(MESH_PRECISION_BASE.c_str()).arg(firstMetricA);
+        double metricA = PRECISION_METRIC_As.front();
+        QString name = QString(MESH_PRECISION_BASE.c_str()).arg(metricA);
 
-        if(!QFile(firstName).exists())
+        if(!QFile(name).exists())
         {
-            setupAdaptedCube(ADAPTATION_METRIC_K16, PRECISION_METRIC_As.front());
-            firstMetricAToTry = 0;
+            setupAdaptedCube(PRECISION_METRIC_K, PRECISION_METRIC_As.front());
+            _character.saveMesh(name.toStdString());
         }
         else
         {
-            _character.loadMesh(firstName.toStdString());
-            firstMetricAToTry = 1;
+            _character.loadMesh(name.toStdString());
         }
 
-        _character.setMetricScaling(ADAPTATION_METRIC_K16);
 
-        for(int a=firstMetricAToTry; a < PRECISION_METRIC_As.size(); ++a)
+        Schedule schedule;
+        schedule.topoOperationEnabled = true;
+        schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
+        schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
+        _character.setMetricScaling(PRECISION_METRIC_K);
+
+        for(int a=1; a < PRECISION_METRIC_As.size(); ++a)
         {
-            double metricA = PRECISION_METRIC_As[a];
-            QString name = QString(MESH_PRECISION_BASE.c_str()).arg(metricA);
+            metricA = PRECISION_METRIC_As[a];
+            name = QString(MESH_PRECISION_BASE.c_str()).arg(metricA);
 
             if(QFile(name).exists())
             {
@@ -315,11 +378,6 @@ void MastersTestSuite::runTests(
             {
                 _character.useSampler("Analytic");
                 _character.setMetricAspectRatio(metricA);
-
-                Schedule schedule;
-                schedule.topoOperationEnabled = true;
-                schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
-                schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
                 _character.restructureMesh(schedule);
 
                 _character.saveMesh(name.toStdString());
@@ -334,21 +392,12 @@ void MastersTestSuite::runTests(
 
         if(!QFile(name).exists())
         {
-            _character.generateMesh("Delaunay", "Sphere", size);
-
-            _character.useSampler("Analytic");
-            _character.setMetricScaling(sizeToScale(size));
-            _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
-
-            Schedule schedule;
-            schedule.topoOperationEnabled = true;
-            schedule.topoOperationPassCount = 10;
-            schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
-            _character.restructureMesh(schedule);
-
+            setupAdaptedSphere(sphereSizeToScale(size), ADAPTATION_METRIC_A);
             _character.saveMesh(name.toStdString());
         }
     }
+
+    exit(0);
 
 
     _character.clearMesh();
@@ -418,20 +467,29 @@ void MastersTestSuite::setupAdaptedCube(
     _character.useSampler("Analytic");
     _character.setMetricAspectRatio(metricA);
     _character.useEvaluator("Metric Conformity");
-    _character.generateMesh("Debug", "Cube", 10);
+    _character.generateMesh("Debug", "Cube", 8);
 
     QCoreApplication::processEvents();
 
 
     Schedule schedule;
-    schedule.topoOperationEnabled = true;
+    schedule.topoOperationEnabled = false;
     schedule.topoOperationPassCount = ADAPTATION_TOPO_PASS;
     schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
+    schedule.relocationPassCount = ADAPTATION_RELOC_PASS;
 
-    for(double k=1.0; k < metricK; k *= 2.0)
+    for(double k = 1.0;k < metricK; k *= glm::pow(2.0,1/3.0))
     {
         _character.setMetricScaling(k);
         _character.restructureMesh(schedule);
+
+        if(k <= 2.0)
+        {
+            _character.smoothMesh(
+                "Nelder-Mead",
+                "Thread",
+                schedule);
+        }
 
         QCoreApplication::processEvents();
     }
@@ -441,6 +499,25 @@ void MastersTestSuite::setupAdaptedCube(
     _character.restructureMesh(schedule);
 
     QCoreApplication::processEvents();
+}
+
+void MastersTestSuite::setupAdaptedSphere(
+        double metricK,
+        double metricA)
+{
+    _character.useSampler("Analytic");
+    _character.setMetricScaling(metricK);
+    _character.setMetricAspectRatio(metricA);
+
+    int approxSize = glm::pow(metricK * sphereCoeff, spherePower);
+    _character.generateMesh("Delaunay", "Sphere", approxSize);
+
+    Schedule schedule;
+    schedule.topoOperationEnabled = true;
+    schedule.topoOperationPassCount = 10;
+    schedule.refinementSweepCount = ADAPTATION_REFINEMENT_SWEEPS;
+
+    _character.restructureMesh(schedule);
 }
 
 void MastersTestSuite::saveToFile(
@@ -914,7 +991,7 @@ void MastersTestSuite::metricPrecision(
 
 
     // Setup test
-    _character.setMetricScaling(ADAPTATION_METRIC_K16);
+    _character.setMetricScaling(PRECISION_METRIC_K);
 
     _character.useEvaluator(evaluator);
 
@@ -995,7 +1072,7 @@ void MastersTestSuite::texturePrecision(
         const string& testName)
 {
     // Test case description
-    double metricK = ADAPTATION_METRIC_K16;
+    double metricK = PRECISION_METRIC_K;
     double metricA = PRECISION_METRIC_As.back();
     string mesh = QString(MESH_PRECISION_BASE.c_str())
             .arg(metricA).toStdString();
@@ -1077,7 +1154,7 @@ void MastersTestSuite::evaluatorBlockSize(
 {
     // Test case description
     const vector<string> meshes = {
-        MESH_TETCUBE_K24,
+        MESH_TETCUBE_500K,
         MESH_HEXCUBE_500K
     };
 
@@ -1101,7 +1178,7 @@ void MastersTestSuite::evaluatorBlockSize(
 
     // Setup test
     _character.useSampler(sampler);
-    _character.setMetricScaling(ADAPTATION_METRIC_K24);
+    _character.setMetricScaling(ADAPTATION_METRIC_K_500K);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
@@ -1186,7 +1263,7 @@ void MastersTestSuite::metricCost(
 
     //QCoreApplication::processEvents();
 
-    _character.setMetricScaling(ADAPTATION_METRIC_K24);
+    _character.setMetricScaling(ADAPTATION_METRIC_K_500K);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
     _character.setGlslEvaluatorThreadCount(EVALUATION_THREAD_COUNT_GLSL);
     _character.setCudaEvaluatorThreadCount(EVALUATION_THREAD_COUNT_CUDA);
@@ -1252,7 +1329,7 @@ void MastersTestSuite::metricCost(
 void MastersTestSuite::metricCostTetCube(
         const string& testName)
 {
-    return metricCost(testName, MESH_TETCUBE_K24);
+    return metricCost(testName, MESH_TETCUBE_500K);
 }
 
 void MastersTestSuite::metricCostHexCube(
@@ -1267,7 +1344,7 @@ void MastersTestSuite::nodeOrder(
     // Test case description
     int fullRelocationPassCount = 100;
     int displayRelocationPassCount = 10;
-    string mesh = MESH_SPHERE_100K;
+    string mesh = MESH_NODE_ORDER;
 
     const string sampler = "Analytic";
 
@@ -1298,7 +1375,7 @@ void MastersTestSuite::nodeOrder(
     _character.loadMesh(mesh);
 
     _character.useSampler(sampler);
-    _character.setMetricScaling(ADAPTATION_METRIC_K12);
+    _character.setMetricScaling(NODE_ORDER_METRIC_K);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
@@ -1406,7 +1483,7 @@ void MastersTestSuite::smootherEfficacity(
 {
     // Test case description
     vector<string> meshes = {
-        MESH_TETCUBE_K5,
+        MESH_TETCUBE_10K,
         MESH_HEXCUBE_10K,
     };
 
@@ -1438,7 +1515,7 @@ void MastersTestSuite::smootherEfficacity(
 
     // Setup test
     _character.useSampler(sampler);
-    _character.setMetricScaling(ADAPTATION_METRIC_K5);
+    _character.setMetricScaling(ADAPTATION_METRIC_K_10K);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
@@ -1531,7 +1608,7 @@ void MastersTestSuite::smootherBlockSize(
 
     // Setup test
     _character.useSampler(sampler);
-    _character.setMetricScaling(ADAPTATION_METRIC_K16);
+    _character.setMetricScaling(ADAPTATION_METRIC_K_175K);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
@@ -1594,7 +1671,7 @@ void MastersTestSuite::smootherBlockSize(
 void MastersTestSuite::smootherBlockSizeTetCube(
         const string& testName)
 {
-    string mesh = MESH_TETCUBE_K16;
+    string mesh = MESH_TETCUBE_175K;
 
     smootherBlockSize(testName, mesh);
 }
@@ -1684,7 +1761,7 @@ void MastersTestSuite::smootherSpeed(
     _character.loadMesh(mesh);
 
     _character.useSampler("Analytic");
-    _character.setMetricScaling(ADAPTATION_METRIC_K16);
+    _character.setMetricScaling(ADAPTATION_METRIC_K_175K);
     _character.setMetricAspectRatio(ADAPTATION_METRIC_A);
 
     _character.useEvaluator(evaluator);
@@ -1762,7 +1839,7 @@ void MastersTestSuite::smootherSpeed(
 void MastersTestSuite::smootherSpeedTetCube(
         const string& testName)
 {
-    string mesh = MESH_TETCUBE_K16;
+    string mesh = MESH_TETCUBE_175K;
 
     smootherSpeed(testName, mesh);
 }
@@ -1811,7 +1888,7 @@ void MastersTestSuite::relocationScaling(
     for(int s=0; s < SPHERE_TARGET_SIZES.size(); ++s)
     {
         int size = SPHERE_TARGET_SIZES[s];
-        _character.setMetricScaling(sizeToScale(size));
+        _character.setMetricScaling(sphereSizeToScale(size));
 
         _character.loadMesh(QString(
             MESH_SCALING_BASE.c_str()).arg(s).toStdString());
