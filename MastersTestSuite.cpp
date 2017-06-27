@@ -397,8 +397,6 @@ void MastersTestSuite::runTests(
         }
     }
 
-    exit(0);
-
 
     _character.clearMesh();
     QCoreApplication::processEvents();

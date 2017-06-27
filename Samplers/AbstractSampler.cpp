@@ -12,6 +12,7 @@ void setCudaMetricScaling(double scaling);
 void setCudaMetricScalingSqr(double scalingSqr);
 void setCudaMetricScalingCube(double scalingCube);
 void setCudaMetricAspectRatio(double aspectRatio);
+void setCudaRotMat(const glm::dmat3& rotMat, const glm::dmat3& rotInv);
 
 AbstractSampler::AbstractSampler(
         const std::string& name,
@@ -95,6 +96,8 @@ void AbstractSampler::setPluginGlslUniforms(
     program.setFloat("MetricScalingSqr", scalingSqr());
     program.setFloat("MetricScalingCube", scalingCube());
     program.setFloat("MetricAspectRatio", aspectRatio());
+    program.setMat3f("RotMat", glm::mat3(_rotMat));
+    program.setMat3f("RotInv", glm::mat3(_rotInv));
 }
 
 void AbstractSampler::setPluginCudaUniforms(
@@ -104,6 +107,7 @@ void AbstractSampler::setPluginCudaUniforms(
     setCudaMetricScalingSqr(scalingSqr());
     setCudaMetricScalingCube(scalingCube());
     setCudaMetricAspectRatio(aspectRatio());
+    setCudaRotMat(_rotMat, _rotInv);
 }
 
 void AbstractSampler::updateGlslData(const Mesh& mesh) const
