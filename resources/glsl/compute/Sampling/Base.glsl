@@ -1,6 +1,8 @@
 uniform float MetricScaling = 1.0;
 uniform float MetricScalingSqr = 1.0;
 uniform float MetricAspectRatio = 1.0;
+uniform mat3 RotMat = mat3(1.0);
+uniform mat3 RotInv = mat3(1.0);
 
 mat3 interpolateMetrics(in mat3 m1, in mat3 m2, float a)
 {
@@ -12,18 +14,22 @@ mat3 interpolateMetrics(in mat3 m1, in mat3 m2, float a)
 
 mat3 vertMetric(in vec3 position)
 {
-    float x = position.x * (2.5 * M_PI);
+    float x = (RotMat * position).x * (2.5 * M_PI);
 
-    float sizeX = MetricScaling * pow(MetricAspectRatio, (1.0 - cos(x)) / 2.0);
+    float a = MetricAspectRatio;
+    float c = (1.0 - cos(x)) / 2.0;
+    float sizeX = MetricScaling * pow(a, pow(c, a));
 
     float Mx = sizeX * sizeX;
     float My = MetricScalingSqr;
     float Mz = My;
 
-    return mat3(
-            vec3(Mx, 0,  0),
-            vec3(0,  My, 0),
-            vec3(0,  0,  Mz));
+    mat3 M = mat3(
+        vec3(Mx, 0,  0),
+        vec3(0,  My, 0),
+        vec3(0,  0,  Mz));
+
+    return RotInv * M * RotMat;
 }
 
 bool tetParams(in uint vi[4], in vec3 p, out float coor[4])

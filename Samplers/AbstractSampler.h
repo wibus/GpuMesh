@@ -114,6 +114,9 @@ private:
     std::string _samplingShader;
     std::string _baseShader;
     installCudaFct _installCuda;
+
+    glm::dmat3 _rotMat;
+    glm::dmat3 _rotInv;
 };
 
 

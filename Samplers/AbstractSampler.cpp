@@ -1,6 +1,7 @@
 #include "AbstractSampler.h"
 
 #include <GLM/gtc/constants.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
 
 #include <CellarWorkbench/GL/GlProgram.h>
 
@@ -11,6 +12,7 @@ void setCudaMetricScaling(double scaling);
 void setCudaMetricScalingSqr(double scalingSqr);
 void setCudaMetricScalingCube(double scalingCube);
 void setCudaMetricAspectRatio(double aspectRatio);
+void setCudaRotMat(const glm::dmat3& rotMat, const glm::dmat3& rotInv);
 
 AbstractSampler::AbstractSampler(
         const std::string& name,
@@ -26,7 +28,17 @@ AbstractSampler::AbstractSampler(
     _baseShader(":/glsl/compute/Sampling/Base.glsl"),
     _installCuda(installCuda)
 {
+    _rotMat = glm::dmat3(glm::rotate(
+                glm::dmat4(_rotMat),
+                glm::pi<double>() / 4.0,
+                glm::dvec3(0, 0, 1)));
 
+    _rotMat = glm::dmat3(glm::rotate(
+                glm::dmat4(_rotMat),
+                glm::pi<double>() / 4.0,
+                glm::dvec3(0, -1, 0)));
+
+    _rotInv = glm::transpose(_rotMat);
 }
 
 AbstractSampler::~AbstractSampler()
@@ -84,6 +96,8 @@ void AbstractSampler::setPluginGlslUniforms(
     program.setFloat("MetricScalingSqr", scalingSqr());
     program.setFloat("MetricScalingCube", scalingCube());
     program.setFloat("MetricAspectRatio", aspectRatio());
+    program.setMat3f("RotMat", glm::mat3(_rotMat));
+    program.setMat3f("RotInv", glm::mat3(_rotInv));
 }
 
 void AbstractSampler::setPluginCudaUniforms(
@@ -93,6 +107,7 @@ void AbstractSampler::setPluginCudaUniforms(
     setCudaMetricScalingSqr(scalingSqr());
     setCudaMetricScalingCube(scalingCube());
     setCudaMetricAspectRatio(aspectRatio());
+    setCudaRotMat(_rotMat, _rotInv);
 }
 
 void AbstractSampler::updateGlslData(const Mesh& mesh) const
@@ -174,17 +189,22 @@ inline MeshMetric atanXY(double scaling, double ratio, const glm::dvec3& positio
 
 MeshMetric AbstractSampler::vertMetric(const glm::dvec3& position) const
 {
-    double x = position.x * (2.5 * glm::pi<double>());
-    double sizeX = scaling() * glm::pow(aspectRatio(), (1.0 - glm::cos(x)) / 2.0);
+    double x = (_rotMat * position).x * (2.5 * glm::pi<double>());
+
+    double a = aspectRatio();
+    double c = (1.0 - glm::cos(x)) / 2.0;
+    double sizeX = scaling() * glm::pow(a, glm::pow(c, a));
 
     double Mx = sizeX * sizeX;
     double My = scalingSqr();
     double Mz = My;
 
-    return MeshMetric(
-            glm::dvec3(Mx, 0,  0),
-            glm::dvec3(0,  My, 0),
-            glm::dvec3(0,  0,  Mz));
+    glm::dmat3 M = MeshMetric(
+        glm::dvec3(Mx, 0,  0),
+        glm::dvec3(0,  My, 0),
+        glm::dvec3(0,  0,  Mz));
+
+    return _rotInv * M * _rotMat;
 }
 
 void AbstractSampler::boundingBox(

@@ -11,6 +11,9 @@ __constant__ float MetricScalingSqr = 1.0;
 __constant__ float MetricScalingCube = 1.0;
 __constant__ float MetricAspectRatio = 1.0;
 
+__constant__ mat3* RotMat = nullptr;
+__constant__ mat3* RotInv = nullptr;
+
 
 
 //////////////////////////////
@@ -26,18 +29,23 @@ __device__ mat3 interpolateMetrics(const mat3& m1, const mat3& m2, float a)
 
 __device__ mat3 vertMetric(const vec3& position)
 {
-    float x = position.x * (2.5 * M_PI);
+    vec3 rp = (*RotMat) * position;
+    float x = rp.x * (2.5 * M_PI);
 
-    float sizeX = MetricScaling * pow(MetricAspectRatio, (1.0 - cos(x)) / 2.0);
+    float a = MetricAspectRatio;
+    float c = (1.0 - glm::cos(x)) / 2.0;
+    float sizeX = MetricScaling * pow(a, pow(c, a));
 
     float Mx = sizeX * sizeX;
     float My = MetricScalingSqr;
     float Mz = My;
 
-    return mat3(
-            vec3(Mx, 0,  0),
-            vec3(0,  My, 0),
-            vec3(0,  0,  Mz));
+    mat3 M = mat3(
+        vec3(Mx, 0,  0),
+        vec3(0,  My, 0),
+        vec3(0,  0,  Mz));
+
+    return (*RotInv) * M * (*RotMat);
 }
 
 __device__ bool tetParams(const uint vi[4], const vec3& p, float coor[4])
@@ -101,8 +109,6 @@ __device__ bool triIntersect(
 // CUDA Drivers
 void setCudaMetricScaling(double scaling)
 {
-    cudaCheckErrors("CUDA error before sampler scaling");
-
     float h_scaling = scaling;
     cudaMemcpyToSymbol(MetricScaling, &h_scaling, sizeof(h_scaling));
 }
@@ -117,8 +123,27 @@ void setCudaMetricScalingCube(double scalingCube)
 {
     float h_scalingCube = scalingCube;
     cudaMemcpyToSymbol(MetricScalingCube, &h_scalingCube, sizeof(h_scalingCube));
+}
 
-    cudaCheckErrors("CUDA error after sampler scaling");
+mat3*  d_rotMat = nullptr;
+mat3*  d_rotInv = nullptr;
+void setCudaRotMat(const glm::dmat3& rotMat, const glm::dmat3& rotInv)
+{
+    mat3 h_rotMat = rotMat;
+    if(d_rotMat == nullptr)
+    {
+        cudaMalloc(&d_rotMat, sizeof(*d_rotMat));
+        cudaMemcpyToSymbol(RotMat, &d_rotMat, sizeof(d_rotMat));
+    }
+    cudaMemcpy(d_rotMat, &h_rotMat, sizeof(h_rotMat), cudaMemcpyHostToDevice);
+
+    mat3 h_rotInv = rotInv;
+    if(d_rotInv == nullptr)
+    {
+        cudaMalloc(&d_rotInv, sizeof(*d_rotInv));
+        cudaMemcpyToSymbol(RotInv, &d_rotInv, sizeof(d_rotInv));
+    }
+    cudaMemcpy(d_rotInv, &h_rotInv, sizeof(h_rotInv), cudaMemcpyHostToDevice);
 }
 
 void setCudaMetricAspectRatio(double aspectRatio)

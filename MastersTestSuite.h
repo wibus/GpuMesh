@@ -42,6 +42,10 @@ protected:
             double metricK,
             double metricA);
 
+    void setupAdaptedSphere(
+            double metricK,
+            double metricA);
+
     void saveToFile(
             const std::string& results,
             const std::string& fileName) const;
