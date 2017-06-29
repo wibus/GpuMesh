@@ -162,11 +162,11 @@ MastersTestSuite::MastersTestSuite(
         {"Quality Laplace",     "Laplace de qualité"},
         {"Spawn Search",        "Force brute"},
         {"Nelder-Mead",         "Nelder-Mead"},
-        {"Multi Elem NM",       "NM multi-éléments"},
+        {"Multi Elem NM",       "NM multiélément"},
         {"Gradient Descent",    "Descente du gradient"},
-        {"Multi Elem GD",       "DG multi-éléments"},
-        {"Multi Pos GD",        "DG multi-positions"},
-        {"Patch GD",            "DG multi-axes"},
+        {"Multi Elem GD",       "DG multiélément"},
+        {"Multi Pos GD",        "DG multiposition"},
+        {"Patch GD",            "DG multiaxe"},
         {"GETMe",               "GETMe"}
     };
 
