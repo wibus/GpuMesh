@@ -1080,9 +1080,13 @@ void MastersTestSuite::texturePrecision(
     string evaluator = "Metric Conformity";
     string sampling = "Texture";
 
-    vector<double> depths = {
-        1, 2, 4, 8, 16, 32, 64, 128
-    };
+    vector<double> depths;
+    const int resolutionCount = 10;
+    const double baseResolution = 16;
+    const double cbRtOfTwo = glm::pow(2.0, 1/3.0);
+    for(int r = 0; r < resolutionCount; ++r)
+        depths.push_back(glm::round(
+            baseResolution * glm::pow(cbRtOfTwo, r)));
 
 
     Schedule schedule;
