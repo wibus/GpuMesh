@@ -141,6 +141,9 @@ MastersTestSuite::MastersTestSuite(
 
         {testNumber(++tId) + ". Relocation Scaling",
         MastersTestFunc(bind(&MastersTestSuite::relocationScaling,          this, _1))},
+
+        {testNumber(++tId) + ". Smoothing Gain Speed",
+        MastersTestFunc(bind(&MastersTestSuite::smoothingGainSpeed,         this, _1))},
     });
 
     _translateSamplingTechniques = {
@@ -1924,6 +1927,73 @@ void MastersTestSuite::relocationScaling(
     vector<int> precisions;
     for(int i=0; i < configs.size(); ++i)
         precisions.push_back(TIME_SEC_PREC);
+
+    output(testName, header, subheader, lineNames, precisions, data);
+}
+
+void MastersTestSuite::smoothingGainSpeed(
+        const std::string& testName)
+{
+    string mesh = QString(MESH_SCALING_BASE.c_str()).arg(2).toStdString();
+
+    string sampler = "Analytic";
+    string evaluator = "Metric Conformity";
+    string smoother = "Nelder-Mead";
+
+    int size = SPHERE_TARGET_SIZES[2];
+    double metricK = sphereSizeToScale(size);
+    double metricA = ADAPTATION_METRIC_A;
+
+    _character.useEvaluator(evaluator);
+
+    _character.useSampler(sampler);
+    _character.setMetricScaling(metricK);
+    _character.setMetricAspectRatio(metricA);
+
+    _character.loadMesh(mesh);
+
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.relocationPassCount = 5;
+
+    Configuration config;
+    config.samplerName = sampler;
+    config.smootherName = smoother;
+    config.implementationName = "Thread";
+
+    OptimizationPlot plot;
+
+    _character.benchmarkSmoothers(plot, schedule, {config});
+
+    const OptimizationImpl& impl = plot.implementations().front();
+    Grid2D<double> data(2, impl.passes.size(), 0.0);
+
+    for(int p=0; p < impl.passes.size(); ++p)
+    {
+        const OptimizationPass& pass = impl.passes[p];
+        data[p][0] = pass.histogram.minimumQuality();
+        data[p][1] = pass.histogram.harmonicMean();
+    }
+
+
+    vector<pair<string, int>> header = {
+        {"Temps", 1},
+        {"Minimum", 1},
+        {"Moyenne", 1}};
+    vector<pair<string, int>> subheader = {};
+
+    vector<string> lineNames;
+    for(int p=0; p < impl.passes.size(); ++p)
+    {
+        const OptimizationPass& pass = impl.passes[p];
+        lineNames.push_back(to_string(pass.timeStamp));
+    }
+
+    vector<int> precisions;
+    precisions.push_back(QUAL_MIN_PREC);
+    precisions.push_back(QUAL_MEAN_PREC);
 
     output(testName, header, subheader, lineNames, precisions, data);
 }

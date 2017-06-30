@@ -162,6 +162,9 @@ protected:
     void relocationScaling(
             const std::string& testName);
 
+    void smoothingGainSpeed(
+            const std::string& testName);
+
 
 private:
     GpuMeshCharacter& _character;
