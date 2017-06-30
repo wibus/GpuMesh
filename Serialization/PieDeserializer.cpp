@@ -114,6 +114,7 @@ bool PieDeserializer::deserialize(
         to_string(maxBox.x) + ", " + to_string(maxBox.y) + ", " + to_string(maxBox.z) + ")",
         "Mesh"));
 
+
     glm::dvec3 ext = maxBox - minBox;
     double scale = 2.0 / glm::max(glm::max(ext.x, ext.y), ext.z);
     glm::dvec3 center = (minBox + maxBox) / 2.0;
@@ -122,6 +123,7 @@ bool PieDeserializer::deserialize(
     {
         v.p = (v.p - center) * scale;
     }
+
 
     int zoneCount = maillage->get_nbzones();
     for(int z=0; z < zoneCount; ++z)
@@ -235,7 +237,7 @@ bool PieDeserializer::deserialize(
 
     int nbsol = pifich.get_nbsolutions();
 
-    double metricScale = (1.0e6) / (scale*scale);
+    double metricScale = 1.0 / (scale*scale);
 
     if(nbsol > 0)
     {
@@ -259,9 +261,9 @@ bool PieDeserializer::deserialize(
                             ->v_get_groupe(v, h);
 
                     metrics[v] = MeshMetric(
-                        h[0], h[1], h[2],
-                        h[1], h[3], h[4],
-                        h[2], h[4], h[5]) * metricScale;
+                        h[0], h[1], h[3],
+                        h[1], h[2], h[4],
+                        h[3], h[4], h[5]) * metricScale;
                 }
 
             }

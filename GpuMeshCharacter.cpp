@@ -751,10 +751,18 @@ void GpuMeshCharacter::benchmarkSmoothers(
     std::shared_ptr<Mesh> currMesh(new Mesh(*_mesh));
     std::shared_ptr<AbstractSampler> currSampler = _meshCrew->samplerPtr();
 
-    std::shared_ptr<AbstractSampler> analyticSampler;
-    _availableSamplers.select("Analytic", analyticSampler);
-    _meshCrew->setSampler(*_mesh, analyticSampler);
-    updateSampling();
+    std::shared_ptr<AbstractSampler> referenceSampler;
+    if(currSampler->useComputedMetric())
+    {
+        referenceSampler = _computedMetricSmapler;
+        _meshCrew->setSampler(*_mesh, referenceSampler);
+    }
+    else
+    {
+        _availableSamplers.select("Analytic", referenceSampler);
+        _meshCrew->setSampler(*_mesh, referenceSampler);
+        updateSampling();
+    }
 
     QualityHistogram initialHistogram;
     _meshCrew->evaluator().evaluateMeshQualityThread(
@@ -804,9 +812,8 @@ void GpuMeshCharacter::benchmarkSmoothers(
                     schedule,
                     impl);
 
-                _meshCrew->setSampler(*_mesh, analyticSampler);
-                updateSampling();
 
+                _meshCrew->setSampler(*_mesh, referenceSampler);
                 _meshCrew->evaluator().evaluateMeshQualityThread(
                     *_mesh, _meshCrew->sampler(), _meshCrew->measurer(),
                     impl.finalHistogram);
@@ -1034,6 +1041,72 @@ void GpuMeshCharacter::updateMeshMeasures()
 
         if(_renderer.get() != nullptr)
             _renderer->notifyMeshUpdate();
+
+
+        /*
+        if(!_meshCrew->sampler().useComputedMetric())
+            return;
+
+        struct EdgeStats{
+            vector<double> lengths;
+            double minLen = 1.0/0.0;
+            double maxLen = -1.0/0.0;
+            double meanLen = 0.0;
+        } euclide, riemann;
+
+        MetricFreeMeasurer freeMeasurer;
+        MetricWiseMeasurer wiseMeasurer;
+
+        int vertCount = _mesh->verts.size();
+        for(int v=0; v < vertCount; ++v)
+        {
+            const MeshTopo& topo = _mesh->topos[v];
+            for(const MeshNeigVert& n : topo.neighborVerts)
+            {
+                if(v < n.v)
+                {
+                    double eucLen = freeMeasurer.riemannianDistance(
+                        _meshCrew->sampler(),
+                        _mesh->verts[v].p,
+                        _mesh->verts[n.v].p,
+                        _mesh->verts[v].c);
+
+                    euclide.lengths.push_back(eucLen);
+                    euclide.minLen = glm::min(euclide.minLen, eucLen);
+                    euclide.maxLen = glm::max(euclide.maxLen, eucLen);
+                    euclide.meanLen += eucLen;
+
+
+                    double metLen = wiseMeasurer.riemannianDistance(
+                        _meshCrew->sampler(),
+                        _mesh->verts[v].p,
+                        _mesh->verts[n.v].p,
+                        _mesh->verts[v].c);
+
+                    riemann.lengths.push_back(metLen);
+                    riemann.minLen = glm::min(riemann.minLen, metLen);
+                    riemann.maxLen = glm::max(riemann.maxLen, metLen);
+                    riemann.meanLen += metLen;
+                }
+            }
+        }
+
+        getLog().postMessage(new Message('D', false,
+            "Eucl stats : (min,\tmax,\tmean)", "GpuMesh"));
+        getLog().postMessage(new Message('D', false,
+            "\t" + to_string(euclide.minLen) +
+            "\t" + to_string(euclide.maxLen) +
+            "\t" + to_string(euclide.meanLen / euclide.lengths.size()),
+            "GpuMesh"));
+
+        getLog().postMessage(new Message('D', false,
+            "Riem stats : (min,\tmax,\tmean)", "GpuMesh"));
+        getLog().postMessage(new Message('D', false,
+            "\t" + to_string(riemann.minLen) +
+            "\t" + to_string(riemann.maxLen) +
+            "\t" + to_string(riemann.meanLen / riemann.lengths.size()),
+            "GpuMesh"));
+        */
     }
 }
 

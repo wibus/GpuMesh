@@ -40,6 +40,7 @@ const string MESH_HEXCUBE_10K  = RESULT_MESH_PATH + "HexCube (N=10K).json";
 const string MESH_HEXCUBE_175K = RESULT_MESH_PATH + "HexCube (N=175K).json";
 const string MESH_HEXCUBE_500K = RESULT_MESH_PATH + "HexCube (N=500K).json";
 const string MESH_TURBINE_500K = RESULT_MESH_PATH + "Turbine (N=500K).cgns";
+const string MESH_CAVITY_32K = RESULT_MESH_PATH + "Cavity/ALL.pie";
 
 const string MESH_PRECISION_BASE = RESULT_MESH_PATH + "Precision (A=%1).json";
 const string MESH_SCALING_BASE = RESULT_MESH_PATH + "Scaling (Scale=%1).json";
@@ -144,6 +145,9 @@ MastersTestSuite::MastersTestSuite(
 
         {testNumber(++tId) + ". Smoothing Gain Speed",
         MastersTestFunc(bind(&MastersTestSuite::smoothingGainSpeed,         this, _1))},
+
+        {testNumber(++tId) + ". Cavity Test Case",
+        MastersTestFunc(bind(&MastersTestSuite::cavityTestCase,             this, _1))},
     });
 
     _translateSamplingTechniques = {
@@ -322,30 +326,6 @@ void MastersTestSuite::runTests(
         _character.saveMesh(MESH_HEXCUBE_500K);
     }
 
-    if(!QFile(MESH_TURBINE_500K.c_str()).exists())
-    {
-        string original = DATA_MESH_PATH + "FINAL_MESH.cgns";
-
-        if(QFile(original.c_str()).exists())
-        {
-            if(!QFile(original.c_str()).copy(
-                        MESH_TURBINE_500K.c_str()))
-            {
-                getLog().postMessage(new Message('E', true,
-                    "Could not copy 500K nodes turbine mesh",
-                    "MastersTestSuite"));
-                return;
-            }
-        }
-        else
-        {
-            getLog().postMessage(new Message('E', true,
-                "Missing 500K nodes turbine mesh",
-                "MastersTestSuite"));
-            return;
-        }
-    }
-
     if(!QFile(QString(MESH_PRECISION_BASE.c_str()).arg(PRECISION_METRIC_As.back())).exists())
     {
         double metricA = PRECISION_METRIC_As.front();
@@ -398,6 +378,30 @@ void MastersTestSuite::runTests(
             setupAdaptedSphere(sphereSizeToScale(size), ADAPTATION_METRIC_A);
             _character.saveMesh(name.toStdString());
         }
+    }
+
+    _turbineIsMissing = false;
+    if(!QFile(MESH_TURBINE_500K.c_str()).exists())
+    {
+        _turbineIsMissing = true;
+        getLog().postMessage(new Message('W', true,
+            "Missing 500K nodes turbine mesh",
+            "MastersTestSuite"));
+        getLog().postMessage(new Message('W', true,
+            "Tests using this mesh won't execute",
+            "MastersTestSuite"));
+    }
+
+    _cavityIsMissing = false;
+    if(!QFile(MESH_CAVITY_32K.c_str()).exists())
+    {
+        _cavityIsMissing = true;
+        getLog().postMessage(new Message('W', true,
+            "Missing 32K Cavity mesh",
+            "MastersTestSuite"));
+        getLog().postMessage(new Message('W', true,
+            "Tests using this mesh won't execute",
+            "MastersTestSuite"));
     }
 
 
@@ -1996,4 +2000,124 @@ void MastersTestSuite::smoothingGainSpeed(
     precisions.push_back(QUAL_MEAN_PREC);
 
     output(testName, header, subheader, lineNames, precisions, data);
+}
+
+void MastersTestSuite::cavityTestCase(
+        const std::string& testName)
+{
+    if(_cavityIsMissing)
+    {
+        getLog().postMessage(new Message('W', true,
+            "Missing 32K Cavity mesh",
+            "MastersTestSuite"));
+        getLog().postMessage(new Message('W', true,
+            "Cannot execute this test",
+            "MastersTestSuite"));
+        return;
+    }
+
+    string mesh = MESH_CAVITY_32K;
+
+    string evaluator = "Metric Conformity";
+    string smoother = "Multi Elem NM";
+
+    double metricK = 1.0;
+    double metricA = 1.0;
+    int discretization = 40;
+
+    int relocPassCount = 300;
+
+    _character.useEvaluator(evaluator);
+
+    // We need to set sampler to one of Computed samplers
+    // So the initial and final histograms can be computed
+    // in the computed metric
+    _character.useSampler("Computed Loc");
+
+    _character.setMetricScaling(metricK);
+    _character.setMetricAspectRatio(metricA);
+    _character.setMetricDiscretizationDepth(discretization);
+
+    _character.loadMesh(mesh);
+
+
+    Schedule schedule;
+    schedule.autoPilotEnabled = false;
+    schedule.topoOperationEnabled = false;
+    schedule.relocationPassCount = relocPassCount;
+
+    vector<string> implementations = {
+        "Serial", "Thread", "GLSL", "CUDA"
+    };
+
+    map<string, string> impToSamp;
+    impToSamp["Serial"] = "Computed Loc";
+    impToSamp["Thread"] = "Computed Loc";
+    impToSamp["GLSL"] = "Computed Tex";
+    impToSamp["CUDA"] = "Computed Tex";
+
+    vector<Configuration> configs;
+    configs.push_back(Configuration{impToSamp["Serial"], smoother, "Serial"});
+    for(const string& impl : implementations)
+        configs.push_back(Configuration{impToSamp[impl], smoother, impl});
+
+    OptimizationPlot plot;
+    _character.benchmarkSmoothers(plot, schedule, configs);
+
+    Grid2D<double> timeData(implementations.size()*2-1, 1, 0.0);
+    for(int i=0; i < implementations.size(); ++i)
+    {
+        const OptimizationImpl& impl = plot.implementations()[i+1];
+        timeData[0][i] = impl.passes.back().timeStamp;
+
+        if(i > 0)
+            timeData[0][i+implementations.size()-1] = timeData[0][0]/ timeData[0][i];
+    }
+
+
+    Grid2D<double> qualData(2, implementations.size()+1, 0.0);
+    qualData[0][0] = plot.initialHistogram().minimumQuality();
+    qualData[0][1] = plot.initialHistogram().harmonicMean();
+    for(int i=0; i <implementations.size(); ++i)
+    {
+        const QualityHistogram hist = plot.implementations()[i+1].finalHistogram;
+        qualData[i+1][0] = hist.minimumQuality();
+        qualData[i+1][1] = hist.harmonicMean();
+    }
+
+
+    vector<pair<string, int>> timeHeader = {{"Cas", 1}};
+    for(int i=0; i <implementations.size(); ++i)
+        timeHeader.push_back({_translateImplementations[implementations[i]], 1});
+    for(int i=1; i <implementations.size(); ++i)
+        timeHeader.push_back({_translateImplementations[implementations[i]], 1});
+
+    vector<pair<string, int>> subheader = {};
+
+    vector<string> timeLineNames;
+    timeLineNames.push_back("Cavitation");
+
+    vector<int> timePrecisions;
+    for(int i=0; i <implementations.size(); ++i)
+        timePrecisions.push_back(TIME_SEC_PREC);
+    for(int i=0; i <implementations.size(); ++i)
+        timePrecisions.push_back(TIME_ACC_PREC);
+
+
+    vector<pair<string, int>> qualHeader = {
+        {"Implémentations", 1},
+        {"Minimums", 1},
+        {"Moyennes", 1}};
+
+    vector<string> qualLineNames;
+    qualLineNames.push_back("Initiale");
+    for(int i=0; i <implementations.size(); ++i)
+        qualLineNames.push_back(_translateImplementations[implementations[i]]);
+
+    vector<int> qualPrecisions;
+    qualPrecisions.push_back(QUAL_MIN_PREC);
+    qualPrecisions.push_back(QUAL_MEAN_PREC);
+
+    output(testName + "(Times)", timeHeader, subheader, timeLineNames, timePrecisions, timeData);
+    output(testName + "(Quality)", qualHeader, subheader, qualLineNames, qualPrecisions, qualData);
 }

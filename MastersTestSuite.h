@@ -162,7 +162,12 @@ protected:
     void relocationScaling(
             const std::string& testName);
 
+
     void smoothingGainSpeed(
+            const std::string& testName);
+
+
+    void cavityTestCase(
             const std::string& testName);
 
 
@@ -179,6 +184,9 @@ private:
     std::map<std::string, std::string> _meshNames;
 
     QTextDocument* _reportDocument;
+
+    bool _cavityIsMissing;
+    bool _turbineIsMissing;
 };
 
 #endif // GPUMESH_MASTERSTESTSUITE
