@@ -43,6 +43,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
     double scale = 0.4 / glm::pow(double(vertexCount), 1.0/3.0);
     for(size_t vId=0; vId < vertexCount; ++vId)
     {
+        double expand = glm::linearRand(0.25, 4.0);
         double rotXY = glm::linearRand(0.0, glm::pi<double>() * 2.0);
         double rotXZ = glm::linearRand(0.0, glm::pi<double>() * 2.0);
         glm::dmat4 matRotXY = glm::rotate(glm::dmat4(), rotXY, glm::dvec3(0, 0, 1));
@@ -61,7 +62,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         {
             mesh.verts[i].p += 0.75 * glm::linearRand(-jitter, jitter);
             mesh.verts[i].p = matRot * mesh.verts[i].p;
-            mesh.verts[i].p *= scale;
+            mesh.verts[i].p *= scale * expand;
             mesh.verts[i].p += offset;
         }
         eBase += MeshTet::VERTEX_COUNT;
@@ -82,7 +83,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         {
             mesh.verts[i].p += glm::linearRand(-jitter, jitter);
             mesh.verts[i].p = matRot * mesh.verts[i].p;
-            mesh.verts[i].p *= scale;
+            mesh.verts[i].p *= scale * expand;
             mesh.verts[i].p += offset;
         }
         eBase += MeshPri::VERTEX_COUNT;
@@ -105,7 +106,7 @@ void DebugMesher::genSingles(Mesh& mesh, size_t vertexCount)
         {
             mesh.verts[i].p += glm::linearRand(-jitter, jitter);
             mesh.verts[i].p = matRot * mesh.verts[i].p;
-            mesh.verts[i].p *= scale;
+            mesh.verts[i].p *= scale * expand;
             mesh.verts[i].p += offset;
         }
         eBase += MeshHex::VERTEX_COUNT;
