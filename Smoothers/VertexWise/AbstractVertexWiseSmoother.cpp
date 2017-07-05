@@ -364,7 +364,7 @@ void AbstractVertexWiseSmoother::smoothMeshGlsl(
     }
 
 
-    // Fetch new vertices' position
+    // Fetch new vertex positions
     mesh.fetchGlslVertices();
     mesh.clearGlslMemory();
     crew.clearGlslMemory(mesh);
@@ -508,7 +508,7 @@ void AbstractVertexWiseSmoother::smoothMeshCuda(
     }
 
 
-    // Fetch new vertices' position
+    // Fetch new vertex positions
     mesh.fetchCudaVertices();
     mesh.clearCudaMemory();
     crew.clearCudaMemory(mesh);
