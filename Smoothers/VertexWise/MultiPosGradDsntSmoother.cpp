@@ -92,11 +92,11 @@ std::string MultiPosGradDsntSmoother::glslLauncher() const
 
 NodeGroups::GpuDispatcher MultiPosGradDsntSmoother::glslDispatcher() const
 {
-    const uint NODE_THREAD_COUNT = 32;
-    const uint POSITION_THREAD_COUNT = 8;
-
     return [](NodeGroups::GpuDispatch& d)
     {
+		const uint NODE_THREAD_COUNT = 32;
+		const uint POSITION_THREAD_COUNT = 8;
+
         d.workgroupSize = glm::uvec3(POSITION_THREAD_COUNT, NODE_THREAD_COUNT, 1);
         d.workgroupCount = glm::uvec3(
             glm::ceil(double(d.gpuBufferSize)/NODE_THREAD_COUNT), 1, 1);
@@ -105,11 +105,11 @@ NodeGroups::GpuDispatcher MultiPosGradDsntSmoother::glslDispatcher() const
 
 NodeGroups::GpuDispatcher MultiPosGradDsntSmoother::cudaDispatcher() const
 {
-    const uint NODE_THREAD_COUNT = 4;
-    const uint POSITION_THREAD_COUNT = 8;
-
     return [](NodeGroups::GpuDispatch& d)
     {
+		const uint NODE_THREAD_COUNT = 4;
+		const uint POSITION_THREAD_COUNT = 8;
+
         d.workgroupSize = glm::uvec3(POSITION_THREAD_COUNT, NODE_THREAD_COUNT, 1);
         d.workgroupCount = glm::uvec3(
             glm::ceil(double(d.gpuBufferSize)/NODE_THREAD_COUNT), 1, 1);

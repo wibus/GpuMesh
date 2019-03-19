@@ -1,7 +1,5 @@
 #include "Base.cuh"
 
-#include <unistd.h>
-
 #include "DataStructures/Mesh.h"
 #include "DataStructures/MeshCrew.h"
 #include "DataStructures/QualityHistogram.h"

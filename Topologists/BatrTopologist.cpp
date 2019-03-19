@@ -1,6 +1,7 @@
 #include "BatrTopologist.h"
 
 #include <list>
+#include <numeric>
 #include <iostream>
 #include <algorithm>
 
@@ -988,7 +989,7 @@ size_t BatrTopologist::edgeSwapping(
                 ++ringSizeCounters[ringSize];
                 if(ringSize < 3 || ringSize >= _ringConfigDictionary.size())
                 {
-                    ++edgeSwapCounters[-ringSize];
+                    ++edgeSwapCounters[-ringSize]; // -ringSize... that's weird! THIS MIGHT BE A BUG
                     continue;
                 }
 

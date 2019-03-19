@@ -102,11 +102,11 @@ std::string PatchGradDsntSmoother::glslLauncher() const
 
 NodeGroups::GpuDispatcher PatchGradDsntSmoother::glslDispatcher() const
 {
-    const uint POSITION_THREAD_COUNT = 8;
-    const uint ELEMENT_THREAD_COUNT = 32;
-
     return [](NodeGroups::GpuDispatch& d)
     {
+		const uint POSITION_THREAD_COUNT = 8;
+		const uint ELEMENT_THREAD_COUNT = 32;
+
         d.workgroupSize = glm::uvec3(POSITION_THREAD_COUNT, ELEMENT_THREAD_COUNT, 1);
         d.workgroupCount = glm::uvec3(d.gpuBufferSize, 1, 1);
     };
@@ -114,11 +114,11 @@ NodeGroups::GpuDispatcher PatchGradDsntSmoother::glslDispatcher() const
 
 NodeGroups::GpuDispatcher PatchGradDsntSmoother::cudaDispatcher() const
 {
-    const uint POSITION_THREAD_COUNT = 8;
-    const uint ELEMENT_THREAD_COUNT = 8;
-
     return [](NodeGroups::GpuDispatch& d)
     {
+		const uint POSITION_THREAD_COUNT = 8;
+		const uint ELEMENT_THREAD_COUNT = 8;
+
         d.workgroupSize = glm::uvec3(POSITION_THREAD_COUNT, ELEMENT_THREAD_COUNT, 1);
         d.workgroupCount = glm::uvec3(d.gpuBufferSize, 1, 1);
     };

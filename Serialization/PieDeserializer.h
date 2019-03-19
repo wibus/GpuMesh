@@ -1,6 +1,8 @@
 #ifndef PIEDESERIALIZER_H
 #define PIEDESERIALIZER_H
 
+#ifdef ENBALE_PIRATE
+
 #include "AbstractDeserializer.h"
 #include "DataStructures/Mesh.h"
 
@@ -16,5 +18,7 @@ public:
             Mesh& mesh,
             std::vector<MeshMetric>& metrics) const override;
 };
+
+#endif // ENABLE_PIRATE
 
 #endif // PIEDESERIALIZER_H

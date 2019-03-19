@@ -8,9 +8,7 @@
 
 #include <GLM/glm.hpp>
 
-#ifndef uint
-typedef unsigned int uint;
-#endif // uint
+#include "types.h"
 
 namespace cellar
 {

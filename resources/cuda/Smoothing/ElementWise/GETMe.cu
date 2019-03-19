@@ -45,7 +45,7 @@ __device__ void getmeSmoothTet(uint eId)
     float volume = tetVolumeImpl(vp, tet);
     float volumePrime = tetVolumeImpl(vpp, tet);
     float absVolumeRation = abs(volume / volumePrime);
-    float volumeVar = pow(absVolumeRation, 1.0/3.0);
+    float volumeVar = powf(absVolumeRation, 1.0/3.0);
 
     vec3 center = float(1.0/4.0) * (
         vp[0] + vp[1] + vp[2] + vp[3]);
@@ -130,7 +130,7 @@ __device__ void getmeSmoothPri(uint eId)
     float volume = priVolumeImpl(vp, pri);
     float volumePrime = priVolumeImpl(vpp, pri);
     float absVolumeRation = abs(volume / volumePrime);
-    float volumeVar = pow(absVolumeRation, 1.0/3.0);
+    float volumeVar = powf(absVolumeRation, 1.0/3.0);
 
     vec3 center = float(1.0/6.0) * (
         vp[0] + vp[1] + vp[2] + vp[3] + vp[4] + vp[5]);
@@ -229,7 +229,7 @@ __device__ void getmeSmoothHex(uint eId)
     float volume = hexVolumeImpl(vp, hex);
     float volumePrime = hexVolumeImpl(vpp, hex);
     float absVolumeRation = abs(volume / volumePrime);
-    float volumeVar = pow(absVolumeRation, 1.0/3.0);
+    float volumeVar = powf(absVolumeRation, 1.0/3.0);
 
     vec3 center = float(1.0/8.0) * (
         vp[0] + vp[1] + vp[2] + vp[3] + vp[4] + vp[5] + vp[6] + vp[7]);

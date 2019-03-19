@@ -1,3 +1,5 @@
+#ifdef ENBALE_PIRATE
+
 #include "PieDeserializer.h"
 
 #include <CellarWorkbench/Misc/Log.h>
@@ -273,3 +275,5 @@ bool PieDeserializer::deserialize(
 
     return true;
 }
+
+#endif // ENBALE_PIRATE

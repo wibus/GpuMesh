@@ -1,6 +1,7 @@
 #include "NodeGroups.h"
 
 #include <set>
+#include <numeric>
 #include <iostream>
 #include <algorithm>
 

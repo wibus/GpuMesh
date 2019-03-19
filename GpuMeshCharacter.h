@@ -18,7 +18,7 @@ class QTextDocument;
 #include "DataStructures/OptimizationPlot.h"
 
 class Mesh;
-class Schedule;
+struct Schedule;
 class AbstractMesher;
 class AbstractSampler;
 class LocalSampler;

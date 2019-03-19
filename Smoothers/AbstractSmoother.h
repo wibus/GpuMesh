@@ -11,7 +11,7 @@
 #include "DataStructures/OptimizationPlot.h"
 
 class MeshCrew;
-class Schedule;
+struct Schedule;
 
 
 class AbstractSmoother

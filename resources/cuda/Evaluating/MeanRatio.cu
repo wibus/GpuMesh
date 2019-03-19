@@ -21,7 +21,7 @@ __device__ float cornerQuality(const mat3& Fk)
         dot(Fk[1], Fk[1]) +
         dot(Fk[2], Fk[2]);
 
-    return sign(Fk_det) * 3.0 * pow(abs(Fk_det), 2.0/3.0) / Fk_frobenius2;
+    return sign(Fk_det) * 3.0 * powf(abs(Fk_det), 2.0/3.0) / Fk_frobenius2;
 }
 
 __device__ float meanRatioTetQuality(const vec3 vp[TET_VERTEX_COUNT], const Tet& tet)

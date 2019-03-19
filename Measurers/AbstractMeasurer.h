@@ -6,6 +6,8 @@
 
 #include <GLM/glm.hpp>
 
+#include "types.h"
+
 namespace cellar
 {
     class GlProgram;

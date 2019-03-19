@@ -5,7 +5,7 @@
 
 class Mesh;
 class MeshCrew;
-class Schedule;
+struct Schedule;
 
 
 class AbstractTopologist

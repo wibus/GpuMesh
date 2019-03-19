@@ -18,7 +18,7 @@ namespace cellar
 
 class GpuMeshCharacter;
 class QualityHistogram;
-class Configuration;
+struct Configuration;
 
 
 class MastersTestSuite

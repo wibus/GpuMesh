@@ -173,7 +173,9 @@ GpuMeshCharacter::GpuMeshCharacter() :
     _availableDeserializers.setContent({
         {string("cgns"), shared_ptr<AbstractDeserializer>(new CgnsDeserializer())},
         {string("json"), shared_ptr<AbstractDeserializer>(new JsonDeserializer())},
+#ifdef ENABLE_PIRATE
         {string("pie"), shared_ptr<AbstractDeserializer>(new PieDeserializer())},
+#endif
     });
 }
 

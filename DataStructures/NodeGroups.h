@@ -13,7 +13,7 @@ typedef unsigned int uint;
 #endif // uint
 
 class Mesh;
-class MeshTopo;
+struct MeshTopo;
 
 
 /// The layout of the vertex buffer is as follows :

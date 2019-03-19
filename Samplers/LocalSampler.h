@@ -5,8 +5,8 @@
 
 #include "AbstractSampler.h"
 
-class MeshLocalTet;
-class Triangle;
+struct MeshLocalTet;
+struct Triangle;
 
 
 class LocalSampler : public AbstractSampler

@@ -5,6 +5,7 @@
 
 #include <GLM/glm.hpp>
 
+#include "types.h"
 #include "Triangle.h"
 
 

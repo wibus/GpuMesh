@@ -190,6 +190,7 @@ Mesh& Mesh::operator=(const Mesh& mesh)
 
     _nodeGroups.reset(new NodeGroups(mesh.nodeGroups()));
     _boundary = mesh._boundary;
+	return *this;
 }
 
 void Mesh::clear()

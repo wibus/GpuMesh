@@ -14,6 +14,11 @@
 #include "DataStructures/Mesh.h"
 #include "DataStructures/OptionMap.h"
 
+#ifdef _WIN32
+// Windows dll import/export system is such a mess :(
+template class __declspec(dllimport) cellar::SpecificObserver<cellar::CameraMsg>;
+#endif //_WIN32
+
 
 class AbstractRenderer:
         public cellar::SpecificObserver<cellar::CameraMsg>

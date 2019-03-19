@@ -3,8 +3,8 @@
 
 #include "AbstractTopologist.h"
 
-class MeshTri;
-class MeshTopo;
+struct MeshTri;
+struct MeshTopo;
 
 
 class BatrTopologist : public AbstractTopologist

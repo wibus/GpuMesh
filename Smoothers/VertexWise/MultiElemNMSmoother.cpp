@@ -116,10 +116,10 @@ std::string MultiElemNMSmoother::glslLauncher() const
 
 NodeGroups::GpuDispatcher MultiElemNMSmoother::glslDispatcher() const
 {
-    const uint NODE_THREAD_COUNT = 4;
-
     return [](NodeGroups::GpuDispatch& d)
     {
+		const uint NODE_THREAD_COUNT = 4;
+
         d.workgroupSize = glm::uvec3(ELEMENT_THREAD_COUNT, NODE_THREAD_COUNT, 1);
         d.workgroupCount = glm::uvec3(
             glm::ceil(double(d.gpuBufferSize)/NODE_THREAD_COUNT), 1, 1);
@@ -128,10 +128,10 @@ NodeGroups::GpuDispatcher MultiElemNMSmoother::glslDispatcher() const
 
 NodeGroups::GpuDispatcher MultiElemNMSmoother::cudaDispatcher() const
 {
-    const uint NODE_THREAD_COUNT = 4;
-
     return [](NodeGroups::GpuDispatch& d)
     {
+		const uint NODE_THREAD_COUNT = 4;
+
         d.workgroupSize = glm::uvec3(ELEMENT_THREAD_COUNT, NODE_THREAD_COUNT, 1);
         d.workgroupCount = glm::uvec3(
             glm::ceil(double(d.gpuBufferSize)/NODE_THREAD_COUNT), 1, 1);

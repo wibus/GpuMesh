@@ -667,6 +667,7 @@ Tetrahedron* CpuDelaunayMesher::findBaseTetrahedron(const glm::ivec3& cId, int v
 
     bool isBaseTetrahedronFound = false;
     assert(isBaseTetrahedronFound);
+	return nullptr;
 }
 
 void CpuDelaunayMesher::findDelaunayBall(const glm::ivec3& cId, int vId)
